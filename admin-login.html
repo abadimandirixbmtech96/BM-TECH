@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#f5f4f1">
+
+<title>Login-administrator</title>
+
+<!-- FIXED WEB FONT -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* =========================
+   RESET
+========================= */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html,
+body{
+  width:100%;
+  min-height:100%;
+}
+
+
+/* =========================
+   ROOT
+========================= */
+
+:root{
+
+  --text:#292825;
+
+  --muted:#77736c;
+
+  --label:#55524c;
+
+  --background:#f5f4f1;
+
+  --card:rgba(218,216,210,.78);
+
+  --input:rgba(248,247,244,.82);
+
+  --border:rgba(170,168,161,.42);
+
+  --button:#e7e5e0;
+
+  --button-text:#77736d;
+
+  --green:#5f8f68;
+
+  --green-dark:#527d5a;
+
+}
+
+
+/* =========================
+   BODY
+========================= */
+
+body{
+
+  font-family:
+    "Inter",
+    Arial,
+    sans-serif;
+
+  color:var(--text);
+
+  background:
+
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(255,255,255,.9),
+      transparent 35%
+    ),
+
+    radial-gradient(
+      circle at 95% 90%,
+      rgba(226,223,216,.55),
+      transparent 38%
+    ),
+
+    var(--background);
+
+  overflow-x:hidden;
+
+}
+
+
+/* =========================
+   SUBTLE LIQUID GLASS
+========================= */
+
+body::before{
+
+  content:"";
+
+  position:fixed;
+
+  width:380px;
+  height:380px;
+
+  top:-210px;
+  right:-170px;
+
+  border-radius:50%;
+
+  background:
+    rgba(255,255,255,.5);
+
+  filter:blur(55px);
+
+  pointer-events:none;
+
+}
+
+body::after{
+
+  content:"";
+
+  position:fixed;
+
+  width:330px;
+  height:330px;
+
+  bottom:-190px;
+  left:-150px;
+
+  border-radius:50%;
+
+  background:
+    rgba(255,255,255,.5);
+
+  filter:blur(55px);
+
+  pointer-events:none;
+
+}
+
+
+/* =========================
+   PAGE
+========================= */
+
+.page{
+
+  width:100%;
+
+  max-width:460px;
+
+  min-height:100vh;
+  min-height:100dvh;
+
+  margin:auto;
+
+  padding:
+    24px
+    20px
+    30px;
+
+  position:relative;
+
+}
+
+
+/* =========================
+   BACK BUTTON
+========================= */
+
+.back-button{
+
+  width:48px;
+  height:48px;
+
+  border-radius:16px;
+
+  border:
+    1px solid rgba(255,255,255,.9);
+
+  background:
+    rgba(232,230,225,.58);
+
+  color:#5f5c56;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  cursor:pointer;
+
+  box-shadow:
+
+    0 8px 24px
+    rgba(70,67,60,.08),
+
+    inset 0 1px 3px
+    rgba(255,255,255,.95);
+
+  backdrop-filter:blur(18px);
+
+  -webkit-backdrop-filter:blur(18px);
+
+  transition:
+    transform .2s ease,
+    background .2s ease;
+
+}
+
+.back-button:hover{
+
+  background:
+    rgba(245,243,239,.78);
+
+}
+
+.back-button:active{
+
+  transform:scale(.94);
+
+}
+
+.back-button svg{
+
+  width:24px;
+  height:24px;
+
+  fill:none;
+
+  stroke:currentColor;
+
+  stroke-width:2;
+
+  stroke-linecap:round;
+
+  stroke-linejoin:round;
+
+}
+
+
+/* =========================
+   CONTENT
+========================= */
+
+.content{
+
+  width:100%;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  padding-top:72px;
+
+}
+
+
+/* =========================
+   LOGO
+========================= */
+
+.logo{
+
+  width:92px;
+  height:92px;
+
+  border-radius:50%;
+
+  overflow:hidden;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  margin-bottom:48px;
+
+  background:
+    rgba(255,255,255,.65);
+
+  border:
+    1px solid rgba(255,255,255,.92);
+
+  box-shadow:
+
+    0 15px 40px
+    rgba(70,67,60,.09),
+
+    inset 0 1px 4px
+    rgba(255,255,255,.95);
+
+  backdrop-filter:blur(20px);
+
+  -webkit-backdrop-filter:blur(20px);
+
+}
+
+.logo img{
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+
+  display:block;
+
+}
+
+
+/* =========================
+   LOGIN CARD
+========================= */
+
+.login-card{
+
+  width:100%;
+
+  padding:
+    42px
+    30px
+    32px;
+
+  border-radius:30px;
+
+  background:
+    var(--card);
+
+  border:
+    1px solid rgba(255,255,255,.86);
+
+  box-shadow:
+
+    0 22px 55px
+    rgba(70,67,60,.10),
+
+    inset 0 1px 3px
+    rgba(255,255,255,.85);
+
+  backdrop-filter:
+    blur(25px)
+    saturate(105%);
+
+  -webkit-backdrop-filter:
+    blur(25px)
+    saturate(105%);
+
+}
+
+
+/* =========================
+   TITLE
+========================= */
+
+.title{
+
+  text-align:center;
+
+  margin-bottom:36px;
+
+}
+
+.title h1{
+
+  font-size:29px;
+
+  line-height:1.25;
+
+  font-weight:700;
+
+  letter-spacing:-.8px;
+
+  color:#292825;
+
+}
+
+.title p{
+
+  margin-top:11px;
+
+  font-size:15px;
+
+  line-height:1.5;
+
+  font-weight:400;
+
+  color:#817d76;
+
+}
+
+
+/* =========================
+   FIELD
+========================= */
+
+.field{
+
+  margin-bottom:22px;
+
+}
+
+.field label{
+
+  display:block;
+
+  margin:
+    0
+    0
+    10px
+    4px;
+
+  font-size:15px;
+
+  line-height:1.4;
+
+  font-weight:600;
+
+  color:var(--label);
+
+}
+
+
+/* =========================
+   INPUT
+========================= */
+
+.input{
+
+  width:100%;
+
+  height:64px;
+
+  padding:
+    0
+    18px;
+
+  border:
+    1px solid var(--border);
+
+  border-radius:18px;
+
+  background:
+    var(--input);
+
+  outline:none;
+
+  color:#292825;
+
+  font-family:
+    "Inter",
+    Arial,
+    sans-serif;
+
+  font-size:16px;
+
+  font-weight:500;
+
+  transition:
+    border .2s ease,
+    background .2s ease,
+    box-shadow .2s ease;
+
+}
+
+.input::placeholder{
+
+  color:#aaa69f;
+
+  font-weight:400;
+
+}
+
+.input:focus{
+
+  border-color:
+    rgba(100,96,88,.5);
+
+  background:
+    rgba(255,255,253,.9);
+
+  box-shadow:
+    0 0 0 4px
+    rgba(100,96,88,.055);
+
+}
+
+
+/* =========================
+   PASSWORD
+========================= */
+
+.password-box{
+
+  width:100%;
+
+  position:relative;
+
+}
+
+.password-box .input{
+
+  padding-right:58px;
+
+}
+
+.eye-button{
+
+  position:absolute;
+
+  right:12px;
+
+  top:50%;
+
+  transform:translateY(-50%);
+
+  width:40px;
+  height:40px;
+
+  border:0;
+
+  background:transparent;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  color:#858078;
+
+  cursor:pointer;
+
+}
+
+.eye-button svg{
+
+  width:22px;
+  height:22px;
+
+  fill:none;
+
+  stroke:currentColor;
+
+  stroke-width:1.8;
+
+  stroke-linecap:round;
+
+  stroke-linejoin:round;
+
+}
+
+
+/* =========================
+   LOGIN BUTTON
+========================= */
+
+.login-button{
+
+  width:100%;
+
+  height:61px;
+
+  margin-top:4px;
+
+  border-radius:18px;
+
+  border:
+    1px solid rgba(255,255,255,.88);
+
+  background:
+    var(--button);
+
+  color:
+    var(--button-text);
+
+  font-family:
+    "Inter",
+    Arial,
+    sans-serif;
+
+  font-size:17px;
+
+  font-weight:600;
+
+  cursor:not-allowed;
+
+  box-shadow:
+
+    0 7px 20px
+    rgba(70,67,60,.07),
+
+    inset 0 1px 3px
+    rgba(255,255,255,.9);
+
+  transition:
+    background .25s ease,
+    color .25s ease,
+    box-shadow .25s ease,
+    transform .2s ease;
+
+}
+
+
+/* =========================
+   ACTIVE BUTTON
+========================= */
+
+.login-button.active{
+
+  background:
+    var(--green);
+
+  color:#fff;
+
+  cursor:pointer;
+
+  border-color:
+    rgba(255,255,255,.45);
+
+  box-shadow:
+
+    0 10px 25px
+    rgba(76,115,83,.18),
+
+    inset 0 1px 2px
+    rgba(255,255,255,.28);
+
+}
+
+.login-button.active:hover{
+
+  background:
+    var(--green-dark);
+
+}
+
+.login-button.active:active{
+
+  transform:scale(.985);
+
+}
+
+
+/* =========================
+   STATUS
+========================= */
+
+.status{
+
+  min-height:20px;
+
+  margin-top:16px;
+
+  text-align:center;
+
+  font-size:13px;
+
+  line-height:1.5;
+
+  font-weight:500;
+
+  color:#858078;
+
+}
+
+.status.error{
+
+  color:#a85f5a;
+
+}
+
+.status.success{
+
+  color:#5f8f68;
+
+}
+
+
+/* =========================
+   ACCESS
+========================= */
+
+.access{
+
+  margin-top:26px;
+
+  padding-top:21px;
+
+  border-top:
+    1px solid
+    rgba(110,106,98,.15);
+
+  text-align:center;
+
+  font-size:12px;
+
+  line-height:1.5;
+
+  font-weight:400;
+
+  color:#918c84;
+
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer{
+
+  margin-top:25px;
+
+  text-align:center;
+
+  font-size:12px;
+
+  font-weight:400;
+
+  color:#99938b;
+
+}
+
+
+/* =========================
+   SMALL SCREEN
+========================= */
+
+@media(max-width:380px){
+
+  .page{
+
+    padding-left:16px;
+    padding-right:16px;
+
+  }
+
+  .content{
+
+    padding-top:55px;
+
+  }
+
+  .logo{
+
+    width:82px;
+    height:82px;
+
+    margin-bottom:38px;
+
+  }
+
+  .login-card{
+
+    padding:
+      32px
+      20px
+      27px;
+
+    border-radius:26px;
+
+  }
+
+  .title{
+
+    margin-bottom:30px;
+
+  }
+
+  .title h1{
+
+    font-size:26px;
+
+  }
+
+  .title p{
+
+    font-size:14px;
+
+  }
+
+  .input{
+
+    height:60px;
+
+  }
+
+  .login-button{
+
+    height:58px;
+
+  }
+
+}
+
+
+/* =========================
+   REDUCE MOTION
+========================= */
+
+@media(prefers-reduced-motion:reduce){
+
+  *{
+
+    transition:none!important;
+
+  }
+
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<main class="page">
+
+
+  <!-- =========================
+       BACK
+  ========================== -->
+
+  <button
+    class="back-button"
+    id="backButton"
+    type="button"
+    aria-label="Back"
+  >
+
+    <svg viewBox="0 0 24 24">
+
+      <path d="M19 12H5"></path>
+
+      <path d="M12 19L5 12L12 5"></path>
+
+    </svg>
+
+  </button>
+
+
+  <div class="content">
+
+
+    <!-- =========================
+         LOGO
+    ========================== -->
+
+    <div class="logo">
+
+      <img
+        src="logo-login.jpg"
+        alt="Logo"
+      >
+
+    </div>
+
+
+    <!-- =========================
+         LOGIN CARD
+    ========================== -->
+
+    <section class="login-card">
+
+
+      <div class="title">
+
+        <h1>
+          Welcome Back
+        </h1>
+
+        <p>
+          Please enter your account details
+        </p>
+
+      </div>
+
+
+      <!-- EMAIL -->
+
+      <div class="field">
+
+        <label for="email">
+          Email
+        </label>
+
+        <input
+          class="input"
+          id="email"
+          type="email"
+          placeholder="Enter your email"
+          autocomplete="email"
+        >
+
+      </div>
+
+
+      <!-- PASSWORD -->
+
+      <div class="field">
+
+        <label for="password">
+          Password
+        </label>
+
+        <div class="password-box">
+
+          <input
+            class="input"
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+          >
+
+          <button
+            class="eye-button"
+            id="eyeButton"
+            type="button"
+            aria-label="Show password"
+          >
+
+            <svg viewBox="0 0 24 24">
+
+              <path
+                d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z">
+              </path>
+
+              <circle
+                cx="12"
+                cy="12"
+                r="2.5">
+              </circle>
+
+            </svg>
+
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- LOGIN BUTTON -->
+
+      <button
+        class="login-button"
+        id="loginButton"
+        type="button"
+      >
+        Login
+      </button>
+
+
+      <!-- STATUS -->
+
+      <div
+        class="status"
+        id="status">
+      </div>
+
+
+      <!-- ACCESS -->
+
+      <div class="access">
+
+        Authorized access only
+
+      </div>
+
+
+    </section>
+
+
+    <div class="footer">
+
+      Secure access
+
+    </div>
+
+
+  </div>
+
+</main>
+
+
+<script>
+
+/* ==========================================
+   AUTHORIZED USERS
+   DEMO ONLY
+========================================== */
+
+const AUTHORIZED_USERS = [
+
+  {
+    email:"admin@example.com",
+    password:"password123"
+  },
+
+  {
+    email:"user@example.com",
+    password:"password456"
+  }
+
+];
+
+
+/* ==========================================
+   ELEMENTS
+========================================== */
+
+const emailInput =
+  document.getElementById("email");
+
+const passwordInput =
+  document.getElementById("password");
+
+const eyeButton =
+  document.getElementById("eyeButton");
+
+const loginButton =
+  document.getElementById("loginButton");
+
+const status =
+  document.getElementById("status");
+
+const backButton =
+  document.getElementById("backButton");
+
+
+/* ==========================================
+   BACK TO DASHBOARD
+========================================== */
+
+backButton.addEventListener(
+  "click",
+  function(){
+
+    window.location.href =
+      "https://dashboard-bm-tech.vercel.app/";
+
+  }
+);
+
+
+/* ==========================================
+   BUTTON STATE
+========================================== */
+
+function updateLoginButton(){
+
+  const email =
+    emailInput.value.trim();
+
+  const password =
+    passwordInput.value.trim();
+
+
+  if(email && password){
+
+    loginButton.classList.add("active");
+
+  }else{
+
+    loginButton.classList.remove("active");
+
+  }
+
+}
+
+
+/* Watch email */
+
+emailInput.addEventListener(
+  "input",
+  updateLoginButton
+);
+
+
+/* Watch password */
+
+passwordInput.addEventListener(
+  "input",
+  updateLoginButton
+);
+
+
+/* ==========================================
+   SHOW / HIDE PASSWORD
+========================================== */
+
+eyeButton.addEventListener(
+  "click",
+  function(){
+
+    const isHidden =
+      passwordInput.type === "password";
+
+
+    passwordInput.type =
+      isHidden
+        ? "text"
+        : "password";
+
+
+    eyeButton.setAttribute(
+      "aria-label",
+      isHidden
+        ? "Hide password"
+        : "Show password"
+    );
+
+
+    if(isHidden){
+
+      eyeButton.innerHTML = `
+
+        <svg viewBox="0 0 24 24">
+
+          <path
+            d="M3 3L21 21">
+          </path>
+
+          <path
+            d="M10.6 10.6a2 2 0 0 0 2.8 2.8">
+          </path>
+
+          <path
+            d="M9.8 5.2A10.2 10.2 0 0 1 12 5c6 0 9.5 7 9.5 7a16 16 0 0 1-3.2 3.9">
+          </path>
+
+          <path
+            d="M6.2 6.2C3.9 7.9 2.5 12 2.5 12s3.5 7 9.5 7c1.2 0 2.3-.2 3.3-.6">
+          </path>
+
+        </svg>
+
+      `;
+
+    }else{
+
+      eyeButton.innerHTML = `
+
+        <svg viewBox="0 0 24 24">
+
+          <path
+            d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z">
+          </path>
+
+          <circle
+            cx="12"
+            cy="12"
+            r="2.5">
+          </circle>
+
+        </svg>
+
+      `;
+
+    }
+
+  }
+);
+
+
+/* ==========================================
+   LOGIN
+========================================== */
+
+loginButton.addEventListener(
+  "click",
+  login
+);
+
+
+/* Enter on password */
+
+passwordInput.addEventListener(
+  "keydown",
+  function(event){
+
+    if(event.key === "Enter"){
+
+      login();
+
+    }
+
+  }
+);
+
+
+/* Enter on email */
+
+emailInput.addEventListener(
+  "keydown",
+  function(event){
+
+    if(event.key === "Enter"){
+
+      passwordInput.focus();
+
+    }
+
+  }
+);
+
+
+/* ==========================================
+   LOGIN FUNCTION
+========================================== */
+
+function login(){
+
+  const email =
+    emailInput.value
+      .trim()
+      .toLowerCase();
+
+  const password =
+    passwordInput.value;
+
+
+  /* Don't submit empty form */
+
+  if(!email || !password){
+
+    return;
+
+  }
+
+
+  /* Loading */
+
+  loginButton.disabled = true;
+
+  loginButton.textContent =
+    "Checking...";
+
+
+  status.className =
+    "status";
+
+  status.textContent =
+    "";
+
+
+  setTimeout(
+    function(){
+
+      const account =
+        AUTHORIZED_USERS.find(
+          function(user){
+
+            return(
+              user.email.toLowerCase() === email &&
+              user.password === password
+            );
+
+          }
+        );
+
+
+      /* SUCCESS */
+
+      if(account){
+
+        status.classList.add(
+          "success"
+        );
+
+        status.textContent =
+          "Login successful.";
+
+
+        /*
+          GANTI TUJUAN LOGIN DI SINI
+
+          Contoh:
+          window.location.href = "dashboard.html";
+        */
+
+        setTimeout(
+          function(){
+
+            window.location.href =
+              "dashboard.html";
+
+          },
+          500
+        );
+
+      }
+
+
+      /* FAILED */
+
+      else{
+
+        status.classList.add(
+          "error"
+        );
+
+        status.textContent =
+          "Email or password is incorrect.";
+
+
+        loginButton.disabled =
+          false;
+
+        loginButton.textContent =
+          "Login";
+
+      }
+
+    },
+    450
+  );
+
+}
+
+
+/* ==========================================
+   INITIAL BUTTON STATE
+========================================== */
+
+updateLoginButton();
+
+</script>
+
+</body>
+</html>
