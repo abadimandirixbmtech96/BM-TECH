@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Kalkulator</title>
+    <style>
+        :root {
+            /* Light Theme Variables (Default) */
+            --bg-color: #F2F2F7;
+            --glass-bg: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9), 0 4px 12px rgba(0, 0, 0, 0.06);
+            
+            --btn-num-bg: rgba(255, 255, 255, 0.85);
+            --btn-top-bg: rgba(0, 0, 0, 0.06);
+            --btn-op-bg: rgba(0, 0, 0, 0.09);
+            --btn-orange: linear-gradient(135deg, #FF7B00 0%, #E65A00 100%);
+            --orange-color: #FF6E00;
+            
+            --text-primary: #000000;
+            --text-secondary: #3C3C43;
+            --text-muted: #8E8E93;
+            --settings-card: rgba(255, 255, 255, 0.7);
+            --settings-active: #FF7B00;
+            --history-item-bg: rgba(255, 255, 255, 0.6);
+        }
+
+        body.dark-theme {
+            /* Dark Theme Variables */
+            --bg-color: #000000;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 3px 8px rgba(0, 0, 0, 0.4);
+            
+            --btn-num-bg: rgba(255, 255, 255, 0.07);
+            --btn-top-bg: rgba(255, 255, 255, 0.16);
+            --btn-op-bg: rgba(255, 255, 255, 0.18);
+            --btn-orange: linear-gradient(135deg, #FF7B00 0%, #E65A00 100%);
+            --orange-color: #FF6E00;
+            
+            --text-primary: #FFFFFF;
+            --text-secondary: #E0E0E5;
+            --text-muted: #737378;
+            --settings-card: rgba(255, 255, 255, 0.06);
+            --settings-active: #FF7B00;
+            --history-item-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+        }
+
+        html, body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .calc-app {
+            width: 100%;
+            max-width: 412px;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: calc(env(safe-area-inset-top, 6px) + 4px) 16px calc(env(safe-area-inset-bottom, 8px) + 8px) 16px;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 42px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            color: var(--text-primary);
+            text-decoration: none;
+            will-change: transform, opacity;
+            cursor: pointer;
+        }
+
+        .pill-menu {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 22px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .pill-menu svg {
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .pill-menu svg:active {
+            opacity: 0.5;
+        }
+
+        /* Display Area */
+        .display-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: flex-end;
+            padding: 4px 6px 12px 6px;
+            position: relative;
+            min-height: 90px;
+        }
+
+        .rad-indicator {
+            position: absolute;
+            left: 4px;
+            bottom: 18px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            display: none;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+
+        .input-row::-webkit-scrollbar {
+            display: none;
+        }
+
+        .calc-input {
+            font-size: 46px;
+            font-weight: 300;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .cursor-bar {
+            display: inline-block;
+            width: 2.5px;
+            height: 38px;
+            background-color: var(--orange-color);
+            margin-left: 3px;
+            border-radius: 2px;
+            animation: cursorBlink 1s infinite;
+        }
+
+        @keyframes cursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .live-preview {
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--text-muted);
+            min-height: 28px;
+            margin-top: 2px;
+            letter-spacing: -0.2px;
+        }
+
+        /* Keypad Area */
+        .keypad-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .scientific-grid {
+            display: none;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            padding-bottom: 2px;
+        }
+
+        .scientific-grid.visible {
+            display: grid;
+        }
+
+        .sci-key {
+            height: 38px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: var(--btn-num-bg);
+            color: var(--text-secondary);
+            font-size: 13.5px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .main-keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 400;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .touch-active {
+            transform: scale(0.92) !important;
+            filter: brightness(1.3) !important;
+            opacity: 0.8 !important;
+        }
+
+        .btn-number {
+            background: var(--btn-num-bg);
+            color: var(--text-primary);
+            font-weight: 350;
+        }
+
+        .btn-func {
+            background: var(--btn-top-bg);
+            color: var(--text-secondary);
+            font-size: 20px;
+        }
+
+        .btn-operator {
+            background: var(--btn-op-bg);
+            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 300;
+        }
+
+        .btn-equals {
+            background: var(--btn-orange);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #FFFFFF;
+            font-size: 32px;
+            font-weight: 300;
+            box-shadow: 0 4px 16px rgba(255, 110, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-expander {
+            background: var(--btn-num-bg);
+            color: var(--text-muted);
+        }
+
+        /* Fullscreen Sliding Views (Settings & History) */
+        .sliding-view {
+            position: absolute;
+            inset: 0;
+            background: var(--bg-color);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: calc(env(safe-area-inset-top, 6px) + 4px) 16px calc(env(safe-area-inset-bottom, 8px) + 8px) 16px;
+            transform: translateX(100%);
+            transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .sliding-view.open {
+            transform: translateX(0);
+        }
+
+        .view-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 48px;
+            margin-bottom: 16px;
+        }
+
+        .view-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .view-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .clear-history-btn {
+            background: none;
+            border: none;
+            color: var(--orange-color);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 10px;
+        }
+
+        .settings-card {
+            background: var(--settings-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            margin-bottom: 16px;
+        }
+
+        .card-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .theme-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .theme-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--glass-bg);
+            border: 1.5px solid transparent;
+            cursor: pointer;
+            color: var(--text-primary);
+            box-shadow: var(--glass-shadow);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .theme-option.active {
+            border-color: var(--settings-active);
+            background: rgba(255, 123, 0, 0.12);
+            color: var(--settings-active);
+        }
+
+        .theme-option svg {
+            stroke: currentColor;
+        }
+
+        /* History List */
+        .history-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 16px;
+            scrollbar-width: none;
+        }
+
+        .history-list::-webkit-scrollbar {
+            display: none;
+        }
+
+        .history-item {
+            background: var(--history-item-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-shadow: var(--glass-shadow);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .history-item:active {
+            transform: scale(0.98);
+        }
+
+        .history-expr {
+            font-size: 16px;
+            color: var(--text-muted);
+        }
+
+        .history-result {
+            font-size: 26px;
+            font-weight: 400;
+            color: var(--text-primary);
+        }
+
+        .empty-history {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calc-app">
+    <!-- Header -->
+    <div class="header">
+        <a href="https://dashboard-bm-tech.vercel.app/" class="back-btn" aria-label="Kembali ke Dashboard">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </a>
+
+        <div class="pill-menu">
+            <!-- Clock/History Icon -->
+            <svg id="btnOpenHistory" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <!-- Gear Icon Settings -->
+            <svg id="btnOpenSettings" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Display Screen -->
+    <div class="display-screen">
+        <div class="rad-indicator" id="radTag">RAD</div>
+        <div class="input-row">
+            <span class="calc-input" id="mainInput"></span>
+            <span class="cursor-bar"></span>
+        </div>
+        <div class="live-preview" id="previewTxt"></div>
+    </div>
+
+    <!-- Keypad Section -->
+    <div class="keypad-section">
+        <!-- Scientific Panel -->
+        <div class="scientific-grid" id="scientificPanel">
+            <button class="sci-key" data-action="inv">INV</button>
+            <button class="sci-key" id="radDegToggle" data-action="raddeg">DEG</button>
+            <button class="sci-key" data-action="fact">x!</button>
+            <button class="sci-key" data-val="(">(</button>
+            <button class="sci-key" data-val=")">)</button>
+
+            <button class="sci-key" data-action="sin">sin</button>
+            <button class="sci-key" data-action="cos">cos</button>
+            <button class="sci-key" data-action="tan">tan</button>
+            <button class="sci-key" data-action="log">log</button>
+            <button class="sci-key" data-action="ln">ln</button>
+
+            <button class="sci-key" data-val="^2">x²</button>
+            <button class="sci-key" data-val="^">xʸ</button>
+            <button class="sci-key" data-val="π">π</button>
+            <button class="sci-key" data-val="e">e</button>
+            <button class="sci-key" data-action="sqrt">√</button>
+        </div>
+
+        <!-- Main Keys -->
+        <div class="main-keypad">
+            <button class="btn btn-func" data-action="ac">AC</button>
+            <button class="btn btn-func" data-action="percent">%</button>
+            <button class="btn btn-func" data-action="backspace">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path>
+                    <line x1="18" y1="9" x2="12" y2="15"></line>
+                    <line x1="12" y1="9" x2="18" y2="15"></line>
+                </svg>
+            </button>
+            <button class="btn btn-operator" data-op="÷">÷</button>
+
+            <button class="btn btn-number" data-val="7">7</button>
+            <button class="btn btn-number" data-val="8">8</button>
+            <button class="btn btn-number" data-val="9">9</button>
+            <button class="btn btn-operator" data-op="×">×</button>
+
+            <button class="btn btn-number" data-val="4">4</button>
+            <button class="btn btn-number" data-val="5">5</button>
+            <button class="btn btn-number" data-val="6">6</button>
+            <button class="btn btn-operator" data-op="−">−</button>
+
+            <button class="btn btn-number" data-val="1">1</button>
+            <button class="btn btn-number" data-val="2">2</button>
+            <button class="btn btn-number" data-val="3">3</button>
+            <button class="btn btn-operator" data-op="+">+</button>
+
+            <button class="btn btn-expander" data-action="expand">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+            </button>
+            <button class="btn btn-number" data-val="0">0</button>
+            <button class="btn btn-number" data-val=".">.</button>
+            <button class="btn btn-equals" data-action="equal">=</button>
+        </div>
+    </div>
+
+    <!-- History Fullscreen View -->
+    <div class="sliding-view" id="historyView">
+        <div class="view-header">
+            <div class="view-header-left">
+                <div class="back-btn" id="btnCloseHistory">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </div>
+                <div class="view-title">Riwayat</div>
+            </div>
+            <button class="clear-history-btn" id="btnClearHistory">Hapus</button>
+        </div>
+
+        <div class="history-list" id="historyListContainer">
+            <!-- Item Riwayat dimasukkan via JS -->
+        </div>
+    </div>
+
+    <!-- Settings Fullscreen View -->
+    <div class="sliding-view" id="settingsView">
+        <div class="view-header">
+            <div class="view-header-left">
+                <div class="back-btn" id="btnCloseSettings">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </div>
+                <div class="view-title">Pengaturan</div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="card-label">Tampilan Tema</div>
+            <div class="theme-selector">
+                <div class="theme-option active" id="btnLightTheme">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <span>Light Mode</span>
+                </div>
+                <div class="theme-option" id="btnDarkTheme">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <span>Dark Mode</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let rawExpr = '';
+    let isRadMode = true;
+    let isCalculated = false;
+
+    const mainInput = document.getElementById('mainInput');
+    const previewTxt = document.getElementById('previewTxt');
+    const scientificPanel = document.getElementById('scientificPanel');
+    const radTag = document.getElementById('radTag');
+    const radDegToggle = document.getElementById('radDegToggle');
+    
+    // Modals
+    const settingsView = document.getElementById('settingsView');
+    const historyView = document.getElementById('historyView');
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    const btnCloseSettings = document.getElementById('btnCloseSettings');
+    const btnOpenHistory = document.getElementById('btnOpenHistory');
+    const btnCloseHistory = document.getElementById('btnCloseHistory');
+    const btnClearHistory = document.getElementById('btnClearHistory');
+    const historyListContainer = document.getElementById('historyListContainer');
+    const btnDarkTheme = document.getElementById('btnDarkTheme');
+    const btnLightTheme = document.getElementById('btnLightTheme');
+
+    // Load Theme from localStorage (Default: light)
+    const savedTheme = localStorage.getItem('calc_theme') || 'light';
+    applyTheme(savedTheme);
+
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.body.classList.add('dark-theme');
+            btnDarkTheme.classList.add('active');
+            btnLightTheme.classList.remove('active');
+        } else {
+            document.body.classList.remove('dark-theme');
+            btnLightTheme.classList.add('active');
+            btnDarkTheme.classList.remove('active');
+        }
+        localStorage.setItem('calc_theme', theme);
+    }
+
+    function formatNumber(numStr) {
+        return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    function syncDisplay() {
+        let displayStr = rawExpr.replace(/(\d+)(\.\d+)?/g, (m, intPart, decPart) => {
+            return formatNumber(intPart) + (decPart || '');
+        });
+        mainInput.innerText = displayStr;
+        evalPreview();
+    }
+
+    function appendToken(val) {
+        if (isCalculated) {
+            rawExpr = '';
+            isCalculated = false;
+        }
+        rawExpr += val;
+        syncDisplay();
+    }
+
+    function appendOperator(op) {
+        if (isCalculated) isCalculated = false;
+        if (rawExpr === '' && op === '−') {
+            rawExpr = '-';
+            syncDisplay();
+            return;
+        }
+        if (rawExpr === '') return;
+        const last = rawExpr.slice(-1);
+        if (['+', '−', '×', '÷', '^'].includes(last)) {
+            rawExpr = rawExpr.slice(0, -1) + op;
+        } else {
+            rawExpr += op;
+        }
+        syncDisplay();
+    }
+
+    function clearCalculator() {
+        rawExpr = '';
+        isCalculated = false;
+        syncDisplay();
+        previewTxt.innerText = '';
+    }
+
+    function handleBackspace() {
+        if (isCalculated) {
+            clearCalculator();
+            return;
+        }
+        if (rawExpr.length > 0) {
+            rawExpr = rawExpr.slice(0, -1);
+            syncDisplay();
+        }
+    }
+
+    function handlePercent() {
+        if (rawExpr !== '') {
+            rawExpr += '%';
+            syncDisplay();
+        }
+    }
+
+    function toggleScientific() {
+        scientificPanel.classList.toggle('visible');
+        radTag.style.display = scientificPanel.classList.contains('visible') ? 'block' : 'none';
+    }
+
+    function toggleRadDegMode() {
+        isRadMode = !isRadMode;
+        radTag.innerText = isRadMode ? 'RAD' : 'DEG';
+        radDegToggle.innerText = isRadMode ? 'DEG' : 'RAD';
+        evalPreview();
+    }
+
+    function calcSci(type) {
+        if (isCalculated) {
+            rawExpr = '';
+            isCalculated = false;
+        }
+        if (type === 'fact') rawExpr += '!';
+        else if (type === 'sqrt') rawExpr += '√(';
+        else rawExpr += type + '(';
+        syncDisplay();
+    }
+
+    function factorial(n) {
+        if (n < 0 || !Number.isInteger(n)) return NaN;
+        if (n === 0 || n === 1) return 1;
+        let res = 1;
+        for (let i = 2; i <= n; i++) res *= i;
+        return res;
+    }
+
+    function parseCalculable(str) {
+        let code = str
+            .replace(/×/g, '*')
+            .replace(/÷/g, '/')
+            .replace(/−/g, '-')
+            .replace(/π/g, `${Math.PI}`)
+            .replace(/e/g, `${Math.E}`)
+            .replace(/(\d+(\.\d+)?)%/g, '($1/100)')
+            .replace(/√\(/g, 'Math.sqrt(')
+            .replace(/log\(/g, 'Math.log10(')
+            .replace(/ln\(/g, 'Math.log(')
+            .replace(/\^/g, '**');
+
+        if (isRadMode) {
+            code = code
+                .replace(/sin\(/g, 'Math.sin(')
+                .replace(/cos\(/g, 'Math.cos(')
+                .replace(/tan\(/g, 'Math.tan(');
+        } else {
+            code = code
+                .replace(/sin\((.*?)\)/g, 'Math.sin(($1)*Math.PI/180)')
+                .replace(/cos\((.*?)\)/g, 'Math.cos(($1)*Math.PI/180)')
+                .replace(/tan\((.*?)\)/g, 'Math.tan(($1)*Math.PI/180)');
+        }
+
+        code = code.replace(/(\d+)!/g, (m, n) => factorial(parseInt(n)));
+        return code;
+    }
+
+    function evalPreview() {
+        if (isCalculated || !rawExpr) {
+            previewTxt.innerText = '';
+            return;
+        }
+        try {
+            const parsed = parseCalculable(rawExpr);
+            const res = Function(`'use strict'; return (${parsed})`)();
+            if (res !== undefined && !isNaN(res) && isFinite(res)) {
+                let rounded = Number(res.toFixed(10)).toString();
+                let [iPart, dPart] = rounded.split('.');
+                previewTxt.innerText = formatNumber(iPart) + (dPart ? '.' + dPart : '');
+            } else {
+                previewTxt.innerText = '';
+            }
+        } catch {
+            previewTxt.innerText = '';
+        }
+    }
+
+    // LocalStorage History Logic
+    function saveHistory(expression, result) {
+        let history = JSON.parse(localStorage.getItem('calc_history') || '[]');
+        history.unshift({ expr: expression, res: result });
+        if (history.length > 50) history.pop();
+        localStorage.setItem('calc_history', JSON.stringify(history));
+    }
+
+    function renderHistory() {
+        const history = JSON.parse(localStorage.getItem('calc_history') || '[]');
+        if (history.length === 0) {
+            historyListContainer.innerHTML = '<div class="empty-history">Belum ada riwayat</div>';
+            return;
+        }
+
+        historyListContainer.innerHTML = history.map((item) => `
+            <div class="history-item" onclick="loadFromHistory('${item.res}')">
+                <div class="history-expr">${item.expr} =</div>
+                <div class="history-result">${item.res}</div>
+            </div>
+        `).join('');
+    }
+
+    window.loadFromHistory = function(val) {
+        rawExpr = val.replace(/,/g, '');
+        isCalculated = true;
+        mainInput.innerText = val;
+        previewTxt.innerText = '';
+        historyView.classList.remove('open');
+    };
+
+    function evalFinal() {
+        if (previewTxt.innerText !== '') {
+            const finalVal = previewTxt.innerText;
+            const originalExpr = mainInput.innerText;
+            
+            saveHistory(originalExpr, finalVal);
+            
+            rawExpr = finalVal.replace(/,/g, '');
+            isCalculated = true;
+            mainInput.innerText = finalVal;
+            previewTxt.innerText = '';
+        }
+    }
+
+    function executeBtnAction(btn) {
+        if (btn.dataset.val) appendToken(btn.dataset.val);
+        else if (btn.dataset.op) appendOperator(btn.dataset.op);
+        else if (btn.dataset.action) {
+            const act = btn.dataset.action;
+            if (act === 'ac') clearCalculator();
+            else if (act === 'backspace') handleBackspace();
+            else if (act === 'percent') handlePercent();
+            else if (act === 'expand') toggleScientific();
+            else if (act === 'equal') evalFinal();
+            else if (act === 'raddeg') toggleRadDegMode();
+            else calcSci(act);
+        }
+    }
+
+    // Zero-lag pointer listener
+    document.querySelectorAll('.btn, .sci-key').forEach(elem => {
+        elem.addEventListener('pointerdown', function(e) {
+            this.classList.add('touch-active');
+            executeBtnAction(this);
+        });
+        elem.addEventListener('pointerup', function() {
+            this.classList.remove('touch-active');
+        });
+        elem.addEventListener('pointerleave', function() {
+            this.classList.remove('touch-active');
+        });
+        elem.addEventListener('pointercancel', function() {
+            this.classList.remove('touch-active');
+        });
+    });
+
+    // History Modal
+    btnOpenHistory.addEventListener('pointerdown', () => {
+        renderHistory();
+        historyView.classList.add('open');
+    });
+
+    btnCloseHistory.addEventListener('pointerdown', () => {
+        historyView.classList.remove('open');
+    });
+
+    btnClearHistory.addEventListener('pointerdown', () => {
+        localStorage.removeItem('calc_history');
+        renderHistory();
+    });
+
+    // Settings Modal
+    btnOpenSettings.addEventListener('pointerdown', () => {
+        settingsView.classList.add('open');
+    });
+
+    btnCloseSettings.addEventListener('pointerdown', () => {
+        settingsView.classList.remove('open');
+    });
+
+    btnDarkTheme.addEventListener('pointerdown', () => {
+        applyTheme('dark');
+    });
+
+    btnLightTheme.addEventListener('pointerdown', () => {
+        applyTheme('light');
+    });
+</script>
+</body>
+</html>
