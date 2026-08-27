@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Infinix Notes Viewer</title>
+<title>BM-TECH-VIEWER</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -211,34 +211,29 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* --- Empty State --- */
+  /* --- Empty State (saat notes kosong) --- */
   .empty-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px 16px;
     text-align: center;
-    color: var(--text-muted);
-    animation: fadeIn 0.4s ease;
+    gap: 14px;
+    padding: 60px 24px;
+    color: var(--text-secondary);
+    animation: fadeInDown 0.4s ease-out;
   }
 
   .empty-state svg {
-    width: 38px;
-    height: 38px;
-    margin-bottom: 10px;
-    opacity: 0.4;
+    width: 56px;
+    height: 56px;
+    color: var(--text-muted);
   }
 
   .empty-state p {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    color: var(--text-secondary);
   }
 
   /* --- Note Layout Modes --- */
@@ -304,46 +299,6 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   }
 
-  /* Liquid Glass Backdrop */
-  .note-card.liquid-glass {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(240, 235, 225, 0.82) 100%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.65);
-    backdrop-filter: blur(28px) saturate(1.8);
-    -webkit-backdrop-filter: blur(28px) saturate(1.8);
-  }
-
-  .note-card.liquid-glass::before {
-    content: '';
-    position: absolute;
-    inset: -30%;
-    background: radial-gradient(circle at 75% 70%, rgba(0, 0, 0, 0.28) 0%, rgba(120, 120, 120, 0.15) 35%, transparent 70%),
-                radial-gradient(circle at 20% 85%, rgba(0, 0, 0, 0.22) 0%, transparent 50%);
-    filter: blur(14px);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .note-card.liquid-glass::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 45%;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .note-card.liquid-glass .note-content-layer,
-  .note-card.liquid-glass .note-date-tag {
-    position: relative;
-    z-index: 2;
-  }
-
-  @keyframes cardAppear {
-    from { opacity: 0; transform: translateY(12px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
   .note-title {
     font-size: 13.5px;
     font-weight: 750;
@@ -374,6 +329,11 @@
     color: var(--text-dark-sub);
     padding: 3px 8px;
     border-radius: 6px;
+  }
+
+  @keyframes cardAppear {
+    from { opacity: 0; transform: translateY(12px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   /* --- Tasks View Section --- */
@@ -407,7 +367,7 @@
     gap: 5px;
   }
 
-  /* --- Full Width Search Bar (No FAB) --- */
+  /* --- Bottom Search + FAB Container --- */
   .bottom-bar {
     position: absolute;
     bottom: calc(var(--safe-bottom) + 14px);
@@ -415,11 +375,12 @@
     right: 16px;
     display: flex;
     align-items: center;
+    gap: 12px;
     z-index: 30;
   }
 
   .search-pill {
-    width: 100%;
+    flex: 1;
     height: 52px;
     background: rgba(26, 25, 28, 0.88);
     backdrop-filter: blur(24px) saturate(1.4);
@@ -439,6 +400,32 @@
   .search-pill:active { transform: scale(0.98); }
   .search-pill svg { width: 19px; height: 19px; }
   .search-pill span { font-size: 14.5px; font-weight: 500; }
+
+  /* Floating Action Button (FAB Pensil) */
+  .fab-pencil-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--accent-yellow);
+    color: #141108;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px var(--accent-yellow-glow);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0;
+  }
+
+  .fab-pencil-btn:active {
+    transform: scale(0.88) rotate(-10deg);
+  }
+
+  .fab-pencil-btn svg {
+    width: 22px;
+    height: 22px;
+  }
 
   /* --- Drawer Folder Side Sheet --- */
   .drawer-overlay {
@@ -481,9 +468,9 @@
   }
 
   .drawer-header h3 { font-size: 17px; font-weight: 700; color: #FFF; }
-  .drawer-header .new-link { font-size: 13.5px; font-weight: 700; color: var(--accent-yellow); text-decoration: none; }
+  .drawer-header .new-link { font-size: 13.5px; font-weight: 700; color: var(--accent-yellow); text-decoration: none; cursor: pointer; }
 
-  .folder-list { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .folder-list { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
   .folder-item {
     display: flex;
     align-items: center;
@@ -500,6 +487,11 @@
   .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; }
   .folder-item-left svg { width: 20px; height: 20px; color: var(--text-secondary); }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .drawer-empty-note {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    padding: 8px 14px 4px 14px;
+  }
 
   .drawer-footer {
     display: flex;
@@ -507,6 +499,35 @@
     padding-top: 14px;
     border-top: 1px solid var(--glass-pill-border);
   }
+
+  .folder-divider {
+    height: 1px;
+    background: var(--glass-pill-border);
+    margin: 14px 6px 12px 6px;
+    flex-shrink: 0;
+  }
+
+  .switch-app-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-pill-border);
+    background: rgba(255, 255, 255, 0.04);
+    color: #EDEAE2;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .switch-app-btn:active {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(0.97);
+  }
+
+  .switch-app-btn .switch-arrow { color: var(--accent-yellow); width: 18px; height: 18px; }
 
   .drawer-foot-btn {
     display: flex;
@@ -521,7 +542,7 @@
   }
   .drawer-foot-btn svg { width: 20px; height: 20px; }
 
-  /* --- Fullscreen Search Overlay --- */
+  /* --- Search Overlay --- */
   .search-overlay {
     position: fixed;
     inset: 0;
@@ -570,6 +591,75 @@
   }
 
   .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+  .search-history-empty {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 14px;
+  }
+
+  .search-results-list {
+    display: none;
+    flex-direction: column;
+    margin-top: 6px;
+  }
+
+  .search-result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+  }
+
+  .search-result-item:active { background: rgba(255, 255, 255, 0.04); }
+
+  .search-result-main { min-width: 0; flex: 1; }
+
+  .search-result-title {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #FFF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result-preview {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .search-result-title mark,
+  .search-result-preview mark {
+    background: transparent;
+    color: var(--accent-yellow);
+    font-weight: 700;
+  }
+
+  .search-result-folder {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-yellow);
+    background: rgba(240, 165, 41, 0.14);
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .search-empty-result {
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 40px 16px;
+  }
   .chip {
     background: #1C1C1E;
     color: #D1D1D6;
@@ -584,7 +674,7 @@
   .editor-modal {
     position: fixed;
     inset: 0;
-    background: #F6F1E7;
+    background: #000;
     z-index: 200;
     transform: translateY(100%);
     transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
@@ -643,7 +733,7 @@
   <!-- Main Scrollable Feed -->
   <main class="content-scroll">
     <div id="notesSection">
-      <h1 class="page-title">WORKSHOP</h1>
+      <h1 class="page-title">ALL</h1>
       <p class="section-label">Previous 7 Days</p>
 
       <!-- Supabase Data Feed Container -->
@@ -667,7 +757,7 @@
     </div>
   </main>
 
-  <!-- Bottom Full-Width Search Bar -->
+  <!-- Bottom Search Bar -->
   <div class="bottom-bar">
     <div class="search-pill" id="btnSearchOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -682,49 +772,24 @@
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
     <h3>Folders</h3>
-    <a href="#" class="new-link">NEW</a>
   </div>
-  <div class="folder-list">
-    <div class="folder-item">
+  <div class="folder-list" id="drawerFolderList">
+    <p class="drawer-empty-note">Belum ada folder</p>
+
+    <div class="folder-divider"></div>
+    <button class="switch-app-btn" id="btnSwitchCalculator" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/calculator.html'">
       <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span>All</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/><line x1="16" y1="14" x2="16" y2="18"/></svg>
+        <span>Kalkulator</span>
       </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-    <div class="folder-item">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        <span>Uncategorized</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-    <div class="folder-item">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Locked</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-    <div class="folder-item">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        <span>Recently Deleted</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-    <div class="folder-item active">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        <span>WORKSHOP</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
+      <svg class="switch-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 6 15 12 9 18"/></svg>
+    </button>
   </div>
+
   <div class="drawer-footer">
-    <button class="drawer-foot-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Fan Group
+    <button class="drawer-foot-btn" id="btnModeAdmin" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/login-admin.html'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><rect x="4" y="19" width="16" height="3" rx="1"/></svg>
+      Mode Admin
     </button>
     <button class="drawer-foot-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
@@ -745,19 +810,19 @@
     </button>
     <div class="search-input-box">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" placeholder="Search">
+      <input type="text" id="searchInput" placeholder="Cari di semua tabel...">
     </div>
   </div>
-  <div style="display:flex; justify-content:space-between; align-items:center;">
-    <span style="font-size:13px; color:var(--text-secondary); font-weight:600;">Search History</span>
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+
+  <div id="searchHistorySection">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:13px; color:var(--text-secondary); font-weight:600;">Search History</span>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary); cursor:pointer;" id="btnClearSearchHistory"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+    </div>
+    <div class="chips-container" id="searchHistoryChips"></div>
   </div>
-  <div class="chips-container">
-    <div class="chip">nap</div>
-    <div class="chip">bobok krengkes</div>
-    <div class="chip">bubut piston</div>
-    <div class="chip">bor intek</div>
-  </div>
+
+  <div class="search-results-list" id="searchResultsList"></div>
 </div>
 
 <!-- Modal Container for Editor Viewer -->
@@ -766,12 +831,16 @@
 </div>
 
 <script>
-  // --- Supabase Data Feed (Kosong secara default) ---
+  // Data feed notes dari Supabase (belum terhubung — dikosongkan dulu)
+  // Struktur tiap note nantinya: { id, title, preview, date_tag, folder }
+  // 'folder' = nama folder kategori/tabel tempat note itu berada, dipakai oleh fitur search lintas tabel
   let notesData = [];
 
   function renderNotes() {
     const container = document.getElementById('notesList');
-    
+    const allCountTag = document.getElementById('allCountTag');
+    if (allCountTag) allCountTag.textContent = `${notesData.length} ›`;
+
     if (!notesData || notesData.length === 0) {
       container.style.display = 'block';
       container.innerHTML = `
@@ -781,9 +850,8 @@
             <polyline points="14 2 14 8 20 8"/>
             <line x1="16" y1="13" x2="8" y2="13"/>
             <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
           </svg>
-          <p>data belum ada</p>
+          <p>Belum ada catatan</p>
         </div>
       `;
       return;
@@ -791,7 +859,7 @@
 
     container.style.display = 'grid';
     container.innerHTML = notesData.map((note, idx) => `
-      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+      <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
         <div class="note-content-layer">
           <h2 class="note-title">${note.title || 'Untitled'}</h2>
           <p class="note-desc">${note.preview || ''}</p>
@@ -801,21 +869,8 @@
     `).join('');
 
     container.querySelectorAll('.note-card').forEach(card => {
-      card.addEventListener('click', () => {
-        openEditor(card.dataset.id);
-      });
+      card.addEventListener('click', () => openEditor(card.dataset.id));
     });
-  }
-
-  // Contoh fungsi integrasi Supabase (Bisa kamu panggil saat Supabase client terhubung)
-  async function fetchSupabaseNotes() {
-    /*
-    const { data, error } = await supabaseClient.from('notes').select('*');
-    if (!error && data) {
-      notesData = data;
-      renderNotes();
-    }
-    */
   }
 
   // --- View Mode Selector ---
@@ -838,7 +893,6 @@
       const viewMode = btn.dataset.view;
       notesList.className = 'notes-container ' + viewMode;
       viewPopup.classList.remove('open');
-      renderNotes();
     });
   });
 
@@ -877,18 +931,128 @@
     drawerOverlay.classList.remove('open');
   });
 
-  // --- Search Overlay ---
+  // --- Search Overlay: pencarian live lintas semua tabel/folder ---
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
   const btnSearchBack = document.getElementById('btnSearchBack');
+  const searchInput = document.getElementById('searchInput');
+  const searchHistorySection = document.getElementById('searchHistorySection');
+  const searchHistoryChips = document.getElementById('searchHistoryChips');
+  const searchResultsList = document.getElementById('searchResultsList');
 
-  btnSearchOpen.addEventListener('click', () => searchOverlay.classList.add('open'));
+  let searchHistory = [];
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function highlightMatch(text, query) {
+    const safe = escapeHtml(text || '');
+    if (!query) return safe;
+    const idx = safe.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return safe;
+    return safe.slice(0, idx) + '<mark>' + safe.slice(idx, idx + query.length) + '</mark>' + safe.slice(idx + query.length);
+  }
+
+  function renderSearchHistory() {
+    searchHistorySection.querySelector('.search-history-empty')?.remove();
+
+    if (searchHistory.length === 0) {
+      searchHistoryChips.innerHTML = '';
+      searchHistoryChips.insertAdjacentHTML('afterend', '<p class="search-history-empty">Belum ada riwayat pencarian</p>');
+      return;
+    }
+
+    searchHistoryChips.innerHTML = searchHistory.map(term => `<div class="chip" data-term="${escapeHtml(term)}">${escapeHtml(term)}</div>`).join('');
+    searchHistoryChips.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        searchInput.value = chip.dataset.term;
+        runSearch(chip.dataset.term);
+      });
+    });
+  }
+
+  function addToSearchHistory(term) {
+    const clean = term.trim();
+    if (!clean) return;
+    searchHistory = [clean, ...searchHistory.filter(t => t.toLowerCase() !== clean.toLowerCase())].slice(0, 8);
+    renderSearchHistory();
+  }
+
+  function runSearch(rawQuery) {
+    const query = rawQuery.trim();
+
+    if (!query) {
+      searchResultsList.style.display = 'none';
+      searchResultsList.innerHTML = '';
+      searchHistorySection.style.display = 'block';
+      return;
+    }
+
+    searchHistorySection.style.display = 'none';
+    searchResultsList.style.display = 'flex';
+
+    const q = query.toLowerCase();
+    const matches = notesData.filter(n =>
+      (n.title || '').toLowerCase().includes(q) ||
+      (n.preview || '').toLowerCase().includes(q)
+    );
+
+    if (matches.length === 0) {
+      searchResultsList.innerHTML = `<p class="search-empty-result">"${escapeHtml(query)}" tidak ditemukan di tabel manapun</p>`;
+      return;
+    }
+
+    searchResultsList.innerHTML = matches.map(n => `
+      <div class="search-result-item" data-id="${n.id}">
+        <div class="search-result-main">
+          <p class="search-result-title">${highlightMatch(n.title || 'Untitled', query)}</p>
+          <p class="search-result-preview">${highlightMatch((n.preview || '').replace(/\n/g, ' '), query)}</p>
+        </div>
+        <span class="search-result-folder">${escapeHtml(n.folder || 'Uncategorized')}</span>
+      </div>
+    `).join('');
+
+    searchResultsList.querySelectorAll('.search-result-item').forEach(el => {
+      el.addEventListener('click', () => {
+        addToSearchHistory(query);
+        openEditor(el.dataset.id);
+        searchOverlay.classList.remove('open');
+      });
+    });
+  }
+
+  searchInput.addEventListener('input', (e) => runSearch(e.target.value));
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && searchInput.value.trim()) addToSearchHistory(searchInput.value);
+  });
+
+  renderSearchHistory();
+
+  document.getElementById('btnClearSearchHistory').addEventListener('click', () => {
+    searchHistory = [];
+    renderSearchHistory();
+  });
+
+  btnSearchOpen.addEventListener('click', () => {
+    searchOverlay.classList.add('open');
+    searchInput.value = '';
+    runSearch('');
+  });
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
   // --- Open & Close Editor Modal ---
   const editorModal = document.getElementById('editorModal');
+  const editorFrame = document.getElementById('editorFrame');
 
   function openEditor(noteId = null) {
+    if (noteId) {
+      editorFrame.src = `editor.html?id=${noteId}`;
+    } else {
+      editorFrame.src = `editor.html?new=true`;
+    }
     editorModal.classList.add('open');
   }
 
@@ -898,7 +1062,6 @@
     }
   });
 
-  // Initial Render (Menampilkan empty state 'data belum ada')
   renderNotes();
 </script>
 </body>
