@@ -996,26 +996,23 @@ body::after{
 </main>
 
 
+<!-- Supabase Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
 <script>
 
 /* ==========================================
-   AUTHORIZED USERS
-   DEMO ONLY
+   AUTHENTICATION
+   Login & pengecekan akses admin sekarang sepenuhnya
+   ditangani oleh Supabase Auth + fungsi is_admin() di server
+   (lihat fungsi login() di bawah). Tidak ada lagi email/password
+   yang tersimpan di file ini.
 ========================================== */
-
-const AUTHORIZED_USERS = [
-
-  {
-    email:"admin@example.com",
-    password:"password123"
-  },
-
-  {
-    email:"user@example.com",
-    password:"password456"
-  }
-
-];
 
 
 /* ==========================================
@@ -1219,10 +1216,10 @@ emailInput.addEventListener(
 
 
 /* ==========================================
-   LOGIN FUNCTION
+   LOGIN FUNCTION (Supabase Auth)
 ========================================== */
 
-function login(){
+async function login(){
 
   const email =
     emailInput.value
@@ -1257,76 +1254,75 @@ function login(){
     "";
 
 
+  /* 1. Login ke Supabase Auth */
+
+  const { data: authData, error: authError } =
+    await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+
+  /* GAGAL: email/password salah */
+
+  if(authError){
+
+    status.classList.add("error");
+
+    status.textContent =
+      "Email or password is incorrect.";
+
+    loginButton.disabled = false;
+    loginButton.textContent = "Login";
+
+    return;
+
+  }
+
+
+  /* 2. Login berhasil di Supabase, sekarang cek hak akses admin
+        lewat fungsi is_admin() di server (bukan di browser) */
+
+  const { data: adminCheck, error: adminError } =
+    await supabaseClient.rpc('is_admin');
+
+
+  /* Kalau bukan admin, langsung sign out — jangan biarkan
+     session non-admin menggantung di browser */
+
+  if(adminError || !adminCheck){
+
+    await supabaseClient.auth.signOut();
+
+    status.classList.add("error");
+
+    status.textContent =
+      "Akun ini tidak memiliki akses admin.";
+
+    loginButton.disabled = false;
+    loginButton.textContent = "Login";
+
+    return;
+
+  }
+
+
+  /* SUCCESS */
+
+  status.classList.add("success");
+
+  status.textContent =
+    "Login successful.";
+
+
   setTimeout(
     function(){
 
-      const account =
-        AUTHORIZED_USERS.find(
-          function(user){
-
-            return(
-              user.email.toLowerCase() === email &&
-              user.password === password
-            );
-
-          }
-        );
-
-
-      /* SUCCESS */
-
-      if(account){
-
-        status.classList.add(
-          "success"
-        );
-
-        status.textContent =
-          "Login successful.";
-
-
-        /*
-          GANTI TUJUAN LOGIN DI SINI
-
-          Contoh:
-          window.location.href = "dashboard.html";
-        */
-
-        setTimeout(
-          function(){
-
-            window.location.href =
-              "dashboard.html";
-
-          },
-          500
-        );
-
-      }
-
-
-      /* FAILED */
-
-      else{
-
-        status.classList.add(
-          "error"
-        );
-
-        status.textContent =
-          "Email or password is incorrect.";
-
-
-        loginButton.disabled =
-          false;
-
-        loginButton.textContent =
-          "Login";
-
-      }
+      window.location.href =
+        "dashboard-admin.html";
 
     },
-    450
+    500
   );
 
 }
@@ -1337,6 +1333,39 @@ function login(){
 ========================================== */
 
 updateLoginButton();
+
+
+/* ==========================================
+   CEK SESI YANG SUDAH ADA
+   Kalau user sudah login & terverifikasi admin sebelumnya,
+   langsung lempar ke dashboard tanpa perlu isi form lagi.
+========================================== */
+
+(async function checkExistingSession(){
+
+  const { data: { session } } =
+    await supabaseClient.auth.getSession();
+
+  if(!session){
+    return;
+  }
+
+  const { data: adminCheck } =
+    await supabaseClient.rpc('is_admin');
+
+  if(adminCheck){
+
+    window.location.href = "dashboard-admin.html";
+
+  } else {
+
+    /* Session ada tapi bukan admin (mis. sisa login lama) — bersihkan */
+
+    await supabaseClient.auth.signOut();
+
+  }
+
+})();
 
 </script>
 

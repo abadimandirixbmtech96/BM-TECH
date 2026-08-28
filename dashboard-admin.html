@@ -794,11 +794,43 @@
 
   .editor-modal.open { transform: translateY(0); }
   .editor-frame { width: 100%; height: 100%; border: none; }
+
+  /* --- Auth Guard Loading Screen --- */
+  .auth-guard-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    color: #7C7C82;
+    font-size: 13.5px;
+  }
+  .auth-guard-spinner {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: var(--accent-yellow);
+    animation: authSpin 0.7s linear infinite;
+  }
+  @keyframes authSpin { to { transform: rotate(360deg); } }
+
+  .logout-row .settings-item-title { color: #F0555C; }
 </style>
 </head>
 <body>
 
-<div class="screen-container">
+<!-- Auth Guard: tampil sebentar saat memverifikasi sesi admin -->
+<div class="auth-guard-screen" id="authGuardScreen">
+  <div class="auth-guard-spinner"></div>
+  <span>Memverifikasi akses admin...</span>
+</div>
+
+<div class="screen-container" id="screenContainer" style="display:none;">
 
   <!-- Top Floating Header -->
   <header class="header">
@@ -959,6 +991,15 @@
       </div>
     </div>
   </div>
+
+  <div class="settings-group">
+    <div class="settings-item" id="settingLogout">
+      <span class="settings-item-title" style="color:#F0555C;">Logout</span>
+      <div class="settings-item-right">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#F0555C" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Search Overlay -->
@@ -989,10 +1030,104 @@
   <iframe id="editorFrame" class="editor-frame" src="editor-data-administrator.html"></iframe>
 </div>
 
+<!-- Supabase Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-  // --- Supabase Data Stores (Kosong secara default) ---
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<script>
+  // --- Auth Guard: cuma admin yang login yang boleh lihat halaman ini ---
+  (async function guardAdminAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'admin-login.html';
+      return;
+    }
+
+    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+
+    if (error || !isAdmin) {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'admin-login.html';
+      return;
+    }
+
+    // Lolos verifikasi: tampilkan halaman & muat data asli
+    document.getElementById('authGuardScreen').style.display = 'none';
+    document.getElementById('screenContainer').style.display = 'flex';
+    loadCategories();
+  })();
+</script>
+
+<script>
+  // --- Supabase Data Stores ---
   let categoriesData = []; // Daftar folder kategori dari database
   let notesData = [];      // Daftar tabel/catatan di dalam kategori aktif
+  let activeCategoryId = null;
+
+  // Ambil semua folder kategori + jumlah note di masing-masing folder
+  async function loadCategories() {
+    const { data: folders, error: folderError } = await supabaseClient
+      .from('folders')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (folderError) {
+      console.error('Gagal memuat folder:', folderError.message);
+      categoriesData = [];
+      renderCategories();
+      return;
+    }
+
+    const { data: allNotes, error: notesError } = await supabaseClient
+      .from('notes')
+      .select('id, folder_id');
+
+    const countByFolder = {};
+    if (!notesError && allNotes) {
+      allNotes.forEach(n => {
+        if (n.folder_id) countByFolder[n.folder_id] = (countByFolder[n.folder_id] || 0) + 1;
+      });
+    }
+
+    categoriesData = (folders || []).map(f => ({
+      id: f.id,
+      name: f.name,
+      count: countByFolder[f.id] || 0,
+      active: f.id === activeCategoryId
+    }));
+
+    renderCategories();
+
+    // Kalau ada kategori aktif sebelumnya, muat ulang notes-nya juga
+    if (activeCategoryId) {
+      loadNotesForCategory(activeCategoryId);
+    }
+  }
+
+  // Ambil semua notes milik satu folder kategori
+  async function loadNotesForCategory(catId) {
+    activeCategoryId = catId;
+
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .eq('folder_id', catId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal memuat notes:', error.message);
+      notesData = [];
+    } else {
+      notesData = data || [];
+    }
+
+    renderNotes();
+  }
 
   // Render Kategori di Drawer
   function renderCategories() {
@@ -1056,13 +1191,13 @@
   function selectCategory(catId) {
     const selected = categoriesData.find(c => c.id === catId);
     if (!selected) return;
-    
+
     categoriesData.forEach(c => c.active = (c.id === catId));
     document.getElementById('currentCategoryTitle').innerText = selected.name;
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
     renderCategories();
-    // fetchNotesByCategory(catId);
+    loadNotesForCategory(catId);
   }
 
   // Render Catatan / Tabel
@@ -1187,6 +1322,13 @@
     }
   });
 
+  // --- Logout ---
+  document.getElementById('settingLogout').addEventListener('click', async () => {
+    if (!confirm('Yakin mau logout?')) return;
+    await supabaseClient.auth.signOut();
+    window.location.href = 'admin-login.html';
+  });
+
   // --- Search Overlay ---
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
@@ -1202,13 +1344,34 @@
     openEditor();
   }
 
+  async function handleCreateCategory() {
+    const name = prompt('Nama kategori/folder baru:');
+    if (!name || !name.trim()) return;
+
+    const { error } = await supabaseClient
+      .from('folders')
+      .insert({ name: name.trim() });
+
+    if (error) {
+      alert('Gagal membuat kategori: ' + error.message);
+      return;
+    }
+
+    loadCategories();
+  }
+
   document.getElementById('btnAdminFooter').addEventListener('click', handleAdminAccess);
-  document.getElementById('btnCreateCategory').addEventListener('click', handleAdminAccess);
+  document.getElementById('btnCreateCategory').addEventListener('click', handleCreateCategory);
 
   // --- Open & Close Editor Modal ---
   const editorModal = document.getElementById('editorModal');
+  const editorFrame = document.getElementById('editorFrame');
 
   function openEditor(noteId = null) {
+    const params = new URLSearchParams();
+    if (noteId) params.set('id', noteId);
+    if (activeCategoryId) params.set('folder', activeCategoryId);
+    editorFrame.src = 'editor-data-administrator.html?' + params.toString();
     editorModal.classList.add('open');
   }
 
@@ -1216,11 +1379,13 @@
     if (e.data === 'close-editor') {
       editorModal.classList.remove('open');
     }
+    if (e.data === 'note-saved') {
+      editorModal.classList.remove('open');
+      loadCategories(); // refresh jumlah note per folder + isi tabel aktif
+    }
   });
 
-  // Initial Load
-  renderCategories();
-  renderNotes();
+  // Data awal dimuat otomatis oleh guardAdminAccess() setelah verifikasi admin berhasil
 </script>
 </body>
 </html>
