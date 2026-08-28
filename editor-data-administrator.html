@@ -1,0 +1,1822 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Workshop Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
+<style>
+  /* Force our own web font everywhere — some Android skins (MIUI, ColorOS, One UI, etc.)
+     let the user override the system font, which would otherwise leak into any
+     element still relying on generic names like sans-serif/Roboto/system-ui.
+     Loading a specifically-named font file bypasses that OS-level substitution,
+     so the Aa panel's typography stays true regardless of the phone's settings. */
+  *{ font-family:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important; }
+</style>
+<style>
+  :root{
+    --paper:#F6F1E7;
+    --paper-alt:#FBF8F2;
+    --ink:#1C1B19;
+    --ink-soft:#6B6459;
+    --line:#E4DDCC;
+    --line-soft:#EDE7D8;
+    --glass-bg:rgba(255,255,255,0.55);
+    --glass-border:rgba(255,255,255,0.6);
+    --glass-shadow:0 8px 32px rgba(80,70,50,0.14);
+    --accent:#C9932F;
+    --radius-pill:999px;
+    --radius-lg:22px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --safe-left:env(safe-area-inset-left,0px);
+    --safe-right:env(safe-area-inset-right,0px);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+    overflow:hidden;
+    overscroll-behavior:none;
+  }
+
+  /* ---------- App shell ---------- */
+  .app{
+    position:fixed;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------- Top floating bar ---------- */
+  .topbar{
+    position:absolute;
+    top:calc(var(--safe-top) + 12px);
+    left:0; right:0;
+    padding:0 calc(var(--safe-left) + 14px) 0 calc(var(--safe-left) + 14px);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    z-index:40;
+    pointer-events:none;
+  }
+  .glass-pill{
+    pointer-events:auto;
+    display:flex;
+    align-items:center;
+    gap:1px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(24px) saturate(1.4);
+    -webkit-backdrop-filter:blur(24px) saturate(1.4);
+    border-radius:var(--radius-pill);
+    box-shadow:var(--glass-shadow);
+    padding:4px;
+  }
+  .icon-btn{
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    border:none; background:transparent;
+    border-radius:50%;
+    color:var(--ink);
+    transition:transform .15s ease, background .15s ease;
+  }
+  .icon-btn:active{
+    transform:scale(0.88);
+    background:rgba(0,0,0,0.06);
+  }
+  .icon-btn svg{width:17px; height:17px;}
+  .icon-btn.disabled{opacity:0.32;}
+
+  /* ---------- Zoomable / pannable workspace ---------- */
+  .content{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    touch-action:none;
+  }
+  .canvas{
+    position:absolute;
+    top:0; left:0;
+    transform-origin:0 0;
+    will-change:transform;
+  }
+  .canvas.panning, .canvas.pinching{transition:none;}
+
+  .zoom-indicator{
+    position:absolute;
+    left:50%;
+    bottom:calc(var(--safe-bottom) + 78px);
+    transform:translateX(-50%) translateY(8px);
+    background:rgba(28,27,25,0.78);
+    color:#fff;
+    font-size:12.5px;
+    font-weight:600;
+    padding:6px 12px;
+    border-radius:var(--radius-pill);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+    z-index:39;
+    font-variant-numeric:tabular-nums;
+  }
+  .zoom-indicator.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  .title-block{
+    padding:4px calc(var(--safe-left) + 20px) 18px calc(var(--safe-left) + 20px);
+  }
+  .title-block h1{
+    margin:0;
+    font-size:30px;
+    font-weight:800;
+    letter-spacing:-0.02em;
+    color:var(--ink);
+  }
+
+  .table-caption{display:none;}
+
+  [contenteditable="true"]{
+    outline:none;
+    border-radius:6px;
+    cursor:text;
+    transition:background .15s ease, box-shadow .15s ease;
+  }
+  [contenteditable="true"]:focus{
+    background:rgba(201,147,47,0.09);
+    box-shadow:0 0 0 2px rgba(201,147,47,0.4) inset;
+  }
+  [contenteditable="true"]:empty::before{
+    content:attr(data-placeholder);
+    color:var(--ink-soft);
+    opacity:0.45;
+  }
+
+  /* ---------- Table workspace ---------- */
+  .table-scroll{
+    margin:0 calc(var(--safe-left) + 14px) 24px calc(var(--safe-left) + 14px);
+    border-radius:16px;
+    box-shadow:0 1px 0 rgba(0,0,0,0.03);
+    background:var(--paper-alt);
+    width:max-content;
+  }
+  table{
+    border-collapse:collapse;
+    width:max-content;
+    font-size:13.5px;
+  }
+  thead th{
+    position:sticky;
+    top:0;
+    background:#F1EADA;
+    color:var(--ink-soft);
+    font-weight:700;
+    font-size:11.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    text-align:left;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+    border-right:1px solid var(--line-soft);
+    white-space:nowrap;
+  }
+  thead th:last-child, tbody td:last-child{border-right:none;}
+  tbody td{
+    padding:12px 12px;
+    border-bottom:1px solid var(--line-soft);
+    border-right:1px solid var(--line-soft);
+    vertical-align:top;
+    min-width:92px;
+    max-width:180px;
+  }
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:active{background:rgba(201,147,47,0.07);}
+
+  td.col-tanggal, th.col-tanggal{min-width:78px;}
+  td.col-tanggal .tgl{font-weight:700;}
+  td.col-tanggal .hari{display:block; font-size:11px; color:var(--ink-soft); font-weight:500; margin-top:1px;}
+  td.col-no{min-width:34px; text-align:center; color:var(--ink-soft);}
+  td.col-jam{min-width:56px; color:var(--ink-soft); font-variant-numeric:tabular-nums;}
+  td.col-harga{min-width:90px; font-weight:600; white-space:nowrap;}
+  td.col-ket{min-width:200px;}
+
+  .row-handle{
+    position:relative;
+  }
+
+  /* ---------- Gambar column ---------- */
+  td.col-gambar{ min-width:52px; text-align:center; padding:8px; }
+  .img-thumb-wrap{ position:relative; display:inline-block; }
+  .img-thumb, .img-empty{
+    width:40px; height:40px;
+    border:none; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+    background:rgba(0,0,0,0.05);
+    color:var(--ink-soft);
+  }
+  .img-thumb img{ width:100%; height:100%; object-fit:cover; }
+  .img-thumb:active, .img-empty:active{ transform:scale(0.92); }
+  .img-empty svg{ width:17px; height:17px; }
+  .img-remove{
+    position:absolute;
+    top:-6px; right:-6px;
+    width:19px; height:19px;
+    border-radius:50%;
+    border:2px solid var(--paper);
+    background:#3A3733;
+    color:#fff;
+    font-size:12px;
+    line-height:15px;
+    text-align:center;
+    padding:0;
+  }
+  .img-remove:active{ transform:scale(0.85); background:#211F1C; }
+
+  /* ---------- Row completeness indicator ---------- */
+  td.cell-empty{ box-shadow:inset 0 0 0 2px #E2483D; }
+  td.cell-filled{ box-shadow:inset 0 0 0 2px #3DA85C; }
+
+  /* ---------- Image preview overlay ---------- */
+  .img-preview-scrim{
+    position:fixed; inset:0;
+    background:rgba(10,9,8,0.86);
+    z-index:95;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    opacity:0; pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .img-preview-scrim.open{ opacity:1; pointer-events:auto; }
+  .img-preview-scrim img{
+    max-width:100%; max-height:100%;
+    border-radius:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);
+  }
+
+  /* ---------- Pencil / drawing ---------- */
+  #drawCanvas{
+    position:absolute; inset:0;
+    z-index:35;
+    pointer-events:none;
+    touch-action:none;
+  }
+  #drawCanvas.active{ pointer-events:auto; }
+  .pencil-panel{
+    position:fixed;
+    left:50%;
+    bottom:calc(var(--safe-bottom) + 78px);
+    transform:translateX(-50%) translateY(14px) scale(0.97);
+    background:rgba(26,24,21,0.92);
+    backdrop-filter:blur(26px) saturate(1.3);
+    -webkit-backdrop-filter:blur(26px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;
+    padding:12px;
+    box-shadow:0 18px 44px rgba(0,0,0,0.38);
+    z-index:60;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .22s cubic-bezier(.22,.9,.32,1);
+  }
+  .pencil-panel.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+  .pencil-row{ display:flex; align-items:center; gap:10px; }
+  .pencil-swatch{
+    width:36px; height:36px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.18);
+    flex:0 0 auto;
+    position:relative;
+    overflow:hidden;
+  }
+  .pencil-swatch.selected{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,0.3); }
+  .pencil-custom{ background:conic-gradient(red, yellow, lime, cyan, blue, magenta, red); display:block; cursor:pointer; }
+  .pencil-custom input[type="color"]{
+    opacity:0; width:100%; height:100%; border:none; padding:0; cursor:pointer;
+  }
+  .pencil-clear{
+    margin-left:auto;
+    flex:0 0 auto;
+    height:36px;
+    padding:0 14px;
+    border:none;
+    border-radius:11px;
+    background:rgba(255,255,255,0.08);
+    color:#F2EFE9;
+    font-size:13px;
+    font-weight:600;
+    font-family:inherit;
+    white-space:nowrap;
+  }
+  .pencil-clear:active{ background:rgba(255,255,255,0.14); }
+  .row-menu-btn{
+    width:28px; height:28px;
+    border:none; background:transparent;
+    color:var(--ink-soft);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .row-menu-btn:active{background:rgba(0,0,0,0.06); transform:scale(0.9);}
+  .row-menu-btn svg{width:16px; height:16px;}
+
+  /* ---------- Bottom floating toolbar ---------- */
+  .bottombar{
+    position:absolute;
+    left:0; right:0;
+    bottom:calc(var(--safe-bottom) + 14px);
+    display:flex;
+    justify-content:center;
+    z-index:40;
+    pointer-events:none;
+  }
+  .bottombar .glass-pill{padding:6px;}
+  .toolbtn{
+    width:46px; height:46px;
+    border:none; background:transparent;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--ink);
+    transition:transform .15s ease, background .15s ease, color .15s ease;
+  }
+  .toolbtn:active{transform:scale(0.88); background:rgba(0,0,0,0.06);}
+  .toolbtn svg{width:21px; height:21px;}
+  .toolbtn.active-tool{color:var(--accent); background:rgba(201,147,47,0.12);}
+  .toolbtn.stub{opacity:0.4;}
+  .toolbtn .aa-label{font-size:17px; font-weight:600; font-family:-apple-system,sans-serif;}
+
+  /* ---------- Row ⋮ context menu ---------- */
+  .menu-scrim{
+    position:fixed; inset:0; z-index:70;
+    background:transparent;
+  }
+  .row-menu{
+    position:fixed;
+    z-index:80;
+    background:rgba(32,30,27,0.86);
+    backdrop-filter:blur(22px) saturate(1.3);
+    -webkit-backdrop-filter:blur(22px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 12px 34px rgba(0,0,0,0.32);
+    animation:menuPop .16s cubic-bezier(.2,.9,.3,1);
+  }
+  @keyframes menuPop{
+    from{ opacity:0; transform:scale(0.92); }
+    to{ opacity:1; transform:scale(1); }
+  }
+  .row-menu button{
+    display:flex; align-items:center; gap:10px;
+    width:100%;
+    padding:13px 16px;
+    background:transparent;
+    border:none;
+    color:#F2EFE9;
+    font-size:15px;
+    font-weight:500;
+    font-family:inherit;
+    text-align:left;
+  }
+  .row-menu button:active{ background:rgba(255,255,255,0.1); }
+  .row-menu button + button{ border-top:1px solid rgba(255,255,255,0.1); }
+  .row-menu button.danger{ color:#FF7A6E; }
+  .row-menu svg{ width:17px; height:17px; flex-shrink:0; }
+
+  /* ---------- Aa formatting panel ---------- */
+  .format-panel{
+    position:fixed;
+    left:50%;
+    bottom:calc(var(--safe-bottom) + 78px);
+    transform:translateX(-50%) translateY(14px) scale(0.97);
+    width:min(94vw, 460px);
+    background:rgba(26,24,21,0.92);
+    backdrop-filter:blur(26px) saturate(1.3);
+    -webkit-backdrop-filter:blur(26px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 18px 44px rgba(0,0,0,0.38);
+    z-index:60;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .22s cubic-bezier(.22,.9,.32,1);
+  }
+  .format-panel.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+  .fp-row{
+    display:flex;
+    gap:7px;
+    margin-bottom:9px;
+  }
+  .fp-row:last-child{ margin-bottom:0; }
+  .fp-row button{
+    flex:1 1 0;
+    min-width:0;
+    height:42px;
+    border:none;
+    border-radius:11px;
+    background:rgba(255,255,255,0.07);
+    color:#EDEAE2;
+    font-size:14.5px;
+    font-weight:600;
+    font-family:inherit;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:background .12s ease, color .12s ease;
+  }
+  .fp-row button svg{ width:18px; height:18px; }
+  .fp-row button:active{ background:rgba(255,255,255,0.14); }
+  .fp-row button.fp-active{
+    background:var(--accent);
+    color:#241C08;
+  }
+  .fp-styles button{ font-size:13.5px; }
+
+  .fp-fontsize{ position:relative; flex:1 1 0; display:flex; }
+  .fp-fontsize > button{
+    width:100%; height:42px; border:none; border-radius:11px;
+    background:rgba(255,255,255,0.07); color:#EDEAE2;
+    display:flex; align-items:center; justify-content:center; gap:4px;
+  }
+  .fp-A{ font-size:16px; font-weight:700; }
+  .fp-caret{ font-size:10px; opacity:0.7; }
+  .fp-size-menu{
+    position:absolute;
+    bottom:50px;
+    left:0;
+    min-width:150px;
+    background:rgba(20,19,17,0.95);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 10px 28px rgba(0,0,0,0.4);
+    display:none;
+  }
+  .fp-size-menu.open{ display:block; }
+  .fp-size-menu button{
+    width:100%; text-align:left;
+    padding:11px 14px;
+    background:transparent; border:none;
+    color:#EDEAE2; font-size:14px; font-weight:500; font-family:inherit;
+  }
+  .fp-size-menu button:active{ background:rgba(255,255,255,0.1); }
+  .fp-size-menu button.fp-active{ color:var(--accent); font-weight:700; }
+  .fp-size-menu button + button{ border-top:1px solid rgba(255,255,255,0.08); }
+
+  ul.list-dash{ list-style:none; padding-left:1.1em; }
+  ul.list-dash li::before{ content:"– "; }
+
+  /* ---------- Background picker panel ---------- */
+  .bg-panel{
+    position:fixed;
+    left:50%;
+    bottom:calc(var(--safe-bottom) + 78px);
+    transform:translateX(-50%) translateY(14px) scale(0.97);
+    background:rgba(26,24,21,0.92);
+    backdrop-filter:blur(26px) saturate(1.3);
+    -webkit-backdrop-filter:blur(26px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:22px;
+    padding:14px;
+    box-shadow:0 18px 44px rgba(0,0,0,0.38);
+    z-index:60;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .22s cubic-bezier(.22,.9,.32,1);
+  }
+  .bg-panel.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0) scale(1);
+  }
+  .bg-row{
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    padding:2px;
+  }
+  .bg-swatch{
+    flex:0 0 auto;
+    width:52px; height:52px;
+    border-radius:50%;
+    border:2px solid rgba(255,255,255,0.14);
+    background:var(--paper);
+    display:flex; align-items:center; justify-content:center;
+    color:#EDEAE2;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  .bg-swatch svg{ width:19px; height:19px; }
+  .bg-swatch.selected{
+    border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(201,147,47,0.28);
+  }
+  .bg-swatch-add{ background:rgba(255,255,255,0.08); }
+
+  /* ---------- Share action sheet ---------- */
+  .share-scrim{
+    position:fixed; inset:0;
+    background:rgba(20,18,15,0.34);
+    z-index:85;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease;
+  }
+  .share-scrim.open{ opacity:1; pointer-events:auto; }
+  .share-panel{
+    position:fixed;
+    left:50%;
+    bottom:calc(var(--safe-bottom) + 16px);
+    transform:translateX(-50%) translateY(16px);
+    width:min(92vw, 420px);
+    z-index:90;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .22s cubic-bezier(.22,.9,.32,1);
+  }
+  .share-panel.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateX(-50%) translateY(0);
+  }
+  .share-options{
+    background:rgba(28,26,23,0.92);
+    backdrop-filter:blur(24px) saturate(1.3);
+    -webkit-backdrop-filter:blur(24px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:16px;
+    overflow:hidden;
+    margin-bottom:10px;
+    box-shadow:0 16px 38px rgba(0,0,0,0.34);
+  }
+  .share-options button{
+    display:block;
+    width:100%;
+    padding:15px;
+    background:transparent;
+    border:none;
+    color:var(--accent);
+    font-size:16px;
+    font-weight:600;
+    font-family:inherit;
+  }
+  .share-options button + button{ border-top:1px solid rgba(255,255,255,0.1); }
+  .share-options button:active{ background:rgba(255,255,255,0.08); }
+  .share-cancel{
+    display:block;
+    width:100%;
+    padding:15px;
+    background:rgba(28,26,23,0.92);
+    backdrop-filter:blur(24px) saturate(1.3);
+    -webkit-backdrop-filter:blur(24px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:16px;
+    color:#F2EFE9;
+    font-size:16px;
+    font-weight:700;
+    font-family:inherit;
+    box-shadow:0 16px 38px rgba(0,0,0,0.3);
+  }
+  .share-cancel:active{ background:rgba(255,255,255,0.1); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP FLOATING BAR — normal mode -->
+  <div class="topbar" id="topbarNormal">
+    <div class="glass-pill">
+      <button class="icon-btn" id="btnBack" aria-label="Kembali">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    </div>
+    <div class="glass-pill">
+      <button class="icon-btn" id="btnShare" aria-label="Bagikan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>
+      </button>
+      <button class="icon-btn" id="btnBackground" aria-label="Latar belakang">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4 4.5 7v3.5H7.5V19.5H16.5V10.5H19.5V7L15.5 4 13 6H11L8.5 4Z"></path></svg>
+      </button>
+      <button class="icon-btn" id="btnMore" aria-label="Lainnya">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- TOP FLOATING BAR — edit mode -->
+  <div class="topbar" id="topbarEdit" style="display:none;">
+    <div class="glass-pill">
+      <button class="icon-btn" id="btnEditBack" aria-label="Kembali">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+    </div>
+    <div class="glass-pill">
+      <button class="icon-btn" id="btnUndo" aria-label="Undo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h11a5 5 0 0 1 0 10h-1"></path></svg>
+      </button>
+      <button class="icon-btn" id="btnRedo" aria-label="Redo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"></path><path d="M20 12H9a5 5 0 0 0 0 10h1"></path></svg>
+      </button>
+      <button class="icon-btn" id="btnEditMore" aria-label="Lainnya">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
+      </button>
+      <button class="icon-btn" id="btnDone" aria-label="Selesai">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6"></polyline></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ZOOM / PAN VIEWPORT -->
+  <div class="content" id="content">
+    <div class="canvas" id="canvas">
+      <div class="title-block">
+        <h1 id="noteTitle" contenteditable="true">Workshop Notes</h1>
+      </div>
+
+      <div class="table-scroll">
+        <table id="notesTable">
+          <thead>
+            <tr>
+              <th class="col-no">No</th>
+              <th class="col-tanggal">Tanggal</th>
+              <th class="col-jam">Jam</th>
+              <th>PJ</th>
+              <th>Customer</th>
+              <th>Barang</th>
+              <th>Barang Keluar</th>
+              <th>Stok Barang</th>
+              <th class="col-ket">Keterangan</th>
+              <th class="col-harga">Harga</th>
+              <th class="col-gambar">Gambar</th>
+              <th style="min-width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <canvas id="drawCanvas"></canvas>
+    <div class="zoom-indicator" id="zoomIndicator">100%</div>
+  </div>
+
+  <!-- BOTTOM FLOATING TOOLBAR -->
+  <div class="bottombar">
+    <div class="glass-pill">
+      <button class="toolbtn" id="btnAa" aria-label="Format teks">
+        <span class="aa-label">Aa</span>
+      </button>
+      <button class="toolbtn" id="btnCamera" aria-label="Kamera / Galeri">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3.4"></circle></svg>
+      </button>
+      <button class="toolbtn" id="btnPencil" aria-label="Coretan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 18.5 9.5 8 20H4v-4Z"></path><path d="M13 7 17 11"></path></svg>
+      </button>
+      <button class="toolbtn" id="btnChecklist" aria-label="Cek kelengkapan data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="8 12.5 10.8 15 16 9"></polyline></svg>
+      </button>
+      <button class="toolbtn stub" aria-label="Tabel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"></rect><line x1="3.5" y1="10.5" x2="20.5" y2="10.5"></line><line x1="3.5" y1="15.5" x2="20.5" y2="15.5"></line><line x1="10.5" y1="3.5" x2="10.5" y2="20.5"></line></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- CAMERA/GALLERY ACTION SHEET -->
+  <div class="share-scrim" id="cameraScrim"></div>
+  <div class="share-panel" id="cameraPanel">
+    <div class="share-options">
+      <button data-camsrc="camera">Ambil dari Kamera</button>
+      <button data-camsrc="gallery">Ambil dari Galeri</button>
+    </div>
+    <button class="share-cancel" id="cameraCancelBtn">Cancel</button>
+  </div>
+  <input type="file" id="cameraCaptureInput" accept="image/*" capture="environment" style="display:none">
+  <input type="file" id="cameraGalleryInput" accept="image/*" style="display:none">
+
+  <!-- IMAGE PREVIEW OVERLAY -->
+  <div class="img-preview-scrim" id="imgPreviewScrim">
+    <img id="imgPreviewPhoto" alt="Preview gambar">
+  </div>
+
+  <!-- PENCIL COLOR PICKER PANEL -->
+  <div class="pencil-panel" id="pencilPanel">
+    <div class="pencil-row">
+      <button class="pencil-swatch" data-color="#1C1B19" style="background:#1C1B19"></button>
+      <button class="pencil-swatch" data-color="#E2483D" style="background:#E2483D"></button>
+      <button class="pencil-swatch" data-color="#3D7DE2" style="background:#3D7DE2"></button>
+      <button class="pencil-swatch" data-color="#3DA85C" style="background:#3DA85C"></button>
+      <button class="pencil-swatch" data-color="#F2B705" style="background:#F2B705"></button>
+      <label class="pencil-swatch pencil-custom" aria-label="Pilih warna kustom">
+        <input type="color" id="pencilColorInput" value="#C9932F">
+      </label>
+      <button class="pencil-clear" id="pencilClearBtn">Hapus Coretan</button>
+    </div>
+  </div>
+
+  <!-- Aa FORMATTING PANEL -->
+  <div class="format-panel" id="formatPanel">
+    <div class="fp-row fp-styles">
+      <button data-style="h1">H1</button>
+      <button data-style="h2">H2</button>
+      <button data-style="h3">H3</button>
+      <button data-style="h4">H4</button>
+      <button data-style="body" class="fp-active">Body</button>
+    </div>
+
+    <div class="fp-row">
+      <button data-cmd="bold" aria-label="Bold"><b>B</b></button>
+      <button data-cmd="italic" aria-label="Italic"><i>I</i></button>
+      <button data-cmd="underline" aria-label="Underline"><u>U</u></button>
+      <button data-cmd="strikeThrough" aria-label="Strikethrough"><s>S</s></button>
+      <button data-indent="in" aria-label="Indent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line><polyline points="3 9 6.5 12 3 15"></polyline></svg>
+      </button>
+      <button data-indent="out" aria-label="Outdent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line><polyline points="6.5 9 3 12 6.5 15"></polyline></svg>
+      </button>
+    </div>
+
+    <div class="fp-row">
+      <button data-list="ordered" aria-label="Numbered list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><text x="2" y="8" font-size="7" fill="currentColor" stroke="none">1</text><text x="2" y="14" font-size="7" fill="currentColor" stroke="none">2</text><text x="2" y="20" font-size="7" fill="currentColor" stroke="none">3</text></svg>
+      </button>
+      <button data-list="bullet" aria-label="Bullet list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="4.5" cy="12" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="4.5" cy="18" r="1.4" fill="currentColor" stroke="none"></circle><line x1="9" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="9" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+      <button data-list="dash" aria-label="Dash list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3.5" y1="6" x2="6.5" y2="6"></line><line x1="3.5" y1="12" x2="6.5" y2="12"></line><line x1="3.5" y1="18" x2="6.5" y2="18"></line><line x1="9" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="9" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+      <button data-align="left" class="fp-active" aria-label="Align left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="15" y2="12"></line><line x1="3" y1="18" x2="18" y2="18"></line></svg>
+      </button>
+      <button data-align="center" aria-label="Align center">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="4.5" y1="18" x2="19.5" y2="18"></line></svg>
+      </button>
+      <button data-align="right" aria-label="Align right">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="6" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+    </div>
+
+    <div class="fp-row">
+      <div class="fp-fontsize">
+        <button id="fontSizeBtn"><span class="fp-A">A</span><span class="fp-caret">▾</span></button>
+        <div class="fp-size-menu" id="fontSizeMenu">
+          <button data-size="12">Small</button>
+          <button data-size="13.5" class="fp-active">Regular</button>
+          <button data-size="16">Large</button>
+          <button data-size="19">Extra Large</button>
+        </div>
+      </div>
+      <button data-spacing="1.15" aria-label="Line spacing tight">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
+      </button>
+      <button data-spacing="1.45" class="fp-active" aria-label="Line spacing normal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="5.5" x2="20" y2="5.5"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18.5" x2="20" y2="18.5"></line></svg>
+      </button>
+      <button data-spacing="1.8" aria-label="Line spacing loose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="20" x2="20" y2="20"></line></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- BACKGROUND PICKER PANEL -->
+  <div class="bg-panel" id="bgPanel">
+    <div class="bg-row">
+      <button class="bg-swatch selected" data-bg="none" aria-label="Tanpa latar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><line x1="6" y1="18" x2="18" y2="6"></line></svg>
+      </button>
+      <button class="bg-swatch" data-bg="gradient" aria-label="Gradient"></button>
+      <button class="bg-swatch" data-bg="cream" aria-label="Cream"></button>
+      <button class="bg-swatch" data-bg="lined" aria-label="Kertas bergaris"></button>
+      <button class="bg-swatch" data-bg="grid" aria-label="Kertas grid"></button>
+      <button class="bg-swatch bg-swatch-add" id="bgAddBtn" aria-label="Pilih dari galeri">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      </button>
+    </div>
+    <input type="file" id="bgFileInput" accept="image/*" style="display:none">
+  </div>
+
+  <!-- SHARE ACTION SHEET -->
+  <div class="share-scrim" id="shareScrim"></div>
+  <div class="share-panel" id="sharePanel">
+    <div class="share-options">
+      <button data-share="text">Share as Text</button>
+      <button data-share="image">Share as Image</button>
+      <button data-share="pdf">Share as PDF</button>
+    </div>
+    <button class="share-cancel" id="shareCancelBtn">Cancel</button>
+  </div>
+
+</div>
+
+<script>
+  // Row data-completeness flag/check — declared early since renderRows()
+  // (called near the top) depends on it.
+  let showCompleteness = false;
+  const REQUIRED_FIELDS = ['pj', 'customer', 'barang', 'keluar', 'stok', 'ket', 'harga'];
+  function isRowComplete(row){
+    return REQUIRED_FIELDS.every(f => (row[f] || '').toString().trim().length > 0);
+  }
+
+  // ---------- Dummy data (Phase 1: static, structure & UI only) ----------
+  let rows = [
+    { tanggal:"25/08/26", hari:"Selasa", no:1, jam:"08:15", pj:"Yono", customer:"Ujang", barang:"Krengkes", keluar:"B&J", stok:"--------", ket:"Senai baut posstep", harga:"70.000" },
+    { tanggal:"", hari:"", no:2, jam:"08:41", pj:"Kuswanto", customer:"PT TBU", barang:"Nap forclip", keluar:"B&J", stok:"--------", ket:"Bubut (ready)", harga:"250.000" },
+    { tanggal:"", hari:"", no:3, jam:"09:03", pj:"Yono", customer:"Nur", barang:"Head vega ZR", keluar:"--------", stok:"--------", ket:"Ganti setingan 2x, ganti botolan (barang belum selesai)", harga:"105.000" },
+    { tanggal:"", hari:"", no:4, jam:"09:30", pj:"Kus", customer:"Iklan", barang:"Gear motor", keluar:"--------", stok:"--------", ket:"Las gear", harga:"30.000" },
+    { tanggal:"", hari:"", no:5, jam:"10:12", pj:"Yono", customer:"Yudi", barang:"Askruk blade, stang blade, set klaher", keluar:"--------", stok:"--------", ket:"Masang stang seher + beli klaher 6304", harga:"80.000" },
+    { tanggal:"", hari:"", no:6, jam:"11:05", pj:"Yono", customer:"Saryoto", barang:"Krengkes, askruk", keluar:"--------", stok:"--------", ket:"Masang stang, cor + senai baut oli", harga:"85.000" },
+    { tanggal:"", hari:"", no:7, jam:"12:47", pj:"Yono", customer:"Dodi", barang:"Blok grand", keluar:"--------", stok:"--------", ket:"Lemer", harga:"180.000" },
+    { tanggal:"", hari:"", no:8, jam:"13:20", pj:"-", customer:"Henki", barang:"Head", keluar:"--------", stok:"--------", ket:"Bubut", harga:"170.000" },
+  ];
+
+  function renderRows(){
+    const tbody = document.getElementById('tableBody');
+    // When completeness checking is on, colors the border of each required
+    // cell — red if empty, green if filled — leaving text color untouched.
+    function cc(field, value, extraClass){
+      const base = extraClass || '';
+      if (!showCompleteness || !REQUIRED_FIELDS.includes(field)) return base;
+      const state = (value || '').toString().trim().length > 0 ? 'cell-filled' : 'cell-empty';
+      return `${base} ${state}`.trim();
+    }
+    tbody.innerHTML = rows.map((r, idx) => {
+      return `
+      <tr>
+        <td class="col-no" contenteditable="true" data-field="no">${r.no}</td>
+        <td class="col-tanggal">
+          <span class="tgl" contenteditable="true" data-field="tanggal" data-placeholder="tgl">${r.tanggal}</span><span class="hari" contenteditable="true" data-field="hari" data-placeholder="hari">${r.hari}</span>
+        </td>
+        <td class="col-jam" contenteditable="true" data-field="jam">${r.jam}</td>
+        <td class="${cc('pj', r.pj)}" contenteditable="true" data-field="pj">${r.pj}</td>
+        <td class="${cc('customer', r.customer)}" contenteditable="true" data-field="customer">${r.customer}</td>
+        <td class="${cc('barang', r.barang)}" contenteditable="true" data-field="barang">${r.barang}</td>
+        <td class="${cc('keluar', r.keluar)}" contenteditable="true" data-field="keluar">${r.keluar}</td>
+        <td class="${cc('stok', r.stok)}" contenteditable="true" data-field="stok">${r.stok}</td>
+        <td class="${cc('ket', r.ket, 'col-ket')}" contenteditable="true" data-field="ket">${r.ket}</td>
+        <td class="${cc('harga', r.harga, 'col-harga')}" contenteditable="true" data-field="harga">${r.harga}</td>
+        <td class="col-gambar">
+          ${r.gambar
+            ? `<div class="img-thumb-wrap">
+                 <button class="img-thumb" data-img-row="${idx}"><img src="${r.gambar}" alt="Foto"></button>
+                 <button class="img-remove" data-img-remove="${idx}" aria-label="Hapus foto">×</button>
+               </div>`
+            : `<button class="img-empty" data-img-row="${idx}" aria-label="Tambah foto">
+                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+               </button>`
+          }
+        </td>
+        <td class="row-handle">
+          <button class="row-menu-btn" aria-label="Menu baris">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+          </button>
+        </td>
+      </tr>
+    `;
+    }).join('');
+    bindRowEvents();
+  }
+
+  function rowIndexOf(el){
+    const tr = el.closest('tr');
+    return [...tbody().children].indexOf(tr);
+  }
+  function tbody(){ return document.getElementById('tableBody'); }
+
+  function bindRowEvents(){
+    // keep the data model in sync with anything the user types, AND capture
+    // one undo step per keystroke (not per editing session) so undo/redo
+    // moves one character at a time, like normal text undo.
+    tbody().querySelectorAll('[data-field]').forEach(el=>{
+      el.addEventListener('input', ()=>{
+        const idx = rowIndexOf(el);
+        if (idx < 0) return;
+        const pre = snapshot(); // rows still holds the pre-keystroke value here
+        rows[idx][el.dataset.field] = el.innerText;
+        const post = snapshot();
+        if (post !== pre) pushHistory(pre);
+      });
+    });
+    tbody().querySelectorAll('.row-menu-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        openRowMenu(e.currentTarget, rowIndexOf(e.currentTarget));
+      });
+    });
+  }
+
+  function nowTime(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function renumber(){
+    rows.forEach((r,i)=>{ r.no = i + 1; });
+  }
+
+  // ---------- Undo / Redo ----------
+  let historyStack = [];
+  let redoStack = [];
+  let noteTitle = document.getElementById('noteTitle').innerText;
+
+  function snapshot(){
+    return JSON.stringify({ rows, noteTitle });
+  }
+
+  function pushHistory(preSnapshot){
+    historyStack.push(preSnapshot);
+    if (historyStack.length > 200) historyStack.shift();
+    redoStack = [];
+    updateUndoRedoUI();
+  }
+
+  function updateUndoRedoUI(){
+    const undoBtn = document.getElementById('btnUndo');
+    const redoBtn = document.getElementById('btnRedo');
+    undoBtn.classList.toggle('disabled', historyStack.length === 0);
+    redoBtn.classList.toggle('disabled', redoStack.length === 0);
+  }
+
+  function restoreState(state){
+    rows = state.rows;
+    noteTitle = state.noteTitle;
+    renderRows();
+    document.getElementById('noteTitle').innerText = noteTitle;
+  }
+
+  function undo(){
+    if (!historyStack.length) return;
+    redoStack.push(snapshot());
+    restoreState(JSON.parse(historyStack.pop()));
+    updateUndoRedoUI();
+  }
+
+  function redo(){
+    if (!redoStack.length) return;
+    historyStack.push(snapshot());
+    restoreState(JSON.parse(redoStack.pop()));
+    updateUndoRedoUI();
+  }
+
+  function addRowAfter(index){
+    const pre = snapshot();
+    rows.splice(index + 1, 0, {
+      tanggal:'', hari:'', no:0, jam:nowTime(),
+      pj:'', customer:'', barang:'', keluar:'--------', stok:'--------', ket:'', harga:'', gambar:''
+    });
+    renumber();
+    pushHistory(pre);
+    renderRows();
+    const p = clampPan(tx, ty, scale);
+    tx = p.x; ty = p.y;
+    apply();
+  }
+
+  function deleteRow(index){
+    const pre = snapshot();
+    rows.splice(index, 1);
+    renumber();
+    pushHistory(pre);
+    renderRows();
+    const p = clampPan(tx, ty, scale);
+    tx = p.x; ty = p.y;
+    apply();
+  }
+
+  // ---------- Row ⋮ menu ----------
+  function closeRowMenu(){
+    document.querySelectorAll('.row-menu, .menu-scrim').forEach(el => el.remove());
+  }
+
+  function openRowMenu(btn, rowIndex){
+    closeRowMenu();
+    const scrim = document.createElement('div');
+    scrim.className = 'menu-scrim';
+    const menu = document.createElement('div');
+    menu.className = 'row-menu';
+    menu.innerHTML = `
+      <button data-action="add">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="4.5" rx="1.2"></rect><rect x="3" y="14.5" width="18" height="4.5" rx="1.2"></rect><line x1="12" y1="9.5" x2="12" y2="14.5"></line></svg>
+        Add Row
+      </button>
+      <button data-action="delete" class="danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path></svg>
+        Delete Row
+      </button>
+    `;
+    document.body.appendChild(scrim);
+    document.body.appendChild(menu);
+
+    const r = btn.getBoundingClientRect();
+    const menuW = 190;
+    let left = r.right - menuW;
+    let top = r.bottom + 6;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (left < 8) left = 8;
+    if (left + menuW > vw - 8) left = vw - 8 - menuW;
+    if (top + 100 > vh - 8) top = r.top - 106;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+    menu.style.width = menuW + 'px';
+
+    scrim.addEventListener('pointerdown', closeRowMenu);
+    menu.querySelector('[data-action="add"]').addEventListener('click', () => { addRowAfter(rowIndex); closeRowMenu(); });
+    menu.querySelector('[data-action="delete"]').addEventListener('click', () => { deleteRow(rowIndex); closeRowMenu(); });
+  }
+
+  renderRows();
+  updateUndoRedoUI();
+
+  // ---------- Normal ↔ Edit mode ----------
+  const topbarNormal = document.getElementById('topbarNormal');
+  const topbarEdit = document.getElementById('topbarEdit');
+  let lastActiveCell = null;
+
+  function enterEditMode(){
+    if (topbarEdit.style.display === 'flex') return;
+    topbarNormal.style.display = 'none';
+    topbarEdit.style.display = 'flex';
+    closeBgPanel();
+    closeSharePanel();
+    setDrawMode(false);
+  }
+  function exitEditMode(){
+    if (lastActiveCell) lastActiveCell.removeAttribute('inputmode');
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    closeRowMenu();
+    closeFormatPanel(false);
+    topbarEdit.style.display = 'none';
+    topbarNormal.style.display = 'flex';
+  }
+
+  document.getElementById('btnEditBack').addEventListener('click', exitEditMode);
+  document.getElementById('btnDone').addEventListener('click', exitEditMode);
+  document.getElementById('btnEditMore').addEventListener('click', () => {
+    console.log('More (edit mode) ditekan — menyusul di step berikutnya');
+  });
+  document.getElementById('btnUndo').addEventListener('click', undo);
+  document.getElementById('btnRedo').addEventListener('click', redo);
+
+  // Entering a cell switches to edit mode and tracks which cell formatting should target.
+  const tableBodyEl = document.getElementById('tableBody');
+  tableBodyEl.addEventListener('focusin', (e) => {
+    if (!e.target.matches('[contenteditable="true"]')) return;
+    enterEditMode();
+    lastActiveCell = e.target;
+  });
+
+  const noteTitleEl = document.getElementById('noteTitle');
+  noteTitleEl.addEventListener('focusin', () => {
+    enterEditMode();
+    lastActiveCell = noteTitleEl;
+  });
+  noteTitleEl.addEventListener('input', () => {
+    const pre = snapshot();
+    noteTitle = noteTitleEl.innerText;
+    pushHistory(pre);
+  });
+
+  // ---------- Aa formatting panel ----------
+  const formatPanel = document.getElementById('formatPanel');
+  const btnAa = document.getElementById('btnAa');
+  const fontSizeBtn = document.getElementById('fontSizeBtn');
+  const fontSizeMenu = document.getElementById('fontSizeMenu');
+
+  // Suppress/restore the on-screen keyboard for a cell without losing its
+  // focus or text selection — needed so the Aa panel isn't covered by the
+  // keyboard, while execCommand still has a valid target to format.
+  function setKeyboardSuppressed(cell, suppressed){
+    if (!cell || !document.body.contains(cell)) return;
+    const isSuppressed = cell.getAttribute('inputmode') === 'none';
+    if (suppressed === isSuppressed) return;
+    const sel = window.getSelection();
+    const range = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
+    if (suppressed) cell.setAttribute('inputmode', 'none');
+    else cell.removeAttribute('inputmode');
+    cell.blur();
+    cell.focus({ preventScroll: true });
+    if (range) { sel.removeAllRanges(); sel.addRange(range); }
+  }
+
+  function openFormatPanel(){
+    formatPanel.classList.add('open');
+    btnAa.classList.add('active-tool');
+    setKeyboardSuppressed(lastActiveCell, true);
+  }
+  function closeFormatPanel(restoreKeyboard){
+    formatPanel.classList.remove('open');
+    fontSizeMenu.classList.remove('open');
+    btnAa.classList.remove('active-tool');
+    if (restoreKeyboard !== false) setKeyboardSuppressed(lastActiveCell, false);
+  }
+
+  btnAa.addEventListener('mousedown', (e) => e.preventDefault()); // keep the cell's caret/selection alive
+  btnAa.addEventListener('click', () => {
+    if (formatPanel.classList.contains('open')) closeFormatPanel();
+    else openFormatPanel();
+  });
+
+  // Every button inside the panel must not steal focus away from the
+  // cell being edited — otherwise execCommand has nothing to act on.
+  formatPanel.addEventListener('mousedown', (e) => {
+    if (e.target.closest('button')) e.preventDefault();
+  });
+
+  function setActiveInGroup(buttons, activeBtn){
+    buttons.forEach(b => b.classList.remove('fp-active'));
+    if (activeBtn) activeBtn.classList.add('fp-active');
+  }
+
+  // Text style (H1–H4 / Body) — applied to the whole active cell
+  const styleButtons = [...formatPanel.querySelectorAll('.fp-styles button')];
+  const STYLE_MAP = {
+    h1:{ size:'22px', weight:'800' },
+    h2:{ size:'19px', weight:'750' },
+    h3:{ size:'17px', weight:'700' },
+    h4:{ size:'15px', weight:'650' },
+    body:{ size:'13.5px', weight:'400' }
+  };
+  styleButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cell = lastActiveCell;
+      if (!cell) return;
+      const s = STYLE_MAP[btn.dataset.style];
+      cell.style.fontSize = s.size;
+      cell.style.fontWeight = s.weight;
+      setActiveInGroup(styleButtons, btn);
+    });
+  });
+
+  // Bold / Italic / Underline / Strikethrough
+  const cmdButtons = [...formatPanel.querySelectorAll('[data-cmd]')];
+  cmdButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.execCommand(btn.dataset.cmd);
+      updateInlineStates();
+    });
+  });
+
+  function updateInlineStates(){
+    cmdButtons.forEach(btn => {
+      let active = false;
+      try { active = document.queryCommandState(btn.dataset.cmd); } catch (err) {}
+      btn.classList.toggle('fp-active', active);
+    });
+  }
+  document.addEventListener('selectionchange', () => {
+    if (lastActiveCell && document.activeElement === lastActiveCell) updateInlineStates();
+  });
+
+  // Indent / outdent — simple per-cell left padding steps
+  formatPanel.querySelectorAll('[data-indent]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cell = lastActiveCell;
+      if (!cell) return;
+      const current = parseInt(cell.style.paddingLeft || '12', 10);
+      const next = btn.dataset.indent === 'in' ? current + 16 : Math.max(12, current - 16);
+      cell.style.paddingLeft = next + 'px';
+    });
+  });
+
+  // Numbered / bullet / dash lists
+  formatPanel.querySelectorAll('[data-list]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.list;
+      document.execCommand(type === 'ordered' ? 'insertOrderedList' : 'insertUnorderedList');
+      const cell = lastActiveCell;
+      if (cell) {
+        const list = cell.querySelector('ul, ol');
+        if (list) list.classList.toggle('list-dash', type === 'dash');
+      }
+    });
+  });
+
+  // Alignment
+  const alignButtons = [...formatPanel.querySelectorAll('[data-align]')];
+  const ALIGN_CMD = { left:'justifyLeft', center:'justifyCenter', right:'justifyRight' };
+  alignButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.execCommand(ALIGN_CMD[btn.dataset.align]);
+      setActiveInGroup(alignButtons, btn);
+    });
+  });
+
+  // Font size dropdown
+  fontSizeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fontSizeMenu.classList.toggle('open');
+  });
+  const sizeOptionButtons = [...fontSizeMenu.querySelectorAll('button')];
+  sizeOptionButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cell = lastActiveCell;
+      if (cell) cell.style.fontSize = btn.dataset.size + 'px';
+      setActiveInGroup(sizeOptionButtons, btn);
+      fontSizeMenu.classList.remove('open');
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.fp-fontsize')) fontSizeMenu.classList.remove('open');
+  });
+
+  // Line spacing
+  const spacingButtons = [...formatPanel.querySelectorAll('[data-spacing]')];
+  spacingButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cell = lastActiveCell;
+      if (cell) cell.style.lineHeight = btn.dataset.spacing;
+      setActiveInGroup(spacingButtons, btn);
+    });
+  });
+
+  // ---------- Background picker ----------
+  const BG_PRESETS = {
+    none: null, // falls back to the default --paper color
+    gradient: 'linear-gradient(160deg, #FFCC8F, #FF8A4C)',
+    cream: '#ECE0C8',
+    lined: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 26px, rgba(28,27,25,0.14) 27px), #FCFAF3',
+    grid: 'repeating-linear-gradient(to right, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), repeating-linear-gradient(to bottom, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), #FCFAF3'
+  };
+
+  const bgPanel = document.getElementById('bgPanel');
+  const btnBackground = document.getElementById('btnBackground');
+  const bgFileInput = document.getElementById('bgFileInput');
+  const bgAddBtn = document.getElementById('bgAddBtn');
+  const bgSwatchButtons = [...bgPanel.querySelectorAll('.bg-swatch[data-bg]')];
+
+  bgSwatchButtons.forEach(btn => {
+    const key = btn.dataset.bg;
+    if (BG_PRESETS[key]) btn.style.background = BG_PRESETS[key];
+    btn.addEventListener('click', () => {
+      applyBackground(BG_PRESETS[key] || '');
+      setSelectedSwatch(btn);
+    });
+  });
+
+  function setSelectedSwatch(btn){
+    [...bgSwatchButtons, bgAddBtn].forEach(b => b.classList.remove('selected'));
+    if (btn) btn.classList.add('selected');
+  }
+
+  function applyBackground(css){
+    document.body.style.background = css;
+  }
+
+  function closeBgPanel(){
+    bgPanel.classList.remove('open');
+  }
+
+  btnBackground.addEventListener('click', () => {
+    closeFormatPanel(false);
+    closeRowMenu();
+    bgPanel.classList.toggle('open');
+  });
+
+  bgAddBtn.addEventListener('click', () => bgFileInput.click());
+  bgFileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      applyBackground(`center / cover no-repeat url(${reader.result})`);
+      setSelectedSwatch(bgAddBtn);
+      closeBgPanel();
+    };
+    reader.readAsDataURL(file);
+    bgFileInput.value = '';
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.bg-panel') && !e.target.closest('#btnBackground')) closeBgPanel();
+  });
+
+  // ---------- Embedding: notify a parent page (e.g. dashboard-admin.html's
+  // iframe modal) that this editor should close. No-op when opened standalone.
+  const btnBack = document.getElementById('btnBack');
+  btnBack.addEventListener('click', () => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage('close-editor', '*');
+    }
+  });
+
+  // ---------- Share action sheet ----------
+  const sharePanel = document.getElementById('sharePanel');
+  const shareScrim = document.getElementById('shareScrim');
+  const btnShare = document.getElementById('btnShare');
+
+  function openSharePanel(){
+    closeBgPanel();
+    sharePanel.classList.add('open');
+    shareScrim.classList.add('open');
+  }
+  function closeSharePanel(){
+    sharePanel.classList.remove('open');
+    shareScrim.classList.remove('open');
+  }
+
+  btnShare.addEventListener('click', openSharePanel);
+  // Tapping anywhere outside the panel itself (the scrim) closes it —
+  // tapping inside the panel never bubbles to the scrim.
+  shareScrim.addEventListener('click', closeSharePanel);
+  document.getElementById('shareCancelBtn').addEventListener('click', closeSharePanel);
+  sharePanel.querySelectorAll('[data-share]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      console.log('Share as', btn.dataset.share, '— fungsi export menyusul di step berikutnya');
+      closeSharePanel();
+    });
+  });
+
+  // ---------- Checklist: row data-completeness ----------
+  const btnChecklist = document.getElementById('btnChecklist');
+  btnChecklist.addEventListener('click', () => {
+    showCompleteness = !showCompleteness;
+    btnChecklist.classList.toggle('active-tool', showCompleteness);
+    renderRows();
+  });
+
+  // ---------- Camera / Gallery: attach a photo to a row ----------
+  const cameraPanel = document.getElementById('cameraPanel');
+  const cameraScrim = document.getElementById('cameraScrim');
+  const cameraCaptureInput = document.getElementById('cameraCaptureInput');
+  const cameraGalleryInput = document.getElementById('cameraGalleryInput');
+  const btnCamera = document.getElementById('btnCamera');
+  const imgPreviewScrim = document.getElementById('imgPreviewScrim');
+  const imgPreviewPhoto = document.getElementById('imgPreviewPhoto');
+  let pendingImageRowIndex = null;
+
+  function openCameraPanel(rowIndex){
+    if (rowIndex === null || rowIndex < 0) return;
+    pendingImageRowIndex = rowIndex;
+    closeBgPanel(); closeSharePanel(); closeRowMenu();
+    cameraPanel.classList.add('open');
+    cameraScrim.classList.add('open');
+  }
+  function closeCameraPanel(){
+    cameraPanel.classList.remove('open');
+    cameraScrim.classList.remove('open');
+  }
+  function openImagePreview(src){
+    imgPreviewPhoto.src = src;
+    imgPreviewScrim.classList.add('open');
+  }
+
+  cameraScrim.addEventListener('click', closeCameraPanel);
+  document.getElementById('cameraCancelBtn').addEventListener('click', closeCameraPanel);
+  cameraPanel.querySelectorAll('[data-camsrc]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const src = btn.dataset.camsrc;
+      closeCameraPanel();
+      if (src === 'camera') cameraCaptureInput.click();
+      else cameraGalleryInput.click();
+    });
+  });
+
+  function handleImageFile(file){
+    if (!file || pendingImageRowIndex === null || !rows[pendingImageRowIndex]) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      rows[pendingImageRowIndex].gambar = reader.result;
+      renderRows();
+    };
+    reader.readAsDataURL(file);
+  }
+  cameraCaptureInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
+  cameraGalleryInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
+
+  imgPreviewScrim.addEventListener('click', () => imgPreviewScrim.classList.remove('open'));
+
+  // Tapping a row's Gambar cell: empty → choose photo source; filled → preview.
+  // The small × badge removes the photo, reverting the cell back to empty.
+  tableBodyEl.addEventListener('click', (e) => {
+    const removeBtn = e.target.closest('[data-img-remove]');
+    if (removeBtn) {
+      const idx = parseInt(removeBtn.dataset.imgRemove, 10);
+      if (rows[idx]) { rows[idx].gambar = ''; renderRows(); }
+      return;
+    }
+    const btn = e.target.closest('[data-img-row]');
+    if (!btn) return;
+    const idx = parseInt(btn.dataset.imgRow, 10);
+    if (rows[idx] && rows[idx].gambar) openImagePreview(rows[idx].gambar);
+    else openCameraPanel(idx);
+  });
+
+  // Bottom-toolbar camera icon targets whichever row was last being edited
+  btnCamera.addEventListener('click', () => {
+    if (!lastActiveCell) return;
+    openCameraPanel(rowIndexOf(lastActiveCell));
+  });
+
+  // ---------- Pencil: freehand annotation with a full color picker ----------
+  const drawCanvas = document.getElementById('drawCanvas');
+  const drawCtx = drawCanvas.getContext('2d');
+  const btnPencil = document.getElementById('btnPencil');
+  const pencilPanel = document.getElementById('pencilPanel');
+  const pencilColorInput = document.getElementById('pencilColorInput');
+  let drawMode = false;
+  let currentColor = pencilColorInput.value;
+  let isDrawing = false;
+  let lastDrawPoint = null;
+
+  function resizeDrawCanvas(){
+    const rect = viewport.getBoundingClientRect();
+    const ratio = window.devicePixelRatio || 1;
+    const prev = drawCanvas.toDataURL ? null : null; // (kept simple — canvas clears on resize, acceptable for an orientation change)
+    drawCanvas.width = rect.width * ratio;
+    drawCanvas.height = rect.height * ratio;
+    drawCanvas.style.width = rect.width + 'px';
+    drawCanvas.style.height = rect.height + 'px';
+    drawCtx.scale(ratio, ratio);
+    drawCtx.lineCap = 'round';
+    drawCtx.lineJoin = 'round';
+  }
+  window.addEventListener('resize', resizeDrawCanvas);
+  requestAnimationFrame(resizeDrawCanvas);
+
+  function setDrawMode(on){
+    drawMode = on;
+    drawCanvas.classList.toggle('active', on);
+    btnPencil.classList.toggle('active-tool', on);
+    pencilPanel.classList.toggle('open', on);
+    if (on) { closeBgPanel(); closeSharePanel(); closeRowMenu(); closeCameraPanel(); }
+  }
+  btnPencil.addEventListener('click', () => setDrawMode(!drawMode));
+
+  const pencilPresetSwatches = [...document.querySelectorAll('.pencil-swatch[data-color]')];
+  pencilPresetSwatches.forEach(sw => {
+    sw.addEventListener('click', () => {
+      currentColor = sw.dataset.color;
+      pencilColorInput.value = currentColor;
+      pencilPresetSwatches.forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+    });
+  });
+  pencilColorInput.addEventListener('input', () => {
+    currentColor = pencilColorInput.value;
+    pencilPresetSwatches.forEach(s => s.classList.remove('selected'));
+  });
+  document.getElementById('pencilClearBtn').addEventListener('click', () => {
+    drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+  });
+
+  drawCanvas.addEventListener('pointerdown', (e) => {
+    isDrawing = true;
+    drawCanvas.setPointerCapture(e.pointerId);
+    const rect = drawCanvas.getBoundingClientRect();
+    lastDrawPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  });
+  drawCanvas.addEventListener('pointermove', (e) => {
+    if (!isDrawing) return;
+    const rect = drawCanvas.getBoundingClientRect();
+    const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    drawCtx.strokeStyle = currentColor;
+    drawCtx.lineWidth = 3;
+    drawCtx.beginPath();
+    drawCtx.moveTo(lastDrawPoint.x, lastDrawPoint.y);
+    drawCtx.lineTo(p.x, p.y);
+    drawCtx.stroke();
+    lastDrawPoint = p;
+  });
+  function endDraw(){ isDrawing = false; lastDrawPoint = null; }
+  drawCanvas.addEventListener('pointerup', endDraw);
+  drawCanvas.addEventListener('pointercancel', endDraw);
+
+  // ---------- Zoom / Pan engine ----------
+  const viewport = document.getElementById('content');
+  const canvas = document.getElementById('canvas');
+  const zoomIndicator = document.getElementById('zoomIndicator');
+
+  const MAX_SCALE = 3;
+  const PAN_SLACK = 36;      // hard edge slack
+  const OVER_MAX = 70;       // max rubber-band overscroll while dragging
+  const RESIST = 0.42;       // rubber-band resistance
+  const FRICTION = 0.94;     // momentum decay per frame
+
+  let scale = 1, tx = 0, ty = 0;
+  let fitScale = 1; // dynamic zoom-out floor — "corner to corner" view
+  const pointers = new Map();
+  let lastMid = null;
+  let lastDist = null;
+  let indicatorTimer = null;
+
+  // gesture/tap tracking (so pinch-end never gets mistaken for a tap)
+  let gestureHadMultiTouch = false;
+  let lastValidTapTime = 0;
+
+  // velocity tracking for momentum fling
+  let vx = 0, vy = 0, lastMoveT = 0;
+  let momentumRAF = null;
+
+  function clampScale(s){
+    return Math.min(MAX_SCALE, Math.max(fitScale, s));
+  }
+
+  // Real on-screen clearance needed above/below the canvas so content never
+  // hides behind the floating toolbars — measured directly in the viewport,
+  // so it stays correct at any zoom level instead of shrinking with scale.
+  function getChrome(){
+    const topBar = (topbarEdit && topbarEdit.style.display === 'flex') ? topbarEdit : topbarNormal;
+    const topRect = topBar.getBoundingClientRect();
+    const bottomRect = document.querySelector('.bottombar').getBoundingClientRect();
+    return {
+      top: Math.max(0, topRect.bottom + 12),
+      bottom: Math.max(0, window.innerHeight - bottomRect.top + 12)
+    };
+  }
+
+  function panBounds(s){
+    const vpRect = viewport.getBoundingClientRect();
+    const cw = canvas.scrollWidth * s;
+    const ch = canvas.scrollHeight * s;
+    const chrome = getChrome();
+    const availH = vpRect.height - chrome.top - chrome.bottom;
+    let minX, maxX, minY, maxY;
+    if (cw <= vpRect.width) { minX = maxX = (vpRect.width - cw) / 2; }
+    else { maxX = PAN_SLACK; minX = vpRect.width - cw - PAN_SLACK; }
+    if (ch <= availH) { minY = maxY = chrome.top; }
+    else { maxY = chrome.top + PAN_SLACK; minY = vpRect.height - chrome.bottom - ch - PAN_SLACK; }
+    return { minX, maxX, minY, maxY };
+  }
+
+  // hard clamp — used for settling, momentum, fit
+  function clampPan(nx, ny, s){
+    const b = panBounds(s);
+    return { x: Math.min(b.maxX, Math.max(b.minX, nx)), y: Math.min(b.maxY, Math.max(b.minY, ny)) };
+  }
+
+  // soft clamp with resistance — used live while a finger is down, so the
+  // edge gives a little instead of feeling like a hard wall
+  function rubberClamp(nx, ny, s){
+    const b = panBounds(s);
+    function soft(v, min, max){
+      if (min === max) return min; // nowhere to pan on this axis — lock it solid, no give
+      if (v < min) return min - Math.min(OVER_MAX, (min - v)) * RESIST;
+      if (v > max) return max + Math.min(OVER_MAX, (v - max)) * RESIST;
+      return v;
+    }
+    return { x: soft(nx, b.minX, b.maxX), y: soft(ny, b.minY, b.maxY) };
+  }
+
+  function isOutOfBounds(s){
+    const b = panBounds(s);
+    return tx < b.minX - 0.5 || tx > b.maxX + 0.5 || ty < b.minY - 0.5 || ty > b.maxY + 0.5;
+  }
+
+  function apply(){
+    canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }
+
+  function showIndicator(){
+    zoomIndicator.textContent = Math.round(scale * 100) + '%';
+    zoomIndicator.classList.add('show');
+    clearTimeout(indicatorTimer);
+    indicatorTimer = setTimeout(() => zoomIndicator.classList.remove('show'), 700);
+  }
+
+  // Snap smoothly back inside bounds (used after rubber-band overscroll)
+  function settleBack(){
+    const p = clampPan(tx, ty, scale);
+    canvas.style.transition = 'transform .32s cubic-bezier(.16,.85,.35,1)';
+    tx = p.x; ty = p.y;
+    requestAnimationFrame(apply);
+    setTimeout(() => { canvas.style.transition = ''; }, 340);
+  }
+
+  // Momentum fling after a single-finger flick release
+  function startMomentum(){
+    cancelAnimationFrame(momentumRAF);
+    if (Math.abs(vx) < 0.02 && Math.abs(vy) < 0.02) return;
+    function step(){
+      tx += vx * 16;
+      ty += vy * 16;
+      vx *= FRICTION;
+      vy *= FRICTION;
+      const b = panBounds(scale);
+      if (tx < b.minX) { tx = b.minX; vx = 0; }
+      if (tx > b.maxX) { tx = b.maxX; vx = 0; }
+      if (ty < b.minY) { ty = b.minY; vy = 0; }
+      if (ty > b.maxY) { ty = b.maxY; vy = 0; }
+      apply();
+      if (Math.abs(vx) > 0.02 || Math.abs(vy) > 0.02) {
+        momentumRAF = requestAnimationFrame(step);
+      }
+    }
+    momentumRAF = requestAnimationFrame(step);
+  }
+
+  // Fit whole table into the viewport — this becomes the zoom-out floor
+  function fitToScreen(animate){
+    cancelAnimationFrame(momentumRAF);
+    const vpRect = viewport.getBoundingClientRect();
+    const naturalWidth = canvas.scrollWidth;
+    if (!naturalWidth) return;
+    fitScale = Math.min(1, (vpRect.width - 16) / naturalWidth);
+    scale = fitScale;
+    const p = clampPan(8, 0, scale);
+    tx = p.x; ty = p.y;
+    if (animate) {
+      canvas.style.transition = 'transform .25s cubic-bezier(.22,.7,.32,1)';
+      requestAnimationFrame(apply);
+      setTimeout(() => canvas.style.transition = '', 260);
+    } else {
+      apply();
+    }
+  }
+
+  function dist(a, b){
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  function mid(a, b){
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  const DRAG_THRESHOLD = 8; // px of movement before a touch counts as a drag, not a tap
+
+  viewport.addEventListener('pointerdown', (e) => {
+    // While the pencil/draw tool is active, the drawing canvas owns all touches —
+    // the pan/pinch engine must stay completely out of the way.
+    if (drawMode) return;
+
+    // The row ⋮ menu lives outside #content, so it's never affected here.
+    cancelAnimationFrame(momentumRAF);
+    canvas.style.transition = '';
+
+    pointers.set(e.pointerId, {
+      x: e.clientX, y: e.clientY,
+      startX: e.clientX, startY: e.clientY, startT: Date.now(),
+      dragging: false, target: e.target
+    });
+
+    if (pointers.size === 1) {
+      gestureHadMultiTouch = false;
+      vx = 0; vy = 0; lastMoveT = performance.now();
+    }
+    if (pointers.size === 2) {
+      gestureHadMultiTouch = true;
+      // A second finger landing means this is definitely a pinch, not a tap-to-edit —
+      // cancel any focus that might already be underway and take over the gesture.
+      if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+        document.activeElement.blur();
+      }
+      viewport.setPointerCapture(e.pointerId);
+      const [a, b] = [...pointers.values()];
+      lastDist = dist(a, b);
+      lastMid = mid(a, b);
+      canvas.classList.add('pinching', 'panning');
+    }
+  });
+
+  viewport.addEventListener('pointermove', (e) => {
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    p.x = e.clientX; p.y = e.clientY;
+
+    if (pointers.size === 2) {
+      e.preventDefault();
+      const [a, b] = [...pointers.values()];
+      const newDist = dist(a, b);
+      const newMid = mid(a, b);
+      const vpRect = viewport.getBoundingClientRect();
+
+      const newScale = clampScale(scale * (newDist / lastDist));
+      const localX = (lastMid.x - vpRect.left - tx) / scale;
+      const localY = (lastMid.y - vpRect.top - ty) / scale;
+      let nx = (newMid.x - vpRect.left) - localX * newScale;
+      let ny = (newMid.y - vpRect.top) - localY * newScale;
+      scale = newScale;
+      const cp = rubberClamp(nx, ny, scale);
+      tx = cp.x; ty = cp.y;
+
+      lastDist = newDist;
+      lastMid = newMid;
+      apply();
+      showIndicator();
+      return;
+    }
+
+    if (pointers.size === 1) {
+      if (!p.dragging) {
+        const moved = Math.hypot(p.x - p.startX, p.y - p.startY);
+        if (moved < DRAG_THRESHOLD) return; // still could be a tap — don't touch anything yet
+        // Threshold crossed: this is a real drag, not a tap. Take over the
+        // gesture, and cancel any focus a tap-sensitive element may have grabbed.
+        p.dragging = true;
+        viewport.setPointerCapture(e.pointerId);
+        canvas.classList.add('panning');
+        if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
+          document.activeElement.blur();
+        }
+      }
+      e.preventDefault();
+      const now = performance.now();
+      const dt = Math.max(1, now - lastMoveT);
+      const dx = e.movementX || 0, dy = e.movementY || 0;
+      vx = vx * 0.7 + (dx / dt) * 0.3;
+      vy = vy * 0.7 + (dy / dt) * 0.3;
+      lastMoveT = now;
+
+      const cp = rubberClamp(tx + dx, ty + dy, scale);
+      tx = cp.x; ty = cp.y;
+      apply();
+    }
+  });
+
+  function endPointer(e){
+    const wasP = pointers.get(e.pointerId);
+    const wasSize = pointers.size;
+    pointers.delete(e.pointerId);
+
+    if (pointers.size < 2) { lastDist = null; lastMid = null; canvas.classList.remove('pinching'); }
+    if (pointers.size === 0) {
+      canvas.classList.remove('panning');
+
+      // A "tap" is a single pointer that never crossed the drag threshold —
+      // in that case we never touched focus/click, so native tap-to-edit
+      // (or the ⋮ button, or any toolbar control) already behaved normally.
+      const isEditableTap = wasP && wasP.target && wasP.target.closest &&
+        wasP.target.closest('[contenteditable="true"]');
+      let wasTap = false;
+      if (wasSize === 1 && wasP && !wasP.dragging && !gestureHadMultiTouch) {
+        const dt = Date.now() - wasP.startT;
+        if (dt < 400) {
+          wasTap = true;
+          // Double-tap-to-fit only applies to taps on the canvas/table chrome —
+          // never inside a cell, so double-tap-to-select-word (Excel-style)
+          // works natively there instead of triggering a zoom reset.
+          if (!isEditableTap) {
+            const now = Date.now();
+            if (now - lastValidTapTime < 300) {
+              fitToScreen(true);
+              showIndicator();
+              lastValidTapTime = 0;
+            } else {
+              lastValidTapTime = now;
+            }
+          }
+        }
+      }
+
+      if (!wasTap) {
+        if (isOutOfBounds(scale)) {
+          vx = 0; vy = 0;
+          settleBack();
+        } else if (!gestureHadMultiTouch) {
+          startMomentum();
+        }
+      }
+
+      gestureHadMultiTouch = false;
+    }
+  }
+  viewport.addEventListener('pointerup', endPointer);
+  viewport.addEventListener('pointercancel', endPointer);
+  viewport.addEventListener('pointerleave', endPointer);
+
+  // Desktop trackpad / mouse wheel: ctrl+wheel = zoom, plain wheel = pan
+  viewport.addEventListener('wheel', (e) => {
+    if (drawMode) return;
+    e.preventDefault();
+    cancelAnimationFrame(momentumRAF);
+    canvas.style.transition = '';
+    if (e.ctrlKey || e.metaKey) {
+      const vpRect = viewport.getBoundingClientRect();
+      const newScale = clampScale(scale * (1 - e.deltaY * 0.012));
+      const localX = (e.clientX - vpRect.left - tx) / scale;
+      const localY = (e.clientY - vpRect.top - ty) / scale;
+      let nx = (e.clientX - vpRect.left) - localX * newScale;
+      let ny = (e.clientY - vpRect.top) - localY * newScale;
+      scale = newScale;
+      const p = clampPan(nx, ny, scale);
+      tx = p.x; ty = p.y;
+      showIndicator();
+    } else {
+      const p = clampPan(tx - e.deltaX, ty - e.deltaY, scale);
+      tx = p.x; ty = p.y;
+    }
+    apply();
+  }, { passive: false });
+
+  window.addEventListener('resize', () => fitToScreen(false));
+  window.addEventListener('load', () => fitToScreen(false));
+  requestAnimationFrame(() => fitToScreen(false));
+</script>
+
+</body>
+</html>

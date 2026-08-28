@@ -28,20 +28,41 @@
     --radius-pill: 999px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --safe-left: env(safe-area-inset-left, 0px);
-    --safe-right: env(safe-area-inset-right, 0px);
+  }
 
-    /* Editor variables */
-    --paper: #F6F1E7;
-    --paper-alt: #FBF8F2;
-    --ink: #1C1B19;
-    --ink-soft: #6B6459;
-    --line: #E4DDCC;
-    --line-soft: #EDE7D8;
-    --editor-glass-bg: rgba(255, 255, 255, 0.55);
-    --editor-glass-border: rgba(255, 255, 255, 0.6);
-    --editor-glass-shadow: 0 8px 32px rgba(80, 70, 50, 0.14);
-    --editor-accent: #C9932F;
+  body.theme-light {
+    --bg-dark: #F5F5F7;
+    --card-surface-dark: #FFFFFF;
+    --card-border-dark: rgba(0, 0, 0, 0.08);
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --text-muted: #A1A1A6;
+    --glass-pill-bg: rgba(0, 0, 0, 0.06);
+    --glass-pill-border: rgba(0, 0, 0, 0.08);
+  }
+
+  body.theme-light .screen-container,
+  body.theme-light .settings-screen,
+  body.theme-light .search-overlay {
+    background: #F5F5F7 !important;
+  }
+
+  body.theme-light .drawer { background: #FFFFFF !important; }
+  body.theme-light .settings-group,
+  body.theme-light .task-item,
+  body.theme-light .search-input-box,
+  body.theme-light .chip {
+    background: #FFFFFF !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  body.theme-light .page-title,
+  body.theme-light .drawer-header h3,
+  body.theme-light .settings-item-title,
+  body.theme-light .folder-item,
+  body.theme-light .settings-header h2,
+  body.theme-light .search-input-box input {
+    color: #000000 !important;
   }
 
   * {
@@ -60,9 +81,9 @@
     width: 100vw;
     display: flex;
     justify-content: center;
+    transition: background-color 0.25s ease;
   }
 
-  /* ================= APP SCREEN VIEWER ================= */
   .screen-container {
     width: 100%;
     max-width: 480px;
@@ -72,6 +93,7 @@
     flex-direction: column;
     background: #000000;
     overflow: hidden;
+    transition: background-color 0.25s ease;
   }
 
   /* --- Top Header Navigation --- */
@@ -91,7 +113,7 @@
     background: var(--glass-pill-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    color: #FFF;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -187,10 +209,7 @@
     font-weight: 700;
   }
 
-  .view-option:active {
-    background: rgba(255, 255, 255, 0.08);
-  }
-
+  .view-option:active { background: rgba(255, 255, 255, 0.08); }
   .view-option svg { width: 17px; height: 17px; }
 
   /* --- Scroll Container --- */
@@ -208,7 +227,8 @@
     font-weight: 800;
     letter-spacing: -0.02em;
     margin-bottom: 6px;
-    color: #FFF;
+    text-transform: uppercase;
+    color: var(--text-primary);
     animation: fadeInDown 0.35s ease-out;
   }
 
@@ -225,7 +245,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* --- Empty State --- */
+  /* --- Empty State Box --- */
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -238,16 +258,16 @@
   }
 
   .empty-state svg {
-    width: 48px;
-    height: 48px;
-    margin-bottom: 12px;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 10px;
     opacity: 0.35;
   }
 
   .empty-state p {
-    font-size: 13.5px;
+    font-size: 12.5px;
     font-weight: 500;
-    color: #63636b;
+    letter-spacing: 0.02em;
   }
 
   @keyframes fadeIn {
@@ -262,51 +282,80 @@
     transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   }
 
-  .notes-container.view-list {
-    grid-template-columns: 1fr;
-  }
+  .notes-container.view-list { grid-template-columns: 1fr; }
   .notes-container.view-list .note-card {
     background: var(--card-surface-dark);
     border: 1px solid var(--card-border-dark);
     border-radius: 16px;
     padding: 16px;
   }
-  .notes-container.view-list .note-title { color: #FFF; font-size: 14.5px; }
+  .notes-container.view-list .note-title { color: var(--text-primary); font-size: 14.5px; }
   .notes-container.view-list .note-desc { color: var(--text-secondary); font-size: 12.5px; }
-
-  .notes-container.view-card {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-  .notes-container.view-card .note-card {
-    min-height: 120px;
+  .notes-container.view-list .note-date-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
   }
 
-  .notes-container.view-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
+  .notes-container.view-card { grid-template-columns: 1fr; gap: 14px; }
+  .notes-container.view-card .note-card { min-height: 120px; }
+  .notes-container.view-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
 
   .notes-container.view-card .note-card,
   .notes-container.view-grid .note-card {
-    background: #18181A;
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(145deg, #F3ECE1 0%, #E3DAC9 100%);
     border-radius: var(--radius-xl);
     padding: 16px 14px 14px 14px;
-    min-height: 120px;
+    min-height: 130px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     position: relative;
+    overflow: hidden;
     cursor: pointer;
-    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
     animation: cardAppear 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
   .notes-container.view-card .note-card:active,
   .notes-container.view-grid .note-card:active {
-    transform: scale(0.96);
+    transform: scale(0.95);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Liquid Glass Backdrop */
+  .note-card.liquid-glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(240, 235, 225, 0.82) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(28px) saturate(1.8);
+    -webkit-backdrop-filter: blur(28px) saturate(1.8);
+  }
+
+  .note-card.liquid-glass::before {
+    content: '';
+    position: absolute;
+    inset: -30%;
+    background: radial-gradient(circle at 75% 70%, rgba(0, 0, 0, 0.28) 0%, rgba(120, 120, 120, 0.15) 35%, transparent 70%),
+                radial-gradient(circle at 20% 85%, rgba(0, 0, 0, 0.22) 0%, transparent 50%);
+    filter: blur(14px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .note-card.liquid-glass::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 45%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .note-card.liquid-glass .note-content-layer,
+  .note-card.liquid-glass .note-date-tag {
+    position: relative;
+    z-index: 2;
   }
 
   @keyframes cardAppear {
@@ -315,30 +364,33 @@
   }
 
   .note-title {
-    font-size: 14px;
-    font-weight: 700;
-    color: #FFF;
+    font-size: 13.5px;
+    font-weight: 750;
+    color: var(--text-dark);
     margin-bottom: 4px;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
   }
 
   .note-desc {
-    font-size: 12px;
-    font-weight: 400;
-    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-dark-sub);
     white-space: pre-wrap;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-height: 1.35;
   }
 
   .note-date-tag {
     align-self: flex-start;
     margin-top: 10px;
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.06);
-    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.07);
+    color: var(--text-dark-sub);
     padding: 3px 8px;
     border-radius: 6px;
   }
@@ -364,7 +416,7 @@
     margin-top: 2px;
     cursor: pointer;
   }
-  .task-info h4 { font-size: 14.5px; font-weight: 600; color: #FFF; }
+  .task-info h4 { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
   .task-info p {
     font-size: 12px;
     color: #FF8A4C;
@@ -374,7 +426,7 @@
     gap: 5px;
   }
 
-  /* --- Bottom Bar --- */
+  /* --- Full Width Search Bar --- */
   .bottom-bar {
     position: absolute;
     bottom: calc(var(--safe-bottom) + 14px);
@@ -382,12 +434,11 @@
     right: 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
     z-index: 30;
   }
 
   .search-pill {
-    flex: 1;
+    width: 100%;
     height: 52px;
     background: rgba(26, 25, 28, 0.88);
     backdrop-filter: blur(24px) saturate(1.4);
@@ -401,40 +452,24 @@
     color: var(--text-secondary);
     box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
     cursor: pointer;
-  }
-
-  .search-pill svg { width: 19px; height: 19px; }
-  .search-pill span { font-size: 14.5px; font-weight: 500; }
-
-  .fab-add-note {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: #242426;
-    border: 1px solid var(--glass-pill-border);
-    color: #FFF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  .fab-add-note:active { transform: scale(0.9); }
-  .fab-add-note svg { width: 22px; height: 22px; }
+  .search-pill:active { transform: scale(0.98); }
+  .search-pill svg { width: 19px; height: 19px; }
+  .search-pill span { font-size: 14.5px; font-weight: 500; }
 
   /* --- Drawer Folder Side Sheet --- */
   .drawer-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     z-index: 90;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .drawer-overlay.open { opacity: 1; pointer-events: auto; }
@@ -458,32 +493,32 @@
 
   .drawer-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    justify-content: space-between;
+    margin-bottom: 22px;
     padding: 0 6px;
   }
 
-  .drawer-header h3 { font-size: 17px; font-weight: 700; color: #FFF; }
-  .drawer-header .new-link {
-    font-size: 14px;
-    font-weight: 700;
-    color: var(--accent-yellow);
+  .drawer-header h3 { font-size: 18px; font-weight: 700; color: #FFF; }
+
+  .btn-create-category {
     background: transparent;
     border: none;
+    color: var(--accent-yellow);
+    font-size: 12.5px;
+    font-weight: 700;
     cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s ease;
   }
 
-  .folder-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    overflow-y: auto;
+  .btn-create-category:active {
+    background: rgba(240, 165, 41, 0.15);
   }
 
-  .folder-list::-webkit-scrollbar { display: none; }
-
+  .folder-list { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
+  
   .folder-item {
     display: flex;
     align-items: center;
@@ -492,18 +527,54 @@
     border-radius: 12px;
     color: #EDEAE2;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: background 0.15s ease, transform 0.12s ease;
   }
 
-  .folder-item:active { background: rgba(255, 255, 255, 0.08); }
-  .folder-item.active {
+  .folder-item:active {
     background: rgba(255, 255, 255, 0.08);
-    font-weight: 700;
+    transform: scale(0.98);
   }
 
-  .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; }
+  .folder-item.active { background: rgba(255, 255, 255, 0.08); }
+  .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; }
   .folder-item-left svg { width: 20px; height: 20px; color: var(--text-secondary); }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+
+  .drawer-empty-category {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .drawer-empty-category svg {
+    width: 28px;
+    height: 28px;
+    opacity: 0.3;
+  }
+
+  /* Admin item */
+  .folder-item.admin-item {
+    border: 1px solid rgba(240, 165, 41, 0.15);
+    background: rgba(240, 165, 41, 0.04);
+    margin-top: auto;
+  }
+  .folder-item.admin-item .folder-item-left svg {
+    color: var(--accent-yellow);
+  }
+  .admin-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-yellow);
+    background: rgba(240, 165, 41, 0.15);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
 
   .drawer-footer {
     display: flex;
@@ -522,173 +593,137 @@
     color: var(--text-secondary);
     font-size: 11px;
     cursor: pointer;
+    transition: transform 0.15s ease, color 0.15s ease;
   }
+  .drawer-foot-btn:active { transform: scale(0.9); }
   .drawer-foot-btn svg { width: 20px; height: 20px; }
 
-  /* --- Create New Folder Modal Dialog --- */
-  .modal-sheet-overlay {
+  /* --- Settings Screen Overlay --- */
+  .settings-screen {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 150;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s ease;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
-  .modal-sheet-overlay.open { opacity: 1; pointer-events: auto; }
-
-  .modal-sheet {
-    width: 100%;
-    max-width: 480px;
-    background: #18181A;
-    border-top-left-radius: 28px;
-    border-top-right-radius: 28px;
-    padding: 16px 20px calc(var(--safe-bottom) + 20px) 20px;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
-    transform: translateY(100%);
-    transition: transform 0.32s cubic-bezier(0.18, 0.85, 0.3, 1);
+    background: #000000;
+    z-index: 110;
     display: flex;
     flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.18, 0.85, 0.3, 1);
+    overflow-y: auto;
+    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 20px) 16px;
+  }
+
+  .settings-screen.open { transform: translateX(0); }
+
+  .settings-header {
+    display: flex;
     align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
   }
 
-  .modal-sheet-overlay.open .modal-sheet { transform: translateY(0); }
-
-  .drag-handle {
-    width: 38px;
-    height: 4px;
-    border-radius: 2px;
-    background: rgba(255, 255, 255, 0.2);
-    margin-bottom: 12px;
-  }
-
-  .modal-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #FFF;
-    margin-bottom: 18px;
-  }
-
-  .cover-preview {
-    width: 108px;
-    height: 140px;
-    border-radius: 12px;
-    background: var(--accent-yellow);
+  .settings-back-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
-    margin-bottom: 20px;
-    transition: background 0.2s ease;
+    cursor: pointer;
+    transition: transform 0.15s ease;
   }
 
-  .cover-preview span {
-    font-size: 14px;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    color: rgba(0, 0, 0, 0.45);
+  .settings-back-btn:active { transform: scale(0.88); }
+  .settings-back-btn svg { width: 22px; height: 22px; }
+
+  .settings-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #FFF;
   }
 
-  .color-palette-tabs {
-    display: flex;
-    gap: 18px;
+  .settings-group {
+    background: #141416;
+    border-radius: 18px;
+    overflow: hidden;
     margin-bottom: 14px;
-    width: 100%;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding-bottom: 8px;
-    font-size: 13px;
-    font-weight: 600;
+    border: 1px solid var(--card-border-dark);
   }
 
-  .color-palette-tabs span.active {
-    color: #FFF;
-    position: relative;
-  }
-
-  .color-palette-tabs span.active::after {
-    content: '';
-    position: absolute;
-    bottom: -9px;
-    left: 0; right: 0;
-    height: 2px;
-    background: var(--accent-yellow);
-  }
-
-  .color-options-row {
+  .settings-item {
     display: flex;
-    gap: 12px;
-    width: 100%;
-    overflow-x: auto;
-    padding: 6px 0 18px 0;
-  }
-
-  .color-options-row::-webkit-scrollbar { display: none; }
-
-  .color-circle {
-    min-width: 60px;
-    height: 72px;
-    border-radius: 10px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
     cursor: pointer;
-    border: 2px solid transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    color: rgba(0, 0, 0, 0.4);
-    transition: transform 0.18s ease;
+    transition: background 0.15s ease;
   }
 
-  .color-circle.selected {
-    border-color: #FFF;
-    transform: scale(1.04);
+  .settings-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 
-  .folder-input-box {
-    width: 100%;
-    height: 50px;
-    background: #242428;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    padding: 0 14px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-  }
+  .settings-item:active { background: rgba(255, 255, 255, 0.04); }
 
-  .folder-input-box input {
-    background: transparent;
-    border: none;
-    color: #FFF;
-    font-size: 14.5px;
-    width: 100%;
-    outline: none;
-  }
-
-  .btn-complete-folder {
-    width: 100%;
-    height: 48px;
-    background: var(--accent-yellow);
-    border: none;
-    border-radius: var(--radius-pill);
-    color: #121008;
+  .settings-item-title {
     font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 18px var(--accent-yellow-glow);
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-weight: 500;
+    color: #FFFFFF;
   }
 
-  .btn-complete-folder:active { transform: scale(0.97); }
+  .settings-item-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
 
-  /* --- Search Overlay --- */
+  .settings-item-right svg { width: 16px; height: 16px; color: var(--text-secondary); }
+
+  /* Custom iOS/Infinix Style Toggle Switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+
+  .switch input { opacity: 0; width: 0; height: 0; }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background-color: #2C2C2E;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 34px;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  input:checked + .slider {
+    background-color: var(--accent-yellow);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+
+  /* --- Fullscreen Search Overlay --- */
   .search-overlay {
     position: fixed;
     inset: 0;
@@ -703,7 +738,11 @@
     transition: all 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
-  .search-overlay.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .search-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
 
   .search-top {
     display: flex;
@@ -732,406 +771,33 @@
     outline: none;
   }
 
-  /* ================= INTEGRATED EDITOR VIEW ================= */
-  .editor-view-container {
+  .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chip {
+    background: #1C1C1E;
+    color: #D1D1D6;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* --- Modal Container for Editor Viewer --- */
+  .editor-modal {
     position: fixed;
     inset: 0;
-    background: var(--paper);
-    color: var(--ink);
+    background: #F6F1E7;
     z-index: 200;
-    display: flex;
-    flex-direction: column;
     transform: translateY(100%);
     transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
-    overflow: hidden;
   }
 
-  .editor-view-container.open {
-    transform: translateY(0);
-  }
-
-  .editor-view-container .topbar {
-    position: absolute;
-    top: calc(var(--safe-top) + 12px);
-    left: 0; right: 0;
-    padding: 0 calc(var(--safe-left) + 14px) 0 calc(var(--safe-left) + 14px);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 40;
-    pointer-events: none;
-  }
-
-  .glass-pill-editor {
-    pointer-events: auto;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    background: var(--editor-glass-bg);
-    border: 1px solid var(--editor-glass-border);
-    backdrop-filter: blur(24px) saturate(1.4);
-    -webkit-backdrop-filter: blur(24px) saturate(1.4);
-    border-radius: var(--radius-pill);
-    box-shadow: var(--editor-glass-shadow);
-    padding: 6px;
-  }
-
-  .editor-icon-btn {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    border: none; background: transparent;
-    border-radius: 50%;
-    color: var(--ink);
-    cursor: pointer;
-    transition: transform .15s ease, background .15s ease;
-  }
-  .editor-icon-btn:active {
-    transform: scale(0.88);
-    background: rgba(0, 0, 0, 0.06);
-  }
-  .editor-icon-btn svg { width: 21px; height: 21px; }
-  .editor-icon-btn.disabled { opacity: 0.32; pointer-events: none; }
-
-  .editor-workspace {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-    touch-action: none;
-  }
-
-  .editor-canvas {
-    position: absolute;
-    top: 0; left: 0;
-    transform-origin: 0 0;
-    will-change: transform;
-  }
-  .editor-canvas.panning, .editor-canvas.pinching { transition: none; }
-
-  .zoom-indicator {
-    position: absolute;
-    left: 50%;
-    bottom: calc(var(--safe-bottom) + 78px);
-    transform: translateX(-50%) translateY(8px);
-    background: rgba(28, 27, 25, 0.78);
-    color: #fff;
-    font-size: 12.5px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: var(--radius-pill);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .18s ease, transform .18s ease;
-    z-index: 39;
-    font-variant-numeric: tabular-nums;
-  }
-  .zoom-indicator.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-
-  .title-block {
-    padding: 4px calc(var(--safe-left) + 20px) 18px calc(var(--safe-left) + 20px);
-  }
-  .title-block h1 {
-    margin: 0;
-    font-size: 30px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-  }
-
-  .editor-workspace [contenteditable="true"] {
-    outline: none;
-    border-radius: 6px;
-    cursor: text;
-    transition: background .15s ease, box-shadow .15s ease;
-  }
-  .editor-workspace [contenteditable="true"]:focus {
-    background: rgba(201, 147, 47, 0.09);
-    box-shadow: 0 0 0 2px rgba(201, 147, 47, 0.4) inset;
-  }
-  .editor-workspace [contenteditable="true"]:empty::before {
-    content: attr(data-placeholder);
-    color: var(--ink-soft);
-    opacity: 0.45;
-  }
-
-  .table-scroll {
-    margin: 0 calc(var(--safe-left) + 14px) 24px calc(var(--safe-left) + 14px);
-    border-radius: 16px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
-    background: var(--paper-alt);
-    width: max-content;
-  }
-
-  table {
-    border-collapse: collapse;
-    width: max-content;
-    font-size: 13.5px;
-  }
-  thead th {
-    position: sticky;
-    top: 0;
-    background: #F1EADA;
-    color: var(--ink-soft);
-    font-weight: 700;
-    font-size: 11.5px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-align: left;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--line);
-    border-right: 1px solid var(--line-soft);
-    white-space: nowrap;
-  }
-  thead th:last-child, tbody td:last-child { border-right: none; }
-  tbody td {
-    padding: 12px 12px;
-    border-bottom: 1px solid var(--line-soft);
-    border-right: 1px solid var(--line-soft);
-    vertical-align: top;
-    min-width: 92px;
-    max-width: 180px;
-    color: var(--ink);
-  }
-  tbody tr:last-child td { border-bottom: none; }
-  tbody tr:active { background: rgba(201, 147, 47, 0.07); }
-
-  td.col-tanggal, th.col-tanggal { min-width: 78px; }
-  td.col-tanggal .tgl { font-weight: 700; }
-  td.col-tanggal .hari { display: block; font-size: 11px; color: var(--ink-soft); font-weight: 500; margin-top: 1px; }
-  td.col-no { min-width: 34px; text-align: center; color: var(--ink-soft); }
-  td.col-jam { min-width: 56px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
-  td.col-harga { min-width: 90px; font-weight: 600; white-space: nowrap; }
-  td.col-ket { min-width: 200px; }
-
-  .row-handle { position: relative; }
-  .row-menu-btn {
-    width: 28px; height: 28px;
-    border: none; background: transparent;
-    color: var(--ink-soft);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
-  .row-menu-btn:active { background: rgba(0, 0, 0, 0.06); transform: scale(0.9); }
-  .row-menu-btn svg { width: 16px; height: 16px; }
-
-  /* Bottom Floating Bar in Editor */
-  .editor-bottombar {
-    position: absolute;
-    left: 0; right: 0;
-    bottom: calc(var(--safe-bottom) + 14px);
-    display: flex;
-    justify-content: center;
-    z-index: 40;
-    pointer-events: none;
-  }
-  .editor-bottombar .glass-pill-editor { padding: 6px; }
-
-  .toolbtn {
-    width: 46px; height: 46px;
-    border: none; background: transparent;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--ink);
-    cursor: pointer;
-    transition: transform .15s ease, background .15s ease, color .15s ease;
-  }
-  .toolbtn:active { transform: scale(0.88); background: rgba(0, 0, 0, 0.06); }
-  .toolbtn svg { width: 21px; height: 21px; }
-  .toolbtn.active-tool { color: var(--editor-accent); background: rgba(201, 147, 47, 0.12); }
-  .toolbtn.stub { opacity: 0.4; }
-  .toolbtn .aa-label { font-size: 17px; font-weight: 600; font-family: -apple-system, sans-serif; }
-
-  /* Aa formatting panel */
-  .format-panel {
-    position: fixed;
-    left: 50%;
-    bottom: calc(var(--safe-bottom) + 78px);
-    transform: translateX(-50%) translateY(14px) scale(0.97);
-    width: min(94vw, 460px);
-    background: rgba(26, 24, 21, 0.92);
-    backdrop-filter: blur(26px) saturate(1.3);
-    -webkit-backdrop-filter: blur(26px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 22px;
-    padding: 14px;
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
-    z-index: 60;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s ease, transform .22s cubic-bezier(.22, .9, .32, 1);
-  }
-  .format-panel.open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(-50%) translateY(0) scale(1);
-  }
-  .fp-row { display: flex; gap: 7px; margin-bottom: 9px; }
-  .fp-row:last-child { margin-bottom: 0; }
-  .fp-row button {
-    flex: 1 1 0; min-width: 0; height: 42px;
-    border: none; border-radius: 11px;
-    background: rgba(255, 255, 255, 0.07);
-    color: #EDEAE2;
-    font-size: 14.5px; font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
-  .fp-row button svg { width: 18px; height: 18px; }
-  .fp-row button:active { background: rgba(255, 255, 255, 0.14); }
-  .fp-row button.fp-active { background: var(--editor-accent); color: #241C08; }
-  .fp-styles button { font-size: 13.5px; }
-
-  .fp-fontsize { position: relative; flex: 1 1 0; display: flex; }
-  .fp-fontsize > button {
-    width: 100%; height: 42px; border: none; border-radius: 11px;
-    background: rgba(255, 255, 255, 0.07); color: #EDEAE2;
-    display: flex; align-items: center; justify-content: center; gap: 4px;
-  }
-  .fp-A { font-size: 16px; font-weight: 700; }
-  .fp-caret { font-size: 10px; opacity: 0.7; }
-  .fp-size-menu {
-    position: absolute; bottom: 50px; left: 0;
-    min-width: 150px;
-    background: rgba(20, 19, 17, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
-    display: none;
-  }
-  .fp-size-menu.open { display: block; }
-  .fp-size-menu button {
-    width: 100%; text-align: left;
-    padding: 11px 14px; background: transparent; border: none;
-    color: #EDEAE2; font-size: 14px; font-weight: 500;
-  }
-  .fp-size-menu button:active { background: rgba(255, 255, 255, 0.1); }
-  .fp-size-menu button.fp-active { color: var(--editor-accent); font-weight: 700; }
-  .fp-size-menu button + button { border-top: 1px solid rgba(255, 255, 255, 0.08); }
-
-  ul.list-dash { list-style: none; padding-left: 1.1em; }
-  ul.list-dash li::before { content: "– "; }
-
-  /* Background Picker Panel */
-  .bg-panel {
-    position: fixed;
-    left: 50%;
-    bottom: calc(var(--safe-bottom) + 78px);
-    transform: translateX(-50%) translateY(14px) scale(0.97);
-    background: rgba(26, 24, 21, 0.92);
-    backdrop-filter: blur(26px) saturate(1.3);
-    -webkit-backdrop-filter: blur(26px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 22px;
-    padding: 14px;
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.38);
-    z-index: 60;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .2s ease, transform .22s cubic-bezier(.22, .9, .32, 1);
-  }
-  .bg-panel.open {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(-50%) translateY(0) scale(1);
-  }
-  .bg-row { display: flex; gap: 12px; overflow-x: auto; padding: 2px; }
-  .bg-swatch {
-    flex: 0 0 auto; width: 52px; height: 52px; border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.14);
-    background: var(--paper);
-    display: flex; align-items: center; justify-content: center;
-    color: #EDEAE2; cursor: pointer;
-  }
-  .bg-swatch svg { width: 19px; height: 19px; }
-  .bg-swatch.selected {
-    border-color: var(--editor-accent);
-    box-shadow: 0 0 0 3px rgba(201, 147, 47, 0.28);
-  }
-  .bg-swatch-add { background: rgba(255, 255, 255, 0.08); }
-
-  /* Share Action Sheet */
-  .share-scrim {
-    position: fixed; inset: 0; background: rgba(20, 18, 15, 0.34);
-    z-index: 85; opacity: 0; pointer-events: none;
-    transition: opacity .18s ease;
-  }
-  .share-scrim.open { opacity: 1; pointer-events: auto; }
-  .share-panel {
-    position: fixed;
-    left: 50%;
-    bottom: calc(var(--safe-bottom) + 16px);
-    transform: translateX(-50%) translateY(16px);
-    width: min(92vw, 420px);
-    z-index: 90; opacity: 0; pointer-events: none;
-    transition: opacity .2s ease, transform .22s cubic-bezier(.22, .9, .32, 1);
-  }
-  .share-panel.open {
-    opacity: 1; pointer-events: auto;
-    transform: translateX(-50%) translateY(0);
-  }
-  .share-options {
-    background: rgba(28, 26, 23, 0.92);
-    backdrop-filter: blur(24px) saturate(1.3);
-    -webkit-backdrop-filter: blur(24px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
-    overflow: hidden; margin-bottom: 10px;
-    box-shadow: 0 16px 38px rgba(0, 0, 0, 0.34);
-  }
-  .share-options button {
-    display: block; width: 100%; padding: 15px;
-    background: transparent; border: none;
-    color: var(--editor-accent); font-size: 16px; font-weight: 600;
-    cursor: pointer;
-  }
-  .share-options button + button { border-top: 1px solid rgba(255, 255, 255, 0.1); }
-  .share-cancel {
-    display: block; width: 100%; padding: 15px;
-    background: rgba(28, 26, 23, 0.92);
-    backdrop-filter: blur(24px) saturate(1.3);
-    -webkit-backdrop-filter: blur(24px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 16px;
-    color: #F2EFE9; font-size: 16px; font-weight: 700;
-    cursor: pointer;
-  }
-
-  /* Row Context Menu */
-  .menu-scrim { position: fixed; inset: 0; z-index: 70; background: transparent; }
-  .row-menu {
-    position: fixed; z-index: 80;
-    background: rgba(32, 30, 27, 0.86);
-    backdrop-filter: blur(22px) saturate(1.3);
-    -webkit-backdrop-filter: blur(22px) saturate(1.3);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 14px; overflow: hidden;
-    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32);
-    animation: menuPop .16s cubic-bezier(.2, .9, .3, 1);
-  }
-  @keyframes menuPop {
-    from { opacity: 0; transform: scale(0.92); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .row-menu button {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 13px 16px;
-    background: transparent; border: none;
-    color: #F2EFE9; font-size: 15px; font-weight: 500;
-    cursor: pointer;
-  }
-  .row-menu button:active { background: rgba(255, 255, 255, 0.1); }
-  .row-menu button + button { border-top: 1px solid rgba(255, 255, 255, 0.1); }
-  .row-menu button.danger { color: #FF7A6E; }
-  .row-menu svg { width: 17px; height: 17px; flex-shrink: 0; }
+  .editor-modal.open { transform: translateY(0); }
+  .editor-frame { width: 100%; height: 100%; border: none; }
 </style>
 </head>
 <body>
 
-  <!-- ================= 1. HALAMAN UTAMA / VIEWER ================= -->
 <div class="screen-container">
 
   <!-- Top Floating Header -->
@@ -1179,8 +845,11 @@
   <!-- Main Scrollable Feed -->
   <main class="content-scroll">
     <div id="notesSection">
-      <h1 class="page-title" id="currentFolderTitle">Dashboard admin</h1>
-      <p class="section-label">Previous 7 Days</p>
+      <!-- Title Kategori Dinamis -->
+      <h1 class="page-title" id="currentCategoryTitle">PILIH KATEGORI</h1>
+      <p class="section-label" id="currentCategorySubtitle">Previous 7 Days</p>
+
+      <!-- Supabase Data Feed Container -->
       <div class="notes-container view-grid" id="notesList"></div>
     </div>
 
@@ -1188,28 +857,22 @@
     <div class="tasks-container" id="tasksSection">
       <h1 class="page-title">Tasks</h1>
       <p class="section-label">To be Completed</p>
-      <div class="task-item">
-        <div class="task-check"></div>
-        <div class="task-info">
-          <h4>Kamis ada pr b indo</h4>
-          <p>Wed, Nov 5, 2026 06:05 PM Once</p>
-        </div>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+        <p>belum ada tasks</p>
       </div>
     </div>
   </main>
 
-  <!-- Bottom Bar: Search + Icon Pensil (Add Note) -->
+  <!-- Bottom Full-Width Search Bar -->
   <div class="bottom-bar">
     <div class="search-pill" id="btnSearchOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span>Search</span>
     </div>
-    <button class="fab-add-note" id="btnAddNewNote" aria-label="Buka Editor Data">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 20h9"/>
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-      </svg>
-    </button>
   </div>
 
 </div>
@@ -1219,86 +882,82 @@
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
     <h3>Folders</h3>
-    <button class="new-link" id="btnOpenNewFolderModal">NEW</button>
+    <button class="btn-create-category" id="btnCreateCategory">Create Kategori</button>
   </div>
   
-  <div class="folder-list" id="customFolderList">
-    <div class="folder-item" data-folder-id="all" data-folder-name="All">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        <span>All</span>
-      </div>
-      <span class="folder-count" id="count-all">1 &rsaquo;</span>
-    </div>
-    <div class="folder-item" data-folder-id="uncategorized" data-folder-name="Uncategorized">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        <span>Uncategorized</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-    <div class="folder-item" data-folder-id="locked" data-folder-name="Locked">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Locked</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-    <div class="folder-item" data-folder-id="deleted" data-folder-name="Recently Deleted">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        <span>Recently Deleted</span>
-      </div>
-      <span class="folder-count">0 &rsaquo;</span>
-    </div>
-  </div>
+  <!-- Dynamic Category List from Supabase -->
+  <div class="folder-list" id="categoryFolderList"></div>
 
   <div class="drawer-footer">
-    <button class="drawer-foot-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-      Mode Admin
+    <button class="drawer-foot-btn" id="btnAdminFooter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+      Admin
     </button>
     <button class="drawer-foot-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
       User Feedback
     </button>
-    <button class="drawer-foot-btn">
+    <button class="drawer-foot-btn" id="btnOpenSettings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Settings
     </button>
   </div>
 </aside>
 
-<!-- New Folder Bottom Sheet Modal -->
-<div class="modal-sheet-overlay" id="newFolderModal">
-  <div class="modal-sheet">
-    <div class="drag-handle"></div>
-    <div class="modal-title">New Folder</div>
-    
-    <div class="cover-preview" id="folderPreviewCover">
-      <span>NOTES</span>
+<!-- Settings Screen Overlay -->
+<div class="settings-screen" id="settingsScreen">
+  <div class="settings-header">
+    <button class="settings-back-btn" id="btnSettingsBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <h2>Settings</h2>
+  </div>
+
+  <div class="settings-group">
+    <div class="settings-item" id="settingThemeToggle">
+      <span class="settings-item-title">Dark Theme</span>
+      <label class="switch">
+        <input type="checkbox" id="themeCheckbox" checked>
+        <span class="slider"></span>
+      </label>
     </div>
 
-    <div class="color-palette-tabs">
-      <span class="active">Solid Color</span>
-      <span>Gradation</span>
-      <span>Graphics</span>
-      <span>Culture</span>
+    <div class="settings-item">
+      <span class="settings-item-title">Haptic Feedback</span>
+      <label class="switch">
+        <input type="checkbox" id="hapticCheckbox" checked>
+        <span class="slider"></span>
+      </label>
     </div>
 
-    <div class="color-options-row">
-      <div class="color-circle selected" style="background:#F0A529;" data-color="#F0A529">NOTES</div>
-      <div class="color-circle" style="background:#EBE7DF;" data-color="#EBE7DF">NOTES</div>
-      <div class="color-circle" style="background:#D4C3B3;" data-color="#D4C3B3">NOTES</div>
-      <div class="color-circle" style="background:#3C4048;" data-color="#3C4048">NOTES</div>
-      <div class="color-circle" style="background:#B84A39;" data-color="#B84A39">NOTES</div>
+    <div class="settings-item">
+      <span class="settings-item-title">Sync to Cloud Database</span>
+      <div class="settings-item-right">
+        <span>Active</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
     </div>
+  </div>
 
-    <div class="folder-input-box">
-      <input type="text" id="inputFolderName" placeholder="Unnamed Folder" autocomplete="off">
+  <div class="settings-group">
+    <div class="settings-item">
+      <span class="settings-item-title">User Agreement</span>
+      <div class="settings-item-right">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
     </div>
-
-    <button class="btn-complete-folder" id="btnSaveNewFolder">Completed</button>
+    <div class="settings-item">
+      <span class="settings-item-title">Privacy Policy</span>
+      <div class="settings-item-right">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1313,339 +972,137 @@
       <input type="text" placeholder="Search">
     </div>
   </div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <span style="font-size:13px; color:var(--text-secondary); font-weight:600;">Search History</span>
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text-secondary);"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+  </div>
+  <div class="chips-container">
+    <div class="chip">nap</div>
+    <div class="chip">bobok krengkes</div>
+    <div class="chip">bubut piston</div>
+    <div class="chip">bor intek</div>
+  </div>
 </div>
 
-<!-- ================= 2. EDITOR DATA ADMINISTRATOR (INLINE MODAL) ================= -->
-<div class="editor-view-container" id="editorContainer">
-
-  <!-- TOP BAR: Normal View Mode -->
-  <div class="topbar" id="topbarNormal">
-    <div class="glass-pill-editor">
-      <button class="editor-icon-btn" id="btnEditorBack" aria-label="Kembali">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-    </div>
-    <div class="glass-pill-editor">
-      <button class="editor-icon-btn" id="btnShare" aria-label="Bagikan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>
-      </button>
-      <button class="editor-icon-btn" id="btnBackground" aria-label="Latar belakang">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4 4.5 7v3.5H7.5V19.5H16.5V10.5H19.5V7L15.5 4 13 6H11L8.5 4Z"></path></svg>
-      </button>
-      <button class="editor-icon-btn" id="btnMore" aria-label="Lainnya">
-        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- TOP BAR: Edit Mode -->
-  <div class="topbar" id="topbarEdit" style="display:none;">
-    <div class="glass-pill-editor">
-      <button class="editor-icon-btn" id="btnEditBack" aria-label="Kembali">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-    </div>
-    <div class="glass-pill-editor">
-      <button class="editor-icon-btn" id="btnUndo" aria-label="Undo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h11a5 5 0 0 1 0 10h-1"></path></svg>
-      </button>
-      <button class="editor-icon-btn" id="btnRedo" aria-label="Redo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"></path><path d="M20 12H9a5 5 0 0 0 0 10h1"></path></svg>
-      </button>
-      <button class="editor-icon-btn" id="btnEditMore" aria-label="Lainnya">
-        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
-      </button>
-      <button class="editor-icon-btn" id="btnDone" aria-label="Selesai">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6"></polyline></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- WORKSPACE CANVAS TABLE -->
-  <div class="editor-workspace" id="editorWorkspace">
-    <div class="editor-canvas" id="editorCanvas">
-      <div class="title-block">
-        <h1 id="noteTitle" contenteditable="true">Dashboard admin</h1>
-      </div>
-
-      <div class="table-scroll">
-        <table id="notesTable">
-          <thead>
-            <tr>
-              <th class="col-no">No</th>
-              <th class="col-tanggal">Tanggal</th>
-              <th class="col-jam">Jam</th>
-              <th>PJ</th>
-              <th>Customer</th>
-              <th>Barang</th>
-              <th>Barang Keluar</th>
-              <th>Stok Barang</th>
-              <th class="col-ket">Keterangan</th>
-              <th class="col-harga">Harga</th>
-              <th style="min-width:36px;"></th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="zoom-indicator" id="zoomIndicator">100%</div>
-  </div>
-
-  <!-- BOTTOM BAR (Aa & Actions) -->
-  <div class="editor-bottombar">
-    <div class="glass-pill-editor">
-      <button class="toolbtn" id="btnAa" aria-label="Format teks">
-        <span class="aa-label">Aa</span>
-      </button>
-      <button class="toolbtn stub" aria-label="Kamera">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3.4"></circle></svg>
-      </button>
-      <button class="toolbtn stub" aria-label="Gambar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1.5-.8-2.2-1.5-3"></path><path d="M9 21c0-3 1.5-5 3-5s3 2 3 5"></path></svg>
-      </button>
-      <button class="toolbtn stub" aria-label="Checklist">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="8 12.5 10.8 15 16 9"></polyline></svg>
-      </button>
-      <button class="toolbtn stub" aria-label="Tabel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"></rect><line x1="3.5" y1="10.5" x2="20.5" y2="10.5"></line><line x1="3.5" y1="15.5" x2="20.5" y2="15.5"></line><line x1="10.5" y1="3.5" x2="10.5" y2="20.5"></line></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- Aa Formatting Floating Panel -->
-  <div class="format-panel" id="formatPanel">
-    <div class="fp-row fp-styles">
-      <button data-style="h1">H1</button>
-      <button data-style="h2">H2</button>
-      <button data-style="h3">H3</button>
-      <button data-style="h4">H4</button>
-      <button data-style="body" class="fp-active">Body</button>
-    </div>
-
-    <div class="fp-row">
-      <button data-cmd="bold" aria-label="Bold"><b>B</b></button>
-      <button data-cmd="italic" aria-label="Italic"><i>I</i></button>
-      <button data-cmd="underline" aria-label="Underline"><u>U</u></button>
-      <button data-cmd="strikeThrough" aria-label="Strikethrough"><s>S</s></button>
-      <button data-indent="in" aria-label="Indent">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line><polyline points="3 9 6.5 12 3 15"></polyline></svg>
-      </button>
-      <button data-indent="out" aria-label="Outdent">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line><polyline points="6.5 9 3 12 6.5 15"></polyline></svg>
-      </button>
-    </div>
-
-    <div class="fp-row">
-      <button data-list="ordered" aria-label="Numbered list">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><text x="2" y="8" font-size="7" fill="currentColor" stroke="none">1</text><text x="2" y="14" font-size="7" fill="currentColor" stroke="none">2</text><text x="2" y="20" font-size="7" fill="currentColor" stroke="none">3</text></svg>
-      </button>
-      <button data-list="bullet" aria-label="Bullet list">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="4.5" cy="6" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="4.5" cy="12" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="4.5" cy="18" r="1.4" fill="currentColor" stroke="none"></circle><line x1="9" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="9" y1="18" x2="21" y2="18"></line></svg>
-      </button>
-      <button data-list="dash" aria-label="Dash list">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3.5" y1="6" x2="6.5" y2="6"></line><line x1="3.5" y1="12" x2="6.5" y2="12"></line><line x1="3.5" y1="18" x2="6.5" y2="18"></line><line x1="9" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="9" y1="18" x2="21" y2="18"></line></svg>
-      </button>
-      <button data-align="left" class="fp-active" aria-label="Align left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="15" y2="12"></line><line x1="3" y1="18" x2="18" y2="18"></line></svg>
-      </button>
-      <button data-align="center" aria-label="Align center">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="6" y1="12" x2="18" y2="12"></line><line x1="4.5" y1="18" x2="19.5" y2="18"></line></svg>
-      </button>
-      <button data-align="right" aria-label="Align right">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="6" y1="18" x2="21" y2="18"></line></svg>
-      </button>
-    </div>
-
-    <div class="fp-row">
-      <div class="fp-fontsize">
-        <button id="fontSizeBtn"><span class="fp-A">A</span><span class="fp-caret">▾</span></button>
-        <div class="fp-size-menu" id="fontSizeMenu">
-          <button data-size="12">Small</button>
-          <button data-size="13.5" class="fp-active">Regular</button>
-          <button data-size="16">Large</button>
-          <button data-size="19">Extra Large</button>
-        </div>
-      </div>
-      <button data-spacing="1.15" aria-label="Line spacing tight">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="7" x2="20" y2="7"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="17" x2="20" y2="17"></line></svg>
-      </button>
-      <button data-spacing="1.45" class="fp-active" aria-label="Line spacing normal">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="5.5" x2="20" y2="5.5"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="18.5" x2="20" y2="18.5"></line></svg>
-      </button>
-      <button data-spacing="1.8" aria-label="Line spacing loose">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="20" x2="20" y2="20"></line></svg>
-      </button>
-    </div>
-  </div>
-
-  <!-- Background Picker Panel -->
-  <div class="bg-panel" id="bgPanel">
-    <div class="bg-row">
-      <button class="bg-swatch selected" data-bg="none" aria-label="Tanpa latar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><line x1="6" y1="18" x2="18" y2="6"></line></svg>
-      </button>
-      <button class="bg-swatch" data-bg="gradient" aria-label="Gradient"></button>
-      <button class="bg-swatch" data-bg="cream" aria-label="Cream"></button>
-      <button class="bg-swatch" data-bg="lined" aria-label="Kertas bergaris"></button>
-      <button class="bg-swatch" data-bg="grid" aria-label="Kertas grid"></button>
-      <button class="bg-swatch bg-swatch-add" id="bgAddBtn" aria-label="Pilih dari galeri">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-      </button>
-    </div>
-    <input type="file" id="bgFileInput" accept="image/*" style="display:none">
-  </div>
-
-  <!-- Share Action Sheet -->
-  <div class="share-scrim" id="shareScrim"></div>
-  <div class="share-panel" id="sharePanel">
-    <div class="share-options">
-      <button data-share="text">Share as Text</button>
-      <button data-share="image">Share as Image</button>
-      <button data-share="pdf">Share as PDF</button>
-    </div>
-    <button class="share-cancel" id="shareCancelBtn">Cancel</button>
-  </div>
-
+<!-- Modal Container for Editor Viewer -->
+<div class="editor-modal" id="editorModal">
+  <iframe id="editorFrame" class="editor-frame" src="editor-data-administrator.html"></iframe>
 </div>
 
 <script>
-  /* =========================================================
-     A. APP VIEWER DATA & LOGIC (Folders, Switcher, Notes List)
-     ========================================================= */
-  let activeFolderId = 'folder_dashboard_admin';
-  let foldersData = [
-    { id: 'folder_dashboard_admin', name: 'Dashboard admin', color: '#F0A529' }
-  ];
-  let notesData = [
-    { id: 'note_1', folder_id: 'folder_dashboard_admin', title: 'dashboard', preview: 'tes', date_tag: 'Now' }
-  ];
-  let selectedCoverColor = '#F0A529';
+  // --- Supabase Data Stores (Kosong secara default) ---
+  let categoriesData = []; // Daftar folder kategori dari database
+  let notesData = [];      // Daftar tabel/catatan di dalam kategori aktif
 
-  function renderFoldersList() {
-    const listContainer = document.getElementById('customFolderList');
-    const dynamicItems = listContainer.querySelectorAll('.custom-folder');
-    dynamicItems.forEach(item => item.remove());
-
-    foldersData.forEach(folder => {
-      const folderItem = document.createElement('div');
-      folderItem.className = `folder-item custom-folder ${activeFolderId === folder.id ? 'active' : ''}`;
-      folderItem.dataset.folderId = folder.id;
-      folderItem.dataset.folderName = folder.name;
-      
-      const count = notesData.filter(n => n.folder_id === folder.id).length;
-
-      folderItem.innerHTML = `
-        <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="currentColor" style="color: ${folder.color || 'var(--accent-yellow)'}">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  // Render Kategori di Drawer
+  function renderCategories() {
+    const container = document.getElementById('categoryFolderList');
+    
+    if (!categoriesData || categoriesData.length === 0) {
+      container.innerHTML = `
+        <div class="drawer-empty-category">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
-          <span>${folder.name}</span>
+          <p>Belum ada kategori</p>
         </div>
-        <span class="folder-count">${count} &rsaquo;</span>
+        <div class="folder-item admin-item" id="btnAdminFolder">
+          <div class="folder-item-left">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M12 8v4"/>
+              <path d="M12 16h.01"/>
+            </svg>
+            <span>Mode Admin</span>
+          </div>
+          <span class="admin-badge">Admin</span>
+        </div>
       `;
+      document.getElementById('btnAdminFolder').addEventListener('click', handleAdminAccess);
+      return;
+    }
 
-      folderItem.addEventListener('click', () => switchFolder(folder.id, folder.name));
-      listContainer.appendChild(folderItem);
+    container.innerHTML = categoriesData.map(cat => `
+      <div class="folder-item ${cat.active ? 'active' : ''}" data-cat-id="${cat.id}">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>${cat.name}</span>
+        </div>
+        <span class="folder-count">${cat.count || 0} &rsaquo;</span>
+      </div>
+    `).join('') + `
+      <div class="folder-item admin-item" id="btnAdminFolder">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M12 8v4"/>
+            <path d="M12 16h.01"/>
+          </svg>
+          <span>Mode Admin</span>
+        </div>
+        <span class="admin-badge">Admin</span>
+      </div>
+    `;
+
+    container.querySelectorAll('.folder-item[data-cat-id]').forEach(item => {
+      item.addEventListener('click', () => {
+        selectCategory(item.dataset.catId);
+      });
     });
 
-    document.getElementById('count-all').innerHTML = `${notesData.length} &rsaquo;`;
+    document.getElementById('btnAdminFolder').addEventListener('click', handleAdminAccess);
   }
 
-  function switchFolder(id, name) {
-    activeFolderId = id;
-    document.getElementById('currentFolderTitle').textContent = name;
+  function selectCategory(catId) {
+    const selected = categoriesData.find(c => c.id === catId);
+    if (!selected) return;
     
-    document.querySelectorAll('.folder-item').forEach(item => {
-      if (item.dataset.folderId === id) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
-
+    categoriesData.forEach(c => c.active = (c.id === catId));
+    document.getElementById('currentCategoryTitle').innerText = selected.name;
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
-
-    renderNotes();
+    renderCategories();
+    // fetchNotesByCategory(catId);
   }
 
+  // Render Catatan / Tabel
   function renderNotes() {
     const container = document.getElementById('notesList');
-    const filteredNotes = activeFolderId === 'all' 
-      ? notesData 
-      : notesData.filter(n => n.folder_id === activeFolderId);
-
-    if (filteredNotes.length === 0) {
+    
+    if (!notesData || notesData.length === 0) {
       container.style.display = 'block';
       container.innerHTML = `
         <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
           </svg>
-          <p>No notes</p>
+          <p>belum ada data</p>
         </div>
       `;
       return;
     }
 
     container.style.display = 'grid';
-    container.innerHTML = filteredNotes.map(note => `
-      <div class="note-card" data-id="${note.id}">
-        <div>
+    container.innerHTML = notesData.map((note, idx) => `
+      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+        <div class="note-content-layer">
           <h2 class="note-title">${note.title || 'Untitled'}</h2>
           <p class="note-desc">${note.preview || ''}</p>
         </div>
-        <span class="note-date-tag">${note.date_tag || 'Now'}</span>
+        <span class="note-date-tag">${note.date_tag || 'Recent'}</span>
       </div>
     `).join('');
 
     container.querySelectorAll('.note-card').forEach(card => {
-      card.addEventListener('click', () => openEditor());
+      card.addEventListener('click', () => {
+        openEditor(card.dataset.id);
+      });
     });
   }
-
-  // --- New Folder Modal Logic ---
-  const btnOpenNewFolderModal = document.getElementById('btnOpenNewFolderModal');
-  const newFolderModal = document.getElementById('newFolderModal');
-  const btnSaveNewFolder = document.getElementById('btnSaveNewFolder');
-  const inputFolderName = document.getElementById('inputFolderName');
-  const folderPreviewCover = document.getElementById('folderPreviewCover');
-  const colorCircles = document.querySelectorAll('.color-circle');
-
-  btnOpenNewFolderModal.addEventListener('click', (e) => {
-    e.preventDefault();
-    inputFolderName.value = '';
-    newFolderModal.classList.add('open');
-    inputFolderName.focus();
-  });
-
-  newFolderModal.addEventListener('click', (e) => {
-    if (e.target === newFolderModal) newFolderModal.classList.remove('open');
-  });
-
-  colorCircles.forEach(circle => {
-    circle.addEventListener('click', () => {
-      colorCircles.forEach(c => c.classList.remove('selected'));
-      circle.classList.add('selected');
-      selectedCoverColor = circle.dataset.color;
-      folderPreviewCover.style.background = selectedCoverColor;
-    });
-  });
-
-  btnSaveNewFolder.addEventListener('click', () => {
-    const name = inputFolderName.value.trim() || 'Unnamed Folder';
-    const newFolderId = 'folder_' + Date.now();
-    foldersData.push({ id: newFolderId, name: name, color: selectedCoverColor });
-    renderFoldersList();
-    newFolderModal.classList.remove('open');
-    switchFolder(newFolderId, name);
-  });
-
-  document.querySelectorAll('.folder-item:not(.custom-folder)').forEach(item => {
-    item.addEventListener('click', () => switchFolder(item.dataset.folderId, item.dataset.folderName));
-  });
 
   // --- View Mode Selector ---
   const btnToggleViewMenu = document.getElementById('btnToggleViewMenu');
@@ -1657,19 +1114,21 @@
     e.stopPropagation();
     viewPopup.classList.toggle('open');
   });
+
   document.addEventListener('click', () => viewPopup.classList.remove('open'));
 
   viewOptions.forEach(btn => {
     btn.addEventListener('click', () => {
       viewOptions.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      notesList.className = 'notes-container ' + btn.dataset.view;
+      const viewMode = btn.dataset.view;
+      notesList.className = 'notes-container ' + viewMode;
       viewPopup.classList.remove('open');
       renderNotes();
     });
   });
 
-  // --- Tabs & Drawer ---
+  // --- Tab Switcher (Notes vs Tasks) ---
   const tabNotes = document.getElementById('tabNotes');
   const tabTasks = document.getElementById('tabTasks');
   const notesSection = document.getElementById('notesSection');
@@ -1689,6 +1148,7 @@
     tasksSection.style.display = 'block';
   });
 
+  // --- Drawer Folder Navigation ---
   const btnOpenDrawer = document.getElementById('btnOpenDrawer');
   const drawer = document.getElementById('drawer');
   const drawerOverlay = document.getElementById('drawerOverlay');
@@ -1697,11 +1157,37 @@
     drawer.classList.add('open');
     drawerOverlay.classList.add('open');
   });
+
   drawerOverlay.addEventListener('click', () => {
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
   });
 
+  // --- Settings Screen Navigation ---
+  const btnOpenSettings = document.getElementById('btnOpenSettings');
+  const settingsScreen = document.getElementById('settingsScreen');
+  const btnSettingsBack = document.getElementById('btnSettingsBack');
+  const themeCheckbox = document.getElementById('themeCheckbox');
+
+  btnOpenSettings.addEventListener('click', () => {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    settingsScreen.classList.add('open');
+  });
+
+  btnSettingsBack.addEventListener('click', () => {
+    settingsScreen.classList.remove('open');
+  });
+
+  themeCheckbox.addEventListener('change', (e) => {
+    if (!e.target.checked) {
+      document.body.classList.add('theme-light');
+    } else {
+      document.body.classList.remove('theme-light');
+    }
+  });
+
+  // --- Search Overlay ---
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
   const btnSearchBack = document.getElementById('btnSearchBack');
@@ -1709,664 +1195,32 @@
   btnSearchOpen.addEventListener('click', () => searchOverlay.classList.add('open'));
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
-/* =========================================================
-     B. INLINE EDITOR CONTROLLER & ACTIONS
-     ========================================================= */
-  const editorContainer = document.getElementById('editorContainer');
-  const btnAddNewNote = document.getElementById('btnAddNewNote');
-  const btnEditorBack = document.getElementById('btnEditorBack');
-
-  function openEditor() {
-    editorContainer.classList.add('open');
-    setTimeout(() => fitToScreen(false), 50);
+  // --- Admin Triggers ---
+  function handleAdminAccess() {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    openEditor();
   }
 
-  function closeEditor() {
-    editorContainer.classList.remove('open');
-    exitEditMode();
+  document.getElementById('btnAdminFooter').addEventListener('click', handleAdminAccess);
+  document.getElementById('btnCreateCategory').addEventListener('click', handleAdminAccess);
+
+  // --- Open & Close Editor Modal ---
+  const editorModal = document.getElementById('editorModal');
+
+  function openEditor(noteId = null) {
+    editorModal.classList.add('open');
   }
 
-  // Klik icon pensil langsung membuka editor administrator
-  btnAddNewNote.addEventListener('click', openEditor);
-  btnEditorBack.addEventListener('click', closeEditor);
-
-  // ---------- Editor Table Data ----------
-  let rows = [
-    { tanggal:"25/08/26", hari:"Selasa", no:1, jam:"08:15", pj:"Yono", customer:"Ujang", barang:"Krengkes", keluar:"B&J", stok:"--------", ket:"Senai baut posstep", harga:"70.000" },
-    { tanggal:"", hari:"", no:2, jam:"08:41", pj:"Kuswanto", customer:"PT TBU", barang:"Nap forclip", keluar:"B&J", stok:"--------", ket:"Bubut (ready)", harga:"250.000" },
-    { tanggal:"", hari:"", no:3, jam:"09:03", pj:"Yono", customer:"Nur", barang:"Head vega ZR", keluar:"--------", stok:"--------", ket:"Ganti setingan 2x, ganti botolan (barang belum selesai)", harga:"105.000" },
-    { tanggal:"", hari:"", no:4, jam:"09:30", pj:"Kus", customer:"Iklan", barang:"Gear motor", keluar:"--------", stok:"--------", ket:"Las gear", harga:"30.000" },
-    { tanggal:"", hari:"", no:5, jam:"10:12", pj:"Yono", customer:"Yudi", barang:"Askruk blade, stang blade, set klaher", keluar:"--------", stok:"--------", ket:"Masang stang seher + beli klaher 6304", harga:"80.000" },
-    { tanggal:"", hari:"", no:6, jam:"11:05", pj:"Yono", customer:"Saryoto", barang:"Krengkes, askruk", keluar:"--------", stok:"--------", ket:"Masang stang, cor + senai baut oli", harga:"85.000" },
-    { tanggal:"", hari:"", no:7, jam:"12:47", pj:"Yono", customer:"Dodi", barang:"Blok grand", keluar:"--------", stok:"--------", ket:"Lemer", harga:"180.000" },
-    { tanggal:"", hari:"", no:8, jam:"13:20", pj:"-", customer:"Henki", barang:"Head", keluar:"--------", stok:"--------", ket:"Bubut", harga:"170.000" },
-  ];
-
-  function renderRows(){
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = rows.map(r => `
-      <tr>
-        <td class="col-no" contenteditable="true" data-field="no">${r.no}</td>
-        <td class="col-tanggal">
-          <span class="tgl" contenteditable="true" data-field="tanggal" data-placeholder="tgl">${r.tanggal}</span><span class="hari" contenteditable="true" data-field="hari" data-placeholder="hari">${r.hari}</span>
-        </td>
-        <td class="col-jam" contenteditable="true" data-field="jam">${r.jam}</td>
-        <td contenteditable="true" data-field="pj">${r.pj}</td>
-        <td contenteditable="true" data-field="customer">${r.customer}</td>
-        <td contenteditable="true" data-field="barang">${r.barang}</td>
-        <td contenteditable="true" data-field="keluar">${r.keluar}</td>
-        <td contenteditable="true" data-field="stok">${r.stok}</td>
-        <td class="col-ket" contenteditable="true" data-field="ket">${r.ket}</td>
-        <td class="col-harga" contenteditable="true" data-field="harga">${r.harga}</td>
-        <td class="row-handle">
-          <button class="row-menu-btn" aria-label="Menu baris">
-            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
-          </button>
-        </td>
-      </tr>
-    `).join('');
-    bindRowEvents();
-  }
-
-  function rowIndexOf(el){
-    const tr = el.closest('tr');
-    return [...document.getElementById('tableBody').children].indexOf(tr);
-  }
-
-  function bindRowEvents(){
-    const tb = document.getElementById('tableBody');
-    tb.querySelectorAll('[data-field]').forEach(el => {
-      el.addEventListener('input', () => {
-        const idx = rowIndexOf(el);
-        if (idx < 0) return;
-        const pre = snapshot();
-        rows[idx][el.dataset.field] = el.innerText;
-        const post = snapshot();
-        if (post !== pre) pushHistory(pre);
-      });
-    });
-    tb.querySelectorAll('.row-menu-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openRowMenu(e.currentTarget, rowIndexOf(e.currentTarget));
-      });
-    });
-  }
-
-  function nowTime(){
-    const d = new Date();
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-  }
-
-  function renumber(){
-    rows.forEach((r,i) => { r.no = i + 1; });
-  }
-
-  // --- Undo / Redo ---
-  let historyStack = [];
-  let redoStack = [];
-  let noteTitle = document.getElementById('noteTitle').innerText;
-
-  function snapshot(){
-    return JSON.stringify({ rows, noteTitle });
-  }
-
-  function pushHistory(preSnapshot){
-    historyStack.push(preSnapshot);
-    if (historyStack.length > 200) historyStack.shift();
-    redoStack = [];
-    updateUndoRedoUI();
-  }
-
-  function updateUndoRedoUI(){
-    const undoBtn = document.getElementById('btnUndo');
-    const redoBtn = document.getElementById('btnRedo');
-    undoBtn.classList.toggle('disabled', historyStack.length === 0);
-    redoBtn.classList.toggle('disabled', redoStack.length === 0);
-  }
-
-  function restoreState(state){
-    rows = state.rows;
-    noteTitle = state.noteTitle;
-    renderRows();
-    document.getElementById('noteTitle').innerText = noteTitle;
-  }
-
-  function undo(){
-    if (!historyStack.length) return;
-    redoStack.push(snapshot());
-    restoreState(JSON.parse(historyStack.pop()));
-    updateUndoRedoUI();
-  }
-
-  function redo(){
-    if (!redoStack.length) return;
-    historyStack.push(snapshot());
-    restoreState(JSON.parse(redoStack.pop()));
-    updateUndoRedoUI();
-  }
-
-  function addRowAfter(index){
-    const pre = snapshot();
-    rows.splice(index + 1, 0, {
-      tanggal:'', hari:'', no:0, jam:nowTime(),
-      pj:'', customer:'', barang:'', keluar:'--------', stok:'--------', ket:'', harga:''
-    });
-    renumber();
-    pushHistory(pre);
-    renderRows();
-  }
-
-  function deleteRow(index){
-    const pre = snapshot();
-    rows.splice(index, 1);
-    renumber();
-    pushHistory(pre);
-    renderRows();
-  }
-
-  function closeRowMenu(){
-    document.querySelectorAll('.row-menu, .menu-scrim').forEach(el => el.remove());
-  }
-
-  function openRowMenu(btn, rowIndex){
-    closeRowMenu();
-    const scrim = document.createElement('div');
-    scrim.className = 'menu-scrim';
-    const menu = document.createElement('div');
-    menu.className = 'row-menu';
-    menu.innerHTML = `
-      <button data-action="add">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="4.5" rx="1.2"></rect><rect x="3" y="14.5" width="18" height="4.5" rx="1.2"></rect><line x1="12" y1="9.5" x2="12" y2="14.5"></line></svg>
-        Add Row
-      </button>
-      <button data-action="delete" class="danger">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path></svg>
-        Delete Row
-      </button>
-    `;
-    document.body.appendChild(scrim);
-    document.body.appendChild(menu);
-
-    const r = btn.getBoundingClientRect();
-    const menuW = 190;
-    let left = r.right - menuW;
-    let top = r.bottom + 6;
-    if (left < 8) left = 8;
-    if (left + menuW > window.innerWidth - 8) left = window.innerWidth - 8 - menuW;
-    if (top + 100 > window.innerHeight - 8) top = r.top - 106;
-    menu.style.left = left + 'px';
-    menu.style.top = top + 'px';
-    menu.style.width = menuW + 'px';
-
-    scrim.addEventListener('pointerdown', closeRowMenu);
-    menu.querySelector('[data-action="add"]').addEventListener('click', () => { addRowAfter(rowIndex); closeRowMenu(); });
-    menu.querySelector('[data-action="delete"]').addEventListener('click', () => { deleteRow(rowIndex); closeRowMenu(); });
-  }
-
-  // --- Editor Normal ↔ Edit Mode ---
-  const topbarNormal = document.getElementById('topbarNormal');
-  const topbarEdit = document.getElementById('topbarEdit');
-  let lastActiveCell = null;
-
-  function enterEditMode(){
-    if (topbarEdit.style.display === 'flex') return;
-    topbarNormal.style.display = 'none';
-    topbarEdit.style.display = 'flex';
-    closeBgPanel();
-    closeSharePanel();
-  }
-  function exitEditMode(){
-    if (lastActiveCell) lastActiveCell.removeAttribute('inputmode');
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    closeRowMenu();
-    closeFormatPanel(false);
-    topbarEdit.style.display = 'none';
-    topbarNormal.style.display = 'flex';
-  }
-
-  document.getElementById('btnEditBack').addEventListener('click', exitEditMode);
-  document.getElementById('btnDone').addEventListener('click', exitEditMode);
-  document.getElementById('btnUndo').addEventListener('click', undo);
-  document.getElementById('btnRedo').addEventListener('click', redo);
-
-  const tableBodyEl = document.getElementById('tableBody');
-  tableBodyEl.addEventListener('focusin', (e) => {
-    if (!e.target.matches('[contenteditable="true"]')) return;
-    enterEditMode();
-    lastActiveCell = e.target;
-  });
-
-  const noteTitleEl = document.getElementById('noteTitle');
-  noteTitleEl.addEventListener('focusin', () => {
-    enterEditMode();
-    lastActiveCell = noteTitleEl;
-  });
-  noteTitleEl.addEventListener('input', () => {
-    const pre = snapshot();
-    noteTitle = noteTitleEl.innerText;
-    pushHistory(pre);
-  });
-
-  // --- Aa Formatting Panel ---
-  const formatPanel = document.getElementById('formatPanel');
-  const btnAa = document.getElementById('btnAa');
-  const fontSizeBtn = document.getElementById('fontSizeBtn');
-  const fontSizeMenu = document.getElementById('fontSizeMenu');
-
-  function setKeyboardSuppressed(cell, suppressed){
-    if (!cell || !document.body.contains(cell)) return;
-    const isSuppressed = cell.getAttribute('inputmode') === 'none';
-    if (suppressed === isSuppressed) return;
-    const sel = window.getSelection();
-    const range = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
-    if (suppressed) cell.setAttribute('inputmode', 'none');
-    else cell.removeAttribute('inputmode');
-    cell.blur();
-    cell.focus({ preventScroll: true });
-    if (range) { sel.removeAllRanges(); sel.addRange(range); }
-  }
-
-  function openFormatPanel(){
-    formatPanel.classList.add('open');
-    btnAa.classList.add('active-tool');
-    setKeyboardSuppressed(lastActiveCell, true);
-  }
-  function closeFormatPanel(restoreKeyboard){
-    formatPanel.classList.remove('open');
-    fontSizeMenu.classList.remove('open');
-    btnAa.classList.remove('active-tool');
-    if (restoreKeyboard !== false) setKeyboardSuppressed(lastActiveCell, false);
-  }
-
-  btnAa.addEventListener('mousedown', (e) => e.preventDefault());
-  btnAa.addEventListener('click', () => {
-    if (formatPanel.classList.contains('open')) closeFormatPanel();
-    else openFormatPanel();
-  });
-
-  formatPanel.addEventListener('mousedown', (e) => {
-    if (e.target.closest('button')) e.preventDefault();
-  });
-
-  function setActiveInGroup(buttons, activeBtn){
-    buttons.forEach(b => b.classList.remove('fp-active'));
-    if (activeBtn) activeBtn.classList.add('fp-active');
-  }
-
-  const styleButtons = [...formatPanel.querySelectorAll('.fp-styles button')];
-  const STYLE_MAP = {
-    h1:{ size:'22px', weight:'800' },
-    h2:{ size:'19px', weight:'750' },
-    h3:{ size:'17px', weight:'700' },
-    h4:{ size:'15px', weight:'650' },
-    body:{ size:'13.5px', weight:'400' }
-  };
-  styleButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cell = lastActiveCell;
-      if (!cell) return;
-      const s = STYLE_MAP[btn.dataset.style];
-      cell.style.fontSize = s.size;
-      cell.style.fontWeight = s.weight;
-      setActiveInGroup(styleButtons, btn);
-    });
-  });
-
-  const cmdButtons = [...formatPanel.querySelectorAll('[data-cmd]')];
-  cmdButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.execCommand(btn.dataset.cmd);
-      updateInlineStates();
-    });
-  });
-
-  function updateInlineStates(){
-    cmdButtons.forEach(btn => {
-      let active = false;
-      try { active = document.queryCommandState(btn.dataset.cmd); } catch (err) {}
-      btn.classList.toggle('fp-active', active);
-    });
-  }
-
-  formatPanel.querySelectorAll('[data-indent]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cell = lastActiveCell;
-      if (!cell) return;
-      const current = parseInt(cell.style.paddingLeft || '12', 10);
-      const next = btn.dataset.indent === 'in' ? current + 16 : Math.max(12, current - 16);
-      cell.style.paddingLeft = next + 'px';
-    });
-  });
-
-  formatPanel.querySelectorAll('[data-list]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.list;
-      document.execCommand(type === 'ordered' ? 'insertOrderedList' : 'insertUnorderedList');
-      const cell = lastActiveCell;
-      if (cell) {
-        const list = cell.querySelector('ul, ol');
-        if (list) list.classList.toggle('list-dash', type === 'dash');
-      }
-    });
-  });
-
-  const alignButtons = [...formatPanel.querySelectorAll('[data-align]')];
-  const ALIGN_CMD = { left:'justifyLeft', center:'justifyCenter', right:'justifyRight' };
-  alignButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.execCommand(ALIGN_CMD[btn.dataset.align]);
-      setActiveInGroup(alignButtons, btn);
-    });
-  });
-
-  fontSizeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    fontSizeMenu.classList.toggle('open');
-  });
-  const sizeOptionButtons = [...fontSizeMenu.querySelectorAll('button')];
-  sizeOptionButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cell = lastActiveCell;
-      if (cell) cell.style.fontSize = btn.dataset.size + 'px';
-      setActiveInGroup(sizeOptionButtons, btn);
-      fontSizeMenu.classList.remove('open');
-    });
-  });
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.fp-fontsize')) fontSizeMenu.classList.remove('open');
-  });
-
-  const spacingButtons = [...formatPanel.querySelectorAll('[data-spacing]')];
-  spacingButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const cell = lastActiveCell;
-      if (cell) cell.style.lineHeight = btn.dataset.spacing;
-      setActiveInGroup(spacingButtons, btn);
-    });
-  });
-
-  // --- Background Picker ---
-  const BG_PRESETS = {
-    none: null,
-    gradient: 'linear-gradient(160deg, #FFCC8F, #FF8A4C)',
-    cream: '#ECE0C8',
-    lined: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 26px, rgba(28,27,25,0.14) 27px), #FCFAF3',
-    grid: 'repeating-linear-gradient(to right, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), repeating-linear-gradient(to bottom, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), #FCFAF3'
-  };
-
-  const bgPanel = document.getElementById('bgPanel');
-  const btnBackground = document.getElementById('btnBackground');
-  const bgFileInput = document.getElementById('bgFileInput');
-  const bgAddBtn = document.getElementById('bgAddBtn');
-  const bgSwatchButtons = [...bgPanel.querySelectorAll('.bg-swatch[data-bg]')];
-
-  bgSwatchButtons.forEach(btn => {
-    const key = btn.dataset.bg;
-    if (BG_PRESETS[key]) btn.style.background = BG_PRESETS[key];
-    btn.addEventListener('click', () => {
-      applyBackground(BG_PRESETS[key] || '');
-      setSelectedSwatch(btn);
-    });
-  });
-
-  function setSelectedSwatch(btn){
-    [...bgSwatchButtons, bgAddBtn].forEach(b => b.classList.remove('selected'));
-    if (btn) btn.classList.add('selected');
-  }
-
-  function applyBackground(css){
-    editorContainer.style.background = css || 'var(--paper)';
-  }
-
-  function closeBgPanel(){ bgPanel.classList.remove('open'); }
-
-  btnBackground.addEventListener('click', () => {
-    closeFormatPanel(false);
-    closeRowMenu();
-    bgPanel.classList.toggle('open');
-  });
-
-  bgAddBtn.addEventListener('click', () => bgFileInput.click());
-  bgFileInput.addEventListener('change', (e) => {
-    const file = e.target.files && e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      applyBackground(`center / cover no-repeat url(${reader.result})`);
-      setSelectedSwatch(bgAddBtn);
-      closeBgPanel();
-    };
-    reader.readAsDataURL(file);
-    bgFileInput.value = '';
-  });
-
-  // --- Share Sheet ---
-  const sharePanel = document.getElementById('sharePanel');
-  const shareScrim = document.getElementById('shareScrim');
-  const btnShare = document.getElementById('btnShare');
-
-  function openSharePanel(){
-    closeBgPanel();
-    sharePanel.classList.add('open');
-    shareScrim.classList.add('open');
-  }
-  function closeSharePanel(){
-    sharePanel.classList.remove('open');
-    shareScrim.classList.remove('open');
-  }
-
-  btnShare.addEventListener('click', openSharePanel);
-  shareScrim.addEventListener('click', closeSharePanel);
-  document.getElementById('shareCancelBtn').addEventListener('click', closeSharePanel);
-
-  // --- Pan & Zoom Canvas Engine ---
-  const viewport = document.getElementById('editorWorkspace');
-  const canvas = document.getElementById('editorCanvas');
-  const zoomIndicator = document.getElementById('zoomIndicator');
-
-  const MAX_SCALE = 3;
-  const PAN_SLACK = 36;
-  const OVER_MAX = 70;
-  const RESIST = 0.42;
-  const FRICTION = 0.94;
-
-  let scale = 1, tx = 0, ty = 0;
-  let fitScale = 1;
-  const pointers = new Map();
-  let lastMid = null, lastDist = null, indicatorTimer = null;
-  let gestureHadMultiTouch = false, lastValidTapTime = 0;
-  let vx = 0, vy = 0, lastMoveT = 0, momentumRAF = null;
-
-  function clampScale(s){ return Math.min(MAX_SCALE, Math.max(fitScale, s)); }
-
-  function getChrome(){
-    const topBar = (topbarEdit && topbarEdit.style.display === 'flex') ? topbarEdit : topbarNormal;
-    const topRect = topBar.getBoundingClientRect();
-    const bottomRect = document.querySelector('.editor-bottombar').getBoundingClientRect();
-    return {
-      top: Math.max(0, topRect.bottom + 12),
-      bottom: Math.max(0, window.innerHeight - bottomRect.top + 12)
-    };
-  }
-
-  function panBounds(s){
-    const vpRect = viewport.getBoundingClientRect();
-    const cw = canvas.scrollWidth * s;
-    const ch = canvas.scrollHeight * s;
-    const chrome = getChrome();
-    const availH = vpRect.height - chrome.top - chrome.bottom;
-    let minX, maxX, minY, maxY;
-    if (cw <= vpRect.width) { minX = maxX = (vpRect.width - cw) / 2; }
-    else { maxX = PAN_SLACK; minX = vpRect.width - cw - PAN_SLACK; }
-    if (ch <= availH) { minY = maxY = chrome.top; }
-    else { maxY = chrome.top + PAN_SLACK; minY = vpRect.height - chrome.bottom - ch - PAN_SLACK; }
-    return { minX, maxX, minY, maxY };
-  }
-
-  function clampPan(nx, ny, s){
-    const b = panBounds(s);
-    return { x: Math.min(b.maxX, Math.max(b.minX, nx)), y: Math.min(b.maxY, Math.max(b.minY, ny)) };
-  }
-
-  function rubberClamp(nx, ny, s){
-    const b = panBounds(s);
-    function soft(v, min, max){
-      if (v < min) return min - Math.min(OVER_MAX, (min - v)) * RESIST;
-      if (v > max) return max + Math.min(OVER_MAX, (v - max)) * RESIST;
-      return v;
-    }
-    return { x: soft(nx, b.minX, b.maxX), y: soft(ny, b.minY, b.maxY) };
-  }
-
-  function apply(){ canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`; }
-
-  function showIndicator(){
-    zoomIndicator.textContent = Math.round(scale * 100) + '%';
-    zoomIndicator.classList.add('show');
-    clearTimeout(indicatorTimer);
-    indicatorTimer = setTimeout(() => zoomIndicator.classList.remove('show'), 700);
-  }
-
-  function fitToScreen(animate){
-    cancelAnimationFrame(momentumRAF);
-    const vpRect = viewport.getBoundingClientRect();
-    const naturalWidth = canvas.scrollWidth;
-    if (!naturalWidth) return;
-    fitScale = Math.min(1, (vpRect.width - 16) / naturalWidth);
-    scale = fitScale;
-    const p = clampPan(8, 0, scale);
-    tx = p.x; ty = p.y;
-    if (animate) {
-      canvas.style.transition = 'transform .25s cubic-bezier(.22,.7,.32,1)';
-      requestAnimationFrame(apply);
-      setTimeout(() => canvas.style.transition = '', 260);
-    } else {
-      apply();
-    }
-  }
-
-  function dist(a, b){ return Math.hypot(a.x - b.x, a.y - b.y); }
-  function mid(a, b){ return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
-
-  const DRAG_THRESHOLD = 8;
-
-  viewport.addEventListener('pointerdown', (e) => {
-    cancelAnimationFrame(momentumRAF);
-    canvas.style.transition = '';
-    pointers.set(e.pointerId, {
-      x: e.clientX, y: e.clientY,
-      startX: e.clientX, startY: e.clientY, startT: Date.now(),
-      dragging: false, target: e.target
-    });
-    if (pointers.size === 1) {
-      gestureHadMultiTouch = false;
-      vx = 0; vy = 0; lastMoveT = performance.now();
-    }
-    if (pointers.size === 2) {
-      gestureHadMultiTouch = true;
-      if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
-        document.activeElement.blur();
-      }
-      viewport.setPointerCapture(e.pointerId);
-      const [a, b] = [...pointers.values()];
-      lastDist = dist(a, b);
-      lastMid = mid(a, b);
-      canvas.classList.add('pinching', 'panning');
+  window.addEventListener('message', (e) => {
+    if (e.data === 'close-editor') {
+      editorModal.classList.remove('open');
     }
   });
 
-  viewport.addEventListener('pointermove', (e) => {
-    const p = pointers.get(e.pointerId);
-    if (!p) return;
-    p.x = e.clientX; p.y = e.clientY;
-
-    if (pointers.size === 2) {
-      e.preventDefault();
-      const [a, b] = [...pointers.values()];
-      const newDist = dist(a, b);
-      const newMid = mid(a, b);
-      const vpRect = viewport.getBoundingClientRect();
-      const newScale = clampScale(scale * (newDist / lastDist));
-      const localX = (lastMid.x - vpRect.left - tx) / scale;
-      const localY = (lastMid.y - vpRect.top - ty) / scale;
-      let nx = (newMid.x - vpRect.left) - localX * newScale;
-      let ny = (newMid.y - vpRect.top) - localY * newScale;
-      scale = newScale;
-      const cp = rubberClamp(nx, ny, scale);
-      tx = cp.x; ty = cp.y;
-      lastDist = newDist;
-      lastMid = newMid;
-      apply();
-      showIndicator();
-      return;
-    }
-
-    if (pointers.size === 1) {
-      if (!p.dragging) {
-        const moved = Math.hypot(p.x - p.startX, p.y - p.startY);
-        if (moved < DRAG_THRESHOLD) return;
-        p.dragging = true;
-        viewport.setPointerCapture(e.pointerId);
-        canvas.classList.add('panning');
-      }
-      e.preventDefault();
-      const now = performance.now();
-      const dt = Math.max(1, now - lastMoveT);
-      const dx = e.movementX || 0, dy = e.movementY || 0;
-      vx = vx * 0.7 + (dx / dt) * 0.3;
-      vy = vy * 0.7 + (dy / dt) * 0.3;
-      lastMoveT = now;
-      const cp = rubberClamp(tx + dx, ty + dy, scale);
-      tx = cp.x; ty = cp.y;
-      apply();
-    }
-  });
-
-  function endPointer(e){
-    const wasP = pointers.get(e.pointerId);
-    const wasSize = pointers.size;
-    pointers.delete(e.pointerId);
-
-    if (pointers.size < 2) { lastDist = null; lastMid = null; canvas.classList.remove('pinching'); }
-    if (pointers.size === 0) {
-      canvas.classList.remove('panning');
-      const isEditableTap = wasP && wasP.target && wasP.target.closest && wasP.target.closest('[contenteditable="true"]');
-      if (wasSize === 1 && wasP && !wasP.dragging && !gestureHadMultiTouch) {
-        const dt = Date.now() - wasP.startT;
-        if (dt < 400 && !isEditableTap) {
-          const now = Date.now();
-          if (now - lastValidTapTime < 300) {
-            fitToScreen(true);
-            showIndicator();
-            lastValidTapTime = 0;
-          } else {
-            lastValidTapTime = now;
-          }
-        }
-      }
-      const b = panBounds(scale);
-      if (tx < b.minX || tx > b.maxX || ty < b.minY || ty > b.maxY) {
-        const p = clampPan(tx, ty, scale);
-        canvas.style.transition = 'transform .32s cubic-bezier(.16,.85,.35,1)';
-        tx = p.x; ty = p.y;
-        requestAnimationFrame(apply);
-        setTimeout(() => { canvas.style.transition = ''; }, 340);
-      }
-      gestureHadMultiTouch = false;
-    }
-  }
-
-  viewport.addEventListener('pointerup', endPointer);
-  viewport.addEventListener('pointercancel', endPointer);
-
-  window.addEventListener('resize', () => fitToScreen(false));
-
-  // --- Initial Boot ---
-  renderFoldersList();
+  // Initial Load
+  renderCategories();
   renderNotes();
-  renderRows();
-  updateUndoRedoUI();
 </script>
 </body>
 </html>
