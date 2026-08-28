@@ -437,8 +437,31 @@
     z-index: 30;
   }
 
+  .bottom-bar { gap: 12px; }
+
+  .btn-compose-pencil {
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
+    border-radius: 50%;
+    background: rgba(26, 25, 28, 0.88);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--glass-pill-border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .btn-compose-pencil:active { transform: scale(0.88); }
+  .btn-compose-pencil svg { width: 20px; height: 20px; }
+
   .search-pill {
-    width: 100%;
+    flex: 1;
     height: 52px;
     background: rgba(26, 25, 28, 0.88);
     backdrop-filter: blur(24px) saturate(1.4);
@@ -820,6 +843,186 @@
   @keyframes authSpin { to { transform: rotate(360deg); } }
 
   .logout-row .settings-item-title { color: #F0555C; }
+
+  /* --- New Folder Bottom Sheet --- */
+  .new-folder-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .new-folder-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .new-folder-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: #1C1B1E;
+    border-radius: 28px 28px 0 0;
+    z-index: 160;
+    padding: 12px 20px calc(var(--safe-bottom) + 20px) 20px;
+    transform: translateY(100%);
+    transition: transform 0.36s cubic-bezier(0.18, 0.85, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .new-folder-sheet.open { transform: translateY(0); }
+
+  .new-folder-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.25);
+    margin: 4px auto 14px auto;
+    cursor: pointer;
+  }
+
+  .new-folder-title {
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    color: #FFF;
+    margin-bottom: 22px;
+  }
+
+  .new-folder-preview-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+
+  .new-folder-preview {
+    width: 148px;
+    height: 190px;
+    border-radius: 14px;
+    background: #D9A536;
+    padding: 22px 16px;
+    position: relative;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+    transition: background 0.2s ease;
+  }
+
+  .new-folder-preview .fp-label {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  .new-folder-preview .fp-line {
+    position: absolute;
+    left: 16px;
+    right: 30px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  .new-folder-preview .fp-line1 { bottom: 34px; }
+  .new-folder-preview .fp-line2 { bottom: 24px; right: 46px; }
+
+  .new-folder-tabs {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    scrollbar-width: none;
+  }
+
+  .new-folder-tabs::-webkit-scrollbar { display: none; }
+
+  .nf-tab {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    white-space: nowrap;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+
+  .nf-tab.active {
+    color: var(--accent-yellow);
+    border-bottom-color: var(--accent-yellow);
+  }
+
+  .new-folder-swatches {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+    scrollbar-width: none;
+  }
+
+  .new-folder-swatches::-webkit-scrollbar { display: none; }
+
+  .nf-swatch {
+    flex: 0 0 auto;
+    width: 76px;
+    height: 96px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    padding: 12px 10px;
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.15s ease;
+  }
+
+  .nf-swatch.selected {
+    border-color: var(--accent-yellow);
+    transform: scale(1.04);
+  }
+
+  .nf-swatch span {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .new-folder-input-box {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--glass-pill-border);
+    border-radius: var(--radius-pill);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+
+  .new-folder-input-box input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #FFF;
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .new-folder-input-box input::placeholder { color: var(--text-secondary); }
+
+  .btn-new-folder-complete {
+    width: 100%;
+    height: 52px;
+    border-radius: var(--radius-pill);
+    border: none;
+    background: var(--accent-yellow);
+    color: #141108;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .btn-new-folder-complete:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
@@ -905,6 +1108,12 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span>Search</span>
     </div>
+    <button class="btn-compose-pencil" id="btnComposePencil" aria-label="Buat Baru">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+      </svg>
+    </button>
   </div>
 
 </div>
@@ -914,7 +1123,7 @@
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
     <h3>Folders</h3>
-    <button class="btn-create-category" id="btnCreateCategory">Create Kategori</button>
+    <button class="btn-create-category" id="btnCreateCategory">New</button>
   </div>
   
   <!-- Dynamic Category List from Supabase -->
@@ -1023,6 +1232,42 @@
     <div class="chip">bubut piston</div>
     <div class="chip">bor intek</div>
   </div>
+</div>
+
+<!-- New Folder Bottom Sheet -->
+<div class="new-folder-overlay" id="newFolderOverlay"></div>
+<div class="new-folder-sheet" id="newFolderSheet">
+  <div class="new-folder-handle" id="newFolderHandle"></div>
+  <h3 class="new-folder-title">New Folder</h3>
+
+  <div class="new-folder-preview-wrap">
+    <div class="new-folder-preview" id="newFolderPreview" style="background:#D9A536;">
+      <span class="fp-label">NOTES</span>
+      <span class="fp-line fp-line1"></span>
+      <span class="fp-line fp-line2"></span>
+    </div>
+  </div>
+
+  <div class="new-folder-tabs" id="newFolderTabs">
+    <button class="nf-tab active" data-tab="solid">Solid Color</button>
+    <button class="nf-tab" data-tab="gradation">Gradation</button>
+    <button class="nf-tab" data-tab="graphics">Graphics</button>
+    <button class="nf-tab" data-tab="culture">Culture</button>
+  </div>
+
+  <div class="new-folder-swatches" id="newFolderSwatches">
+    <div class="nf-swatch selected" data-color="#D9A536" style="background:#D9A536;"><span>NOTES</span></div>
+    <div class="nf-swatch" data-color="#EDE6D8" style="background:#EDE6D8;"><span style="color:#8A8478;">NOTES</span></div>
+    <div class="nf-swatch" data-color="#C9A177" style="background:#C9A177;"><span>NOTES</span></div>
+    <div class="nf-swatch" data-color="#AFAFB6" style="background:#AFAFB6;"><span>NOTES</span></div>
+    <div class="nf-swatch" data-color="#7C8A99" style="background:#7C8A99;"><span>NOTES</span></div>
+  </div>
+
+  <div class="new-folder-input-box">
+    <input type="text" id="newFolderNameInput" placeholder="Unnamed Folder" maxlength="40">
+  </div>
+
+  <button class="btn-new-folder-complete" id="btnNewFolderComplete">Completed</button>
 </div>
 
 <!-- Modal Container for Editor Viewer -->
@@ -1344,24 +1589,84 @@
     openEditor();
   }
 
+  // --- New Folder Bottom Sheet (ganti prompt() lama) ---
+  const newFolderOverlay = document.getElementById('newFolderOverlay');
+  const newFolderSheet = document.getElementById('newFolderSheet');
+  const newFolderPreview = document.getElementById('newFolderPreview');
+  const newFolderNameInput = document.getElementById('newFolderNameInput');
+  let selectedFolderColor = '#D9A536';
+
+  function openNewFolderModal() {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+
+    newFolderNameInput.value = '';
+    selectedFolderColor = '#D9A536';
+    newFolderPreview.style.background = selectedFolderColor;
+    document.querySelectorAll('.nf-swatch').forEach(s => {
+      s.classList.toggle('selected', s.dataset.color === selectedFolderColor);
+    });
+
+    newFolderOverlay.classList.add('open');
+    newFolderSheet.classList.add('open');
+    setTimeout(() => newFolderNameInput.focus(), 300);
+  }
+
+  function closeNewFolderModal() {
+    newFolderOverlay.classList.remove('open');
+    newFolderSheet.classList.remove('open');
+  }
+
+  newFolderOverlay.addEventListener('click', closeNewFolderModal);
+  document.getElementById('newFolderHandle').addEventListener('click', closeNewFolderModal);
+
+  // Pilih warna cover folder (preview only, lihat catatan di handleCreateCategory)
+  document.querySelectorAll('.nf-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      document.querySelectorAll('.nf-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+      selectedFolderColor = swatch.dataset.color;
+      newFolderPreview.style.background = selectedFolderColor;
+    });
+  });
+
+  // Tab "Gradation / Graphics / Culture" baru UI, isi variasinya menyusul
+  document.querySelectorAll('.nf-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nf-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      // TODO: swatch untuk tab Gradation/Graphics/Culture belum dibuat, tinggal tambahkan nanti
+    });
+  });
+
   async function handleCreateCategory() {
-    const name = prompt('Nama kategori/folder baru:');
-    if (!name || !name.trim()) return;
+    const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
 
     const { error } = await supabaseClient
       .from('folders')
-      .insert({ name: name.trim() });
+      .insert({ name });
+      // Catatan: warna cover (selectedFolderColor) belum ikut disimpan ke Supabase.
+      // Kalau nanti kolom 'color' sudah ditambahkan di tabel folders, tinggal ubah jadi:
+      // .insert({ name, color: selectedFolderColor })
 
     if (error) {
       alert('Gagal membuat kategori: ' + error.message);
       return;
     }
 
+    closeNewFolderModal();
     loadCategories();
   }
 
   document.getElementById('btnAdminFooter').addEventListener('click', handleAdminAccess);
-  document.getElementById('btnCreateCategory').addEventListener('click', handleCreateCategory);
+  document.getElementById('btnCreateCategory').addEventListener('click', openNewFolderModal);
+  document.getElementById('btnNewFolderComplete').addEventListener('click', handleCreateCategory);
+
+  // --- Tombol Pensil (compose) di bottom bar ---
+  // Fungsi belum dibuat sesuai permintaan — tinggal isi manual nanti (misal buka editor catatan baru)
+  document.getElementById('btnComposePencil').addEventListener('click', () => {
+    // TODO: isi fungsi tombol pensil di sini
+  });
 
   // --- Open & Close Editor Modal ---
   const editorModal = document.getElementById('editorModal');
