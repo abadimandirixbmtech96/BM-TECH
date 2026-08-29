@@ -2170,10 +2170,13 @@
   document.getElementById('btnCreateCategory').addEventListener('click', openNewFolderModal);
   document.getElementById('btnNewFolderComplete').addEventListener('click', handleCreateCategory);
 
-  // --- Tombol Pensil (compose) di bottom bar ---
-  // Fungsi belum dibuat sesuai permintaan — tinggal isi manual nanti (misal buka editor catatan baru)
+  // --- Tombol Pensil (compose) di bottom bar: buat catatan baru di folder aktif ---
   document.getElementById('btnComposePencil').addEventListener('click', () => {
-    // TODO: isi fungsi tombol pensil di sini
+    if (!activeCategoryId) {
+      alert('Pilih folder dulu sebelum bikin catatan baru.');
+      return;
+    }
+    openEditor();
   });
 
   // --- Open & Close Editor Modal ---
