@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#f5f4f1">
 
 <title>Login-administrator</title>
@@ -23,12 +23,34 @@
   margin:0;
   padding:0;
   box-sizing:border-box;
+
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
+
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
 }
 
 html,
 body{
   width:100%;
   min-height:100%;
+
+  overscroll-behavior:none;
+  -webkit-text-size-adjust:100%;
+}
+
+/* Izinkan seleksi & callout hanya pada field input (supaya edit teks tetap normal) */
+input,
+textarea{
+  -webkit-user-select:text;
+  -moz-user-select:text;
+  -ms-user-select:text;
+  user-select:text;
+
+  -webkit-touch-callout:default;
 }
 
 
@@ -58,7 +80,7 @@ body{
 
   --green:#5f8f68;
 
-  --green-dark:#527d5a;
+  --green-dark:#05ff34;
 
 }
 
@@ -170,6 +192,12 @@ body::after{
 
   position:relative;
 
+  display:flex;
+
+  flex-direction:column;
+
+  justify-content:center;
+
 }
 
 
@@ -178,6 +206,11 @@ body::after{
 ========================= */
 
 .back-button{
+
+  position:absolute;
+
+  top:24px;
+  left:20px;
 
   width:48px;
   height:48px;
@@ -261,8 +294,6 @@ body::after{
   flex-direction:column;
 
   align-items:center;
-
-  padding-top:72px;
 
 }
 
@@ -737,68 +768,181 @@ body::after{
    SMALL SCREEN
 ========================= */
 
-@media(max-width:380px){
+@media(max-width:430px){
 
   .page{
 
     padding-left:16px;
     padding-right:16px;
+    padding-top:16px;
 
   }
 
-  .content{
+  .back-button{
 
-    padding-top:55px;
+    top:16px;
+    left:16px;
+
+    width:44px;
+    height:44px;
+
+    border-radius:14px;
 
   }
 
   .logo{
 
-    width:82px;
-    height:82px;
+    width:64px;
+    height:64px;
 
-    margin-bottom:38px;
+    margin-bottom:18px;
 
   }
 
   .login-card{
 
     padding:
-      32px
-      20px
-      27px;
+      22px
+      16px
+      18px;
 
-    border-radius:26px;
+    border-radius:22px;
 
   }
 
   .title{
 
-    margin-bottom:30px;
+    margin-bottom:18px;
 
   }
 
   .title h1{
 
-    font-size:26px;
+    font-size:22px;
 
   }
 
   .title p{
 
-    font-size:14px;
+    margin-top:6px;
+
+    font-size:13px;
+
+  }
+
+  .field{
+
+    margin-bottom:14px;
+
+  }
+
+  .field label{
+
+    font-size:13px;
+
+    margin-bottom:6px;
 
   }
 
   .input{
 
-    height:60px;
+    height:48px;
+
+    font-size:15px;
 
   }
 
   .login-button{
 
-    height:58px;
+    height:48px;
+
+    font-size:15px;
+    margin-top:2px;
+
+  }
+
+  .access{
+
+    margin-top:16px;
+    padding-top:14px;
+
+  }
+
+  .footer{
+
+    margin-top:12px;
+
+  }
+
+}
+
+
+/* =========================
+   VERY SHORT SCREEN
+   (HP kecil dalam mode potret,
+   misalnya tinggi layar < 700px)
+========================= */
+
+@media(max-height:700px) and (max-width:430px){
+
+  .logo{
+
+    width:52px;
+    height:52px;
+
+    margin-bottom:12px;
+
+  }
+
+  .login-card{
+
+    padding:
+      18px
+      16px
+      16px;
+
+  }
+
+  .title{
+
+    margin-bottom:14px;
+
+  }
+
+  .title h1{
+
+    font-size:20px;
+
+  }
+
+  .field{
+
+    margin-bottom:12px;
+
+  }
+
+  .input{
+
+    height:44px;
+
+  }
+
+  .login-button{
+
+    height:44px;
+
+  }
+
+  .access{
+
+    margin-top:12px;
+    padding-top:10px;
+
+  }
+
+  .footer{
+
+    margin-top:10px;
 
   }
 
@@ -863,6 +1007,8 @@ body::after{
       <img
         src="logo-login.jpg"
         alt="Logo"
+        draggable="false"
+        oncontextmenu="return false;"
       >
 
     </div>
@@ -1013,6 +1159,37 @@ body::after{
    (lihat fungsi login() di bawah). Tidak ada lagi email/password
    yang tersimpan di file ini.
 ========================================== */
+
+
+/* ==========================================
+   ANTI RIGHT-CLICK / ANTI HIGHLIGHT
+========================================== */
+
+document.addEventListener("contextmenu", function(e){
+  e.preventDefault();
+});
+
+document.addEventListener("selectstart", function(e){
+  const tag = e.target.tagName;
+  if(tag !== "INPUT" && tag !== "TEXTAREA"){
+    e.preventDefault();
+  }
+});
+
+document.addEventListener("dragstart", function(e){
+  e.preventDefault();
+});
+
+document.addEventListener("keydown", function(e){
+  // Blokir shortcut umum untuk buka devtools / view-source / save page
+  if(
+    e.key === "F12" ||
+    (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) ||
+    (e.ctrlKey && (e.key === "u" || e.key === "s" || e.key === "U" || e.key === "S"))
+  ){
+    e.preventDefault();
+  }
+});
 
 
 /* ==========================================
