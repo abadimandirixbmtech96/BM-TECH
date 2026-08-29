@@ -185,11 +185,31 @@
     letter-spacing:0.04em;
     text-transform:uppercase;
     text-align:left;
-    padding:10px 12px;
+    padding:8px 6px 8px 12px;
     border-bottom:1px solid var(--line);
     border-right:1px solid var(--line-soft);
     white-space:nowrap;
   }
+  .th-inner{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .th-label{
+    outline:none;
+    min-width:24px;
+    cursor:text;
+  }
+  .th-menu-btn{
+    flex:0 0 auto;
+    width:22px; height:22px;
+    border:none; background:transparent;
+    color:var(--ink-soft);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .th-menu-btn:active{ background:rgba(0,0,0,0.08); transform:scale(0.9); }
+  .th-menu-btn svg{ width:14px; height:14px; }
   thead th:last-child, tbody td:last-child{border-right:none;}
   tbody td{
     padding:12px 12px;
@@ -266,7 +286,7 @@
 
   /* ---------- Pencil / drawing ---------- */
   #drawCanvas{
-    position:absolute; inset:0;
+    position:absolute; top:0; left:0;
     z-index:35;
     pointer-events:none;
     touch-action:none;
@@ -277,6 +297,7 @@
     left:50%;
     bottom:calc(var(--safe-bottom) + 78px);
     transform:translateX(-50%) translateY(14px) scale(0.97);
+    width:min(94vw, 380px);
     background:rgba(26,24,21,0.92);
     backdrop-filter:blur(26px) saturate(1.3);
     -webkit-backdrop-filter:blur(26px) saturate(1.3);
@@ -294,9 +315,9 @@
     pointer-events:auto;
     transform:translateX(-50%) translateY(0) scale(1);
   }
-  .pencil-row{ display:flex; align-items:center; gap:10px; }
+  .pencil-row{ display:flex; align-items:center; gap:8px; }
   .pencil-swatch{
-    width:36px; height:36px;
+    width:30px; height:30px;
     border-radius:50%;
     border:2px solid rgba(255,255,255,0.18);
     flex:0 0 auto;
@@ -304,25 +325,48 @@
     overflow:hidden;
   }
   .pencil-swatch.selected{ border-color:#fff; box-shadow:0 0 0 2px rgba(255,255,255,0.3); }
-  .pencil-custom{ background:conic-gradient(red, yellow, lime, cyan, blue, magenta, red); display:block; cursor:pointer; }
-  .pencil-custom input[type="color"]{
-    opacity:0; width:100%; height:100%; border:none; padding:0; cursor:pointer;
-  }
   .pencil-clear{
     margin-left:auto;
     flex:0 0 auto;
-    height:36px;
-    padding:0 14px;
+    height:30px;
+    padding:0 12px;
     border:none;
-    border-radius:11px;
+    border-radius:10px;
     background:rgba(255,255,255,0.08);
     color:#F2EFE9;
-    font-size:13px;
+    font-size:12.5px;
     font-weight:600;
     font-family:inherit;
     white-space:nowrap;
   }
   .pencil-clear:active{ background:rgba(255,255,255,0.14); }
+  .pencil-wheel-wrap{ display:flex; justify-content:center; margin-top:14px; }
+  .pencil-wheel{
+    position:relative;
+    width:150px; height:150px;
+    border-radius:50%;
+    background:conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    touch-action:none;
+    box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  }
+  .pencil-wheel::after{
+    content:'';
+    position:absolute; inset:0;
+    border-radius:50%;
+    background:radial-gradient(circle at center, #fff, rgba(255,255,255,0) 70%);
+    pointer-events:none;
+  }
+  .pencil-wheel-cursor{
+    position:absolute;
+    width:22px; height:22px;
+    left:8px; top:8px;
+    border-radius:50%;
+    border:3px solid #fff;
+    box-shadow:0 2px 8px rgba(0,0,0,0.45);
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    background:#F2B705;
+  }
   .row-menu-btn{
     width:28px; height:28px;
     border:none; background:transparent;
@@ -648,32 +692,17 @@
   <div class="content" id="content">
     <div class="canvas" id="canvas">
       <div class="title-block">
-        <h1 id="noteTitle" contenteditable="true">Workshop Notes</h1>
+        <h1 id="noteTitle" contenteditable="true" data-placeholder="Isi judul tabel..."></h1>
       </div>
 
       <div class="table-scroll">
         <table id="notesTable">
-          <thead>
-            <tr>
-              <th class="col-no">No</th>
-              <th class="col-tanggal">Tanggal</th>
-              <th class="col-jam">Jam</th>
-              <th>PJ</th>
-              <th>Customer</th>
-              <th>Barang</th>
-              <th>Barang Keluar</th>
-              <th>Stok Barang</th>
-              <th class="col-ket">Keterangan</th>
-              <th class="col-harga">Harga</th>
-              <th class="col-gambar">Gambar</th>
-              <th style="min-width:36px;"></th>
-            </tr>
-          </thead>
+          <thead id="tableHead"></thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
+      <canvas id="drawCanvas"></canvas>
     </div>
-    <canvas id="drawCanvas"></canvas>
     <div class="zoom-indicator" id="zoomIndicator">100%</div>
   </div>
 
@@ -722,11 +751,13 @@
       <button class="pencil-swatch" data-color="#E2483D" style="background:#E2483D"></button>
       <button class="pencil-swatch" data-color="#3D7DE2" style="background:#3D7DE2"></button>
       <button class="pencil-swatch" data-color="#3DA85C" style="background:#3DA85C"></button>
-      <button class="pencil-swatch" data-color="#F2B705" style="background:#F2B705"></button>
-      <label class="pencil-swatch pencil-custom" aria-label="Pilih warna kustom">
-        <input type="color" id="pencilColorInput" value="#C9932F">
-      </label>
+      <button class="pencil-swatch selected" data-color="#F2B705" style="background:#F2B705"></button>
       <button class="pencil-clear" id="pencilClearBtn">Hapus Coretan</button>
+    </div>
+    <div class="pencil-wheel-wrap">
+      <div class="pencil-wheel" id="pencilWheel">
+        <div class="pencil-wheel-cursor" id="pencilWheelCursor"></div>
+      </div>
     </div>
   </div>
 
@@ -827,69 +858,178 @@
 </div>
 
 <script>
-  // Row data-completeness flag/check — declared early since renderRows()
-  // (called near the top) depends on it.
-  let showCompleteness = false;
-  const REQUIRED_FIELDS = ['pj', 'customer', 'barang', 'keluar', 'stok', 'ket', 'harga'];
-  function isRowComplete(row){
-    return REQUIRED_FIELDS.every(f => (row[f] || '').toString().trim().length > 0);
-  }
-
-  // ---------- Dummy data (Phase 1: static, structure & UI only) ----------
-  let rows = [
-    { tanggal:"25/08/26", hari:"Selasa", no:1, jam:"08:15", pj:"Yono", customer:"Ujang", barang:"Krengkes", keluar:"B&J", stok:"--------", ket:"Senai baut posstep", harga:"70.000" },
-    { tanggal:"", hari:"", no:2, jam:"08:41", pj:"Kuswanto", customer:"PT TBU", barang:"Nap forclip", keluar:"B&J", stok:"--------", ket:"Bubut (ready)", harga:"250.000" },
-    { tanggal:"", hari:"", no:3, jam:"09:03", pj:"Yono", customer:"Nur", barang:"Head vega ZR", keluar:"--------", stok:"--------", ket:"Ganti setingan 2x, ganti botolan (barang belum selesai)", harga:"105.000" },
-    { tanggal:"", hari:"", no:4, jam:"09:30", pj:"Kus", customer:"Iklan", barang:"Gear motor", keluar:"--------", stok:"--------", ket:"Las gear", harga:"30.000" },
-    { tanggal:"", hari:"", no:5, jam:"10:12", pj:"Yono", customer:"Yudi", barang:"Askruk blade, stang blade, set klaher", keluar:"--------", stok:"--------", ket:"Masang stang seher + beli klaher 6304", harga:"80.000" },
-    { tanggal:"", hari:"", no:6, jam:"11:05", pj:"Yono", customer:"Saryoto", barang:"Krengkes, askruk", keluar:"--------", stok:"--------", ket:"Masang stang, cor + senai baut oli", harga:"85.000" },
-    { tanggal:"", hari:"", no:7, jam:"12:47", pj:"Yono", customer:"Dodi", barang:"Blok grand", keluar:"--------", stok:"--------", ket:"Lemer", harga:"180.000" },
-    { tanggal:"", hari:"", no:8, jam:"13:20", pj:"-", customer:"Henki", barang:"Head", keluar:"--------", stok:"--------", ket:"Bubut", harga:"170.000" },
+  // ---------- Dynamic table core ----------
+  // Columns are user-defined (add/rename/delete). Each row stores its values
+  // in `cells`, keyed by column id — so renaming a column never breaks data.
+  let columns = [
+    { id: 'no',      label: 'No',      type: 'no' },
+    { id: 'tanggal', label: 'Tanggal', type: 'date' },
+    { id: 'jam',     label: 'Jam',     type: 'time' }
   ];
 
+  function nowDateLabel(){
+    const d = new Date();
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(-2);
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', "Jum'at", 'Sabtu'];
+    return `${dd}/${mm}/${yy} • ${days[d.getDay()]}`;
+  }
+  function nowTimeLabel(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  // "date"/"time" columns freeze their value the moment a row is created
+  // (never recalculated on edit) — but stay editable if the user corrects them.
+  function makeEmptyRowCells(cols){
+    const cells = {};
+    cols.forEach(col => {
+      if (col.type === 'date') cells[col.id] = nowDateLabel();
+      else if (col.type === 'time') cells[col.id] = nowTimeLabel();
+      else cells[col.id] = '';
+    });
+    return cells;
+  }
+
+  let rows = [ { cells: makeEmptyRowCells(columns) } ];
+
+  function renumber(){
+    columns.filter(c => c.type === 'no').forEach(noCol => {
+      rows.forEach((r, i) => { r.cells[noCol.id] = String(i + 1); });
+    });
+  }
+  renumber();
+
+  function newColId(){ return 'col_' + Math.random().toString(36).slice(2, 9); }
+
+  // ---------- Header (columns) ----------
+  function renderHeader(){
+    const thead = document.getElementById('tableHead');
+    thead.innerHTML = `<tr>${columns.map((col, idx) => `
+      <th data-col-index="${idx}">
+        <div class="th-inner">
+          <span class="th-label" contenteditable="true" data-col-index="${idx}">${col.label}</span>
+          <button class="th-menu-btn" data-col-index="${idx}" aria-label="Menu kolom">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
+          </button>
+        </div>
+      </th>`).join('')}<th style="min-width:36px;"></th></tr>`;
+    bindHeaderEvents();
+  }
+
+  function bindHeaderEvents(){
+    const thead = document.getElementById('tableHead');
+    thead.querySelectorAll('.th-label').forEach(el => {
+      el.addEventListener('focusin', () => { enterEditMode(); lastActiveCell = el; });
+      el.addEventListener('input', () => {
+        const idx = parseInt(el.dataset.colIndex, 10);
+        if (!columns[idx]) return;
+        const pre = snapshot();
+        columns[idx].label = el.innerText;
+        const post = snapshot();
+        if (post !== pre) pushHistory(pre);
+      });
+    });
+    thead.querySelectorAll('.th-menu-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openColumnMenu(e.currentTarget, parseInt(e.currentTarget.dataset.colIndex, 10));
+      });
+    });
+  }
+
+  function addColumnAfter(index, type){
+    const pre = snapshot();
+    const col = { id: newColId(), label: type === 'image' ? 'Gambar' : 'Kolom Baru', type: type };
+    columns.splice(index + 1, 0, col);
+    rows.forEach(r => { r.cells[col.id] = ''; });
+    pushHistory(pre);
+    renderHeader();
+    renderRows();
+  }
+
+  function deleteColumn(index){
+    if (columns.length <= 1) return; // always keep at least one column
+    const pre = snapshot();
+    const [removed] = columns.splice(index, 1);
+    rows.forEach(r => { delete r.cells[removed.id]; });
+    pushHistory(pre);
+    renderHeader();
+    renderRows();
+  }
+
+  function closeColumnMenu(){
+    document.querySelectorAll('.col-menu, .menu-scrim').forEach(el => el.remove());
+  }
+
+  function openColumnMenu(btn, colIndex){
+    closeColumnMenu();
+    closeRowMenu();
+    const scrim = document.createElement('div');
+    scrim.className = 'menu-scrim';
+    const menu = document.createElement('div');
+    menu.className = 'row-menu col-menu';
+    menu.innerHTML = `
+      <button data-action="addcol">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="4.5" rx="1.2"></rect><rect x="3" y="14.5" width="18" height="4.5" rx="1.2"></rect><line x1="12" y1="9.5" x2="12" y2="14.5"></line></svg>
+        Add Column
+      </button>
+      <button data-action="addimg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+        Add Gambar
+      </button>
+      <button data-action="delcol" class="danger">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path></svg>
+        Delete Column
+      </button>
+    `;
+    document.body.appendChild(scrim);
+    document.body.appendChild(menu);
+    const r = btn.getBoundingClientRect();
+    const menuW = 190;
+    let left = r.right - menuW;
+    let top = r.bottom + 6;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    if (left < 8) left = 8;
+    if (left + menuW > vw - 8) left = vw - 8 - menuW;
+    if (top + 150 > vh - 8) top = r.top - 156;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+    menu.style.width = menuW + 'px';
+
+    scrim.addEventListener('pointerdown', closeColumnMenu);
+    menu.querySelector('[data-action="addcol"]').addEventListener('click', () => { addColumnAfter(colIndex, 'text'); closeColumnMenu(); });
+    menu.querySelector('[data-action="addimg"]').addEventListener('click', () => { addColumnAfter(colIndex, 'image'); closeColumnMenu(); });
+    menu.querySelector('[data-action="delcol"]').addEventListener('click', () => { deleteColumn(colIndex); closeColumnMenu(); });
+  }
+
+  // ---------- Rows ----------
   function renderRows(){
-    const tbody = document.getElementById('tableBody');
-    // When completeness checking is on, colors the border of each required
-    // cell — red if empty, green if filled — leaving text color untouched.
-    function cc(field, value, extraClass){
-      const base = extraClass || '';
-      if (!showCompleteness || !REQUIRED_FIELDS.includes(field)) return base;
-      const state = (value || '').toString().trim().length > 0 ? 'cell-filled' : 'cell-empty';
-      return `${base} ${state}`.trim();
-    }
-    tbody.innerHTML = rows.map((r, idx) => {
-      return `
-      <tr>
-        <td class="col-no" contenteditable="true" data-field="no">${r.no}</td>
-        <td class="col-tanggal">
-          <span class="tgl" contenteditable="true" data-field="tanggal" data-placeholder="tgl">${r.tanggal}</span><span class="hari" contenteditable="true" data-field="hari" data-placeholder="hari">${r.hari}</span>
-        </td>
-        <td class="col-jam" contenteditable="true" data-field="jam">${r.jam}</td>
-        <td class="${cc('pj', r.pj)}" contenteditable="true" data-field="pj">${r.pj}</td>
-        <td class="${cc('customer', r.customer)}" contenteditable="true" data-field="customer">${r.customer}</td>
-        <td class="${cc('barang', r.barang)}" contenteditable="true" data-field="barang">${r.barang}</td>
-        <td class="${cc('keluar', r.keluar)}" contenteditable="true" data-field="keluar">${r.keluar}</td>
-        <td class="${cc('stok', r.stok)}" contenteditable="true" data-field="stok">${r.stok}</td>
-        <td class="${cc('ket', r.ket, 'col-ket')}" contenteditable="true" data-field="ket">${r.ket}</td>
-        <td class="${cc('harga', r.harga, 'col-harga')}" contenteditable="true" data-field="harga">${r.harga}</td>
-        <td class="col-gambar">
-          ${r.gambar
-            ? `<div class="img-thumb-wrap">
-                 <button class="img-thumb" data-img-row="${idx}"><img src="${r.gambar}" alt="Foto"></button>
-                 <button class="img-remove" data-img-remove="${idx}" aria-label="Hapus foto">×</button>
-               </div>`
-            : `<button class="img-empty" data-img-row="${idx}" aria-label="Tambah foto">
-                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3"></circle></svg>
-               </button>`
-          }
-        </td>
-        <td class="row-handle">
+    const tbodyEl = document.getElementById('tableBody');
+    tbodyEl.innerHTML = rows.map((r, idx) => {
+      const cellsHtml = columns.map(col => {
+        const val = r.cells[col.id] || '';
+        if (col.type === 'image') {
+          return `<td class="col-gambar">
+            ${val
+              ? `<div class="img-thumb-wrap">
+                   <button class="img-thumb" data-img-row="${idx}" data-img-col="${col.id}"><img src="${val}" alt="Foto"></button>
+                   <button class="img-remove" data-img-row="${idx}" data-img-col="${col.id}" aria-label="Hapus foto">×</button>
+                 </div>`
+              : `<button class="img-empty" data-img-row="${idx}" data-img-col="${col.id}" aria-label="Tambah foto">
+                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3"></circle></svg>
+                 </button>`
+            }
+          </td>`;
+        }
+        return `<td contenteditable="true" data-field="${col.id}">${val}</td>`;
+      }).join('');
+      return `<tr>${cellsHtml}<td class="row-handle">
           <button class="row-menu-btn" aria-label="Menu baris">
             <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
           </button>
-        </td>
-      </tr>
-    `;
+        </td></tr>`;
     }).join('');
     bindRowEvents();
   }
@@ -908,8 +1048,8 @@
       el.addEventListener('input', ()=>{
         const idx = rowIndexOf(el);
         if (idx < 0) return;
-        const pre = snapshot(); // rows still holds the pre-keystroke value here
-        rows[idx][el.dataset.field] = el.innerText;
+        const pre = snapshot();
+        rows[idx].cells[el.dataset.field] = el.innerText;
         const post = snapshot();
         if (post !== pre) pushHistory(pre);
       });
@@ -922,13 +1062,26 @@
     });
   }
 
-  function nowTime(){
-    const d = new Date();
-    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  function addRowAfter(index){
+    const pre = snapshot();
+    rows.splice(index + 1, 0, { cells: makeEmptyRowCells(columns) });
+    renumber();
+    pushHistory(pre);
+    renderRows();
+    const p = clampPan(tx, ty, scale);
+    tx = p.x; ty = p.y;
+    apply();
   }
 
-  function renumber(){
-    rows.forEach((r,i)=>{ r.no = i + 1; });
+  function deleteRow(index){
+    const pre = snapshot();
+    rows.splice(index, 1);
+    renumber();
+    pushHistory(pre);
+    renderRows();
+    const p = clampPan(tx, ty, scale);
+    tx = p.x; ty = p.y;
+    apply();
   }
 
   // ---------- Undo / Redo ----------
@@ -937,11 +1090,13 @@
   let noteTitle = document.getElementById('noteTitle').innerText;
 
   function snapshot(){
-    return JSON.stringify({ rows, noteTitle });
+    return JSON.stringify({ rows, noteTitle, columns });
   }
 
-  function pushHistory(preSnapshot){
-    historyStack.push(preSnapshot);
+  // preSnapshot: a JSON string from snapshot() for text/row/column changes,
+  // or a canvas dataURL string for a completed pencil stroke.
+  function pushHistory(preSnapshot, kind){
+    historyStack.push({ kind: kind || 'text', data: preSnapshot });
     if (historyStack.length > 200) historyStack.shift();
     redoStack = [];
     updateUndoRedoUI();
@@ -957,21 +1112,35 @@
   function restoreState(state){
     rows = state.rows;
     noteTitle = state.noteTitle;
+    columns = state.columns;
+    renderHeader();
     renderRows();
     document.getElementById('noteTitle').innerText = noteTitle;
   }
 
   function undo(){
     if (!historyStack.length) return;
-    redoStack.push(snapshot());
-    restoreState(JSON.parse(historyStack.pop()));
+    const entry = historyStack.pop();
+    if (entry.kind === 'draw') {
+      redoStack.push({ kind: 'draw', data: drawCanvas.toDataURL() });
+      applyDrawSnapshot(entry.data);
+    } else {
+      redoStack.push({ kind: 'text', data: snapshot() });
+      restoreState(JSON.parse(entry.data));
+    }
     updateUndoRedoUI();
   }
 
   function redo(){
     if (!redoStack.length) return;
-    historyStack.push(snapshot());
-    restoreState(JSON.parse(redoStack.pop()));
+    const entry = redoStack.pop();
+    if (entry.kind === 'draw') {
+      historyStack.push({ kind: 'draw', data: drawCanvas.toDataURL() });
+      applyDrawSnapshot(entry.data);
+    } else {
+      historyStack.push({ kind: 'text', data: snapshot() });
+      restoreState(JSON.parse(entry.data));
+    }
     updateUndoRedoUI();
   }
 
@@ -1041,8 +1210,25 @@
     menu.querySelector('[data-action="delete"]').addEventListener('click', () => { deleteRow(rowIndex); closeRowMenu(); });
   }
 
+  renderHeader();
   renderRows();
   updateUndoRedoUI();
+
+  // Pressing Enter in any cell (header or body) moves focus to the next
+  // editable cell in the same row, instead of inserting a line break.
+  document.getElementById('notesTable').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (!e.target.matches('[contenteditable="true"]')) return;
+    e.preventDefault();
+    const cell = e.target.closest('td, th');
+    if (!cell) return;
+    let next = cell.nextElementSibling;
+    while (next) {
+      const editable = next.matches('[contenteditable="true"]') ? next : next.querySelector('[contenteditable="true"]');
+      if (editable) { editable.focus(); break; }
+      next = next.nextElementSibling;
+    }
+  });
 
   // ---------- Normal ↔ Edit mode ----------
   const topbarNormal = document.getElementById('topbarNormal');
@@ -1284,6 +1470,7 @@
   }
 
   btnBackground.addEventListener('click', () => {
+    setDrawMode(false);
     closeFormatPanel(false);
     closeRowMenu();
     bgPanel.classList.toggle('open');
@@ -1313,6 +1500,8 @@
   btnBack.addEventListener('click', () => {
     if (window.parent && window.parent !== window) {
       window.parent.postMessage('close-editor', '*');
+    } else if (window.history.length > 1) {
+      window.history.back();
     }
   });
 
@@ -1322,6 +1511,7 @@
   const btnShare = document.getElementById('btnShare');
 
   function openSharePanel(){
+    setDrawMode(false);
     closeBgPanel();
     sharePanel.classList.add('open');
     shareScrim.classList.add('open');
@@ -1343,12 +1533,11 @@
     });
   });
 
-  // ---------- Checklist: row data-completeness ----------
+  // ---------- Checklist: deferred to phase 2 (needs redesign for dynamic columns) ----------
   const btnChecklist = document.getElementById('btnChecklist');
   btnChecklist.addEventListener('click', () => {
-    showCompleteness = !showCompleteness;
-    btnChecklist.classList.toggle('active-tool', showCompleteness);
-    renderRows();
+    setDrawMode(false);
+    console.log('Checklist kelengkapan data — menyusul, perlu didesain ulang buat kolom dinamis');
   });
 
   // ---------- Camera / Gallery: attach a photo to a row ----------
@@ -1360,10 +1549,13 @@
   const imgPreviewScrim = document.getElementById('imgPreviewScrim');
   const imgPreviewPhoto = document.getElementById('imgPreviewPhoto');
   let pendingImageRowIndex = null;
+  let pendingImageColId = null;
 
-  function openCameraPanel(rowIndex){
-    if (rowIndex === null || rowIndex < 0) return;
+  function openCameraPanel(rowIndex, colId){
+    if (rowIndex === null || rowIndex < 0 || !colId) return;
     pendingImageRowIndex = rowIndex;
+    pendingImageColId = colId;
+    setDrawMode(false);
     closeBgPanel(); closeSharePanel(); closeRowMenu();
     cameraPanel.classList.add('open');
     cameraScrim.classList.add('open');
@@ -1389,10 +1581,10 @@
   });
 
   function handleImageFile(file){
-    if (!file || pendingImageRowIndex === null || !rows[pendingImageRowIndex]) return;
+    if (!file || pendingImageRowIndex === null || !pendingImageColId || !rows[pendingImageRowIndex]) return;
     const reader = new FileReader();
     reader.onload = () => {
-      rows[pendingImageRowIndex].gambar = reader.result;
+      rows[pendingImageRowIndex].cells[pendingImageColId] = reader.result;
       renderRows();
     };
     reader.readAsDataURL(file);
@@ -1405,53 +1597,96 @@
   // Tapping a row's Gambar cell: empty → choose photo source; filled → preview.
   // The small × badge removes the photo, reverting the cell back to empty.
   tableBodyEl.addEventListener('click', (e) => {
-    const removeBtn = e.target.closest('[data-img-remove]');
+    const removeBtn = e.target.closest('.img-remove');
     if (removeBtn) {
-      const idx = parseInt(removeBtn.dataset.imgRemove, 10);
-      if (rows[idx]) { rows[idx].gambar = ''; renderRows(); }
+      const idx = parseInt(removeBtn.dataset.imgRow, 10);
+      const colId = removeBtn.dataset.imgCol;
+      if (rows[idx]) { rows[idx].cells[colId] = ''; renderRows(); }
       return;
     }
     const btn = e.target.closest('[data-img-row]');
     if (!btn) return;
     const idx = parseInt(btn.dataset.imgRow, 10);
-    if (rows[idx] && rows[idx].gambar) openImagePreview(rows[idx].gambar);
-    else openCameraPanel(idx);
+    const colId = btn.dataset.imgCol;
+    if (rows[idx] && rows[idx].cells[colId]) openImagePreview(rows[idx].cells[colId]);
+    else openCameraPanel(idx, colId);
   });
 
-  // Bottom-toolbar camera icon targets whichever row was last being edited
+  // Bottom-toolbar camera icon targets the last-edited row's first Gambar column
   btnCamera.addEventListener('click', () => {
     if (!lastActiveCell) return;
-    openCameraPanel(rowIndexOf(lastActiveCell));
+    const idx = rowIndexOf(lastActiveCell);
+    const imgCol = columns.find(c => c.type === 'image');
+    if (idx < 0 || !imgCol) return;
+    openCameraPanel(idx, imgCol.id);
   });
 
-  // ---------- Pencil: freehand annotation with a full color picker ----------
+
+  // ---------- Pencil: freehand annotation attached to the paper ----------
   const drawCanvas = document.getElementById('drawCanvas');
   const drawCtx = drawCanvas.getContext('2d');
   const btnPencil = document.getElementById('btnPencil');
   const pencilPanel = document.getElementById('pencilPanel');
-  const pencilColorInput = document.getElementById('pencilColorInput');
+  const pencilWheel = document.getElementById('pencilWheel');
+  const pencilWheelCursor = document.getElementById('pencilWheelCursor');
   let drawMode = false;
-  let currentColor = pencilColorInput.value;
+  let currentColor = '#F2B705';
   let isDrawing = false;
   let lastDrawPoint = null;
+  let preStrokeSnapshot = null;
 
-  function resizeDrawCanvas(){
-    const rect = viewport.getBoundingClientRect();
+  // drawCanvas lives inside #canvas (the pannable/zoomable element), so it
+  // must be sized to the actual paper content (title+table), not the screen —
+  // that's what makes strokes pan/zoom together with the table instead of
+  // staying fixed on the glass on top of it.
+  function syncDrawCanvasSize(){
+    const targetW = Math.max(canvas.scrollWidth, 50);
+    const targetH = Math.max(canvas.scrollHeight, 50);
+    if (drawCanvas.dataset.paperW == targetW && drawCanvas.dataset.paperH == targetH) return;
+
+    const hasContent = drawCanvas.width > 0 && drawCanvas.height > 0;
+    const prevDataURL = hasContent ? drawCanvas.toDataURL() : null;
+
     const ratio = window.devicePixelRatio || 1;
-    const prev = drawCanvas.toDataURL ? null : null; // (kept simple — canvas clears on resize, acceptable for an orientation change)
-    drawCanvas.width = rect.width * ratio;
-    drawCanvas.height = rect.height * ratio;
-    drawCanvas.style.width = rect.width + 'px';
-    drawCanvas.style.height = rect.height + 'px';
+    drawCanvas.width = targetW * ratio;
+    drawCanvas.height = targetH * ratio;
+    drawCanvas.style.width = targetW + 'px';
+    drawCanvas.style.height = targetH + 'px';
+    drawCtx.setTransform(1, 0, 0, 1, 0, 0);
     drawCtx.scale(ratio, ratio);
     drawCtx.lineCap = 'round';
     drawCtx.lineJoin = 'round';
+
+    drawCanvas.dataset.paperW = targetW;
+    drawCanvas.dataset.paperH = targetH;
+
+    if (prevDataURL) applyDrawSnapshot(prevDataURL);
   }
-  window.addEventListener('resize', resizeDrawCanvas);
-  requestAnimationFrame(resizeDrawCanvas);
+  window.addEventListener('resize', syncDrawCanvasSize);
+  requestAnimationFrame(syncDrawCanvasSize);
+
+  function applyDrawSnapshot(dataURL){
+    const img = new Image();
+    img.onload = () => {
+      drawCtx.save();
+      drawCtx.setTransform(1, 0, 0, 1, 0, 0);
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      drawCtx.drawImage(img, 0, 0, drawCanvas.width, drawCanvas.height);
+      drawCtx.restore();
+    };
+    img.src = dataURL;
+  }
+
+  // Screen coordinates → paper-local coordinates, accounting for the
+  // current pan/zoom scale (drawCanvas's own rect already reflects it).
+  function screenToDrawCoords(e){
+    const rect = drawCanvas.getBoundingClientRect();
+    return { x: (e.clientX - rect.left) / scale, y: (e.clientY - rect.top) / scale };
+  }
 
   function setDrawMode(on){
     drawMode = on;
+    if (on) syncDrawCanvasSize();
     drawCanvas.classList.toggle('active', on);
     btnPencil.classList.toggle('active-tool', on);
     pencilPanel.classList.toggle('open', on);
@@ -1460,32 +1695,79 @@
   btnPencil.addEventListener('click', () => setDrawMode(!drawMode));
 
   const pencilPresetSwatches = [...document.querySelectorAll('.pencil-swatch[data-color]')];
+  function selectColor(hex){
+    currentColor = hex;
+    pencilWheelCursor.style.background = hex;
+  }
   pencilPresetSwatches.forEach(sw => {
     sw.addEventListener('click', () => {
-      currentColor = sw.dataset.color;
-      pencilColorInput.value = currentColor;
+      selectColor(sw.dataset.color);
       pencilPresetSwatches.forEach(s => s.classList.remove('selected'));
       sw.classList.add('selected');
     });
   });
-  pencilColorInput.addEventListener('input', () => {
-    currentColor = pencilColorInput.value;
-    pencilPresetSwatches.forEach(s => s.classList.remove('selected'));
-  });
   document.getElementById('pencilClearBtn').addEventListener('click', () => {
+    const pre = drawCanvas.toDataURL();
     drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+    pushHistory(pre, 'draw');
   });
 
+  // ---------- Color wheel: hue = angle around center, saturation = distance ----------
+  function hsvToHex(h, s, v){
+    const c = v * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = v - c;
+    let r = 0, g = 0, b = 0;
+    if (h < 60)       { r = c; g = x; b = 0; }
+    else if (h < 120) { r = x; g = c; b = 0; }
+    else if (h < 180) { r = 0; g = c; b = x; }
+    else if (h < 240) { r = 0; g = x; b = c; }
+    else if (h < 300) { r = x; g = 0; b = c; }
+    else              { r = c; g = 0; b = x; }
+    const toHex = n => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  function pickFromWheel(clientX, clientY){
+    const rect = pencilWheel.getBoundingClientRect();
+    const radius = rect.width / 2;
+    let dx = clientX - (rect.left + radius);
+    let dy = clientY - (rect.top + radius);
+    let dist = Math.hypot(dx, dy);
+    if (dist > radius) { dx = (dx / dist) * radius; dy = (dy / dist) * radius; dist = radius; }
+    const angle = (Math.atan2(dy, dx) * 180 / Math.PI + 360) % 360;
+    const sat = Math.min(1, dist / radius);
+    const hex = hsvToHex(angle, sat, 1);
+    selectColor(hex);
+    pencilPresetSwatches.forEach(s => s.classList.remove('selected'));
+    pencilWheelCursor.style.left = (radius + dx) + 'px';
+    pencilWheelCursor.style.top = (radius + dy) + 'px';
+  }
+
+  let wheelDragging = false;
+  pencilWheel.addEventListener('pointerdown', (e) => {
+    wheelDragging = true;
+    pencilWheel.setPointerCapture(e.pointerId);
+    pickFromWheel(e.clientX, e.clientY);
+  });
+  pencilWheel.addEventListener('pointermove', (e) => {
+    if (!wheelDragging) return;
+    pickFromWheel(e.clientX, e.clientY);
+  });
+  function endWheelDrag(){ wheelDragging = false; }
+  pencilWheel.addEventListener('pointerup', endWheelDrag);
+  pencilWheel.addEventListener('pointercancel', endWheelDrag);
+
+  // ---------- Freehand strokes ----------
   drawCanvas.addEventListener('pointerdown', (e) => {
     isDrawing = true;
     drawCanvas.setPointerCapture(e.pointerId);
-    const rect = drawCanvas.getBoundingClientRect();
-    lastDrawPoint = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    preStrokeSnapshot = drawCanvas.toDataURL();
+    lastDrawPoint = screenToDrawCoords(e);
   });
   drawCanvas.addEventListener('pointermove', (e) => {
     if (!isDrawing) return;
-    const rect = drawCanvas.getBoundingClientRect();
-    const p = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    const p = screenToDrawCoords(e);
     drawCtx.strokeStyle = currentColor;
     drawCtx.lineWidth = 3;
     drawCtx.beginPath();
@@ -1494,7 +1776,12 @@
     drawCtx.stroke();
     lastDrawPoint = p;
   });
-  function endDraw(){ isDrawing = false; lastDrawPoint = null; }
+  function endDraw(){
+    if (isDrawing && preStrokeSnapshot) pushHistory(preStrokeSnapshot, 'draw');
+    isDrawing = false;
+    lastDrawPoint = null;
+    preStrokeSnapshot = null;
+  }
   drawCanvas.addEventListener('pointerup', endDraw);
   drawCanvas.addEventListener('pointercancel', endDraw);
 
