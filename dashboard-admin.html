@@ -509,10 +509,9 @@
     display: flex;
     flex-direction: column;
     padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 16px) 16px;
-    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8);
   }
 
-  .drawer.open { transform: translateX(0); }
+  .drawer.open { transform: translateX(0); box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8); }
 
   .drawer-header {
     display: flex;
@@ -1816,12 +1815,16 @@
       });
     }
 
-    categoriesData = (folders || []).map(f => ({
-      id: f.id,
-      name: f.name,
-      count: countByFolder[f.id] || 0,
-      active: f.id === activeCategoryId
-    }));
+    // Filter folder yang datanya nggak valid (mis. insert gagal separuh jalan, nama kosong/null)
+    // biar nggak ada folder "hantu" yang sebenarnya nggak ke-save dengan benar di database
+    categoriesData = (folders || [])
+      .filter(f => f && f.id && typeof f.name === 'string' && f.name.trim() !== '')
+      .map(f => ({
+        id: f.id,
+        name: f.name,
+        count: countByFolder[f.id] || 0,
+        active: f.id === activeCategoryId
+      }));
 
     renderCategories();
 
@@ -1964,8 +1967,11 @@
   // Render Catatan / Tabel
   function renderNotes() {
     const container = document.getElementById('notesList');
-    
+    const subtitleEl = document.getElementById('currentCategorySubtitle');
+
     if (!notesData || notesData.length === 0) {
+      // Belum ada data asli dari Supabase — jangan tampilkan label seolah-olah ada isinya
+      if (subtitleEl) subtitleEl.style.display = 'none';
       container.style.display = 'block';
       container.innerHTML = `
         <div class="empty-state">
@@ -1982,6 +1988,7 @@
       return;
     }
 
+    if (subtitleEl) subtitleEl.style.display = 'block';
     container.style.display = 'grid';
     container.innerHTML = notesData.map((note, idx) => `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
