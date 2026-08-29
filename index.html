@@ -23,6 +23,15 @@
     --text-dark-sub: #5E584D;
     --glass-pill-bg: rgba(255, 255, 255, 0.09);
     --glass-pill-border: rgba(255, 255, 255, 0.12);
+    --input-bg: #1C1C1E;
+    --overlay-1: rgba(255, 255, 255, 0.04);
+    --overlay-2: rgba(255, 255, 255, 0.08);
+    --overlay-3: rgba(255, 255, 255, 0.12);
+    --overlay-4: rgba(255, 255, 255, 0.16);
+    --overlay-5: rgba(255, 255, 255, 0.18);
+    --divider-soft: rgba(255, 255, 255, 0.06);
+    --success-text: #BEF2D6;
+    --danger-text: #FBC9CC;
     --radius-xl: 22px;
     --radius-lg: 16px;
     --radius-pill: 999px;
@@ -47,6 +56,15 @@
     --text-muted: #A8A8AD;
     --glass-pill-bg: rgba(0, 0, 0, 0.05);
     --glass-pill-border: rgba(0, 0, 0, 0.1);
+    --input-bg: #EDEBE4;
+    --overlay-1: rgba(0, 0, 0, 0.035);
+    --overlay-2: rgba(0, 0, 0, 0.06);
+    --overlay-3: rgba(0, 0, 0, 0.08);
+    --overlay-4: rgba(0, 0, 0, 0.10);
+    --overlay-5: rgba(0, 0, 0, 0.10);
+    --divider-soft: rgba(0, 0, 0, 0.08);
+    --success-text: #1B7F4C;
+    --danger-text: #B23A3F;
   }
 
   body {
@@ -66,7 +84,7 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    background: #000000;
+    background: var(--bg-dark);
     overflow: hidden;
   }
 
@@ -87,7 +105,7 @@
     background: var(--glass-pill-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    color: #FFF;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -97,7 +115,7 @@
 
   .header-btn:active {
     transform: scale(0.86);
-    background: rgba(255, 255, 255, 0.18);
+    background: var(--overlay-5);
   }
 
   .header-btn svg { width: 20px; height: 20px; }
@@ -138,10 +156,10 @@
     position: absolute;
     top: calc(var(--safe-top) + 60px);
     right: 16px;
-    background: rgba(24, 23, 26, 0.94);
+    background: var(--card-surface-dark);
     backdrop-filter: blur(28px) saturate(1.4);
     -webkit-backdrop-filter: blur(28px) saturate(1.4);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--card-border-dark);
     border-radius: 16px;
     padding: 6px;
     width: 156px;
@@ -169,7 +187,7 @@
     width: 100%;
     background: transparent;
     border: none;
-    color: #EDEAE2;
+    color: var(--text-primary);
     font-size: 13.5px;
     font-weight: 500;
     border-radius: 10px;
@@ -184,7 +202,7 @@
   }
 
   .view-option:active {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--overlay-2);
   }
 
   .view-option svg { width: 17px; height: 17px; }
@@ -205,7 +223,7 @@
     letter-spacing: -0.02em;
     margin-bottom: 6px;
     text-transform: uppercase;
-    color: #FFF;
+    color: var(--text-primary);
     animation: fadeInDown 0.35s ease-out;
   }
 
@@ -264,10 +282,10 @@
     border-radius: 16px;
     padding: 16px;
   }
-  .notes-container.view-list .note-title { color: #FFF; font-size: 14.5px; }
+  .notes-container.view-list .note-title { color: var(--text-primary); font-size: 14.5px; }
   .notes-container.view-list .note-desc { color: var(--text-secondary); font-size: 12.5px; }
   .notes-container.view-list .note-date-tag {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--overlay-2);
     color: var(--text-secondary);
   }
 
@@ -368,7 +386,7 @@
     margin-top: 2px;
     cursor: pointer;
   }
-  .task-info h4 { font-size: 14.5px; font-weight: 600; color: #FFF; }
+  .task-info h4 { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
   .task-info p {
     font-size: 12px;
     color: #FF8A4C;
@@ -458,7 +476,7 @@
     top: 0; bottom: 0; left: 0;
     width: 82%;
     max-width: 320px;
-    background: #141416;
+    background: var(--card-surface-dark);
     z-index: 100;
     transform: translateX(-100%);
     transition: transform 0.34s cubic-bezier(0.18, 0.85, 0.3, 1);
@@ -478,7 +496,7 @@
     padding: 0 6px;
   }
 
-  .drawer-header h3 { font-size: 17px; font-weight: 700; color: #FFF; }
+  .drawer-header h3 { font-size: 17px; font-weight: 700; color: var(--text-primary); }
   .drawer-header .new-link { font-size: 13.5px; font-weight: 700; color: var(--accent-yellow); text-decoration: none; cursor: pointer; }
 
   .folder-list { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
@@ -488,13 +506,13 @@
     justify-content: space-between;
     padding: 12px 14px;
     border-radius: 12px;
-    color: #EDEAE2;
+    color: var(--text-primary);
     cursor: pointer;
     transition: background 0.15s ease;
   }
 
-  .folder-item:active { background: rgba(255, 255, 255, 0.08); }
-  .folder-item.active { background: rgba(255, 255, 255, 0.08); }
+  .folder-item:active { background: var(--overlay-2); }
+  .folder-item.active { background: var(--overlay-2); }
   .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; }
   .folder-item-left svg { width: 20px; height: 20px; color: var(--text-secondary); }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
@@ -526,15 +544,15 @@
     padding: 12px 14px;
     border-radius: 12px;
     border: 1px solid var(--glass-pill-border);
-    background: rgba(255, 255, 255, 0.04);
-    color: #EDEAE2;
+    background: var(--overlay-1);
+    color: var(--text-primary);
     cursor: pointer;
     flex-shrink: 0;
     transition: background 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .switch-app-btn:active {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--overlay-3);
     transform: scale(0.97);
   }
 
@@ -557,7 +575,7 @@
   .search-overlay {
     position: fixed;
     inset: 0;
-    background: #000;
+    background: var(--bg-dark);
     z-index: 120;
     display: flex;
     flex-direction: column;
@@ -584,7 +602,7 @@
   .search-input-box {
     flex: 1;
     height: 48px;
-    background: #1C1C1E;
+    background: var(--input-bg);
     border-radius: var(--radius-pill);
     display: flex;
     align-items: center;
@@ -595,7 +613,7 @@
   .search-input-box input {
     background: transparent;
     border: none;
-    color: #FFF;
+    color: var(--text-primary);
     font-size: 15px;
     width: 100%;
     outline: none;
@@ -621,18 +639,18 @@
     justify-content: space-between;
     gap: 12px;
     padding: 13px 4px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--divider-soft);
     cursor: pointer;
   }
 
-  .search-result-item:active { background: rgba(255, 255, 255, 0.04); }
+  .search-result-item:active { background: var(--overlay-1); }
 
   .search-result-main { min-width: 0; flex: 1; }
 
   .search-result-title {
     font-size: 14.5px;
     font-weight: 700;
-    color: #FFF;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -672,8 +690,8 @@
     padding: 40px 16px;
   }
   .chip {
-    background: #1C1C1E;
-    color: #D1D1D6;
+    background: var(--input-bg);
+    color: var(--text-secondary);
     padding: 8px 14px;
     border-radius: var(--radius-pill);
     font-size: 13px;
@@ -685,7 +703,7 @@
   .editor-modal {
     position: fixed;
     inset: 0;
-    background: #000;
+    background: var(--bg-dark);
     z-index: 200;
     transform: translateY(100%);
     transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
@@ -741,7 +759,7 @@
 
   .settings-row:last-child { border-bottom: none; }
   .settings-row.clickable { cursor: pointer; }
-  .settings-row.clickable:active { background: rgba(255, 255, 255, 0.04); }
+  .settings-row.clickable:active { background: var(--overlay-1); }
 
   .settings-row-label { font-size: 15.5px; font-weight: 700; color: var(--text-primary); }
 
@@ -755,7 +773,7 @@
     width: 50px;
     height: 29px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.16);
+    background: var(--overlay-4);
     cursor: pointer;
     transition: background 0.25s ease;
     flex-shrink: 0;
@@ -959,7 +977,7 @@
     font-size: 10px;
     font-weight: 700;
     color: var(--text-secondary);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--overlay-2);
     padding: 4px 8px;
     border-radius: 999px;
     white-space: nowrap;
@@ -1034,7 +1052,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: #1C1C1E;
+    background: var(--input-bg);
     border-radius: var(--radius-pill);
     padding: 11px 16px;
     margin-bottom: 18px;
@@ -1061,8 +1079,8 @@
     margin-bottom: 18px;
     flex-shrink: 0;
   }
-  .insight-banner.positive { background: rgba(61, 214, 140, 0.10); border: 1px solid rgba(61, 214, 140, 0.28); color: #BEF2D6; }
-  .insight-banner.negative { background: rgba(240, 85, 92, 0.10); border: 1px solid rgba(240, 85, 92, 0.28); color: #FBC9CC; }
+  .insight-banner.positive { background: rgba(61, 214, 140, 0.10); border: 1px solid rgba(61, 214, 140, 0.28); color: var(--success-text); }
+  .insight-banner.negative { background: rgba(240, 85, 92, 0.10); border: 1px solid rgba(240, 85, 92, 0.28); color: var(--danger-text); }
 
   .trend-badge {
     display: none;
@@ -1127,7 +1145,7 @@
     cursor: pointer;
   }
   .export-btn svg { width: 15px; height: 15px; }
-  .export-btn:active { background: rgba(255, 255, 255, 0.12); }
+  .export-btn:active { background: var(--overlay-3); }
 
   .recent-activity-list {
     display: flex;
@@ -1220,7 +1238,7 @@
   <!-- Main Scrollable Feed -->
   <main class="content-scroll">
     <div id="notesSection">
-      <h1 class="page-title">ALL</h1>
+      <h1 class="page-title" id="pageTitleMain">ALL</h1>
       <p class="section-label">Previous 7 Days</p>
 
       <!-- Supabase Data Feed Container -->
@@ -1234,7 +1252,7 @@
       <div class="task-item">
         <div class="task-check"></div>
         <div class="task-info">
-          <h4>Kamis ada pr b indo</h4>
+          <h4>testing</h4>
           <p>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Wed, Nov 5, 2026 06:05 PM Once
@@ -1260,18 +1278,7 @@
   <div class="drawer-header">
     <h3>Folders</h3>
   </div>
-  <div class="folder-list" id="drawerFolderList">
-    <p class="drawer-empty-note">Belum ada folder</p>
-
-    <div class="folder-divider"></div>
-    <button class="switch-app-btn" id="btnSwitchCalculator" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/calculator.html'">
-      <div class="folder-item-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/><line x1="16" y1="14" x2="16" y2="18"/></svg>
-        <span>Kalkulator</span>
-      </div>
-      <svg class="switch-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 6 15 12 9 18"/></svg>
-    </button>
-  </div>
+  <div class="folder-list" id="drawerFolderList"></div>
 
   <div class="drawer-footer">
     <button class="drawer-foot-btn" id="btnModeAdmin" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/login-admin.html'">
@@ -1480,21 +1487,140 @@
   </div>
 </div>
 
+<!-- Supabase Client SDK — sama dengan Dashboard Admin, biar data selalu sinkron -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-  // Data feed notes dari Supabase (belum terhubung — dikosongkan dulu)
-  // Struktur tiap note nantinya: { id, title, preview, date_tag, folder, amount, category, created_at }
-  // 'folder'     = nama folder kategori/tabel tempat note itu berada (dipakai fitur search & distribusi)
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<script>
+  // --- Data dari Supabase, sinkron dengan Dashboard Admin (tabel 'folders' & 'notes') ---
+  // Struktur tiap note: { id, title, preview, date_tag, folder_id, folder, amount, category, created_at }
+  // 'folder'     = nama folder hasil join dari folder_id (dipakai fitur search & distribusi)
   // 'amount'     = nominal transaksi/pemasukan (angka, Rupiah) — dipakai fitur grafik & breakdown Analisa
   // 'category'   = jenis transaksi, mis. "Jasa Servis" / "Sparepart" — dipakai breakdown kategori
-  // 'created_at' = tanggal-waktu asli ISO 8601 (mis. "2026-08-28T10:30:00") — dipakai filter periode & aktivitas terbaru
-  let notesData = [];
+  // 'created_at' = tanggal-waktu asli ISO 8601 — dipakai filter periode & aktivitas terbaru
+  let categoriesData = [];   // daftar folder dari Supabase (dipakai drawer)
+  let notesData = [];        // SELURUH notes dari semua folder (dipakai Analisa & search global)
+  let activeFolderId = null; // null = tampilkan semua folder di list utama ("ALL")
+
+  // Ambil semua folder kategori dari Supabase
+  async function loadFolders() {
+    const { data, error } = await supabaseClient
+      .from('folders')
+      .select('*')
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Gagal memuat folder:', error.message);
+      categoriesData = [];
+    } else {
+      categoriesData = data || [];
+    }
+  }
+
+  // Ambil semua notes dari semua folder, lalu tempel nama foldernya
+  async function loadNotes() {
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal memuat notes:', error.message);
+      notesData = [];
+    } else {
+      const folderNameById = {};
+      categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
+      notesData = (data || []).map(n => ({
+        ...n,
+        folder: folderNameById[n.folder_id] || 'Uncategorized'
+      }));
+    }
+  }
+
+  // Muat ulang folder + notes sekaligus, lalu refresh semua tampilan
+  async function loadAllData() {
+    await loadFolders();
+    await loadNotes();
+    renderFolderDrawer();
+    renderNotes();
+  }
+
+  // Notes yang tampil di grid utama (difilter folder aktif, "ALL" kalau null)
+  function getVisibleNotes() {
+    return activeFolderId ? notesData.filter(n => n.folder_id === activeFolderId) : notesData;
+  }
+
+  // Render daftar folder dinamis di drawer (item "All" + tiap folder dari Supabase)
+  function renderFolderDrawer() {
+    const list = document.getElementById('drawerFolderList');
+    if (!list) return;
+
+    const countByFolder = {};
+    notesData.forEach(n => {
+      if (n.folder_id) countByFolder[n.folder_id] = (countByFolder[n.folder_id] || 0) + 1;
+    });
+
+    const allRow = `
+      <div class="folder-item ${!activeFolderId ? 'active' : ''}" data-folder-id="">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>All</span>
+        </div>
+        <span class="folder-count" id="allCountTag">${notesData.length} &rsaquo;</span>
+      </div>
+    `;
+
+    const folderRows = categoriesData.map(cat => `
+      <div class="folder-item ${activeFolderId === cat.id ? 'active' : ''}" data-folder-id="${cat.id}">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>${escapeHtml(cat.name)}</span>
+        </div>
+        <span class="folder-count">${countByFolder[cat.id] || 0} &rsaquo;</span>
+      </div>
+    `).join('');
+
+    const emptyNote = categoriesData.length === 0
+      ? `<p class="drawer-empty-note">Belum ada folder</p>`
+      : '';
+
+    list.innerHTML = allRow + folderRows + emptyNote + `
+      <div class="folder-divider"></div>
+      <button class="switch-app-btn" id="btnSwitchCalculator" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/calculator.html'">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/><line x1="16" y1="14" x2="16" y2="18"/></svg>
+          <span>Kalkulator</span>
+        </div>
+        <svg class="switch-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
+    `;
+
+    list.querySelectorAll('.folder-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const fid = item.dataset.folderId;
+        activeFolderId = fid || null;
+        const cat = categoriesData.find(c => c.id === fid);
+        document.getElementById('pageTitleMain').textContent = cat ? cat.name.toUpperCase() : 'ALL';
+        drawer.classList.remove('open');
+        drawerOverlay.classList.remove('open');
+        renderFolderDrawer();
+        renderNotes();
+      });
+    });
+  }
 
   function renderNotes() {
     const container = document.getElementById('notesList');
     const allCountTag = document.getElementById('allCountTag');
     if (allCountTag) allCountTag.textContent = `${notesData.length} ›`;
 
-    if (!notesData || notesData.length === 0) {
+    const visibleNotes = getVisibleNotes();
+
+    if (!visibleNotes || visibleNotes.length === 0) {
       container.style.display = 'block';
       container.innerHTML = `
         <div class="empty-state">
@@ -1511,7 +1637,7 @@
     }
 
     container.style.display = 'grid';
-    container.innerHTML = notesData.map((note, idx) => `
+    container.innerHTML = visibleNotes.map((note, idx) => `
       <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
         <div class="note-content-layer">
           <h2 class="note-title">${note.title || 'Untitled'}</h2>
@@ -1810,7 +1936,8 @@
     const w = 320, h = 150, pad = 6;
 
     if (points.length === 0) {
-      svgEl.innerHTML = `<line x1="0" y1="${h - pad}" x2="${w}" y2="${h - pad}" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>`;
+      const baseStroke = document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.12)';
+      svgEl.innerHTML = `<line x1="0" y1="${h - pad}" x2="${w}" y2="${h - pad}" stroke="${baseStroke}" stroke-width="1.5"/>`;
       emptyEl.style.display = 'flex';
       return;
     }
@@ -2126,6 +2253,7 @@
     const isLight = document.body.classList.toggle('light-theme');
     toggleDarkTheme.classList.toggle('active', !isLight);
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
+    if (analyticsOverlay.classList.contains('open')) renderIncomeCard();
   });
 
   // --- Liquid Glass Alert (dipakai oleh Sync/User Agreement/Privacy Policy) ---
@@ -2184,7 +2312,7 @@
     }
   });
 
-  renderNotes();
+  loadAllData();
 </script>
 </body>
 </html>
