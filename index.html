@@ -483,10 +483,9 @@
     display: flex;
     flex-direction: column;
     padding: calc(var(--safe-top) + 20px) 16px calc(var(--safe-bottom) + 16px) 16px;
-    box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8);
   }
 
-  .drawer.open { transform: translateX(0); }
+  .drawer.open { transform: translateX(0); box-shadow: 10px 0 40px rgba(0, 0, 0, 0.8); }
 
   .drawer-header {
     display: flex;
@@ -1239,7 +1238,7 @@
   <main class="content-scroll">
     <div id="notesSection">
       <h1 class="page-title" id="pageTitleMain">ALL</h1>
-      <p class="section-label">Previous 7 Days</p>
+      <p class="section-label" id="periodLabelMain">Previous 7 Days</p>
 
       <!-- Supabase Data Feed Container -->
       <div class="notes-container view-grid" id="notesList"></div>
@@ -1247,17 +1246,12 @@
 
     <!-- Tasks Tab Content -->
     <div class="tasks-container" id="tasksSection">
-      <h1 class="page-title">Tasks</h1>
-      <p class="section-label">To be Completed</p>
-      <div class="task-item">
-        <div class="task-check"></div>
-        <div class="task-info">
-          <h4>testing</h4>
-          <p>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Wed, Nov 5, 2026 06:05 PM Once
-          </p>
-        </div>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/>
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <p>Belum ada task</p>
       </div>
     </div>
   </main>
@@ -1281,7 +1275,7 @@
   <div class="folder-list" id="drawerFolderList"></div>
 
   <div class="drawer-footer">
-    <button class="drawer-foot-btn" id="btnModeAdmin" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/admin-login.html'">
+    <button class="drawer-foot-btn" id="btnModeAdmin" onclick="window.location.href='dashboard-admin.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><rect x="4" y="19" width="16" height="3" rx="1"/></svg>
       Mode Admin
     </button>
@@ -1517,7 +1511,9 @@
       console.error('Gagal memuat folder:', error.message);
       categoriesData = [];
     } else {
-      categoriesData = data || [];
+    // Filter folder yang datanya nggak valid (mis. insert gagal separuh jalan, nama kosong/null)
+    // biar nggak ada folder "hantu" yang sebenarnya nggak ke-save dengan benar di database
+    categoriesData = (data || []).filter(f => f && f.id && typeof f.name === 'string' && f.name.trim() !== '');
     }
   }
 
@@ -1619,8 +1615,13 @@
     if (allCountTag) allCountTag.textContent = `${notesData.length} ›`;
 
     const visibleNotes = getVisibleNotes();
+    const pageTitleEl = document.getElementById('pageTitleMain');
+    const periodLabelEl = document.getElementById('periodLabelMain');
 
     if (!visibleNotes || visibleNotes.length === 0) {
+      // Belum ada data asli dari Supabase — jangan tampilkan judul/label seolah-olah datanya ada
+      pageTitleEl.style.display = 'none';
+      periodLabelEl.style.display = 'none';
       container.style.display = 'block';
       container.innerHTML = `
         <div class="empty-state">
@@ -1630,12 +1631,14 @@
             <line x1="16" y1="13" x2="8" y2="13"/>
             <line x1="16" y1="17" x2="8" y2="17"/>
           </svg>
-          <p>Belum ada data</p>
+          <p>Belum ada catatan</p>
         </div>
       `;
       return;
     }
 
+    pageTitleEl.style.display = 'block';
+    periodLabelEl.style.display = 'block';
     container.style.display = 'grid';
     container.innerHTML = visibleNotes.map((note, idx) => `
       <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
