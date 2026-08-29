@@ -640,6 +640,34 @@
   }
   .share-cancel:active{ background:rgba(255,255,255,0.1); }
 </style>
+<!-- Supabase Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<!-- Auth Guard: file ini private, sama seperti dashboard-admin.html.
+     Kalau dibuka langsung tanpa login admin, langsung dilempar keluar. -->
+<script>
+  (async function guardAdminAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.top.location.href = 'admin-login.html';
+      return;
+    }
+
+    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+
+    if (error || !isAdmin) {
+      await supabaseClient.auth.signOut();
+      window.top.location.href = 'admin-login.html';
+    }
+  })();
+</script>
+
 </head>
 <body>
 
@@ -1214,6 +1242,101 @@
   renderRows();
   updateUndoRedoUI();
 
+  // ---------- Sinkronisasi Database (Supabase) ----------
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentNoteId = urlParams.get('id') || null;
+  const targetFolderId = urlParams.get('folder') || null;
+
+  // Kalau ini buka note yang sudah ada, tarik isinya dari database
+  // dan timpa tabel kosong bawaan dengan data aslinya.
+  async function loadExistingNote() {
+    if (!currentNoteId) return;
+
+    const { data: note, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .eq('id', currentNoteId)
+      .single();
+
+    if (error || !note) {
+      console.error('Gagal memuat note:', error && error.message);
+      return;
+    }
+
+    if (note.content && note.content.columns && note.content.rows) {
+      columns = note.content.columns;
+      rows = note.content.rows;
+    }
+
+    noteTitle = note.title || '';
+    document.getElementById('noteTitle').innerText = noteTitle;
+
+    renderHeader();
+    renderRows();
+
+    historyStack = [];
+    redoStack = [];
+    updateUndoRedoUI();
+  }
+
+  loadExistingNote();
+
+  // Bikin ringkasan singkat (preview) dari 2 kolom pertama (selain kolom "No")
+  // buat ditampilkan di kartu grid dashboard admin.
+  function buildPreviewText() {
+    return columns
+      .filter(c => c.type !== 'no')
+      .slice(0, 2)
+      .map(c => c.label || '')
+      .join('\n');
+  }
+
+  function buildDateTag() {
+    const d = new Date();
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+  }
+
+  // Simpan (insert kalau note baru, update kalau sudah ada) ke tabel 'notes'.
+  async function saveNoteToDatabase() {
+    const titleNow = document.getElementById('noteTitle').innerText.trim();
+
+    const payload = {
+      title: titleNow || 'Untitled',
+      preview: buildPreviewText(),
+      date_tag: buildDateTag(),
+      content: { columns, rows }
+    };
+
+    let result;
+
+    if (currentNoteId) {
+      result = await supabaseClient
+        .from('notes')
+        .update(payload)
+        .eq('id', currentNoteId)
+        .select()
+        .single();
+    } else {
+      result = await supabaseClient
+        .from('notes')
+        .insert({ ...payload, folder_id: targetFolderId })
+        .select()
+        .single();
+    }
+
+    if (result.error) {
+      alert('Gagal menyimpan ke database: ' + result.error.message);
+      return false;
+    }
+
+    currentNoteId = result.data.id; // biar klik ceklis berikutnya jadi update, bukan insert baru
+    return true;
+  }
+
   // Pressing Enter in any cell (header or body) moves focus to the next
   // editable cell in the same row, instead of inserting a line break.
   document.getElementById('notesTable').addEventListener('keydown', (e) => {
@@ -1533,11 +1656,26 @@
     });
   });
 
-  // ---------- Checklist: deferred to phase 2 (needs redesign for dynamic columns) ----------
+  // ---------- Checklist = Simpan ke Database ----------
   const btnChecklist = document.getElementById('btnChecklist');
-  btnChecklist.addEventListener('click', () => {
+  btnChecklist.addEventListener('click', async () => {
     setDrawMode(false);
-    console.log('Checklist kelengkapan data — menyusul, perlu didesain ulang buat kolom dinamis');
+
+    if (btnChecklist.classList.contains('saving')) return; // cegah double-klik
+    btnChecklist.classList.add('saving');
+    const originalOpacity = btnChecklist.style.opacity;
+    btnChecklist.style.opacity = '0.5';
+
+    const success = await saveNoteToDatabase();
+
+    btnChecklist.classList.remove('saving');
+    btnChecklist.style.opacity = originalOpacity;
+
+    if (success) {
+      btnChecklist.style.color = '#3DD68C';
+      setTimeout(() => { btnChecklist.style.color = ''; }, 900);
+      window.parent.postMessage('note-saved', '*');
+    }
   });
 
   // ---------- Camera / Gallery: attach a photo to a row ----------
