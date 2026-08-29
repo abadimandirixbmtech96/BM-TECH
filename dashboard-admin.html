@@ -581,24 +581,6 @@
     opacity: 0.3;
   }
 
-  /* Admin item */
-  .folder-item.admin-item {
-    border: 1px solid rgba(240, 165, 41, 0.15);
-    background: rgba(240, 165, 41, 0.04);
-    margin-top: auto;
-  }
-  .folder-item.admin-item .folder-item-left svg {
-    color: var(--accent-yellow);
-  }
-  .admin-badge {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--accent-yellow);
-    background: rgba(240, 165, 41, 0.15);
-    padding: 2px 8px;
-    border-radius: 6px;
-  }
-
   .drawer-footer {
     display: flex;
     justify-content: space-around;
@@ -1479,10 +1461,6 @@
       </svg>
       Admin
     </button>
-    <button class="drawer-foot-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-      User Feedback
-    </button>
     <button class="drawer-foot-btn" id="btnAnalyticsOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
       Analisa
@@ -1856,19 +1834,7 @@
           </svg>
           <p>Belum ada kategori</p>
         </div>
-        <div class="folder-item admin-item" id="btnAdminFolder">
-          <div class="folder-item-left">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              <path d="M12 8v4"/>
-              <path d="M12 16h.01"/>
-            </svg>
-            <span>Mode Admin</span>
-          </div>
-          <span class="admin-badge">Admin</span>
-        </div>
       `;
-      document.getElementById('btnAdminFolder').addEventListener('click', handleAdminAccess);
       return;
     }
 
@@ -1880,27 +1846,63 @@
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
       </div>
-    `).join('') + `
-      <div class="folder-item admin-item" id="btnAdminFolder">
-        <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            <path d="M12 8v4"/>
-            <path d="M12 16h.01"/>
-          </svg>
-          <span>Mode Admin</span>
-        </div>
-        <span class="admin-badge">Admin</span>
-      </div>
-    `;
+    `).join('');
 
+    // Tap biasa = buka folder. Tekan & tahan (long-press) = hapus folder (buat bersihin folder test/salah kayak "kyy").
     container.querySelectorAll('.folder-item[data-cat-id]').forEach(item => {
+      let pressTimer = null;
+      let longPressed = false;
+
       item.addEventListener('click', () => {
+        if (longPressed) { longPressed = false; return; }
         selectCategory(item.dataset.catId);
       });
-    });
 
-    document.getElementById('btnAdminFolder').addEventListener('click', handleAdminAccess);
+      item.addEventListener('touchstart', () => {
+        longPressed = false;
+        pressTimer = setTimeout(() => {
+          longPressed = true;
+          handleDeleteCategory(item.dataset.catId, item.querySelector('span').textContent);
+        }, 550);
+      });
+      item.addEventListener('touchend', () => clearTimeout(pressTimer));
+      item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+    });
+  }
+
+  // Hapus folder + seluruh notes di dalamnya (dipicu long-press di drawer)
+  async function handleDeleteCategory(catId, catName) {
+    const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya juga akan terhapus permanen.`);
+    if (!confirmDelete) return;
+
+    const { error: notesDeleteError } = await supabaseClient
+      .from('notes')
+      .delete()
+      .eq('folder_id', catId);
+
+    if (notesDeleteError) {
+      alert('Gagal menghapus notes di folder ini: ' + notesDeleteError.message);
+      return;
+    }
+
+    const { error: folderDeleteError } = await supabaseClient
+      .from('folders')
+      .delete()
+      .eq('id', catId);
+
+    if (folderDeleteError) {
+      alert('Gagal menghapus folder: ' + folderDeleteError.message);
+      return;
+    }
+
+    if (activeCategoryId === catId) {
+      activeCategoryId = null;
+      document.getElementById('currentCategoryTitle').innerText = 'PILIH KATEGORI';
+      notesData = [];
+      renderNotes();
+    }
+
+    loadCategories();
   }
 
   function selectCategory(catId) {
