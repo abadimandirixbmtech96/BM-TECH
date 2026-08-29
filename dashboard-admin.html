@@ -561,6 +561,34 @@
   .folder-item.active { background: rgba(255, 255, 255, 0.08); }
   .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; }
   .folder-item-left svg { width: 20px; height: 20px; color: var(--text-secondary); }
+  .folder-item { position: relative; overflow: hidden; }
+
+  .btn-delete-folder {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: rgba(240, 85, 92, 0.14);
+    border: 1px solid rgba(240, 85, 92, 0.4);
+    color: #F0555C;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    flex-shrink: 0;
+    animation: delBtnIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-delete-folder svg { width: 15px; height: 15px; }
+  .btn-delete-folder:active { background: rgba(240, 85, 92, 0.26); }
+
+  .folder-item.delete-mode { background: rgba(240, 85, 92, 0.06); }
+  .folder-item.delete-mode .folder-count { display: none; }
+  .folder-item.delete-mode .btn-delete-folder { display: flex; }
+
+  @keyframes delBtnIn {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+  }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
 
   .drawer-empty-category {
@@ -1454,12 +1482,12 @@
   <div class="folder-list" id="categoryFolderList"></div>
 
   <div class="drawer-footer">
-    <button class="drawer-foot-btn" id="btnAdminFooter">
+    <button class="drawer-foot-btn" id="btnModePreview" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
       </svg>
-      Admin
+      Mode Preview
     </button>
     <button class="drawer-foot-btn" id="btnAnalyticsOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
@@ -1761,6 +1789,7 @@
   let categoriesData = []; // Daftar folder kategori dari database
   let notesData = [];      // Daftar tabel/catatan di dalam kategori aktif
   let activeCategoryId = null;
+  let deleteModeCatId = null; // id folder yang lagi nampilin tombol "Hapus" (habis di-hold)
 
   // Ambil semua folder kategori + jumlah note di masing-masing folder
   async function loadCategories() {
@@ -1839,22 +1868,27 @@
     }
 
     container.innerHTML = categoriesData.map(cat => `
-      <div class="folder-item ${cat.active ? 'active' : ''}" data-cat-id="${cat.id}">
+      <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'delete-mode' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <span>${cat.name}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
+        <button class="btn-delete-folder" data-del-id="${cat.id}" data-del-name="${cat.name}" aria-label="Hapus folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Hapus
+        </button>
       </div>
     `).join('');
 
-    // Tap biasa = buka folder. Tekan & tahan (long-press) = hapus folder (buat bersihin folder test/salah kayak "kyy").
+    // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin tombol "Hapus" di row itu.
     container.querySelectorAll('.folder-item[data-cat-id]').forEach(item => {
       let pressTimer = null;
       let longPressed = false;
 
       item.addEventListener('click', () => {
         if (longPressed) { longPressed = false; return; }
+        if (deleteModeCatId) { deleteModeCatId = null; renderCategories(); return; }
         selectCategory(item.dataset.catId);
       });
 
@@ -1862,18 +1896,28 @@
         longPressed = false;
         pressTimer = setTimeout(() => {
           longPressed = true;
-          handleDeleteCategory(item.dataset.catId, item.querySelector('span').textContent);
-        }, 550);
+          deleteModeCatId = item.dataset.catId;
+          renderCategories();
+        }, 500);
       });
       item.addEventListener('touchend', () => clearTimeout(pressTimer));
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
     });
+
+    container.querySelectorAll('.btn-delete-folder').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleDeleteCategory(btn.dataset.delId, btn.dataset.delName);
+      });
+    });
   }
 
-  // Hapus folder + seluruh notes di dalamnya (dipicu long-press di drawer)
+  // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
   async function handleDeleteCategory(catId, catName) {
     const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya juga akan terhapus permanen.`);
     if (!confirmDelete) return;
+
+    deleteModeCatId = null;
 
     const { error: notesDeleteError } = await supabaseClient
       .from('notes')
@@ -2054,13 +2098,6 @@
   btnSearchOpen.addEventListener('click', () => searchOverlay.classList.add('open'));
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
-  // --- Admin Triggers ---
-  function handleAdminAccess() {
-    drawer.classList.remove('open');
-    drawerOverlay.classList.remove('open');
-    openEditor();
-  }
-
   // --- New Folder Bottom Sheet (ganti prompt() lama) ---
   const newFolderOverlay = document.getElementById('newFolderOverlay');
   const newFolderSheet = document.getElementById('newFolderSheet');
@@ -2130,7 +2167,6 @@
     loadCategories();
   }
 
-  document.getElementById('btnAdminFooter').addEventListener('click', handleAdminAccess);
   document.getElementById('btnCreateCategory').addEventListener('click', openNewFolderModal);
   document.getElementById('btnNewFolderComplete').addEventListener('click', handleCreateCategory);
 
