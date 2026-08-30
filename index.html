@@ -1464,18 +1464,9 @@
     <p class="recent-activity-empty">Belum ada aktivitas</p>
   </div>
 
-  <p class="analytics-section-title">Segera Hadir (butuh data transaksi dari Admin)</p>
+  <p class="analytics-section-title">Top Customer</p>
   <div class="upcoming-list">
-    <div class="upcoming-item">
-      <div class="upcoming-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-      </div>
-      <div>
-        <p class="upcoming-text-title">Top Customer</p>
-        <p class="upcoming-text-sub">Pelanggan paling sering transaksi</p>
-      </div>
-      <span class="upcoming-badge">Segera</span>
-    </div>
+    <div class="upcoming-item" id="topCustomerCard" style="opacity:1;"></div>
   </div>
 </div>
 
@@ -2011,33 +2002,83 @@
     return null; // 'all' & 'custom' tidak punya pembanding yang jelas
   }
 
+  // =====================================================================
+  // --- LAPISAN TRANSAKSI ASLI: turunan dari kolom Harga/Tanggal/Customer/Barang
+  // per baris tabel (bukan dari notes.amount/tx_category yang nggak pernah diisi
+  // editor). Dipakai Analisa (grafik omzet, breakdown, Top Customer) biar
+  // datanya beneran nyambung ke apa yang admin isi di tabel.
+  // =====================================================================
+  function parseRupiah(val) {
+    if (val === undefined || val === null) return 0;
+    const cleaned = String(val).replace(/[^0-9]/g, '');
+    const parsed = parseInt(cleaned, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  function parseRowDate(val, fallbackISO) {
+    if (val) {
+      const s = String(val).trim();
+      // format "25/08/26" atau "25-08-2026" (DD/MM/YY atau DD-MM-YYYY)
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (m) {
+        let [, d, mo, y] = m;
+        if (y.length === 2) y = '20' + y;
+        const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
+        if (!isNaN(dt)) return dt;
+      }
+      const dt2 = new Date(s);
+      if (!isNaN(dt2)) return dt2;
+    }
+    return fallbackISO ? new Date(fallbackISO) : null;
+  }
+
+  // Satu baris tabel yang punya nilai Harga = satu transaksi
+  function extractTransactions() {
+    const txs = [];
+    notesData.forEach(note => {
+      const content = note.content;
+      if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
+
+      const columns = content.columns;
+      content.rows.forEach(row => {
+        const hargaVal = getRowValueByLabel(columns, row, 'Harga');
+        const amount = parseRupiah(hargaVal);
+        if (!amount) return; // baris tanpa harga bukan transaksi
+
+        const date = parseRowDate(getRowValueByLabel(columns, row, 'Tanggal'), note.created_at);
+        if (!date) return;
+
+        txs.push({
+          amount,
+          date,
+          customer: getRowValueByLabel(columns, row, 'Customer') || 'Tanpa Nama',
+          barang: getRowValueByLabel(columns, row, 'Barang') || 'Lainnya',
+          folder: note.folder || 'Uncategorized',
+          noteTitle: note.title || 'Untitled'
+        });
+      });
+    });
+    return txs;
+  }
+
   function sumAmountInRange(start, end) {
-    return notesData
-      .filter(n => {
-        if (!n.amount || !n.created_at) return false;
-        const d = new Date(n.created_at);
-        return !isNaN(d) && d >= start && d <= end;
-      })
-      .reduce((sum, n) => sum + Number(n.amount), 0);
+    return extractTransactions()
+      .filter(t => t.date >= start && t.date <= end)
+      .reduce((sum, t) => sum + t.amount, 0);
   }
 
   function computeIncomeSeries(period) {
     const { start, end } = getPeriodRange(period);
-
-    const txs = notesData.filter(n => {
-      if (!n.amount || !n.created_at) return false;
-      const d = new Date(n.created_at);
-      return !isNaN(d) && d >= start && d <= end;
-    });
+    const txs = extractTransactions().filter(t => t.date >= start && t.date <= end);
 
     const byDay = {};
-    txs.forEach(n => {
-      const key = new Date(n.created_at).toISOString().slice(0, 10);
-      byDay[key] = (byDay[key] || 0) + Number(n.amount);
+    txs.forEach(t => {
+      const key = t.date.toISOString().slice(0, 10);
+      byDay[key] = (byDay[key] || 0) + t.amount;
     });
 
     const points = Object.keys(byDay).sort().map(key => ({ date: key, value: byDay[key] }));
-    const total = txs.reduce((sum, n) => sum + Number(n.amount), 0);
+    const total = txs.reduce((sum, t) => sum + t.amount, 0);
 
     return { points, total };
   }
@@ -2181,18 +2222,14 @@
     const todayTotal = sumAmountInRange(todayStart, now);
 
     const sevenAgo = new Date(todayStart); sevenAgo.setDate(sevenAgo.getDate() - 7);
-    const last7 = notesData.filter(n => {
-      if (!n.amount || !n.created_at) return false;
-      const d = new Date(n.created_at);
-      return !isNaN(d) && d >= sevenAgo && d < todayStart;
-    });
+    const last7 = extractTransactions().filter(t => t.date >= sevenAgo && t.date < todayStart);
 
     if (last7.length === 0) { el.style.display = 'none'; return; }
 
     const byDay = {};
-    last7.forEach(n => {
-      const key = new Date(n.created_at).toISOString().slice(0, 10);
-      byDay[key] = (byDay[key] || 0) + Number(n.amount);
+    last7.forEach(t => {
+      const key = t.date.toISOString().slice(0, 10);
+      byDay[key] = (byDay[key] || 0) + t.amount;
     });
     const days = Object.keys(byDay);
     const avg7 = days.reduce((s, k) => s + byDay[k], 0) / days.length;
@@ -2210,15 +2247,14 @@
     }
   }
 
-  // --- Breakdown per Kategori ---
+  // --- Breakdown per Barang (kolom "Barang" tiap baris, bukan tx_category yang nggak pernah diisi) ---
   function renderCategoryBreakdown(filterTerm) {
     const el = document.getElementById('categoryBarList');
     const byCategory = {};
-    notesData.forEach(n => {
-      if (!n.amount) return;
-      const cat = n.category || 'Lainnya';
+    extractTransactions().forEach(t => {
+      const cat = t.barang;
       if (filterTerm && !cat.toLowerCase().includes(filterTerm)) return;
-      byCategory[cat] = (byCategory[cat] || 0) + Number(n.amount);
+      byCategory[cat] = (byCategory[cat] || 0) + t.amount;
     });
     const names = Object.keys(byCategory);
     if (names.length === 0) {
@@ -2277,35 +2313,74 @@
       }).join('');
   }
 
-  // --- Aktivitas Terbaru ---
+  // --- Aktivitas Terbaru (transaksi per baris, bukan per note) ---
   function renderRecentActivity(filterTerm) {
     const el = document.getElementById('recentActivityList');
-    let items = notesData.filter(n => n.created_at);
+    let items = extractTransactions();
 
     if (filterTerm) {
-      items = items.filter(n =>
-        (n.title || '').toLowerCase().includes(filterTerm) ||
-        (n.folder || '').toLowerCase().includes(filterTerm) ||
-        (n.category || '').toLowerCase().includes(filterTerm)
+      items = items.filter(t =>
+        t.customer.toLowerCase().includes(filterTerm) ||
+        t.barang.toLowerCase().includes(filterTerm) ||
+        t.folder.toLowerCase().includes(filterTerm)
       );
     }
 
-    items = items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
+    items = items.sort((a, b) => b.date - a.date).slice(0, 5);
 
     if (items.length === 0) {
       el.innerHTML = `<p class="recent-activity-empty">${filterTerm ? 'Tidak ada aktivitas cocok' : 'Belum ada aktivitas'}</p>`;
       return;
     }
 
-    el.innerHTML = items.map(n => `
+    el.innerHTML = items.map(t => `
       <div class="recent-activity-item">
         <div>
-          <p class="recent-activity-title">${escapeHtml(n.title || 'Untitled')}</p>
-          <p class="recent-activity-sub">${escapeHtml(n.folder || 'Uncategorized')} · ${timeAgo(n.created_at)}</p>
+          <p class="recent-activity-title">${escapeHtml(t.customer)} &middot; ${escapeHtml(t.barang)}</p>
+          <p class="recent-activity-sub">${escapeHtml(t.folder)} · ${timeAgo(t.date.toISOString())}</p>
         </div>
-        ${n.amount ? `<span class="recent-activity-amount">${formatRupiah(n.amount)}</span>` : ''}
+        <span class="recent-activity-amount">${formatRupiah(t.amount)}</span>
       </div>
     `).join('');
+  }
+
+  // --- Top Customer (dulu "Segera Hadir" — sekarang dihitung dari kolom Customer + Harga tiap baris) ---
+  function renderTopCustomer() {
+    const el = document.getElementById('topCustomerCard');
+    if (!el) return;
+
+    const byCustomer = {};
+    extractTransactions().forEach(t => {
+      if (t.customer === 'Tanpa Nama') return;
+      if (!byCustomer[t.customer]) byCustomer[t.customer] = { total: 0, count: 0 };
+      byCustomer[t.customer].total += t.amount;
+      byCustomer[t.customer].count += 1;
+    });
+
+    const names = Object.keys(byCustomer);
+    if (names.length === 0) {
+      el.innerHTML = `
+        <div class="upcoming-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+        </div>
+        <div>
+          <p class="upcoming-text-title">Top Customer</p>
+          <p class="upcoming-text-sub">Belum ada data customer</p>
+        </div>
+      `;
+      return;
+    }
+
+    const top = names.sort((a, b) => byCustomer[b].total - byCustomer[a].total)[0];
+    el.innerHTML = `
+      <div class="upcoming-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </div>
+      <div>
+        <p class="upcoming-text-title">${escapeHtml(top)}</p>
+        <p class="upcoming-text-sub">${byCustomer[top].count}x transaksi &middot; total ${formatRupiah(byCustomer[top].total)}</p>
+      </div>
+    `;
   }
 
   // --- Search di dalam Analisa ---
@@ -2317,6 +2392,7 @@
   });
 
   function renderAnalytics() {
+    renderTopCustomer();
     renderIncomeCard();
     renderInsightBanner();
 
