@@ -1270,8 +1270,11 @@
   }
 
   // Simpan (insert kalau note baru, update kalau sudah ada) ke tabel 'notes'.
-  async function saveNoteToDatabase() {
-    console.log('[saveNoteToDatabase] mulai. currentNoteId =', currentNoteId, 'targetFolderId =', targetFolderId);
+  // silent=true dipakai untuk autosave (tidak menampilkan alert kalau gagal,
+  // cukup dicatat ke console — supaya user tidak diberondong popup error
+  // tiap kali koneksi sempat lambat/putus sebentar).
+  async function saveNoteToDatabase(silent) {
+    console.log('[autosave] menyimpan. currentNoteId =', currentNoteId, 'targetFolderId =', targetFolderId);
 
     const titleEl = document.getElementById('noteTitle');
     const titleNow = titleEl ? titleEl.innerText.trim() : '';
@@ -1282,8 +1285,6 @@
       date_tag: buildDateTag(),
       content: { columns, rows }
     };
-
-    console.log('[saveNoteToDatabase] payload:', payload);
 
     let result;
 
@@ -1302,16 +1303,72 @@
         .single();
     }
 
-    console.log('[saveNoteToDatabase] hasil:', result);
-
     if (result.error) {
-      alert('Gagal menyimpan ke database: ' + result.error.message);
+      console.error('[autosave] gagal:', result.error.message);
+      if (!silent) alert('Gagal menyimpan ke database: ' + result.error.message);
+      showSaveStatus('Gagal tersimpan', true);
       return false;
     }
 
-    currentNoteId = result.data.id; // biar klik ceklis berikutnya jadi update, bukan insert baru
+    currentNoteId = result.data.id; // biar autosave berikutnya jadi update, bukan insert baru
+    window.parent.postMessage('note-saved', '*');
     return true;
   }
+
+  // ---------- Indikator status simpan (kecil, di pojok, tidak mengganggu) ----------
+  function ensureSaveStatusEl() {
+    let el = document.getElementById('saveStatusIndicator');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'saveStatusIndicator';
+      el.style.cssText = 'position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); right:14px; z-index:500; font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:999px; background:rgba(0,0,0,0.55); color:#fff; opacity:0; transition:opacity .25s ease; pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  let saveStatusTimer = null;
+  function showSaveStatus(text, isError) {
+    const el = ensureSaveStatusEl();
+    el.textContent = text;
+    el.style.background = isError ? 'rgba(200,60,60,0.85)' : 'rgba(30,30,30,0.75)';
+    el.style.opacity = '1';
+    clearTimeout(saveStatusTimer);
+    saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+  }
+
+  // ---------- Autosave Real-Time ----------
+  // Memantau perubahan apapun di judul & tabel (ketik, isi cell, tambah/hapus
+  // baris/kolom) lalu otomatis menyimpan ke database setelah jeda singkat.
+  // Tidak perlu tombol apapun ditekan.
+  let autosaveTimer = null;
+  let autosaveInFlight = false;
+  let autosavePending = false;
+
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    showSaveStatus('Menyimpan...');
+    autosaveTimer = setTimeout(runAutosave, 1200);
+  }
+
+  async function runAutosave() {
+    if (autosaveInFlight) { autosavePending = true; return; }
+    autosaveInFlight = true;
+
+    const success = await saveNoteToDatabase(true);
+    showSaveStatus(success ? 'Tersimpan' : 'Gagal tersimpan', !success);
+
+    autosaveInFlight = false;
+    if (autosavePending) {
+      autosavePending = false;
+      scheduleAutosave();
+    }
+  }
+
+  const autosaveObserver = new MutationObserver(scheduleAutosave);
+  autosaveObserver.observe(document.getElementById('noteTitle'), { childList: true, characterData: true, subtree: true });
+  autosaveObserver.observe(document.getElementById('tableHead'), { childList: true, characterData: true, subtree: true });
+  autosaveObserver.observe(document.getElementById('tableBody'), { childList: true, characterData: true, subtree: true });
 
   // Pressing Enter in any cell (header or body) moves focus to the next
   // editable cell in the same row, instead of inserting a line break.
@@ -1609,38 +1666,16 @@
   // Kept as a no-op so other code that calls it doesn't break.
   function closeSharePanel(){}
 
-  // ---------- Checklist = Simpan ke Database ----------
+  // ---------- Checklist: cek kelengkapan data (cell kosong) ----------
+  // CATATAN: tombol ini BUKAN tombol simpan. Penyimpanan sekarang berjalan
+  // otomatis real-time (lihat MutationObserver "autosave" di bawah), jadi
+  // data tetap masuk ke database walau tombol ini tidak pernah disentuh.
+  // Fungsi asli tombol ini (menandai cell mana yang masih kosong) belum
+  // diimplementasikan — silakan dilanjutkan sesuai kebutuhan UI/tools.
   const btnChecklist = document.getElementById('btnChecklist');
-  btnChecklist.addEventListener('click', async () => {
-    try {
-      setDrawMode(false);
-
-      if (btnChecklist.classList.contains('saving')) return; // cegah double-klik
-      btnChecklist.classList.add('saving');
-      const originalOpacity = btnChecklist.style.opacity;
-      btnChecklist.style.opacity = '0.5';
-
-      let success = false;
-      try {
-        success = await saveNoteToDatabase();
-      } finally {
-        // Apapun hasilnya (sukses/gagal/error), tombol WAJIB kembali normal
-        // biar nggak macet permanen dan bisa dicoba lagi.
-        btnChecklist.classList.remove('saving');
-        btnChecklist.style.opacity = originalOpacity;
-      }
-
-      if (success) {
-        btnChecklist.style.color = '#3DD68C';
-        setTimeout(() => { btnChecklist.style.color = ''; }, 900);
-        window.parent.postMessage('note-saved', '*');
-      }
-    } catch (err) {
-      // Pengaman terakhir: kalau ada error tak terduga di mana pun dalam
-      // proses ini, JANGAN diam-diam gagal — selalu kasih tahu user.
-      console.error('Error saat menyimpan note:', err);
-      alert('Terjadi kesalahan saat menyimpan: ' + (err && err.message ? err.message : err));
-    }
+  btnChecklist.addEventListener('click', () => {
+    setDrawMode(false);
+    console.log('Checklist kelengkapan data — menyusul, perlu didesain ulang buat kolom dinamis');
   });
 
   // ---------- Camera / Gallery: attach a photo to a row ----------
