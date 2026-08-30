@@ -681,9 +681,6 @@
       </button>
     </div>
     <div class="glass-pill">
-      <button class="icon-btn" id="btnShare" aria-label="Bagikan">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"></line><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"></line></svg>
-      </button>
       <button class="icon-btn" id="btnBackground" aria-label="Latar belakang">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4 4.5 7v3.5H7.5V19.5H16.5V10.5H19.5V7L15.5 4 13 6H11L8.5 4Z"></path></svg>
       </button>
@@ -740,17 +737,11 @@
       <button class="toolbtn" id="btnAa" aria-label="Format teks">
         <span class="aa-label">Aa</span>
       </button>
-      <button class="toolbtn" id="btnCamera" aria-label="Kamera / Galeri">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3.4"></circle></svg>
-      </button>
       <button class="toolbtn" id="btnPencil" aria-label="Coretan">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 18.5 9.5 8 20H4v-4Z"></path><path d="M13 7 17 11"></path></svg>
       </button>
       <button class="toolbtn" id="btnChecklist" aria-label="Cek kelengkapan data">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="8 12.5 10.8 15 16 9"></polyline></svg>
-      </button>
-      <button class="toolbtn stub" aria-label="Tabel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"></rect><line x1="3.5" y1="10.5" x2="20.5" y2="10.5"></line><line x1="3.5" y1="15.5" x2="20.5" y2="15.5"></line><line x1="10.5" y1="3.5" x2="10.5" y2="20.5"></line></svg>
       </button>
     </div>
   </div>
@@ -870,17 +861,6 @@
       </button>
     </div>
     <input type="file" id="bgFileInput" accept="image/*" style="display:none">
-  </div>
-
-  <!-- SHARE ACTION SHEET -->
-  <div class="share-scrim" id="shareScrim"></div>
-  <div class="share-panel" id="sharePanel">
-    <div class="share-options">
-      <button data-share="text">Share as Text</button>
-      <button data-share="image">Share as Image</button>
-      <button data-share="pdf">Share as PDF</button>
-    </div>
-    <button class="share-cancel" id="shareCancelBtn">Cancel</button>
   </div>
 
 </div>
@@ -1170,31 +1150,6 @@
       restoreState(JSON.parse(entry.data));
     }
     updateUndoRedoUI();
-  }
-
-  function addRowAfter(index){
-    const pre = snapshot();
-    rows.splice(index + 1, 0, {
-      tanggal:'', hari:'', no:0, jam:nowTime(),
-      pj:'', customer:'', barang:'', keluar:'--------', stok:'--------', ket:'', harga:'', gambar:''
-    });
-    renumber();
-    pushHistory(pre);
-    renderRows();
-    const p = clampPan(tx, ty, scale);
-    tx = p.x; ty = p.y;
-    apply();
-  }
-
-  function deleteRow(index){
-    const pre = snapshot();
-    rows.splice(index, 1);
-    renumber();
-    pushHistory(pre);
-    renderRows();
-    const p = clampPan(tx, ty, scale);
-    tx = p.x; ty = p.y;
-    apply();
   }
 
   // ---------- Row ⋮ menu ----------
@@ -1629,32 +1584,9 @@
   });
 
   // ---------- Share action sheet ----------
-  const sharePanel = document.getElementById('sharePanel');
-  const shareScrim = document.getElementById('shareScrim');
-  const btnShare = document.getElementById('btnShare');
-
-  function openSharePanel(){
-    setDrawMode(false);
-    closeBgPanel();
-    sharePanel.classList.add('open');
-    shareScrim.classList.add('open');
-  }
-  function closeSharePanel(){
-    sharePanel.classList.remove('open');
-    shareScrim.classList.remove('open');
-  }
-
-  btnShare.addEventListener('click', openSharePanel);
-  // Tapping anywhere outside the panel itself (the scrim) closes it —
-  // tapping inside the panel never bubbles to the scrim.
-  shareScrim.addEventListener('click', closeSharePanel);
-  document.getElementById('shareCancelBtn').addEventListener('click', closeSharePanel);
-  sharePanel.querySelectorAll('[data-share]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      console.log('Share as', btn.dataset.share, '— fungsi export menyusul di step berikutnya');
-      closeSharePanel();
-    });
-  });
+  // Share feature removed (not needed in the editor — that's a viewer concern).
+  // Kept as a no-op so other code that calls it doesn't break.
+  function closeSharePanel(){}
 
   // ---------- Checklist = Simpan ke Database ----------
   const btnChecklist = document.getElementById('btnChecklist');
@@ -1683,7 +1615,6 @@
   const cameraScrim = document.getElementById('cameraScrim');
   const cameraCaptureInput = document.getElementById('cameraCaptureInput');
   const cameraGalleryInput = document.getElementById('cameraGalleryInput');
-  const btnCamera = document.getElementById('btnCamera');
   const imgPreviewScrim = document.getElementById('imgPreviewScrim');
   const imgPreviewPhoto = document.getElementById('imgPreviewPhoto');
   let pendingImageRowIndex = null;
@@ -1748,15 +1679,6 @@
     const colId = btn.dataset.imgCol;
     if (rows[idx] && rows[idx].cells[colId]) openImagePreview(rows[idx].cells[colId]);
     else openCameraPanel(idx, colId);
-  });
-
-  // Bottom-toolbar camera icon targets the last-edited row's first Gambar column
-  btnCamera.addEventListener('click', () => {
-    if (!lastActiveCell) return;
-    const idx = rowIndexOf(lastActiveCell);
-    const imgCol = columns.find(c => c.type === 'image');
-    if (idx < 0 || !imgCol) return;
-    openCameraPanel(idx, imgCol.id);
   });
 
 
