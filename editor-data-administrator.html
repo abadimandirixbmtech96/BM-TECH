@@ -668,6 +668,20 @@
   })();
 </script>
 
+<!-- Pengaman: kalau ada error JavaScript apapun yang tak tertangani di
+     halaman ini, langsung munculkan alert. Tanpa ini, error semacam itu
+     cuma diam-diam gagal di background tanpa jejak yang kelihatan. -->
+<script>
+  window.addEventListener('error', function (e) {
+    console.error('Unhandled error:', e.error || e.message);
+    alert('Terjadi error tak terduga: ' + (e.message || 'unknown error'));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    alert('Terjadi error tak terduga (async): ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+</script>
+
 </head>
 <body>
 
@@ -1257,7 +1271,10 @@
 
   // Simpan (insert kalau note baru, update kalau sudah ada) ke tabel 'notes'.
   async function saveNoteToDatabase() {
-    const titleNow = document.getElementById('noteTitle').innerText.trim();
+    console.log('[saveNoteToDatabase] mulai. currentNoteId =', currentNoteId, 'targetFolderId =', targetFolderId);
+
+    const titleEl = document.getElementById('noteTitle');
+    const titleNow = titleEl ? titleEl.innerText.trim() : '';
 
     const payload = {
       title: titleNow || 'Untitled',
@@ -1265,6 +1282,8 @@
       date_tag: buildDateTag(),
       content: { columns, rows }
     };
+
+    console.log('[saveNoteToDatabase] payload:', payload);
 
     let result;
 
@@ -1282,6 +1301,8 @@
         .select()
         .single();
     }
+
+    console.log('[saveNoteToDatabase] hasil:', result);
 
     if (result.error) {
       alert('Gagal menyimpan ke database: ' + result.error.message);
@@ -1591,22 +1612,34 @@
   // ---------- Checklist = Simpan ke Database ----------
   const btnChecklist = document.getElementById('btnChecklist');
   btnChecklist.addEventListener('click', async () => {
-    setDrawMode(false);
+    try {
+      setDrawMode(false);
 
-    if (btnChecklist.classList.contains('saving')) return; // cegah double-klik
-    btnChecklist.classList.add('saving');
-    const originalOpacity = btnChecklist.style.opacity;
-    btnChecklist.style.opacity = '0.5';
+      if (btnChecklist.classList.contains('saving')) return; // cegah double-klik
+      btnChecklist.classList.add('saving');
+      const originalOpacity = btnChecklist.style.opacity;
+      btnChecklist.style.opacity = '0.5';
 
-    const success = await saveNoteToDatabase();
+      let success = false;
+      try {
+        success = await saveNoteToDatabase();
+      } finally {
+        // Apapun hasilnya (sukses/gagal/error), tombol WAJIB kembali normal
+        // biar nggak macet permanen dan bisa dicoba lagi.
+        btnChecklist.classList.remove('saving');
+        btnChecklist.style.opacity = originalOpacity;
+      }
 
-    btnChecklist.classList.remove('saving');
-    btnChecklist.style.opacity = originalOpacity;
-
-    if (success) {
-      btnChecklist.style.color = '#3DD68C';
-      setTimeout(() => { btnChecklist.style.color = ''; }, 900);
-      window.parent.postMessage('note-saved', '*');
+      if (success) {
+        btnChecklist.style.color = '#3DD68C';
+        setTimeout(() => { btnChecklist.style.color = ''; }, 900);
+        window.parent.postMessage('note-saved', '*');
+      }
+    } catch (err) {
+      // Pengaman terakhir: kalau ada error tak terduga di mana pun dalam
+      // proses ini, JANGAN diam-diam gagal — selalu kasih tahu user.
+      console.error('Error saat menyimpan note:', err);
+      alert('Terjadi kesalahan saat menyimpan: ' + (err && err.message ? err.message : err));
     }
   });
 
