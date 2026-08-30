@@ -2349,7 +2349,16 @@
     if (folderId) params.set('folder', folderId);
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);
-    editorFrame.src = 'editor-data-administrator.html?' + params.toString();
+    params.set('_t', Date.now()); // cache-buster: paksa iframe selalu reload fresh, tidak reuse instance/JS lama
+
+    // Kosongkan dulu ke about:blank sebelum set src baru — memastikan browser
+    // benar-benar membuang state/session editor sebelumnya, bukan diam-diam
+    // memakai ulang dokumen iframe yang sama kalau kebetulan URL-nya identik.
+    editorFrame.src = 'about:blank';
+    requestAnimationFrame(() => {
+      editorFrame.src = 'editor-data-administrator.html?' + params.toString();
+    });
+
     editorModal.classList.add('open');
   }
 
