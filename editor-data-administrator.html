@@ -1311,7 +1311,7 @@
     }
 
     currentNoteId = result.data.id; // biar autosave berikutnya jadi update, bukan insert baru
-    window.parent.postMessage('note-saved', '*');
+    window.parent.postMessage('note-autosaved', '*'); // cuma refresh data di background, BUKAN menutup editor
     return true;
   }
 

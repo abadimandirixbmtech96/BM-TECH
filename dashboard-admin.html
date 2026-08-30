@@ -2365,10 +2365,12 @@
   window.addEventListener('message', (e) => {
     if (e.data === 'close-editor') {
       editorModal.classList.remove('open');
+      loadCategories(); // refresh jumlah note per folder + isi tabel aktif saat editor ditutup
     }
-    if (e.data === 'note-saved') {
-      editorModal.classList.remove('open');
-      loadCategories(); // refresh jumlah note per folder + isi tabel aktif
+    if (e.data === 'note-autosaved') {
+      // Autosave real-time dari editor — cukup refresh data di background,
+      // JANGAN menutup modal editor (user masih lagi ngetik).
+      loadCategories();
     }
   });
 
