@@ -704,6 +704,55 @@
   }
   .share-cancel:active{ background:rgba(255,255,255,0.1); }
 </style>
+<!-- Supabase Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<!-- Auth Guard: file ini private, sama seperti dashboard-admin.html.
+     Kalau dibuka langsung tanpa login admin, langsung dilempar keluar.
+     Error jaringan TIDAK memaksa logout (cuma dicatat) — RLS di server
+     tetap jadi penjaga utama, ini cuma lapisan UX. -->
+<script>
+  (async function guardAdminAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.top.location.href = 'admin-login.html';
+      return;
+    }
+
+    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+
+    if (error) {
+      console.error('Gagal cek status admin (jaringan?):', error.message);
+      return;
+    }
+
+    if (!isAdmin) {
+      await supabaseClient.auth.signOut();
+      window.top.location.href = 'admin-login.html';
+    }
+  })();
+</script>
+
+<!-- Pengaman: kalau ada error JavaScript apapun yang tak tertangani di
+     halaman ini, langsung munculkan alert. Tanpa ini, error semacam itu
+     cuma diam-diam gagal di background tanpa jejak yang kelihatan. -->
+<script>
+  window.addEventListener('error', function (e) {
+    console.error('Unhandled error:', e.error || e.message);
+    alert('Terjadi error tak terduga: ' + (e.message || 'unknown error'));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    alert('Terjadi error tak terduga (async): ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+</script>
+
 </head>
 <body>
 
@@ -1255,6 +1304,154 @@
   renderRows();
   updateUndoRedoUI();
 
+  // ---------- Sinkronisasi Database (Supabase) ----------
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentNoteId = urlParams.get('id') || null;
+  const targetFolderId = urlParams.get('folder') || null;
+
+  async function loadExistingNote() {
+    if (!currentNoteId) return;
+
+    const { data: note, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .eq('id', currentNoteId)
+      .single();
+
+    if (error || !note) {
+      console.error('Gagal memuat note:', error && error.message);
+      return;
+    }
+
+    if (note.content && note.content.columns && note.content.rows) {
+      columns = note.content.columns;
+      rows = note.content.rows;
+    }
+
+    noteTitle = note.title || '';
+    document.getElementById('noteTitle').innerText = noteTitle;
+
+    renderHeader();
+    renderRows();
+
+    historyStack = [];
+    redoStack = [];
+    updateUndoRedoUI();
+  }
+
+  loadExistingNote();
+
+  function buildPreviewText() {
+    return columns
+      .filter(c => c.type !== 'no')
+      .slice(0, 2)
+      .map(c => c.label || '')
+      .join('\n');
+  }
+
+  function buildDateTag() {
+    const d = new Date();
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+  }
+
+  async function saveNoteToDatabase(silent) {
+    console.log('[autosave] menyimpan. currentNoteId =', currentNoteId, 'targetFolderId =', targetFolderId);
+
+    const titleEl = document.getElementById('noteTitle');
+    const titleNow = titleEl ? titleEl.innerText.trim() : '';
+
+    const payload = {
+      title: titleNow || 'Untitled',
+      preview: buildPreviewText(),
+      date_tag: buildDateTag(),
+      content: { columns, rows }
+    };
+
+    let result;
+
+    if (currentNoteId) {
+      result = await supabaseClient
+        .from('notes')
+        .update(payload)
+        .eq('id', currentNoteId)
+        .select()
+        .single();
+    } else {
+      result = await supabaseClient
+        .from('notes')
+        .insert({ ...payload, folder_id: targetFolderId })
+        .select()
+        .single();
+    }
+
+    if (result.error) {
+      console.error('[autosave] gagal:', result.error.message);
+      if (!silent) alert('Gagal menyimpan ke database: ' + result.error.message);
+      showSaveStatus('Gagal tersimpan', true);
+      return false;
+    }
+
+    currentNoteId = result.data.id;
+    window.parent.postMessage('note-autosaved', '*');
+    return true;
+  }
+
+  // ---------- Indikator status simpan ----------
+  function ensureSaveStatusEl() {
+    let el = document.getElementById('saveStatusIndicator');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'saveStatusIndicator';
+      el.style.cssText = 'position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); right:14px; z-index:500; font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:999px; background:rgba(0,0,0,0.55); color:#fff; opacity:0; transition:opacity .25s ease; pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  let saveStatusTimer = null;
+  function showSaveStatus(text, isError) {
+    const el = ensureSaveStatusEl();
+    el.textContent = text;
+    el.style.background = isError ? 'rgba(200,60,60,0.85)' : 'rgba(30,30,30,0.75)';
+    el.style.opacity = '1';
+    clearTimeout(saveStatusTimer);
+    saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+  }
+
+  // ---------- Autosave Real-Time ----------
+  let autosaveTimer = null;
+  let autosaveInFlight = false;
+  let autosavePending = false;
+
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    showSaveStatus('Menyimpan...');
+    autosaveTimer = setTimeout(runAutosave, 1200);
+  }
+
+  async function runAutosave() {
+    if (autosaveInFlight) { autosavePending = true; return; }
+    autosaveInFlight = true;
+
+    const success = await saveNoteToDatabase(true);
+    showSaveStatus(success ? 'Tersimpan' : 'Gagal tersimpan', !success);
+
+    autosaveInFlight = false;
+    if (autosavePending) {
+      autosavePending = false;
+      scheduleAutosave();
+    }
+  }
+
+  const autosaveObserver = new MutationObserver(scheduleAutosave);
+  autosaveObserver.observe(document.getElementById('noteTitle'), { childList: true, characterData: true, subtree: true });
+  autosaveObserver.observe(document.getElementById('tableHead'), { childList: true, characterData: true, subtree: true });
+  autosaveObserver.observe(document.getElementById('tableBody'), { childList: true, characterData: true, subtree: true });
+
   // Pressing Enter in any cell (header or body) moves focus to the next
   // editable cell in the same row, instead of inserting a line break.
   document.getElementById('notesTable').addEventListener('keydown', (e) => {
@@ -1614,14 +1811,45 @@
     });
   });
 
-  function handleImageFile(file){
+  async function handleImageFile(file){
     if (!file || pendingImageRowIndex === null || !pendingImageColId || !rows[pendingImageRowIndex]) return;
+
+    const rowIdx = pendingImageRowIndex;
+    const colId = pendingImageColId;
+
+    // Preview lokal dulu (base64) biar responsif — ini SEMENTARA saja.
     const reader = new FileReader();
     reader.onload = () => {
-      rows[pendingImageRowIndex].cells[pendingImageColId] = reader.result;
-      renderRows();
+      if (rows[rowIdx]) {
+        rows[rowIdx].cells[colId] = reader.result;
+        renderRows();
+      }
     };
     reader.readAsDataURL(file);
+
+    // Upload file ASLI ke Supabase Storage — yang tersimpan ke database
+    // nantinya cuma URL pendek, bukan base64 raksasa.
+    showSaveStatus('Mengunggah foto...');
+    const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'jpg';
+    const path = `${targetFolderId || 'tanpa-folder'}/${Date.now()}-${colId}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from('note-images')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+
+    if (uploadError) {
+      console.error('Gagal upload foto:', uploadError.message);
+      showSaveStatus('Gagal upload foto', true);
+      return;
+    }
+
+    const { data: urlData } = supabaseClient.storage.from('note-images').getPublicUrl(path);
+
+    if (rows[rowIdx]) {
+      rows[rowIdx].cells[colId] = urlData.publicUrl;
+      renderRows();
+    }
   }
   cameraCaptureInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
   cameraGalleryInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
