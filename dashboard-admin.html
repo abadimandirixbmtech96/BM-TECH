@@ -562,42 +562,33 @@
   .folder-item.active { background: rgba(255, 255, 255, 0.08); }
   .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; }
   .folder-item-left svg { width: 20px; height: 20px; color: var(--text-secondary); }
-  .folder-item { position: relative; }
+  .folder-item { position: relative; overflow: hidden; }
 
-  .folder-menu-popup {
-    position: absolute;
-    left: 14px;
-    right: 14px;
-    top: 100%;
-    margin-top: 2px;
-    background: #1C1B1E;
-    border: 1px solid var(--card-border-dark);
-    border-radius: 14px;
-    overflow: hidden;
-    z-index: 20;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-    animation: delBtnIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .folder-menu-item {
-    display: flex;
+  .btn-delete-folder {
+    display: none;
     align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    font-size: 13.5px;
-    font-weight: 600;
+    gap: 6px;
+    background: rgba(240, 85, 92, 0.14);
+    border: 1px solid rgba(240, 85, 92, 0.4);
+    color: #F0555C;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 7px 12px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
-    color: var(--text-primary);
+    flex-shrink: 0;
+    animation: delBtnIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .folder-menu-item:active { background: rgba(255, 255, 255, 0.07); }
-  .folder-menu-item.danger { color: #F0555C; }
-  .folder-menu-item + .folder-menu-item { border-top: 1px solid var(--card-border-dark); }
-  .folder-menu-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .btn-delete-folder svg { width: 15px; height: 15px; }
+  .btn-delete-folder:active { background: rgba(240, 85, 92, 0.26); }
 
-  .folder-item.menu-open { background: rgba(255, 255, 255, 0.06); }
+  .folder-item.delete-mode { background: rgba(240, 85, 92, 0.06); }
+  .folder-item.delete-mode .folder-count { display: none; }
+  .folder-item.delete-mode .btn-delete-folder { display: flex; }
 
   @keyframes delBtnIn {
-    from { opacity: 0; transform: translateY(-4px) scale(0.96); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
   }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
 
@@ -1585,7 +1576,7 @@
 <div class="new-folder-overlay" id="newFolderOverlay"></div>
 <div class="new-folder-sheet" id="newFolderSheet">
   <div class="new-folder-handle" id="newFolderHandle"></div>
-  <h3 class="new-folder-title" id="newFolderModalTitle">New Folder</h3>
+  <h3 class="new-folder-title">New Folder</h3>
 
   <div class="new-folder-preview-wrap">
     <div class="new-folder-preview" id="newFolderPreview" style="background:#D9A536;">
@@ -1731,9 +1722,18 @@
     <p class="recent-activity-empty">Belum ada aktivitas</p>
   </div>
 
-  <p class="analytics-section-title">Top Customer</p>
+  <p class="analytics-section-title">Segera Hadir</p>
   <div class="upcoming-list">
-    <div class="upcoming-item" id="topCustomerCard" style="opacity:1;"></div>
+    <div class="upcoming-item">
+      <div class="upcoming-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+      </div>
+      <div>
+        <p class="upcoming-text-title">Top Customer</p>
+        <p class="upcoming-text-sub">Pelanggan paling sering transaksi</p>
+      </div>
+      <span class="upcoming-badge">Segera</span>
+    </div>
   </div>
 </div>
 
@@ -1821,7 +1821,6 @@
       .map(f => ({
         id: f.id,
         name: f.name,
-        color: f.color || '#D9A536',
         count: countByFolder[f.id] || 0,
         active: f.id === activeCategoryId
       }));
@@ -1871,37 +1870,28 @@
     }
 
     container.innerHTML = categoriesData.map(cat => `
-      <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
+      <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'delete-mode' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <span>${cat.name}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
-        ${deleteModeCatId === cat.id ? `
-          <div class="folder-menu-popup">
-            <div class="folder-menu-item" data-menu-action="edit" data-menu-id="${cat.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-              Edit
-            </div>
-            <div class="folder-menu-item danger" data-menu-action="delete" data-menu-id="${cat.id}" data-menu-name="${cat.name}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              Delete
-            </div>
-          </div>
-        ` : ''}
+        <button class="btn-delete-folder" data-del-id="${cat.id}" data-del-name="${cat.name}" aria-label="Hapus folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Hapus
+        </button>
       </div>
     `).join('');
 
-    // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin popup Edit/Delete di bawah row itu.
+    // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin tombol "Hapus" di row itu.
     container.querySelectorAll('.folder-item[data-cat-id]').forEach(item => {
       let pressTimer = null;
       let longPressed = false;
 
-      item.addEventListener('click', (e) => {
-        if (e.target.closest('.folder-menu-popup')) return; // biar nggak ke-handle dua kali sama listener popup
+      item.addEventListener('click', () => {
         if (longPressed) { longPressed = false; return; }
         if (deleteModeCatId && deleteModeCatId !== item.dataset.catId) {
-          // Lagi ada folder LAIN yang nampilin popup — tutup itu, lalu tetap buka folder yang ditap
+          // Lagi ada folder LAIN yang nampilin tombol Hapus — batalin itu, lalu tetap buka folder yang ditap
           deleteModeCatId = null;
           renderCategories();
           selectCategory(item.dataset.catId);
@@ -1923,16 +1913,10 @@
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
     });
 
-    container.querySelectorAll('.folder-menu-item').forEach(el => {
-      el.addEventListener('click', (e) => {
+    container.querySelectorAll('.btn-delete-folder').forEach(btn => {
+      btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        const action = el.dataset.menuAction;
-        if (action === 'edit') {
-          deleteModeCatId = null;
-          openNewFolderModal(el.dataset.menuId);
-        } else if (action === 'delete') {
-          handleDeleteCategory(el.dataset.menuId, el.dataset.menuName);
-        }
+        handleDeleteCategory(btn.dataset.delId, btn.dataset.delName);
       });
     });
   }
@@ -2273,28 +2257,19 @@
     renderSearchResults(e.target.value);
   });
 
-  // --- New Folder Bottom Sheet (ganti prompt() lama) — dipakai juga buat mode Edit Folder ---
+  // --- New Folder Bottom Sheet (ganti prompt() lama) ---
   const newFolderOverlay = document.getElementById('newFolderOverlay');
   const newFolderSheet = document.getElementById('newFolderSheet');
   const newFolderPreview = document.getElementById('newFolderPreview');
   const newFolderNameInput = document.getElementById('newFolderNameInput');
-  const newFolderModalTitle = document.getElementById('newFolderModalTitle');
-  const btnNewFolderComplete = document.getElementById('btnNewFolderComplete');
   let selectedFolderColor = '#D9A536';
-  let editingFolderId = null; // null = mode bikin folder baru, ada isinya = lagi edit folder ini
 
-  function openNewFolderModal(catId = null) {
+  function openNewFolderModal() {
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
-    editingFolderId = catId;
 
-    const editingCat = catId ? categoriesData.find(c => c.id === catId) : null;
-
-    newFolderNameInput.value = editingCat ? editingCat.name : '';
-    selectedFolderColor = editingCat ? editingCat.color : '#D9A536';
-    newFolderModalTitle.textContent = editingCat ? 'Edit Folder' : 'New Folder';
-    btnNewFolderComplete.textContent = editingCat ? 'Simpan' : 'Completed';
-
+    newFolderNameInput.value = '';
+    selectedFolderColor = '#D9A536';
     newFolderPreview.style.background = selectedFolderColor;
     document.querySelectorAll('.nf-swatch').forEach(s => {
       s.classList.toggle('selected', s.dataset.color === selectedFolderColor);
@@ -2308,13 +2283,12 @@
   function closeNewFolderModal() {
     newFolderOverlay.classList.remove('open');
     newFolderSheet.classList.remove('open');
-    editingFolderId = null;
   }
 
   newFolderOverlay.addEventListener('click', closeNewFolderModal);
   document.getElementById('newFolderHandle').addEventListener('click', closeNewFolderModal);
 
-  // Pilih warna cover folder — sekarang beneran kesimpen ke Supabase (kolom folders.color)
+  // Pilih warna cover folder (preview only, lihat catatan di handleCreateCategory)
   document.querySelectorAll('.nf-swatch').forEach(swatch => {
     swatch.addEventListener('click', () => {
       document.querySelectorAll('.nf-swatch').forEach(s => s.classList.remove('selected'));
@@ -2336,35 +2310,24 @@
   async function handleCreateCategory() {
     const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
 
-    if (editingFolderId) {
-      // Mode edit: update folder yang sudah ada
-      const { error } = await supabaseClient
-        .from('folders')
-        .update({ name, color: selectedFolderColor })
-        .eq('id', editingFolderId);
+    const { error } = await supabaseClient
+      .from('folders')
+      .insert({ name });
+      // Catatan: warna cover (selectedFolderColor) belum ikut disimpan ke Supabase.
+      // Kalau nanti kolom 'color' sudah ditambahkan di tabel folders, tinggal ubah jadi:
+      // .insert({ name, color: selectedFolderColor })
 
-      if (error) {
-        alert('Gagal menyimpan perubahan folder: ' + error.message);
-        return;
-      }
-    } else {
-      // Mode baru: insert folder
-      const { error } = await supabaseClient
-        .from('folders')
-        .insert({ name, color: selectedFolderColor });
-
-      if (error) {
-        alert('Gagal membuat kategori: ' + error.message);
-        return;
-      }
+    if (error) {
+      alert('Gagal membuat kategori: ' + error.message);
+      return;
     }
 
     closeNewFolderModal();
     loadCategories();
   }
 
-  document.getElementById('btnCreateCategory').addEventListener('click', () => openNewFolderModal());
-  btnNewFolderComplete.addEventListener('click', handleCreateCategory);
+  document.getElementById('btnCreateCategory').addEventListener('click', openNewFolderModal);
+  document.getElementById('btnNewFolderComplete').addEventListener('click', handleCreateCategory);
 
   // --- Tombol Pensil (compose) di bottom bar: buat catatan baru di folder aktif ---
   document.getElementById('btnComposePencil').addEventListener('click', () => {
@@ -2561,82 +2524,33 @@
     return null; // 'all' & 'custom' tidak punya pembanding yang jelas
   }
 
-  // =====================================================================
-  // --- LAPISAN TRANSAKSI ASLI: turunan dari kolom Harga/Tanggal/Customer/Barang
-  // per baris tabel (bukan dari notes.amount/tx_category yang nggak pernah diisi
-  // editor). Dipakai Analisa (grafik omzet, breakdown, Top Customer) biar
-  // datanya beneran nyambung ke apa yang admin isi di tabel.
-  // =====================================================================
-  function parseRupiah(val) {
-    if (val === undefined || val === null) return 0;
-    const cleaned = String(val).replace(/[^0-9]/g, '');
-    const parsed = parseInt(cleaned, 10);
-    return isNaN(parsed) ? 0 : parsed;
-  }
-
-  function parseRowDate(val, fallbackISO) {
-    if (val) {
-      const s = String(val).trim();
-      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-      if (m) {
-        let [, d, mo, y] = m;
-        if (y.length === 2) y = '20' + y;
-        const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
-        if (!isNaN(dt)) return dt;
-      }
-      const dt2 = new Date(s);
-      if (!isNaN(dt2)) return dt2;
-    }
-    return fallbackISO ? new Date(fallbackISO) : null;
-  }
-
-  // Satu baris tabel yang punya nilai Harga = satu transaksi
-  function extractTransactions() {
-    const txs = [];
-    allNotesData.forEach(note => {
-      const content = note.content;
-      if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
-
-      const columns = content.columns;
-      content.rows.forEach(row => {
-        const hargaVal = getRowValueByLabel(columns, row, 'Harga');
-        const amount = parseRupiah(hargaVal);
-        if (!amount) return;
-
-        const date = parseRowDate(getRowValueByLabel(columns, row, 'Tanggal'), note.created_at);
-        if (!date) return;
-
-        txs.push({
-          amount,
-          date,
-          customer: getRowValueByLabel(columns, row, 'Customer') || 'Tanpa Nama',
-          barang: getRowValueByLabel(columns, row, 'Barang') || 'Lainnya',
-          folder: note.folder || 'Uncategorized',
-          noteTitle: note.title || 'Untitled'
-        });
-      });
-    });
-    return txs;
-  }
-
   function sumAmountInRange(start, end) {
-    return extractTransactions()
-      .filter(t => t.date >= start && t.date <= end)
-      .reduce((sum, t) => sum + t.amount, 0);
+    return allNotesData
+      .filter(n => {
+        if (!n.amount || !n.created_at) return false;
+        const d = new Date(n.created_at);
+        return !isNaN(d) && d >= start && d <= end;
+      })
+      .reduce((sum, n) => sum + Number(n.amount), 0);
   }
 
   function computeIncomeSeries(period) {
     const { start, end } = getPeriodRange(period);
-    const txs = extractTransactions().filter(t => t.date >= start && t.date <= end);
+
+    const txs = allNotesData.filter(n => {
+      if (!n.amount || !n.created_at) return false;
+      const d = new Date(n.created_at);
+      return !isNaN(d) && d >= start && d <= end;
+    });
 
     const byDay = {};
-    txs.forEach(t => {
-      const key = t.date.toISOString().slice(0, 10);
-      byDay[key] = (byDay[key] || 0) + t.amount;
+    txs.forEach(n => {
+      const key = new Date(n.created_at).toISOString().slice(0, 10);
+      byDay[key] = (byDay[key] || 0) + Number(n.amount);
     });
 
     const points = Object.keys(byDay).sort().map(key => ({ date: key, value: byDay[key] }));
-    const total = txs.reduce((sum, t) => sum + t.amount, 0);
+    const total = txs.reduce((sum, n) => sum + Number(n.amount), 0);
 
     return { points, total };
   }
@@ -2780,14 +2694,18 @@
     const todayTotal = sumAmountInRange(todayStart, now);
 
     const sevenAgo = new Date(todayStart); sevenAgo.setDate(sevenAgo.getDate() - 7);
-    const last7 = extractTransactions().filter(t => t.date >= sevenAgo && t.date < todayStart);
+    const last7 = allNotesData.filter(n => {
+      if (!n.amount || !n.created_at) return false;
+      const d = new Date(n.created_at);
+      return !isNaN(d) && d >= sevenAgo && d < todayStart;
+    });
 
     if (last7.length === 0) { el.style.display = 'none'; return; }
 
     const byDay = {};
-    last7.forEach(t => {
-      const key = t.date.toISOString().slice(0, 10);
-      byDay[key] = (byDay[key] || 0) + t.amount;
+    last7.forEach(n => {
+      const key = new Date(n.created_at).toISOString().slice(0, 10);
+      byDay[key] = (byDay[key] || 0) + Number(n.amount);
     });
     const days = Object.keys(byDay);
     const avg7 = days.reduce((s, k) => s + byDay[k], 0) / days.length;
@@ -2805,14 +2723,15 @@
     }
   }
 
-  // --- Breakdown per Barang (kolom "Barang" tiap baris, bukan tx_category yang nggak pernah diisi) ---
+  // --- Breakdown per Kategori ---
   function renderCategoryBreakdown(filterTerm) {
     const el = document.getElementById('categoryBarList');
     const byCategory = {};
-    extractTransactions().forEach(t => {
-      const cat = t.barang;
+    allNotesData.forEach(n => {
+      if (!n.amount) return;
+      const cat = n.category || 'Lainnya';
       if (filterTerm && !cat.toLowerCase().includes(filterTerm)) return;
-      byCategory[cat] = (byCategory[cat] || 0) + t.amount;
+      byCategory[cat] = (byCategory[cat] || 0) + Number(n.amount);
     });
     const names = Object.keys(byCategory);
     if (names.length === 0) {
@@ -2871,74 +2790,35 @@
       }).join('');
   }
 
-  // --- Aktivitas Terbaru (transaksi per baris, bukan per note) ---
+  // --- Aktivitas Terbaru ---
   function renderRecentActivity(filterTerm) {
     const el = document.getElementById('recentActivityList');
-    let items = extractTransactions();
+    let items = allNotesData.filter(n => n.created_at);
 
     if (filterTerm) {
-      items = items.filter(t =>
-        t.customer.toLowerCase().includes(filterTerm) ||
-        t.barang.toLowerCase().includes(filterTerm) ||
-        t.folder.toLowerCase().includes(filterTerm)
+      items = items.filter(n =>
+        (n.title || '').toLowerCase().includes(filterTerm) ||
+        (n.folder || '').toLowerCase().includes(filterTerm) ||
+        (n.category || '').toLowerCase().includes(filterTerm)
       );
     }
 
-    items = items.sort((a, b) => b.date - a.date).slice(0, 5);
+    items = items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5);
 
     if (items.length === 0) {
       el.innerHTML = `<p class="recent-activity-empty">${filterTerm ? 'Tidak ada aktivitas cocok' : 'Belum ada aktivitas'}</p>`;
       return;
     }
 
-    el.innerHTML = items.map(t => `
+    el.innerHTML = items.map(n => `
       <div class="recent-activity-item">
         <div>
-          <p class="recent-activity-title">${escapeHtml(t.customer)} &middot; ${escapeHtml(t.barang)}</p>
-          <p class="recent-activity-sub">${escapeHtml(t.folder)} · ${timeAgo(t.date.toISOString())}</p>
+          <p class="recent-activity-title">${escapeHtml(n.title || 'Untitled')}</p>
+          <p class="recent-activity-sub">${escapeHtml(n.folder || 'Uncategorized')} · ${timeAgo(n.created_at)}</p>
         </div>
-        <span class="recent-activity-amount">${formatRupiah(t.amount)}</span>
+        ${n.amount ? `<span class="recent-activity-amount">${formatRupiah(n.amount)}</span>` : ''}
       </div>
     `).join('');
-  }
-
-  // --- Top Customer (dulu "Segera Hadir" — sekarang dihitung dari kolom Customer + Harga tiap baris) ---
-  function renderTopCustomer() {
-    const el = document.getElementById('topCustomerCard');
-    if (!el) return;
-
-    const byCustomer = {};
-    extractTransactions().forEach(t => {
-      if (t.customer === 'Tanpa Nama') return;
-      if (!byCustomer[t.customer]) byCustomer[t.customer] = { total: 0, count: 0 };
-      byCustomer[t.customer].total += t.amount;
-      byCustomer[t.customer].count += 1;
-    });
-
-    const names = Object.keys(byCustomer);
-    if (names.length === 0) {
-      el.innerHTML = `
-        <div class="upcoming-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-        </div>
-        <div>
-          <p class="upcoming-text-title">Top Customer</p>
-          <p class="upcoming-text-sub">Belum ada data customer</p>
-        </div>
-      `;
-      return;
-    }
-
-    const top = names.sort((a, b) => byCustomer[b].total - byCustomer[a].total)[0];
-    el.innerHTML = `
-      <div class="upcoming-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-      </div>
-      <div>
-        <p class="upcoming-text-title">${escapeHtml(top)}</p>
-        <p class="upcoming-text-sub">${byCustomer[top].count}x transaksi &middot; total ${formatRupiah(byCustomer[top].total)}</p>
-      </div>
-    `;
   }
 
   // --- Search di dalam Analisa ---
@@ -2950,7 +2830,6 @@
   });
 
   function renderAnalytics() {
-    renderTopCustomer();
     renderIncomeCard();
     renderInsightBanner();
 

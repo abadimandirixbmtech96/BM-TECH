@@ -1717,14 +1717,46 @@
     });
   });
 
-  function handleImageFile(file){
+  async function handleImageFile(file){
     if (!file || pendingImageRowIndex === null || !pendingImageColId || !rows[pendingImageRowIndex]) return;
+
+    const rowIdx = pendingImageRowIndex;
+    const colId = pendingImageColId;
+
+    // Tampilkan preview lokal dulu (base64) biar responsif — ini SEMENTARA,
+    // bukan yang akhirnya tersimpan ke database.
     const reader = new FileReader();
     reader.onload = () => {
-      rows[pendingImageRowIndex].cells[pendingImageColId] = reader.result;
-      renderRows();
+      if (rows[rowIdx]) {
+        rows[rowIdx].cells[colId] = reader.result;
+        renderRows();
+      }
     };
     reader.readAsDataURL(file);
+
+    // Upload file ASLI ke Supabase Storage (bukan base64) — hasilnya cuma
+    // sebuah URL pendek yang aman & ringan buat disimpan di kolom database.
+    showSaveStatus('Mengunggah foto...');
+    const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'jpg';
+    const path = `${targetFolderId || 'tanpa-folder'}/${Date.now()}-${colId}.${ext}`;
+
+    const { error: uploadError } = await supabaseClient
+      .storage
+      .from('note-images')
+      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
+
+    if (uploadError) {
+      console.error('Gagal upload foto:', uploadError.message);
+      showSaveStatus('Gagal upload foto', true);
+      return; // preview base64 lokal tetap kelihatan di layar sebagai fallback, tapi TIDAK akan ikut tersimpan ke database sampai upload berhasil
+    }
+
+    const { data: urlData } = supabaseClient.storage.from('note-images').getPublicUrl(path);
+
+    if (rows[rowIdx]) {
+      rows[rowIdx].cells[colId] = urlData.publicUrl; // ganti preview base64 jadi URL asli yang ringan
+      renderRows(); // ini otomatis memicu autosave (MutationObserver), yang tersimpan ke notes.content sekarang cuma URL-nya
+    }
   }
   cameraCaptureInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
   cameraGalleryInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
