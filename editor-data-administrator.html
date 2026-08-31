@@ -8,14 +8,17 @@
 <title>Workshop Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Work+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* Force our own web font everywhere — some Android skins (MIUI, ColorOS, One UI, etc.)
-     let the user override the system font, which would otherwise leak into any
-     element still relying on generic names like sans-serif/Roboto/system-ui.
-     Loading a specifically-named font file bypasses that OS-level substitution,
-     so the Aa panel's typography stays true regardless of the phone's settings. */
-  *{ font-family:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif !important; }
+  /* Default to our own downloaded web font everywhere — some Android skins
+     (MIUI, ColorOS, One UI, etc.) let the user override the system font,
+     which would otherwise leak into any element still relying on generic
+     names like sans-serif/Roboto/system-ui. Loading specifically-named font
+     files bypasses that OS-level substitution. No !important here (unlike
+     before) so the per-cell font picker can override this default per cell —
+     every font offered there is also a specifically-named downloaded font,
+     so it's equally immune to OS substitution. */
+  *{ font-family:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
 </style>
 <style>
   :root{
@@ -166,8 +169,7 @@
   .table-scroll{
     margin:0 calc(var(--safe-left) + 14px) 24px calc(var(--safe-left) + 14px);
     border-radius:16px;
-    box-shadow:0 1px 0 rgba(0,0,0,0.03);
-    background:var(--paper-alt);
+    background:transparent;
     width:max-content;
   }
   table{
@@ -178,7 +180,7 @@
   thead th{
     position:sticky;
     top:0;
-    background:#F1EADA;
+    background:transparent;
     color:var(--ink-soft);
     font-weight:700;
     font-size:11.5px;
@@ -186,8 +188,8 @@
     text-transform:uppercase;
     text-align:left;
     padding:8px 6px 8px 12px;
-    border-bottom:1px solid var(--line);
-    border-right:1px solid var(--line-soft);
+    border-bottom:2px solid var(--line);
+    border-right:2px solid var(--line);
     white-space:nowrap;
   }
   .th-inner{
@@ -213,14 +215,15 @@
   thead th:last-child, tbody td:last-child{border-right:none;}
   tbody td{
     padding:12px 12px;
-    border-bottom:1px solid var(--line-soft);
-    border-right:1px solid var(--line-soft);
+    border-bottom:2px solid var(--line);
+    border-right:2px solid var(--line);
     vertical-align:top;
     min-width:92px;
     max-width:180px;
+    background:transparent;
   }
   tbody tr:last-child td{border-bottom:none;}
-  tbody tr:active{background:rgba(201,147,47,0.07);}
+  tbody tr:active{background:rgba(201,147,47,0.1);}
 
   td.col-tanggal, th.col-tanggal{min-width:78px;}
   td.col-tanggal .tgl{font-weight:700;}
@@ -494,6 +497,37 @@
   }
   .fp-styles button{ font-size:13.5px; }
 
+  .fp-font-row{ align-items:center; }
+  .fp-font-arrow{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    border:none; border-radius:50%;
+    background:rgba(255,255,255,0.08);
+    color:#EDEAE2;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .fp-font-arrow:active{ background:rgba(255,255,255,0.15); transform:scale(0.9); }
+  .fp-font-arrow svg{ width:14px; height:14px; }
+  .fp-font-track{
+    flex:1;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    scroll-behavior:smooth;
+  }
+  .fp-font-track button{
+    flex:0 0 auto;
+    padding:0 14px;
+    height:42px;
+    border:none; border-radius:11px;
+    background:rgba(255,255,255,0.07);
+    color:#EDEAE2;
+    font-size:15px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .fp-font-track button.fp-active{ background:var(--accent); color:#241C08; }
+
   .fp-fontsize{ position:relative; flex:1 1 0; display:flex; }
   .fp-fontsize > button{
     width:100%; height:42px; border:none; border-radius:11px;
@@ -531,36 +565,51 @@
   /* ---------- Background picker panel ---------- */
   .bg-panel{
     position:fixed;
-    left:50%;
+    left:0; right:0;
     bottom:calc(var(--safe-bottom) + 78px);
-    transform:translateX(-50%) translateY(14px) scale(0.97);
-    background:rgba(26,24,21,0.92);
+    padding:12px calc(var(--safe-left) + 12px) 12px calc(var(--safe-right) + 12px);
+    background:rgba(20,19,17,0.92);
     backdrop-filter:blur(26px) saturate(1.3);
     -webkit-backdrop-filter:blur(26px) saturate(1.3);
-    border:1px solid rgba(255,255,255,0.07);
-    border-radius:22px;
-    padding:14px;
-    box-shadow:0 18px 44px rgba(0,0,0,0.38);
+    border-top:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 -8px 30px rgba(0,0,0,0.25);
     z-index:60;
+    display:flex;
+    align-items:center;
+    gap:8px;
     opacity:0;
     pointer-events:none;
-    transition:opacity .2s ease, transform .22s cubic-bezier(.22,.9,.32,1);
+    transform:translateY(10px);
+    transition:opacity .2s ease, transform .2s ease;
   }
   .bg-panel.open{
     opacity:1;
     pointer-events:auto;
-    transform:translateX(-50%) translateY(0) scale(1);
+    transform:translateY(0);
   }
+  .bg-arrow{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    border-radius:50%;
+    border:none;
+    background:rgba(255,255,255,0.1);
+    color:#F2EFE9;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .bg-arrow:active{ background:rgba(255,255,255,0.18); transform:scale(0.9); }
+  .bg-arrow svg{ width:15px; height:15px; }
   .bg-row{
     display:flex;
-    gap:12px;
+    gap:10px;
     overflow-x:auto;
+    scroll-behavior:smooth;
+    flex:1;
     padding:2px;
   }
   .bg-swatch{
     flex:0 0 auto;
-    width:52px; height:52px;
-    border-radius:50%;
+    width:52px; height:68px;
+    border-radius:13px;
     border:2px solid rgba(255,255,255,0.14);
     background:var(--paper);
     display:flex; align-items:center; justify-content:center;
@@ -640,48 +689,6 @@
   }
   .share-cancel:active{ background:rgba(255,255,255,0.1); }
 </style>
-<!-- Supabase Client SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
-  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-</script>
-
-<!-- Auth Guard: file ini private, sama seperti dashboard-admin.html.
-     Kalau dibuka langsung tanpa login admin, langsung dilempar keluar. -->
-<script>
-  (async function guardAdminAccess() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-
-    if (!session) {
-      window.top.location.href = 'admin-login.html';
-      return;
-    }
-
-    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
-
-    if (error || !isAdmin) {
-      await supabaseClient.auth.signOut();
-      window.top.location.href = 'admin-login.html';
-    }
-  })();
-</script>
-
-<!-- Pengaman: kalau ada error JavaScript apapun yang tak tertangani di
-     halaman ini, langsung munculkan alert. Tanpa ini, error semacam itu
-     cuma diam-diam gagal di background tanpa jejak yang kelihatan. -->
-<script>
-  window.addEventListener('error', function (e) {
-    console.error('Unhandled error:', e.error || e.message);
-    alert('Terjadi error tak terduga: ' + (e.message || 'unknown error'));
-  });
-  window.addEventListener('unhandledrejection', function (e) {
-    console.error('Unhandled promise rejection:', e.reason);
-    alert('Terjadi error tak terduga (async): ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
-  });
-</script>
-
 </head>
 <body>
 
@@ -858,11 +865,30 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="4" x2="20" y2="4"></line><line x1="4" y1="12" x2="20" y2="12"></line><line x1="4" y1="20" x2="20" y2="20"></line></svg>
       </button>
     </div>
+
+    <div class="fp-row fp-font-row">
+      <button class="fp-font-arrow" id="fontArrowLeft" aria-label="Font sebelumnya">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <div class="fp-font-track" id="fontTrack">
+        <button data-font="'Inter', sans-serif" class="fp-active" style="font-family:'Inter', sans-serif;">Inter</button>
+        <button data-font="'Poppins', sans-serif" style="font-family:'Poppins', sans-serif;">Poppins</button>
+        <button data-font="'Nunito', sans-serif" style="font-family:'Nunito', sans-serif;">Nunito</button>
+        <button data-font="'Work Sans', sans-serif" style="font-family:'Work Sans', sans-serif;">Work Sans</button>
+        <button data-font="'DM Sans', sans-serif" style="font-family:'DM Sans', sans-serif;">DM Sans</button>
+      </div>
+      <button class="fp-font-arrow" id="fontArrowRight" aria-label="Font berikutnya">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+      </button>
+    </div>
   </div>
 
   <!-- BACKGROUND PICKER PANEL -->
   <div class="bg-panel" id="bgPanel">
-    <div class="bg-row">
+    <button class="bg-arrow" id="bgArrowLeft" aria-label="Sebelumnya">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
+    <div class="bg-row" id="bgRow">
       <button class="bg-swatch selected" data-bg="none" aria-label="Tanpa latar">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><line x1="6" y1="18" x2="18" y2="6"></line></svg>
       </button>
@@ -874,6 +900,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       </button>
     </div>
+    <button class="bg-arrow" id="bgArrowRight" aria-label="Berikutnya">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
+    </button>
     <input type="file" id="bgFileInput" accept="image/*" style="display:none">
   </div>
 
@@ -884,9 +913,9 @@
   // Columns are user-defined (add/rename/delete). Each row stores its values
   // in `cells`, keyed by column id — so renaming a column never breaks data.
   let columns = [
-    { id: 'no',      label: 'No',      type: 'no' },
-    { id: 'tanggal', label: 'Tanggal', type: 'date' },
-    { id: 'jam',     label: 'Jam',     type: 'time' }
+    { id: 'no',      label: 'No',      type: 'no',   placeholder: 'No' },
+    { id: 'tanggal', label: 'Tanggal', type: 'date', placeholder: 'Tanggal' },
+    { id: 'jam',     label: 'Jam',     type: 'time', placeholder: 'Jam' }
   ];
 
   function nowDateLabel(){
@@ -931,7 +960,7 @@
     thead.innerHTML = `<tr>${columns.map((col, idx) => `
       <th data-col-index="${idx}">
         <div class="th-inner">
-          <span class="th-label" contenteditable="true" data-col-index="${idx}">${col.label}</span>
+          <span class="th-label" contenteditable="true" data-col-index="${idx}" data-placeholder="${col.placeholder || ''}">${col.label}</span>
           <button class="th-menu-btn" data-col-index="${idx}" aria-label="Menu kolom">
             <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
           </button>
@@ -963,7 +992,7 @@
 
   function addColumnAfter(index, type){
     const pre = snapshot();
-    const col = { id: newColId(), label: type === 'image' ? 'Gambar' : 'Kolom Baru', type: type };
+    const col = { id: newColId(), label: '', type: type, placeholder: type === 'image' ? 'Gambar' : 'Kolom Baru' };
     columns.splice(index + 1, 0, col);
     rows.forEach(r => { r.cells[col.id] = ''; });
     pushHistory(pre);
@@ -1211,165 +1240,6 @@
   renderRows();
   updateUndoRedoUI();
 
-  // ---------- Sinkronisasi Database (Supabase) ----------
-  const urlParams = new URLSearchParams(window.location.search);
-  let currentNoteId = urlParams.get('id') || null;
-  const targetFolderId = urlParams.get('folder') || null;
-
-  // Kalau ini buka note yang sudah ada, tarik isinya dari database
-  // dan timpa tabel kosong bawaan dengan data aslinya.
-  async function loadExistingNote() {
-    if (!currentNoteId) return;
-
-    const { data: note, error } = await supabaseClient
-      .from('notes')
-      .select('*')
-      .eq('id', currentNoteId)
-      .single();
-
-    if (error || !note) {
-      console.error('Gagal memuat note:', error && error.message);
-      return;
-    }
-
-    if (note.content && note.content.columns && note.content.rows) {
-      columns = note.content.columns;
-      rows = note.content.rows;
-    }
-
-    noteTitle = note.title || '';
-    document.getElementById('noteTitle').innerText = noteTitle;
-
-    renderHeader();
-    renderRows();
-
-    historyStack = [];
-    redoStack = [];
-    updateUndoRedoUI();
-  }
-
-  loadExistingNote();
-
-  // Bikin ringkasan singkat (preview) dari 2 kolom pertama (selain kolom "No")
-  // buat ditampilkan di kartu grid dashboard admin.
-  function buildPreviewText() {
-    return columns
-      .filter(c => c.type !== 'no')
-      .slice(0, 2)
-      .map(c => c.label || '')
-      .join('\n');
-  }
-
-  function buildDateTag() {
-    const d = new Date();
-    let h = d.getHours();
-    const m = String(d.getMinutes()).padStart(2, '0');
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12; if (h === 0) h = 12;
-    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
-  }
-
-  // Simpan (insert kalau note baru, update kalau sudah ada) ke tabel 'notes'.
-  // silent=true dipakai untuk autosave (tidak menampilkan alert kalau gagal,
-  // cukup dicatat ke console — supaya user tidak diberondong popup error
-  // tiap kali koneksi sempat lambat/putus sebentar).
-  async function saveNoteToDatabase(silent) {
-    console.log('[autosave] menyimpan. currentNoteId =', currentNoteId, 'targetFolderId =', targetFolderId);
-
-    const titleEl = document.getElementById('noteTitle');
-    const titleNow = titleEl ? titleEl.innerText.trim() : '';
-
-    const payload = {
-      title: titleNow || 'Untitled',
-      preview: buildPreviewText(),
-      date_tag: buildDateTag(),
-      content: { columns, rows }
-    };
-
-    let result;
-
-    if (currentNoteId) {
-      result = await supabaseClient
-        .from('notes')
-        .update(payload)
-        .eq('id', currentNoteId)
-        .select()
-        .single();
-    } else {
-      result = await supabaseClient
-        .from('notes')
-        .insert({ ...payload, folder_id: targetFolderId })
-        .select()
-        .single();
-    }
-
-    if (result.error) {
-      console.error('[autosave] gagal:', result.error.message);
-      if (!silent) alert('Gagal menyimpan ke database: ' + result.error.message);
-      showSaveStatus('Gagal tersimpan', true);
-      return false;
-    }
-
-    currentNoteId = result.data.id; // biar autosave berikutnya jadi update, bukan insert baru
-    window.parent.postMessage('note-autosaved', '*'); // cuma refresh data di background, BUKAN menutup editor
-    return true;
-  }
-
-  // ---------- Indikator status simpan (kecil, di pojok, tidak mengganggu) ----------
-  function ensureSaveStatusEl() {
-    let el = document.getElementById('saveStatusIndicator');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'saveStatusIndicator';
-      el.style.cssText = 'position:fixed; top:calc(env(safe-area-inset-top,0px) + 10px); right:14px; z-index:500; font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:999px; background:rgba(0,0,0,0.55); color:#fff; opacity:0; transition:opacity .25s ease; pointer-events:none;';
-      document.body.appendChild(el);
-    }
-    return el;
-  }
-
-  let saveStatusTimer = null;
-  function showSaveStatus(text, isError) {
-    const el = ensureSaveStatusEl();
-    el.textContent = text;
-    el.style.background = isError ? 'rgba(200,60,60,0.85)' : 'rgba(30,30,30,0.75)';
-    el.style.opacity = '1';
-    clearTimeout(saveStatusTimer);
-    saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
-  }
-
-  // ---------- Autosave Real-Time ----------
-  // Memantau perubahan apapun di judul & tabel (ketik, isi cell, tambah/hapus
-  // baris/kolom) lalu otomatis menyimpan ke database setelah jeda singkat.
-  // Tidak perlu tombol apapun ditekan.
-  let autosaveTimer = null;
-  let autosaveInFlight = false;
-  let autosavePending = false;
-
-  function scheduleAutosave() {
-    clearTimeout(autosaveTimer);
-    showSaveStatus('Menyimpan...');
-    autosaveTimer = setTimeout(runAutosave, 1200);
-  }
-
-  async function runAutosave() {
-    if (autosaveInFlight) { autosavePending = true; return; }
-    autosaveInFlight = true;
-
-    const success = await saveNoteToDatabase(true);
-    showSaveStatus(success ? 'Tersimpan' : 'Gagal tersimpan', !success);
-
-    autosaveInFlight = false;
-    if (autosavePending) {
-      autosavePending = false;
-      scheduleAutosave();
-    }
-  }
-
-  const autosaveObserver = new MutationObserver(scheduleAutosave);
-  autosaveObserver.observe(document.getElementById('noteTitle'), { childList: true, characterData: true, subtree: true });
-  autosaveObserver.observe(document.getElementById('tableHead'), { childList: true, characterData: true, subtree: true });
-  autosaveObserver.observe(document.getElementById('tableBody'), { childList: true, characterData: true, subtree: true });
-
   // Pressing Enter in any cell (header or body) moves focus to the next
   // editable cell in the same row, instead of inserting a line break.
   document.getElementById('notesTable').addEventListener('keydown', (e) => {
@@ -1588,6 +1458,19 @@
     });
   });
 
+  // Font family
+  const fontTrack = document.getElementById('fontTrack');
+  const fontButtons = [...fontTrack.querySelectorAll('[data-font]')];
+  fontButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cell = lastActiveCell;
+      if (cell) cell.style.fontFamily = btn.dataset.font;
+      setActiveInGroup(fontButtons, btn);
+    });
+  });
+  document.getElementById('fontArrowLeft').addEventListener('click', () => fontTrack.scrollBy({ left: -130, behavior: 'smooth' }));
+  document.getElementById('fontArrowRight').addEventListener('click', () => fontTrack.scrollBy({ left: 130, behavior: 'smooth' }));
+
   // ---------- Background picker ----------
   const BG_PRESETS = {
     none: null, // falls back to the default --paper color
@@ -1601,7 +1484,11 @@
   const btnBackground = document.getElementById('btnBackground');
   const bgFileInput = document.getElementById('bgFileInput');
   const bgAddBtn = document.getElementById('bgAddBtn');
+  const bgRow = document.getElementById('bgRow');
   const bgSwatchButtons = [...bgPanel.querySelectorAll('.bg-swatch[data-bg]')];
+
+  document.getElementById('bgArrowLeft').addEventListener('click', () => bgRow.scrollBy({ left: -140, behavior: 'smooth' }));
+  document.getElementById('bgArrowRight').addEventListener('click', () => bgRow.scrollBy({ left: 140, behavior: 'smooth' }));
 
   bgSwatchButtons.forEach(btn => {
     const key = btn.dataset.bg;
@@ -1666,12 +1553,7 @@
   // Kept as a no-op so other code that calls it doesn't break.
   function closeSharePanel(){}
 
-  // ---------- Checklist: cek kelengkapan data (cell kosong) ----------
-  // CATATAN: tombol ini BUKAN tombol simpan. Penyimpanan sekarang berjalan
-  // otomatis real-time (lihat MutationObserver "autosave" di bawah), jadi
-  // data tetap masuk ke database walau tombol ini tidak pernah disentuh.
-  // Fungsi asli tombol ini (menandai cell mana yang masih kosong) belum
-  // diimplementasikan — silakan dilanjutkan sesuai kebutuhan UI/tools.
+  // ---------- Checklist: deferred to phase 2 (needs redesign for dynamic columns) ----------
   const btnChecklist = document.getElementById('btnChecklist');
   btnChecklist.addEventListener('click', () => {
     setDrawMode(false);
@@ -1717,46 +1599,14 @@
     });
   });
 
-  async function handleImageFile(file){
+  function handleImageFile(file){
     if (!file || pendingImageRowIndex === null || !pendingImageColId || !rows[pendingImageRowIndex]) return;
-
-    const rowIdx = pendingImageRowIndex;
-    const colId = pendingImageColId;
-
-    // Tampilkan preview lokal dulu (base64) biar responsif — ini SEMENTARA,
-    // bukan yang akhirnya tersimpan ke database.
     const reader = new FileReader();
     reader.onload = () => {
-      if (rows[rowIdx]) {
-        rows[rowIdx].cells[colId] = reader.result;
-        renderRows();
-      }
+      rows[pendingImageRowIndex].cells[pendingImageColId] = reader.result;
+      renderRows();
     };
     reader.readAsDataURL(file);
-
-    // Upload file ASLI ke Supabase Storage (bukan base64) — hasilnya cuma
-    // sebuah URL pendek yang aman & ringan buat disimpan di kolom database.
-    showSaveStatus('Mengunggah foto...');
-    const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'jpg';
-    const path = `${targetFolderId || 'tanpa-folder'}/${Date.now()}-${colId}.${ext}`;
-
-    const { error: uploadError } = await supabaseClient
-      .storage
-      .from('note-images')
-      .upload(path, file, { upsert: true, contentType: file.type || 'image/jpeg' });
-
-    if (uploadError) {
-      console.error('Gagal upload foto:', uploadError.message);
-      showSaveStatus('Gagal upload foto', true);
-      return; // preview base64 lokal tetap kelihatan di layar sebagai fallback, tapi TIDAK akan ikut tersimpan ke database sampai upload berhasil
-    }
-
-    const { data: urlData } = supabaseClient.storage.from('note-images').getPublicUrl(path);
-
-    if (rows[rowIdx]) {
-      rows[rowIdx].cells[colId] = urlData.publicUrl; // ganti preview base64 jadi URL asli yang ringan
-      renderRows(); // ini otomatis memicu autosave (MutationObserver), yang tersimpan ke notes.content sekarang cuma URL-nya
-    }
   }
   cameraCaptureInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
   cameraGalleryInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
@@ -1800,8 +1650,11 @@
   // that's what makes strokes pan/zoom together with the table instead of
   // staying fixed on the glass on top of it.
   function syncDrawCanvasSize(){
-    const targetW = Math.max(canvas.scrollWidth, 50);
-    const targetH = Math.max(canvas.scrollHeight, 50);
+    const vpRect = viewport.getBoundingClientRect();
+    const viewW = vpRect.width / Math.max(scale, 0.01);
+    const viewH = vpRect.height / Math.max(scale, 0.01);
+    const targetW = Math.max(canvas.scrollWidth, viewW, 50);
+    const targetH = Math.max(canvas.scrollHeight, viewH, 50);
     if (drawCanvas.dataset.paperW == targetW && drawCanvas.dataset.paperH == targetH) return;
 
     const hasContent = drawCanvas.width > 0 && drawCanvas.height > 0;
