@@ -562,33 +562,42 @@
   .folder-item.active { background: rgba(255, 255, 255, 0.08); }
   .folder-item-left { display: flex; align-items: center; gap: 14px; font-size: 14px; font-weight: 600; }
   .folder-item-left svg { width: 20px; height: 20px; color: var(--text-secondary); }
-  .folder-item { position: relative; overflow: hidden; }
+  .folder-item { position: relative; }
 
-  .btn-delete-folder {
-    display: none;
-    align-items: center;
-    gap: 6px;
-    background: rgba(240, 85, 92, 0.14);
-    border: 1px solid rgba(240, 85, 92, 0.4);
-    color: #F0555C;
-    font-size: 12.5px;
-    font-weight: 700;
-    padding: 7px 12px;
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    flex-shrink: 0;
-    animation: delBtnIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  .folder-menu-popup {
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    top: 100%;
+    margin-top: 2px;
+    background: #1C1B1E;
+    border: 1px solid var(--card-border-dark);
+    border-radius: 14px;
+    overflow: hidden;
+    z-index: 20;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    animation: delBtnIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  .btn-delete-folder svg { width: 15px; height: 15px; }
-  .btn-delete-folder:active { background: rgba(240, 85, 92, 0.26); }
+  .folder-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-primary);
+  }
+  .folder-menu-item:active { background: rgba(255, 255, 255, 0.07); }
+  .folder-menu-item.danger { color: #F0555C; }
+  .folder-menu-item + .folder-menu-item { border-top: 1px solid var(--card-border-dark); }
+  .folder-menu-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 
-  .folder-item.delete-mode { background: rgba(240, 85, 92, 0.06); }
-  .folder-item.delete-mode .folder-count { display: none; }
-  .folder-item.delete-mode .btn-delete-folder { display: flex; }
+  .folder-item.menu-open { background: rgba(255, 255, 255, 0.06); }
 
   @keyframes delBtnIn {
-    from { opacity: 0; transform: scale(0.8); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
 
@@ -1576,7 +1585,7 @@
 <div class="new-folder-overlay" id="newFolderOverlay"></div>
 <div class="new-folder-sheet" id="newFolderSheet">
   <div class="new-folder-handle" id="newFolderHandle"></div>
-  <h3 class="new-folder-title">New Folder</h3>
+  <h3 class="new-folder-title" id="newFolderModalTitle">New Folder</h3>
 
   <div class="new-folder-preview-wrap">
     <div class="new-folder-preview" id="newFolderPreview" style="background:#D9A536;">
@@ -1812,6 +1821,7 @@
       .map(f => ({
         id: f.id,
         name: f.name,
+        color: f.color || '#D9A536',
         count: countByFolder[f.id] || 0,
         active: f.id === activeCategoryId
       }));
@@ -1861,28 +1871,37 @@
     }
 
     container.innerHTML = categoriesData.map(cat => `
-      <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'delete-mode' : ''}" data-cat-id="${cat.id}">
+      <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <span>${cat.name}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
-        <button class="btn-delete-folder" data-del-id="${cat.id}" data-del-name="${cat.name}" aria-label="Hapus folder">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          Hapus
-        </button>
+        ${deleteModeCatId === cat.id ? `
+          <div class="folder-menu-popup">
+            <div class="folder-menu-item" data-menu-action="edit" data-menu-id="${cat.id}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Edit
+            </div>
+            <div class="folder-menu-item danger" data-menu-action="delete" data-menu-id="${cat.id}" data-menu-name="${cat.name}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Delete
+            </div>
+          </div>
+        ` : ''}
       </div>
     `).join('');
 
-    // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin tombol "Hapus" di row itu.
+    // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin popup Edit/Delete di bawah row itu.
     container.querySelectorAll('.folder-item[data-cat-id]').forEach(item => {
       let pressTimer = null;
       let longPressed = false;
 
-      item.addEventListener('click', () => {
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.folder-menu-popup')) return; // biar nggak ke-handle dua kali sama listener popup
         if (longPressed) { longPressed = false; return; }
         if (deleteModeCatId && deleteModeCatId !== item.dataset.catId) {
-          // Lagi ada folder LAIN yang nampilin tombol Hapus — batalin itu, lalu tetap buka folder yang ditap
+          // Lagi ada folder LAIN yang nampilin popup — tutup itu, lalu tetap buka folder yang ditap
           deleteModeCatId = null;
           renderCategories();
           selectCategory(item.dataset.catId);
@@ -1904,10 +1923,16 @@
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
     });
 
-    container.querySelectorAll('.btn-delete-folder').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+    container.querySelectorAll('.folder-menu-item').forEach(el => {
+      el.addEventListener('click', (e) => {
         e.stopPropagation();
-        handleDeleteCategory(btn.dataset.delId, btn.dataset.delName);
+        const action = el.dataset.menuAction;
+        if (action === 'edit') {
+          deleteModeCatId = null;
+          openNewFolderModal(el.dataset.menuId);
+        } else if (action === 'delete') {
+          handleDeleteCategory(el.dataset.menuId, el.dataset.menuName);
+        }
       });
     });
   }
@@ -2248,19 +2273,28 @@
     renderSearchResults(e.target.value);
   });
 
-  // --- New Folder Bottom Sheet (ganti prompt() lama) ---
+  // --- New Folder Bottom Sheet (ganti prompt() lama) — dipakai juga buat mode Edit Folder ---
   const newFolderOverlay = document.getElementById('newFolderOverlay');
   const newFolderSheet = document.getElementById('newFolderSheet');
   const newFolderPreview = document.getElementById('newFolderPreview');
   const newFolderNameInput = document.getElementById('newFolderNameInput');
+  const newFolderModalTitle = document.getElementById('newFolderModalTitle');
+  const btnNewFolderComplete = document.getElementById('btnNewFolderComplete');
   let selectedFolderColor = '#D9A536';
+  let editingFolderId = null; // null = mode bikin folder baru, ada isinya = lagi edit folder ini
 
-  function openNewFolderModal() {
+  function openNewFolderModal(catId = null) {
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
+    editingFolderId = catId;
 
-    newFolderNameInput.value = '';
-    selectedFolderColor = '#D9A536';
+    const editingCat = catId ? categoriesData.find(c => c.id === catId) : null;
+
+    newFolderNameInput.value = editingCat ? editingCat.name : '';
+    selectedFolderColor = editingCat ? editingCat.color : '#D9A536';
+    newFolderModalTitle.textContent = editingCat ? 'Edit Folder' : 'New Folder';
+    btnNewFolderComplete.textContent = editingCat ? 'Simpan' : 'Completed';
+
     newFolderPreview.style.background = selectedFolderColor;
     document.querySelectorAll('.nf-swatch').forEach(s => {
       s.classList.toggle('selected', s.dataset.color === selectedFolderColor);
@@ -2274,12 +2308,13 @@
   function closeNewFolderModal() {
     newFolderOverlay.classList.remove('open');
     newFolderSheet.classList.remove('open');
+    editingFolderId = null;
   }
 
   newFolderOverlay.addEventListener('click', closeNewFolderModal);
   document.getElementById('newFolderHandle').addEventListener('click', closeNewFolderModal);
 
-  // Pilih warna cover folder (preview only, lihat catatan di handleCreateCategory)
+  // Pilih warna cover folder — sekarang beneran kesimpen ke Supabase (kolom folders.color)
   document.querySelectorAll('.nf-swatch').forEach(swatch => {
     swatch.addEventListener('click', () => {
       document.querySelectorAll('.nf-swatch').forEach(s => s.classList.remove('selected'));
@@ -2301,24 +2336,35 @@
   async function handleCreateCategory() {
     const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
 
-    const { error } = await supabaseClient
-      .from('folders')
-      .insert({ name });
-      // Catatan: warna cover (selectedFolderColor) belum ikut disimpan ke Supabase.
-      // Kalau nanti kolom 'color' sudah ditambahkan di tabel folders, tinggal ubah jadi:
-      // .insert({ name, color: selectedFolderColor })
+    if (editingFolderId) {
+      // Mode edit: update folder yang sudah ada
+      const { error } = await supabaseClient
+        .from('folders')
+        .update({ name, color: selectedFolderColor })
+        .eq('id', editingFolderId);
 
-    if (error) {
-      alert('Gagal membuat kategori: ' + error.message);
-      return;
+      if (error) {
+        alert('Gagal menyimpan perubahan folder: ' + error.message);
+        return;
+      }
+    } else {
+      // Mode baru: insert folder
+      const { error } = await supabaseClient
+        .from('folders')
+        .insert({ name, color: selectedFolderColor });
+
+      if (error) {
+        alert('Gagal membuat kategori: ' + error.message);
+        return;
+      }
     }
 
     closeNewFolderModal();
     loadCategories();
   }
 
-  document.getElementById('btnCreateCategory').addEventListener('click', openNewFolderModal);
-  document.getElementById('btnNewFolderComplete').addEventListener('click', handleCreateCategory);
+  document.getElementById('btnCreateCategory').addEventListener('click', () => openNewFolderModal());
+  btnNewFolderComplete.addEventListener('click', handleCreateCategory);
 
   // --- Tombol Pensil (compose) di bottom bar: buat catatan baru di folder aktif ---
   document.getElementById('btnComposePencil').addEventListener('click', () => {
