@@ -1044,6 +1044,171 @@
 
   .btn-new-folder-complete:active { transform: scale(0.97); }
 
+  /* --- Selection Mode: hold tabel/note manapun --- */
+  .selection-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .selection-header .selection-title { font-size: 15px; font-weight: 800; color: var(--text-primary); }
+  .btn-select-all {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--text-secondary);
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .btn-select-all svg { width: 13px; height: 13px; color: transparent; transition: color 0.15s ease; }
+  .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); }
+  .btn-select-all.all-checked svg { color: #1C1B19; }
+
+  .note-card { position: relative; }
+  .note-checkbox {
+    display: none;
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .note-checkbox svg { width: 14px; height: 14px; color: transparent; transition: color 0.15s ease; }
+  .notes-container.selection-mode .note-checkbox { display: flex; }
+  .note-card.selected { transform: scale(0.97); }
+  .note-card.selected .note-checkbox { background: var(--accent-yellow); border-color: var(--accent-yellow); }
+  .note-card.selected .note-checkbox svg { color: #1C1B19; }
+
+  /* --- Bottom bar mode seleksi (Pin / Pindah Folder / Hapus) --- */
+  .selection-bottom-bar {
+    display: none;
+    position: absolute;
+    bottom: calc(var(--safe-bottom) + 14px);
+    left: 16px;
+    right: 16px;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(26, 25, 28, 0.92);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border: 1px solid var(--glass-pill-border);
+    border-radius: var(--radius-pill);
+    padding: 12px 8px;
+    z-index: 30;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    animation: selBarIn 0.28s cubic-bezier(0.18, 0.85, 0.3, 1);
+  }
+  @keyframes selBarIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .sel-bar-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 4px 14px;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sel-bar-btn:active { transform: scale(0.88); }
+  .sel-bar-btn svg { width: 21px; height: 21px; }
+  .sel-bar-btn.danger { color: #F0555C; }
+
+  /* --- Note Action Sheet: liquid glass popup dari bawah --- */
+  .note-action-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 170;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .note-action-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .note-action-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: rgba(28, 27, 30, 0.82);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    z-index: 180;
+    padding: 12px 20px calc(var(--safe-bottom) + 20px) 20px;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.18, 0.85, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  .note-action-sheet.open { transform: translateY(0); }
+
+  .note-action-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.28);
+    margin: 4px auto 16px auto;
+  }
+
+  .nas-title { font-size: 16.5px; font-weight: 800; color: #fff; margin-bottom: 6px; text-align: center; }
+  .nas-text { font-size: 13px; color: rgba(255, 255, 255, 0.7); text-align: center; margin-bottom: 18px; line-height: 1.5; }
+
+  .nas-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .nas-btn:active { transform: scale(0.97); }
+  .nas-btn-primary { background: var(--accent-yellow); color: #1C1B19; }
+  .nas-btn-danger { background: #F0555C; color: #fff; }
+  .nas-btn-cancel { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); margin-bottom: 0; }
+
+  .nas-folder-list { max-height: 42vh; overflow-y: auto; margin-bottom: 14px; }
+  .nas-folder-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: background 0.15s ease;
+  }
+  .nas-folder-row:last-child { border-bottom: none; }
+  .nas-folder-row:active { background: rgba(255, 255, 255, 0.06); }
+  .nas-folder-row svg { width: 19px; height: 19px; flex-shrink: 0; }
+
   /* --- Settings Top Header (dipakai overlay Analisa) --- */
   .settings-top {
     display: flex;
@@ -1423,6 +1588,17 @@
     </button>
   </header>
 
+  <!-- Header Mode Seleksi (muncul saat hold note/tabel manapun) -->
+  <header class="header selection-header" id="selectionHeader">
+    <button class="header-btn" id="btnSelectionBack">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    </button>
+    <span class="selection-title" id="selectionCountText">1 Item Selected</span>
+    <button class="btn-select-all" id="btnSelectAll" aria-label="Pilih Semua">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </button>
+  </header>
+
   <!-- View Dropdown Pop-up -->
   <div class="view-popup" id="viewPopup">
     <button class="view-option" data-view="view-list">
@@ -1469,6 +1645,22 @@
         <path d="M12 20h9"/>
         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
       </svg>
+    </button>
+  </div>
+
+  <!-- Bottom Bar Mode Seleksi: Pin / Pindah Folder / Hapus -->
+  <div class="selection-bottom-bar" id="selectionBottomBar">
+    <button class="sel-bar-btn" id="btnSelPin">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+      Pin
+    </button>
+    <button class="sel-bar-btn" id="btnSelMove">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.91 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
+      Pindah
+    </button>
+    <button class="sel-bar-btn danger" id="btnSelDelete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      Hapus
     </button>
   </div>
 
@@ -1737,6 +1929,13 @@
   </div>
 </div>
 
+<!-- Note Action Sheet: liquid glass popup dari bawah (Pin / Pindah Folder / Hapus) -->
+<div class="note-action-overlay" id="noteActionOverlay"></div>
+<div class="note-action-sheet" id="noteActionSheet">
+  <div class="note-action-handle"></div>
+  <div id="noteActionContent"></div>
+</div>
+
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -1874,7 +2073,8 @@
       console.error('Gagal memuat notes:', error.message);
       notesData = [];
     } else {
-      notesData = data || [];
+      // Note yang di-pin selalu tampil paling atas
+      notesData = (data || []).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
     }
 
     renderNotes();
@@ -2045,14 +2245,39 @@
           <p class="note-desc">${note.preview || ''}</p>
         </div>
         <span class="note-date-tag">${note.date_tag || 'Recent'}</span>
+        <div class="note-checkbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
       </div>
     `).join('');
 
+    // Tap biasa = buka note. Kalau lagi mode seleksi, tap = toggle checkbox.
+    // Tekan & tahan (long-press) di note manapun = masuk mode seleksi.
     container.querySelectorAll('.note-card').forEach(card => {
+      let pressTimer = null;
+      let longPressed = false;
+
       card.addEventListener('click', () => {
-        openEditor(card.dataset.id);
+        if (longPressed) { longPressed = false; return; }
+        if (noteSelectionMode) {
+          toggleNoteSelection(card.dataset.id);
+        } else {
+          openEditor(card.dataset.id);
+        }
       });
+
+      card.addEventListener('touchstart', () => {
+        longPressed = false;
+        pressTimer = setTimeout(() => {
+          longPressed = true;
+          if (!noteSelectionMode) enterSelectionMode(card.dataset.id);
+        }, 500);
+      });
+      card.addEventListener('touchend', () => clearTimeout(pressTimer));
+      card.addEventListener('touchmove', () => clearTimeout(pressTimer));
     });
+
+    updateSelectionUI(); // biar checkbox tercentang lagi kalau notesData baru saja di-render ulang
   }
 
   // --- View Mode Selector ---
@@ -2201,6 +2426,191 @@
         openEditor(t.noteId, { folder: t.folderId, row: t.rowIndex, focus: t.missing[0] });
       });
     });
+  }
+
+  // =====================================================================
+  // --- SELECTION MODE: hold note/tabel manapun buat pilih banyak sekaligus
+  // (Pin / Pindah Folder / Hapus), gaya Infinix Notes.
+  // =====================================================================
+  let noteSelectionMode = false;
+  let selectedNoteIds = new Set();
+
+  const normalHeaderEl = document.querySelector('header.header:not(.selection-header)');
+  const selectionHeaderEl = document.getElementById('selectionHeader');
+  const selectionCountText = document.getElementById('selectionCountText');
+  const btnSelectionBack = document.getElementById('btnSelectionBack');
+  const btnSelectAll = document.getElementById('btnSelectAll');
+  const bottomBarNormalEl = document.querySelector('.bottom-bar');
+  const selectionBottomBarEl = document.getElementById('selectionBottomBar');
+
+  function enterSelectionMode(firstNoteId) {
+    noteSelectionMode = true;
+    selectedNoteIds = new Set([firstNoteId]);
+    updateSelectionUI();
+  }
+
+  function exitSelectionMode() {
+    noteSelectionMode = false;
+    selectedNoteIds.clear();
+    updateSelectionUI();
+  }
+
+  function toggleNoteSelection(noteId) {
+    if (selectedNoteIds.has(noteId)) selectedNoteIds.delete(noteId);
+    else selectedNoteIds.add(noteId);
+
+    if (selectedNoteIds.size === 0) { exitSelectionMode(); return; }
+    updateSelectionUI();
+  }
+
+  function updateSelectionUI() {
+    normalHeaderEl.style.display = noteSelectionMode ? 'none' : 'flex';
+    selectionHeaderEl.style.display = noteSelectionMode ? 'flex' : 'none';
+    bottomBarNormalEl.style.display = noteSelectionMode ? 'none' : 'flex';
+    selectionBottomBarEl.style.display = noteSelectionMode ? 'flex' : 'none';
+
+    if (noteSelectionMode) {
+      selectionCountText.textContent = `${selectedNoteIds.size} Item Selected`;
+    }
+
+    const notesListEl = document.getElementById('notesList');
+    notesListEl.classList.toggle('selection-mode', noteSelectionMode);
+    notesListEl.querySelectorAll('.note-card').forEach(card => {
+      const checked = selectedNoteIds.has(card.dataset.id);
+      card.classList.toggle('selected', checked);
+    });
+
+    const allSelected = notesData.length > 0 && selectedNoteIds.size === notesData.length;
+    btnSelectAll.classList.toggle('all-checked', allSelected);
+  }
+
+  btnSelectionBack.addEventListener('click', exitSelectionMode);
+
+  btnSelectAll.addEventListener('click', () => {
+    if (notesData.length > 0 && selectedNoteIds.size === notesData.length) {
+      selectedNoteIds.clear();
+      if (noteSelectionMode) updateSelectionUI();
+    } else {
+      selectedNoteIds = new Set(notesData.map(n => n.id));
+      updateSelectionUI();
+    }
+  });
+
+  // --- Note Action Sheet: liquid glass popup dari bawah ---
+  const noteActionOverlay = document.getElementById('noteActionOverlay');
+  const noteActionSheet = document.getElementById('noteActionSheet');
+  const noteActionContent = document.getElementById('noteActionContent');
+
+  function openActionSheet(innerHtml) {
+    noteActionContent.innerHTML = innerHtml;
+    noteActionOverlay.classList.add('open');
+    noteActionSheet.classList.add('open');
+  }
+
+  function closeActionSheet() {
+    noteActionOverlay.classList.remove('open');
+    noteActionSheet.classList.remove('open');
+  }
+
+  noteActionOverlay.addEventListener('click', closeActionSheet);
+
+  // --- Pin ---
+  document.getElementById('btnSelPin').addEventListener('click', () => {
+    const count = selectedNoteIds.size;
+    openActionSheet(`
+      <p class="nas-title">Pin ${count} Note?</p>
+      <p class="nas-text">Note yang di-pin bakal selalu muncul paling atas daftar.</p>
+      <button class="nas-btn nas-btn-primary" id="nasConfirmPin">Pin Sekarang</button>
+      <button class="nas-btn nas-btn-cancel" id="nasCancel">Batal</button>
+    `);
+    document.getElementById('nasConfirmPin').addEventListener('click', async () => {
+      closeActionSheet();
+      await handlePinSelected();
+    });
+    document.getElementById('nasCancel').addEventListener('click', closeActionSheet);
+  });
+
+  async function handlePinSelected() {
+    const ids = [...selectedNoteIds];
+    const { error } = await supabaseClient.from('notes').update({ pinned: true }).in('id', ids);
+
+    if (error) {
+      alert('Gagal pin note: ' + error.message);
+      return;
+    }
+
+    exitSelectionMode();
+    loadCategories();
+  }
+
+  // --- Pindah Folder ---
+  document.getElementById('btnSelMove').addEventListener('click', () => {
+    const count = selectedNoteIds.size;
+    const otherFolders = categoriesData.filter(c => c.id !== activeCategoryId);
+    const folderOptions = otherFolders.map(cat => `
+      <div class="nas-folder-row" data-folder-id="${cat.id}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>${escapeHtml(cat.name)}</span>
+      </div>
+    `).join('');
+
+    openActionSheet(`
+      <p class="nas-title">Pindahkan ${count} Note</p>
+      <div class="nas-folder-list">
+        ${folderOptions || '<p class="nas-text">Nggak ada folder lain buat dipindahin</p>'}
+      </div>
+      <button class="nas-btn nas-btn-cancel" id="nasCancel">Batal</button>
+    `);
+
+    document.querySelectorAll('.nas-folder-row').forEach(row => {
+      row.addEventListener('click', async () => {
+        closeActionSheet();
+        await handleMoveSelected(row.dataset.folderId);
+      });
+    });
+    document.getElementById('nasCancel').addEventListener('click', closeActionSheet);
+  });
+
+  async function handleMoveSelected(targetFolderId) {
+    const ids = [...selectedNoteIds];
+    const { error } = await supabaseClient.from('notes').update({ folder_id: targetFolderId }).in('id', ids);
+
+    if (error) {
+      alert('Gagal memindahkan note: ' + error.message);
+      return;
+    }
+
+    exitSelectionMode();
+    loadCategories();
+  }
+
+  // --- Hapus ---
+  document.getElementById('btnSelDelete').addEventListener('click', () => {
+    const count = selectedNoteIds.size;
+    openActionSheet(`
+      <p class="nas-title">Hapus ${count} Note?</p>
+      <p class="nas-text">Tindakan ini nggak bisa dibatalkan. Data yang dihapus hilang permanen.</p>
+      <button class="nas-btn nas-btn-danger" id="nasConfirmDelete">Hapus</button>
+      <button class="nas-btn nas-btn-cancel" id="nasCancel">Batal</button>
+    `);
+    document.getElementById('nasConfirmDelete').addEventListener('click', async () => {
+      closeActionSheet();
+      await handleDeleteSelected();
+    });
+    document.getElementById('nasCancel').addEventListener('click', closeActionSheet);
+  });
+
+  async function handleDeleteSelected() {
+    const ids = [...selectedNoteIds];
+    const { error } = await supabaseClient.from('notes').delete().in('id', ids);
+
+    if (error) {
+      alert('Gagal menghapus note: ' + error.message);
+      return;
+    }
+
+    exitSelectionMode();
+    loadCategories();
   }
 
   // --- Drawer Folder Navigation ---
