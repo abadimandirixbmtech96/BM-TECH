@@ -1952,6 +1952,21 @@
     renderSearchHistory();
   }
 
+  // Cari kata kunci di dalam ISI TABEL sungguhan (content.rows), bukan cuma
+  // ringkasan preview. Balikin kolom & nilai yang cocok buat ditampilkan.
+  function findMatchInContent(content, q) {
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return null;
+    for (const row of content.rows) {
+      for (const col of content.columns) {
+        const val = row.cells ? row.cells[col.id] : '';
+        if (val && col.type !== 'image' && String(val).toLowerCase().includes(q)) {
+          return { label: col.label || 'Kolom', value: String(val) };
+        }
+      }
+    }
+    return null;
+  }
+
   function runSearch(rawQuery) {
     const query = rawQuery.trim();
 
@@ -1966,21 +1981,31 @@
     searchResultsList.style.display = 'flex';
 
     const q = query.toLowerCase();
-    const matches = notesData.filter(n =>
-      (n.title || '').toLowerCase().includes(q) ||
-      (n.preview || '').toLowerCase().includes(q)
-    );
+    const matches = notesData
+      .map(n => {
+        const titleMatch = (n.title || '').toLowerCase().includes(q);
+        const previewMatch = (n.preview || '').toLowerCase().includes(q);
+        const folderMatch = (n.folder || '').toLowerCase().includes(q);
+        const cellMatch = findMatchInContent(n.content, q);
+        if (!titleMatch && !previewMatch && !folderMatch && !cellMatch) return null;
+        return { note: n, cellMatch };
+      })
+      .filter(Boolean);
 
     if (matches.length === 0) {
       searchResultsList.innerHTML = `<p class="search-empty-result">"${escapeHtml(query)}" tidak ditemukan di tabel manapun</p>`;
       return;
     }
 
-    searchResultsList.innerHTML = matches.map(n => `
+    searchResultsList.innerHTML = matches.map(({ note: n, cellMatch }) => `
       <div class="search-result-item" data-id="${n.id}">
         <div class="search-result-main">
           <p class="search-result-title">${highlightMatch(n.title || 'Untitled', query)}</p>
-          <p class="search-result-preview">${highlightMatch((n.preview || '').replace(/\n/g, ' '), query)}</p>
+          <p class="search-result-preview">${
+            cellMatch
+              ? escapeHtml(cellMatch.label) + ': ' + highlightMatch(cellMatch.value, query)
+              : highlightMatch((n.preview || '').replace(/\n/g, ' '), query)
+          }</p>
         </div>
         <span class="search-result-folder">${escapeHtml(n.folder || 'Uncategorized')}</span>
       </div>
