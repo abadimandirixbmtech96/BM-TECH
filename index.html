@@ -700,19 +700,6 @@
     cursor: pointer;
   }
 
-  /* --- Modal Container for Editor Viewer --- */
-  .editor-modal {
-    position: fixed;
-    inset: 0;
-    background: var(--bg-dark);
-    z-index: 200;
-    transform: translateY(100%);
-    transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
-  }
-
-  .editor-modal.open { transform: translateY(0); }
-  .editor-frame { width: 100%; height: 100%; border: none; }
-
   /* --- Settings Overlay --- */
   .settings-overlay {
     position: fixed;
@@ -1148,6 +1135,98 @@
   .export-btn svg { width: 15px; height: 15px; }
   .export-btn:active { background: var(--overlay-3); }
 
+  /* --- Note Detail Overlay (read-only, publik cuma bisa lihat) --- */
+  .note-detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    z-index: 130;
+    display: flex;
+    flex-direction: column;
+    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 20px) 16px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(15px);
+    transition: all 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .note-detail-overlay.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+  .note-detail-overlay .settings-top h2 {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .note-detail-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+    width: fit-content;
+  }
+
+  .note-detail-table-wrap {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-lg);
+  }
+
+  .note-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .note-detail-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--card-surface-dark);
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--card-border-dark);
+  }
+
+  .note-detail-table tbody td {
+    padding: 10px 12px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--card-border-dark);
+    white-space: nowrap;
+  }
+
+  .note-detail-table tbody tr:last-child td { border-bottom: none; }
+
+  .note-detail-img {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+  }
+
+  .note-detail-empty {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
   .recent-activity-list {
     display: flex;
     flex-direction: column;
@@ -1312,8 +1391,18 @@
 </div>
 
 <!-- Modal Container for Editor Viewer -->
-<div class="editor-modal" id="editorModal">
-  <iframe id="editorFrame" class="editor-frame" src="editor.html"></iframe>
+<!-- Note Detail Overlay: publik cuma bisa LIHAT isi tabel, tidak bisa edit -->
+<div class="note-detail-overlay" id="noteDetailOverlay">
+  <div class="settings-top">
+    <button class="header-btn" id="btnNoteDetailBack">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2 id="noteDetailTitle">Untitled</h2>
+  </div>
+  <span class="note-detail-badge">Mode Lihat Saja</span>
+  <div class="note-detail-table-wrap">
+    <table class="note-detail-table" id="noteDetailTable"></table>
+  </div>
 </div>
 
 <!-- Settings Overlay -->
@@ -1632,15 +1721,15 @@
     container.innerHTML = visibleNotes.map((note, idx) => `
       <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
         <div class="note-content-layer">
-          <h2 class="note-title">${note.title || 'Untitled'}</h2>
-          <p class="note-desc">${note.preview || ''}</p>
+          <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
+          <p class="note-desc">${escapeHtml(note.preview || '')}</p>
         </div>
-        <span class="note-date-tag">${note.date_tag || 'Recent'}</span>
+        <span class="note-date-tag">${escapeHtml(note.date_tag || 'Recent')}</span>
       </div>
     `).join('');
 
     container.querySelectorAll('.note-card').forEach(card => {
-      card.addEventListener('click', () => openEditor(card.dataset.id));
+      card.addEventListener('click', () => openNoteDetail(card.dataset.id));
     });
   }
 
@@ -1900,8 +1989,8 @@
     searchResultsList.querySelectorAll('.search-result-item').forEach(el => {
       el.addEventListener('click', () => {
         addToSearchHistory(query);
-        openEditor(el.dataset.id);
         searchOverlay.classList.remove('open');
+        openNoteDetail(el.dataset.id);
       });
     });
   }
@@ -2481,24 +2570,53 @@
     );
   });
 
-  // --- Open & Close Editor Modal ---
-  const editorModal = document.getElementById('editorModal');
-  const editorFrame = document.getElementById('editorFrame');
+  // --- Note Detail Overlay: publik cuma bisa LIHAT isi tabel, read-only ---
+  const noteDetailOverlay = document.getElementById('noteDetailOverlay');
+  const btnNoteDetailBack = document.getElementById('btnNoteDetailBack');
 
-  function openEditor(noteId = null) {
-    if (noteId) {
-      editorFrame.src = `editor.html?id=${noteId}`;
+  function openNoteDetail(noteId) {
+    const note = notesData.find(n => n.id === noteId);
+    if (!note) return;
+
+    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+
+    const tableEl = document.getElementById('noteDetailTable');
+    const content = note.content;
+
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
+      tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
     } else {
-      editorFrame.src = `editor.html?new=true`;
+      const cols = content.columns;
+      const theadHtml = '<thead><tr>' + cols.map(c => `<th>${escapeHtml(c.label || '')}</th>`).join('') + '</tr></thead>';
+      const tbodyHtml = '<tbody>' + content.rows.map(row => {
+        return '<tr>' + cols.map(c => {
+          const val = row.cells ? row.cells[c.id] : '';
+          if (c.type === 'image' && val) {
+            return `<td><img src="${escapeHtml(val)}" class="note-detail-img" alt="Gambar"></td>`;
+          }
+          return `<td>${escapeHtml(val || '')}</td>`;
+        }).join('') + '</tr>';
+      }).join('') + '</tbody>';
+      tableEl.innerHTML = theadHtml + tbodyHtml;
     }
-    editorModal.classList.add('open');
+
+    noteDetailOverlay.classList.add('open');
   }
 
-  window.addEventListener('message', (e) => {
-    if (e.data === 'close-editor') {
-      editorModal.classList.remove('open');
-    }
-  });
+  btnNoteDetailBack.addEventListener('click', () => noteDetailOverlay.classList.remove('open'));
+
+  // --- Realtime: viewer publik otomatis update kalau ada perubahan data
+  // folders/notes dari admin, tanpa perlu refresh manual ---
+  let realtimeRefreshTimer = null;
+  function scheduleRealtimeRefresh() {
+    clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = setTimeout(() => loadAllData(), 400);
+  }
+  supabaseClient
+    .channel('public-realtime')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, scheduleRealtimeRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, scheduleRealtimeRefresh)
+    .subscribe();
 
   loadAllData();
 </script>
