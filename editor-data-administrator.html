@@ -1300,14 +1300,47 @@
     menu.querySelector('[data-action="delete"]').addEventListener('click', () => { deleteRow(rowIndex); closeRowMenu(); });
   }
 
-  renderHeader();
-  renderRows();
-  updateUndoRedoUI();
-
   // ---------- Sinkronisasi Database (Supabase) ----------
   const urlParams = new URLSearchParams(window.location.search);
   let currentNoteId = urlParams.get('id') || null;
   const targetFolderId = urlParams.get('folder') || null;
+
+  if (currentNoteId) {
+    // Note yang SUDAH ADA: jangan render tabel default kosong dulu (bikin
+    // kelip "kosong lalu keisi" yang kerasa nggak nyaman). Tampilkan
+    // loading skeleton, baru render aslinya begitu data siap.
+    showEditorLoadingSkeleton();
+  } else {
+    // Note BARU: nggak ada yang perlu ditunggu, langsung render tabel kosong.
+    renderHeader();
+    renderRows();
+    updateUndoRedoUI();
+  }
+
+  function showEditorLoadingSkeleton() {
+    const wrap = document.getElementById('tableScrollWrap') || document.getElementById('notesTable').parentElement;
+    const skeleton = document.createElement('div');
+    skeleton.id = 'editorLoadingSkeleton';
+    skeleton.style.cssText = 'display:flex; flex-direction:column; gap:10px; padding:20px 4px;';
+    skeleton.innerHTML = [40, 90, 70].map(w =>
+      `<div style="height:16px; width:${w}%; border-radius:8px; background:linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12), rgba(0,0,0,0.06)); background-size:200% 100%; animation:editorSkeletonPulse 1.1s ease-in-out infinite;"></div>`
+    ).join('');
+    document.getElementById('notesTable').style.display = 'none';
+    wrap.appendChild(skeleton);
+
+    if (!document.getElementById('editorSkeletonStyle')) {
+      const styleTag = document.createElement('style');
+      styleTag.id = 'editorSkeletonStyle';
+      styleTag.textContent = '@keyframes editorSkeletonPulse { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }';
+      document.head.appendChild(styleTag);
+    }
+  }
+
+  function hideEditorLoadingSkeleton() {
+    const skeleton = document.getElementById('editorLoadingSkeleton');
+    if (skeleton) skeleton.remove();
+    document.getElementById('notesTable').style.display = '';
+  }
 
   async function loadExistingNote() {
     if (!currentNoteId) return;
@@ -1320,6 +1353,10 @@
 
     if (error || !note) {
       console.error('Gagal memuat note:', error && error.message);
+      hideEditorLoadingSkeleton();
+      renderHeader();
+      renderRows();
+      updateUndoRedoUI();
       return;
     }
 
@@ -1337,15 +1374,21 @@
     historyStack = [];
     redoStack = [];
     updateUndoRedoUI();
+
+    hideEditorLoadingSkeleton();
   }
 
   loadExistingNote();
 
   function buildPreviewText() {
+    const firstRow = rows[0];
     return columns
-      .filter(c => c.type !== 'no')
+      .filter(c => c.type !== 'no' && c.type !== 'image')
       .slice(0, 2)
-      .map(c => c.label || '')
+      .map(c => {
+        const val = firstRow && firstRow.cells ? firstRow.cells[c.id] : '';
+        return val ? String(val) : (c.label || '');
+      })
       .join('\n');
   }
 
