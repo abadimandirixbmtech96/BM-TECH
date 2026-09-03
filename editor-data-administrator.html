@@ -1364,8 +1364,18 @@
       columns = note.content.columns;
       rows = note.content.rows;
     }
-
     noteTitle = note.title || '';
+
+    // Cek dulu: ada draf lokal yang belum sempat tersinkron dari sesi
+    // sebelumnya (misal koneksi putus pas lagi ngetik)? Tawarkan dipulihkan
+    // SEBELUM data dari server ditampilkan, biar nggak ketiban data lama.
+    const recovered = checkForRecoverableDraft(columns, rows, noteTitle);
+    if (recovered) {
+      columns = recovered.columns;
+      rows = recovered.rows;
+      noteTitle = recovered.title;
+    }
+
     document.getElementById('noteTitle').innerText = noteTitle;
 
     renderHeader();
@@ -1376,6 +1386,12 @@
     updateUndoRedoUI();
 
     hideEditorLoadingSkeleton();
+
+    if (recovered) {
+      // Data yang dipulihkan beda dari server — langsung coba sinkronkan
+      // sekarang juga, jangan tunggu user ngetik lagi.
+      scheduleAutosave();
+    }
   }
 
   loadExistingNote();
@@ -1456,21 +1472,92 @@
   }
 
   let saveStatusTimer = null;
-  function showSaveStatus(text, isError) {
+  function showSaveStatus(text, isError, sticky) {
     const el = ensureSaveStatusEl();
     el.textContent = text;
     el.style.background = isError ? 'rgba(200,60,60,0.85)' : 'rgba(30,30,30,0.75)';
     el.style.opacity = '1';
     clearTimeout(saveStatusTimer);
-    saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+    if (!sticky) {
+      saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+    }
+  }
+
+  // ---------- Lapis Pengaman 1: Backup Lokal Instan ----------
+  // Jalan tiap ada perubahan, TIDAK butuh internet, TIDAK nunggu apapun.
+  // Ini jaring pengaman kalau autosave ke server gagal/lambat — data tetap
+  // ada di HP, bisa dipulihkan lagi walau tab/app sempat ketutup.
+  let activeDraftKey = null; // ditentukan sekali di awal sesi editor ini, konsisten sampai akhir
+
+  function getLocalDraftKey() {
+    if (activeDraftKey) return activeDraftKey;
+    if (currentNoteId) {
+      activeDraftKey = 'bm_draft_' + currentNoteId;
+    } else {
+      let tempKey = sessionStorage.getItem('bm_temp_draft_key');
+      if (!tempKey) {
+        tempKey = 'bm_draft_new_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+        sessionStorage.setItem('bm_temp_draft_key', tempKey);
+      }
+      activeDraftKey = tempKey;
+    }
+    return activeDraftKey;
+  }
+
+  function saveLocalDraft() {
+    try {
+      localStorage.setItem(getLocalDraftKey(), JSON.stringify({
+        title: document.getElementById('noteTitle').innerText,
+        columns, rows,
+        savedAt: Date.now()
+      }));
+    } catch (e) { /* storage penuh/nggak tersedia — abaikan, jangan sampai bikin error lain */ }
+  }
+
+  function clearLocalDraft() {
+    try {
+      localStorage.removeItem(getLocalDraftKey());
+      sessionStorage.removeItem('bm_temp_draft_key');
+    } catch (e) {}
+  }
+
+  // Cek draf lokal yang belum sempat sinkron dari sesi sebelumnya (misal
+  // koneksi putus pas lagi ngetik, atau app ketutup paksa) — tawarkan buat
+  // dipulihkan sebelum data dari server ditampilkan.
+  function checkForRecoverableDraft(serverColumns, serverRows, serverTitle) {
+    let draft = null;
+    try {
+      const raw = localStorage.getItem(getLocalDraftKey());
+      if (raw) draft = JSON.parse(raw);
+    } catch (e) { return null; }
+    if (!draft) return null;
+
+    const isDifferent = JSON.stringify({ t: serverTitle, c: serverColumns, r: serverRows })
+      !== JSON.stringify({ t: draft.title, c: draft.columns, r: draft.rows });
+
+    if (!isDifferent) { clearLocalDraft(); return null; }
+
+    const menitLalu = Math.max(1, Math.round((Date.now() - draft.savedAt) / 60000));
+    const pulihkan = confirm(
+      `Ditemukan perubahan yang belum sempat tersimpan ke server (dari ${menitLalu} menit lalu, ` +
+      `kemungkinan koneksi sempat putus). Pulihkan perubahan itu sekarang?`
+    );
+
+    if (pulihkan) return draft;
+    clearLocalDraft();
+    return null;
   }
 
   // ---------- Autosave Real-Time ----------
   let autosaveTimer = null;
   let autosaveInFlight = false;
   let autosavePending = false;
+  let autosaveRetryCount = 0;
+  let hasUnsyncedChanges = false;
 
   function scheduleAutosave() {
+    saveLocalDraft(); // instan, tiap ketikan — INI yang benar-benar menjamin datanya nggak hilang
+    hasUnsyncedChanges = true;
     clearTimeout(autosaveTimer);
     showSaveStatus('Menyimpan...');
     autosaveTimer = setTimeout(runAutosave, 1200);
@@ -1481,12 +1568,27 @@
     autosaveInFlight = true;
 
     const success = await saveNoteToDatabase(true);
-    showSaveStatus(success ? 'Tersimpan' : 'Gagal tersimpan', !success);
+
+    if (success) {
+      autosaveRetryCount = 0;
+      hasUnsyncedChanges = false;
+      clearLocalDraft(); // sudah aman di server, backup lokal nggak perlu lagi
+      showSaveStatus('Tersimpan', false);
+    } else {
+      // GAGAL: jangan diam-diam nyerah. Coba lagi otomatis, dan biarkan
+      // indikator "Gagal tersimpan" tetap nempel (nggak auto-hilang),
+      // biar user SADAR datanya belum aman sampai beneran berhasil.
+      autosaveRetryCount++;
+      const delay = Math.min(30000, 3000 * autosaveRetryCount); // 3s, 6s, 9s... maks 30s
+      showSaveStatus(`Gagal tersimpan — mencoba lagi (${autosaveRetryCount})...`, true, true);
+      clearTimeout(autosaveTimer);
+      autosaveTimer = setTimeout(runAutosave, delay);
+    }
 
     autosaveInFlight = false;
     if (autosavePending) {
       autosavePending = false;
-      scheduleAutosave();
+      if (success) scheduleAutosave();
     }
   }
 
@@ -1796,6 +1898,18 @@
   // iframe modal) that this editor should close. No-op when opened standalone.
   const btnBack = document.getElementById('btnBack');
   btnBack.addEventListener('click', () => {
+    // Lapis pengaman terakhir: kalau masih ada perubahan yang belum
+    // sukses tersimpan ke server (masih nyoba retry), jangan biarkan
+    // keluar diam-diam — data bisa hilang kalau nekat ditutup sekarang.
+    if (autosaveInFlight || hasUnsyncedChanges) {
+      const tetapKeluar = confirm(
+        'Perubahan terakhir belum sukses tersimpan ke server (kemungkinan koneksi bermasalah). ' +
+        'Data amannya tersimpan di HP ini dan akan otomatis dicoba lagi kalau kamu balik ke note ini. ' +
+        'Tetap mau keluar sekarang?'
+      );
+      if (!tetapKeluar) return;
+    }
+
     if (window.parent && window.parent !== window) {
       window.parent.postMessage('close-editor', '*');
     } else if (window.history.length > 1) {
