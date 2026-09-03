@@ -149,6 +149,71 @@
 
   .table-caption{display:none;}
 
+  .note-body{
+    margin:4px calc(var(--safe-left) + 20px) 20px calc(var(--safe-left) + 20px);
+    min-height:28px;
+    font-size:15.5px;
+    line-height:1.5;
+    color:var(--ink);
+    outline:none;
+  }
+
+  .table-scroll.hidden{ display:none; }
+
+  .toolbtn.dimmed{ opacity:0.32; }
+
+  .more-menu button.danger[disabled]{
+    opacity:0.4;
+    pointer-events:none;
+  }
+  #moreScrim{
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .15s ease;
+  }
+  #moreScrim.open{ opacity:1; pointer-events:auto; }
+  #moreMenu{
+    position:fixed;
+    top:calc(var(--safe-top) + 62px);
+    right:calc(var(--safe-right) + 14px);
+    width:190px;
+    opacity:0;
+    pointer-events:none;
+    transform:translateY(-6px) scale(0.96);
+    transition:opacity .16s ease, transform .16s ease;
+  }
+  #moreMenu.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translateY(0) scale(1);
+  }
+
+  .app-toast{
+    position:fixed;
+    left:50%;
+    bottom:calc(var(--safe-bottom) + 78px);
+    transform:translateX(-50%) translateY(10px);
+    background:rgba(26,24,21,0.92);
+    backdrop-filter:blur(22px) saturate(1.3);
+    -webkit-backdrop-filter:blur(22px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:14px;
+    padding:11px 18px;
+    color:#F2EFE9;
+    font-size:14px;
+    font-weight:600;
+    box-shadow:0 14px 34px rgba(0,0,0,0.32);
+    z-index:95;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease, transform .2s ease;
+    white-space:nowrap;
+  }
+  .app-toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
   [contenteditable="true"]{
     outline:none;
     border-radius:6px;
@@ -805,7 +870,9 @@
         <h1 id="noteTitle" contenteditable="true" data-placeholder="Isi judul tabel..."></h1>
       </div>
 
-      <div class="table-scroll">
+      <div class="note-body" id="noteBody" contenteditable="true" data-placeholder="Note something down"></div>
+
+      <div class="table-scroll hidden">
         <table id="notesTable">
           <thead id="tableHead"></thead>
           <tbody id="tableBody"></tbody>
@@ -828,8 +895,23 @@
       <button class="toolbtn" id="btnChecklist" aria-label="Cek kelengkapan data">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="8 12.5 10.8 15 16 9"></polyline></svg>
       </button>
+      <button class="toolbtn" id="btnTableCreate" aria-label="Buat tabel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"></rect><line x1="3.5" y1="10.5" x2="20.5" y2="10.5"></line><line x1="3.5" y1="15.5" x2="20.5" y2="15.5"></line><line x1="10.5" y1="3.5" x2="10.5" y2="20.5"></line></svg>
+      </button>
     </div>
   </div>
+
+  <!-- MORE MENU (top bar ⋮) -->
+  <div class="menu-scrim" id="moreScrim"></div>
+  <div class="row-menu more-menu" id="moreMenu">
+    <button data-action="delete-table" id="moreDeleteTable" class="danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path></svg>
+      Hapus Tabel
+    </button>
+  </div>
+
+  <!-- TOAST -->
+  <div class="app-toast" id="appToast"></div>
 
   <!-- CAMERA/GALLERY ACTION SHEET -->
   <div class="share-scrim" id="cameraScrim"></div>
@@ -1041,6 +1123,7 @@
         const idx = parseInt(el.dataset.colIndex, 10);
         if (!columns[idx]) return;
         const pre = snapshot();
+        autoCapitalizeFirst(el);
         columns[idx].label = el.innerText;
         const post = snapshot();
         if (post !== pre) pushHistory(pre);
@@ -1164,6 +1247,7 @@
         const idx = rowIndexOf(el);
         if (idx < 0) return;
         const pre = snapshot();
+        autoCapitalizeFirst(el);
         rows[idx].cells[el.dataset.field] = el.innerText;
         const post = snapshot();
         if (post !== pre) pushHistory(pre);
@@ -1203,9 +1287,11 @@
   let historyStack = [];
   let redoStack = [];
   let noteTitle = document.getElementById('noteTitle').innerText;
+  let noteBody = '';
+  let hasTable = false;
 
   function snapshot(){
-    return JSON.stringify({ rows, noteTitle, columns });
+    return JSON.stringify({ rows, noteTitle, columns, noteBody, hasTable });
   }
 
   // preSnapshot: a JSON string from snapshot() for text/row/column changes,
@@ -1228,9 +1314,14 @@
     rows = state.rows;
     noteTitle = state.noteTitle;
     columns = state.columns;
+    noteBody = state.noteBody || '';
+    hasTable = !!state.hasTable;
     renderHeader();
     renderRows();
     document.getElementById('noteTitle').innerText = noteTitle;
+    document.getElementById('noteBody').innerText = noteBody;
+    document.querySelector('.table-scroll').classList.toggle('hidden', !hasTable);
+    updateTableIconState();
   }
 
   function undo(){
@@ -1311,7 +1402,6 @@
     // loading skeleton, baru render aslinya begitu data siap.
     showEditorLoadingSkeleton();
   } else {
-    // Note BARU: nggak ada yang perlu ditunggu, langsung render tabel kosong.
     renderHeader();
     renderRows();
     updateUndoRedoUI();
@@ -1360,23 +1450,36 @@
       return;
     }
 
+    let loadedHasTable = hasTable;
+    let loadedNoteBody = noteBody;
+
     if (note.content && note.content.columns && note.content.rows) {
       columns = note.content.columns;
       rows = note.content.rows;
+      loadedHasTable = typeof note.content.hasTable === 'boolean' ? note.content.hasTable : true;
     }
+    loadedNoteBody = note.content && typeof note.content.noteBody === 'string' ? note.content.noteBody : '';
     noteTitle = note.title || '';
 
     // Cek dulu: ada draf lokal yang belum sempat tersinkron dari sesi
     // sebelumnya (misal koneksi putus pas lagi ngetik)? Tawarkan dipulihkan
     // SEBELUM data dari server ditampilkan, biar nggak ketiban data lama.
-    const recovered = checkForRecoverableDraft(columns, rows, noteTitle);
+    const recovered = checkForRecoverableDraft(columns, rows, noteTitle, loadedNoteBody, loadedHasTable);
     if (recovered) {
       columns = recovered.columns;
       rows = recovered.rows;
       noteTitle = recovered.title;
+      loadedNoteBody = recovered.noteBody;
+      loadedHasTable = recovered.hasTable;
     }
 
+    hasTable = loadedHasTable;
+    noteBody = loadedNoteBody;
+
     document.getElementById('noteTitle').innerText = noteTitle;
+    document.getElementById('noteBody').innerText = noteBody;
+    document.querySelector('.table-scroll').classList.toggle('hidden', !hasTable);
+    updateTableIconState();
 
     renderHeader();
     renderRows();
@@ -1388,8 +1491,6 @@
     hideEditorLoadingSkeleton();
 
     if (recovered) {
-      // Data yang dipulihkan beda dari server — langsung coba sinkronkan
-      // sekarang juga, jangan tunggu user ngetik lagi.
       scheduleAutosave();
     }
   }
@@ -1427,7 +1528,7 @@
       title: titleNow || 'Untitled',
       preview: buildPreviewText(),
       date_tag: buildDateTag(),
-      content: { columns, rows }
+      content: { columns, rows, noteBody, hasTable } // struktur lengkap termasuk fitur teks bebas & toggle tabel
     };
 
     let result;
@@ -1508,7 +1609,7 @@
     try {
       localStorage.setItem(getLocalDraftKey(), JSON.stringify({
         title: document.getElementById('noteTitle').innerText,
-        columns, rows,
+        columns, rows, noteBody, hasTable,
         savedAt: Date.now()
       }));
     } catch (e) { /* storage penuh/nggak tersedia — abaikan, jangan sampai bikin error lain */ }
@@ -1524,7 +1625,7 @@
   // Cek draf lokal yang belum sempat sinkron dari sesi sebelumnya (misal
   // koneksi putus pas lagi ngetik, atau app ketutup paksa) — tawarkan buat
   // dipulihkan sebelum data dari server ditampilkan.
-  function checkForRecoverableDraft(serverColumns, serverRows, serverTitle) {
+  function checkForRecoverableDraft(serverColumns, serverRows, serverTitle, serverNoteBody, serverHasTable) {
     let draft = null;
     try {
       const raw = localStorage.getItem(getLocalDraftKey());
@@ -1532,10 +1633,9 @@
     } catch (e) { return null; }
     if (!draft) return null;
 
-    const isDifferent = JSON.stringify({ t: serverTitle, c: serverColumns, r: serverRows })
-      !== JSON.stringify({ t: draft.title, c: draft.columns, r: draft.rows });
-
-    if (!isDifferent) { clearLocalDraft(); return null; }
+    const server = { t: serverTitle, c: serverColumns, r: serverRows, b: serverNoteBody, h: serverHasTable };
+    const local = { t: draft.title, c: draft.columns, r: draft.rows, b: draft.noteBody, h: draft.hasTable };
+    if (JSON.stringify(server) === JSON.stringify(local)) { clearLocalDraft(); return null; }
 
     const menitLalu = Math.max(1, Math.round((Date.now() - draft.savedAt) / 60000));
     const pulihkan = confirm(
@@ -1594,6 +1694,7 @@
 
   const autosaveObserver = new MutationObserver(scheduleAutosave);
   autosaveObserver.observe(document.getElementById('noteTitle'), { childList: true, characterData: true, subtree: true });
+  autosaveObserver.observe(document.getElementById('noteBody'), { childList: true, characterData: true, subtree: true });
   autosaveObserver.observe(document.getElementById('tableHead'), { childList: true, characterData: true, subtree: true });
   autosaveObserver.observe(document.getElementById('tableBody'), { childList: true, characterData: true, subtree: true });
 
@@ -1624,6 +1725,7 @@
     topbarEdit.style.display = 'flex';
     closeBgPanel();
     closeSharePanel();
+    closeMoreMenu();
     setDrawMode(false);
   }
   function exitEditMode(){
@@ -1651,6 +1753,21 @@
     lastActiveCell = e.target;
   });
 
+  // Capitalizes just the first character as soon as it's typed (e.g. "yanto" → "Yanto").
+  // Scoped to the very first character only, so cursor position stays simple/safe.
+  function autoCapitalizeFirst(el){
+    const text = el.innerText;
+    if (text.length === 1 && /[a-z]/.test(text)) {
+      el.innerText = text.toUpperCase();
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
   const noteTitleEl = document.getElementById('noteTitle');
   noteTitleEl.addEventListener('focusin', () => {
     enterEditMode();
@@ -1658,9 +1775,95 @@
   });
   noteTitleEl.addEventListener('input', () => {
     const pre = snapshot();
+    autoCapitalizeFirst(noteTitleEl);
     noteTitle = noteTitleEl.innerText;
     pushHistory(pre);
   });
+
+  const noteBodyEl = document.getElementById('noteBody');
+  noteBodyEl.addEventListener('focusin', () => {
+    enterEditMode();
+    lastActiveCell = noteBodyEl;
+  });
+  noteBodyEl.addEventListener('input', () => {
+    const pre = snapshot();
+    autoCapitalizeFirst(noteBodyEl);
+    noteBody = noteBodyEl.innerText;
+    pushHistory(pre);
+  });
+
+  // ---------- Toast (single reusable element — never stacks/spams) ----------
+  const appToast = document.getElementById('appToast');
+  let toastHideTimer = null;
+  function showToast(text){
+    appToast.textContent = text;
+    appToast.classList.add('show');
+    clearTimeout(toastHideTimer);
+    toastHideTimer = setTimeout(() => appToast.classList.remove('show'), 1800);
+  }
+
+  // ---------- Table create / delete ----------
+  const btnTableCreate = document.getElementById('btnTableCreate');
+  const tableScrollEl = document.querySelector('.table-scroll');
+
+  function updateTableIconState(){
+    btnTableCreate.classList.toggle('dimmed', hasTable);
+    moreDeleteTable.disabled = !hasTable;
+  }
+
+  function createTable(){
+    if (hasTable) return; // already exists — icon just sits dimmed, no action
+    const pre = snapshot();
+    hasTable = true;
+    tableScrollEl.classList.remove('hidden');
+    pushHistory(pre);
+    updateTableIconState();
+    scheduleAutosave(); // toggle class doang, MutationObserver nggak nangkep ini
+  }
+
+  function deleteTable(){
+    if (!hasTable) return;
+    const pre = snapshot();
+    hasTable = false;
+    columns = [
+      { id: 'no',      label: 'No',      type: 'no',   placeholder: 'No' },
+      { id: 'tanggal', label: 'Tanggal', type: 'date', placeholder: 'Tanggal' },
+      { id: 'jam',     label: 'Jam',     type: 'time', placeholder: 'Jam' }
+    ];
+    rows = [ { cells: makeEmptyRowCells(columns) } ];
+    renderHeader();
+    renderRows();
+    tableScrollEl.classList.add('hidden');
+    pushHistory(pre);
+    updateTableIconState();
+    showToast('Tabel dihapus');
+    scheduleAutosave(); // pastikan tersimpan walau renderHeader/Rows kebetulan gak selalu ke-catch observer
+  }
+
+  btnTableCreate.addEventListener('click', createTable);
+
+  // ---------- More menu (top bar ⋮) ----------
+  const moreScrim = document.getElementById('moreScrim');
+  const moreMenu = document.getElementById('moreMenu');
+  const moreDeleteTable = document.getElementById('moreDeleteTable');
+  const btnMoreTop = document.getElementById('btnMore');
+
+  function closeMoreMenu(){
+    moreScrim.classList.remove('open');
+    moreMenu.classList.remove('open');
+  }
+  btnMoreTop.addEventListener('click', () => {
+    if (!hasTable) { showToast('Belum ada tabel'); return; }
+    moreScrim.classList.add('open');
+    moreMenu.classList.add('open');
+  });
+  moreScrim.addEventListener('click', closeMoreMenu);
+  moreDeleteTable.addEventListener('click', () => {
+    if (moreDeleteTable.disabled) return;
+    closeMoreMenu();
+    deleteTable();
+  });
+  updateTableIconState();
 
   // ---------- Aa formatting panel ----------
   const formatPanel = document.getElementById('formatPanel');
@@ -1898,9 +2101,6 @@
   // iframe modal) that this editor should close. No-op when opened standalone.
   const btnBack = document.getElementById('btnBack');
   btnBack.addEventListener('click', () => {
-    // Lapis pengaman terakhir: kalau masih ada perubahan yang belum
-    // sukses tersimpan ke server (masih nyoba retry), jangan biarkan
-    // keluar diam-diam — data bisa hilang kalau nekat ditutup sekarang.
     if (autosaveInFlight || hasUnsyncedChanges) {
       const tetapKeluar = confirm(
         'Perubahan terakhir belum sukses tersimpan ke server (kemungkinan koneksi bermasalah). ' +
