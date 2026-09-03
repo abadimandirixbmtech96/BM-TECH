@@ -1407,6 +1407,12 @@
     updateUndoRedoUI();
   }
 
+  // Kalau true, autosave DIKUNCI TOTAL — dipakai waktu note yang sudah ada
+  // gagal dimuat (misal offline & belum ada draf lokal), supaya tabel
+  // kosong yang cuma tampilan gagal-muat TIDAK sengaja tersimpan menimpa
+  // data asli begitu koneksi balik.
+  let existingNoteLoadFailed = false;
+
   function showEditorLoadingSkeleton() {
     const wrap = document.getElementById('tableScrollWrap') || document.getElementById('notesTable').parentElement;
     const skeleton = document.createElement('div');
@@ -1435,6 +1441,33 @@
   async function loadExistingNote() {
     if (!currentNoteId) return;
 
+    if (!navigator.onLine) {
+      // Offline dari awal — coba pulihkan dari draf lokal (kalau sebelumnya
+      // pernah kebuka & sempat ke-cache). Kalau nggak ada draf sama sekali,
+      // JANGAN kasih tabel kosong — itu berbahaya, bisa disangka notenya
+      // emang kosong dan berujung nimpa data asli begitu online lagi.
+      const raw = (() => { try { return localStorage.getItem(getLocalDraftKey()); } catch (e) { return null; } })();
+      if (raw) {
+        const draft = JSON.parse(raw);
+        columns = draft.columns; rows = draft.rows;
+        noteTitle = draft.title; noteBody = draft.noteBody; hasTable = draft.hasTable;
+        document.getElementById('noteTitle').innerText = noteTitle;
+        document.getElementById('noteBody').innerText = noteBody;
+        document.querySelector('.table-scroll').classList.toggle('hidden', !hasTable);
+        updateTableIconState();
+        renderHeader();
+        renderRows();
+        updateUndoRedoUI();
+        hideEditorLoadingSkeleton();
+        showSaveStatus('Tersimpan di HP (offline)', false, true);
+      } else {
+        existingNoteLoadFailed = true;
+        hideEditorLoadingSkeleton();
+        showSaveStatus('Offline — tidak bisa memuat note ini', true, true);
+      }
+      return;
+    }
+
     const { data: note, error } = await supabaseClient
       .from('notes')
       .select('*')
@@ -1443,13 +1476,13 @@
 
     if (error || !note) {
       console.error('Gagal memuat note:', error && error.message);
+      existingNoteLoadFailed = true;
       hideEditorLoadingSkeleton();
-      renderHeader();
-      renderRows();
-      updateUndoRedoUI();
+      showSaveStatus('Gagal memuat note — coba buka ulang', true, true);
       return;
     }
 
+    existingNoteLoadFailed = false;
     let loadedHasTable = hasTable;
     let loadedNoteBody = noteBody;
 
@@ -1648,7 +1681,12 @@
     return null;
   }
 
-  // ---------- Autosave Real-Time ----------
+  // ---------- Autosave Real-Time (connectivity-aware, cocok buat PWA) ----------
+  // Prinsipnya: draf lokal SELALU jadi tempat aman utama (jalan walau offline
+  // total). Sinkron ke server cuma dicoba kalau perangkat memang online —
+  // kalau jelas-jelas offline, jangan buang percobaan berkali-kali ke server
+  // (itu penyebab status "kedip-kedip" sebelumnya). Begitu koneksi balik
+  // (event 'online'), langsung disinkronkan otomatis tanpa nunggu ketikan baru.
   let autosaveTimer = null;
   let autosaveInFlight = false;
   let autosavePending = false;
@@ -1656,14 +1694,28 @@
   let hasUnsyncedChanges = false;
 
   function scheduleAutosave() {
+    if (existingNoteLoadFailed) return; // data asli belum berhasil dimuat — JANGAN simpan apapun dulu
+
     saveLocalDraft(); // instan, tiap ketikan — INI yang benar-benar menjamin datanya nggak hilang
     hasUnsyncedChanges = true;
     clearTimeout(autosaveTimer);
+
+    if (!navigator.onLine) {
+      // Jelas-jelas offline — jangan nyoba ke server sama sekali. Cukup
+      // kasih status tenang & stabil, nggak berubah-ubah tiap beberapa detik.
+      showSaveStatus('Tersimpan di HP (offline)', false, true);
+      return;
+    }
+
     showSaveStatus('Menyimpan...');
     autosaveTimer = setTimeout(runAutosave, 1200);
   }
 
   async function runAutosave() {
+    if (!navigator.onLine) {
+      showSaveStatus('Tersimpan di HP (offline)', false, true);
+      return;
+    }
     if (autosaveInFlight) { autosavePending = true; return; }
     autosaveInFlight = true;
 
@@ -1675,9 +1727,9 @@
       clearLocalDraft(); // sudah aman di server, backup lokal nggak perlu lagi
       showSaveStatus('Tersimpan', false);
     } else {
-      // GAGAL: jangan diam-diam nyerah. Coba lagi otomatis, dan biarkan
-      // indikator "Gagal tersimpan" tetap nempel (nggak auto-hilang),
-      // biar user SADAR datanya belum aman sampai beneran berhasil.
+      // Gagal walau status browser bilang online (server lambat/error) —
+      // ini baru pantas di-retry beberapa kali, kasusnya jauh lebih jarang
+      // dibanding sekadar "lagi offline".
       autosaveRetryCount++;
       const delay = Math.min(30000, 3000 * autosaveRetryCount); // 3s, 6s, 9s... maks 30s
       showSaveStatus(`Gagal tersimpan — mencoba lagi (${autosaveRetryCount})...`, true, true);
@@ -1691,6 +1743,32 @@
       if (success) scheduleAutosave();
     }
   }
+
+  // Begitu koneksi balik, langsung coba sinkronkan draf yang tertunda —
+  // nggak perlu nunggu user ngetik lagi buat mancing autosave jalan.
+  window.addEventListener('online', () => {
+    autosaveRetryCount = 0;
+    if (existingNoteLoadFailed) {
+      // Tadi gagal muat data asli (misal karena offline) — coba lagi sekarang.
+      showSaveStatus('Koneksi kembali, memuat ulang...');
+      loadExistingNote();
+      return;
+    }
+    if (hasUnsyncedChanges) {
+      showSaveStatus('Koneksi kembali, menyimpan...');
+      runAutosave();
+    }
+  });
+
+  // Begitu koneksi putus, langsung hentikan percobaan yang lagi jalan &
+  // tenangkan statusnya — daripada dibiarkan gagal berkali-kali dulu.
+  window.addEventListener('offline', () => {
+    clearTimeout(autosaveTimer);
+    if (hasUnsyncedChanges) {
+      showSaveStatus('Tersimpan di HP (offline)', false, true);
+    }
+  });
+
 
   const autosaveObserver = new MutationObserver(scheduleAutosave);
   autosaveObserver.observe(document.getElementById('noteTitle'), { childList: true, characterData: true, subtree: true });
