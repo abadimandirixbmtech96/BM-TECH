@@ -6,6 +6,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>BM-TECH-VIEWER</title>
+
+<!-- Open Graph & Twitter Card: banner preview saat link dibagikan ke WA/sosmed -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="BM-TECH Notes">
+<meta property="og:description" content="Lihat data & tabel workshop BM-TECH.">
+<meta property="og:image" content="https://dashboard-bm-tech.vercel.app/logo-login.jpg">
+<meta property="og:url" content="https://dashboard-bm-tech.vercel.app/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="BM-TECH Notes">
+<meta name="twitter:description" content="Lihat data & tabel workshop BM-TECH.">
+<meta name="twitter:image" content="https://dashboard-bm-tech.vercel.app/logo-login.jpg">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1175,6 +1187,27 @@
     width: fit-content;
   }
 
+  .btn-share-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px;
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    border-radius: var(--radius-pill);
+    color: var(--text-primary);
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease;
+  }
+  .btn-share-link:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.1); }
+  .btn-share-link svg { width: 17px; height: 17px; color: var(--accent-yellow); }
+
   .note-detail-table-wrap {
     flex: 1;
     overflow: auto;
@@ -1538,6 +1571,10 @@
   <div class="note-detail-table-wrap">
     <table class="note-detail-table" id="noteDetailTable"></table>
   </div>
+  <button class="btn-share-link" id="btnShareLink">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    Bagikan Link Tabel Ini
+  </button>
 </div>
 
 <!-- Share Sheet: pilihan Export PDF / Export Gambar -->
@@ -2836,6 +2873,22 @@
   shareSheetOverlay.addEventListener('click', closeShareSheet);
   document.getElementById('btnShareCancel').addEventListener('click', closeShareSheet);
 
+  // --- Bagikan Link Tabel: link ini lewat /api/share/<id> biar banner WA/sosmed
+  // ikut nama tabelnya (lihat catatan di file /api/share/[id].js)
+  document.getElementById('btnShareLink').addEventListener('click', async () => {
+    if (!currentDetailNote) return;
+
+    const link = `${window.location.origin}/api/share/${currentDetailNote.id}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      showLiquidAlert('Link Disalin!', 'Link tabel ini sudah disalin. Tinggal tempel (paste) di WhatsApp atau sosmed buat dibagikan.');
+    } catch (err) {
+      // Fallback kalau navigator.clipboard nggak didukung (browser lama / bukan HTTPS)
+      showLiquidAlert('Link Tabel Ini', link);
+    }
+  });
+
   function safeFileName(str) {
     return String(str || 'tabel').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'tabel';
   }
@@ -2934,7 +2987,11 @@
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, scheduleRealtimeRefresh)
     .subscribe();
 
-  loadAllData();
+  loadAllData().then(() => {
+    // Deep-link dari link yang dibagikan (?note=<id>) — langsung buka tabel itu
+    const sharedNoteId = new URLSearchParams(window.location.search).get('note');
+    if (sharedNoteId) openNoteDetail(sharedNoteId);
+  });
 </script>
 </body>
 </html>
