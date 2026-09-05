@@ -818,6 +818,16 @@
   });
 </script>
 
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F0A529">
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW register gagal:', err));
+    });
+  }
+</script>
+
 </head>
 <body>
 
@@ -1792,6 +1802,9 @@
   // nggak perlu nunggu user ngetik lagi buat mancing autosave jalan.
   window.addEventListener('online', () => {
     autosaveRetryCount = 0;
+    if (pendingImageUpload) {
+      attemptImageUpload();
+    }
     if (existingNoteLoadFailed) {
       // Tadi gagal muat data asli (misal karena offline) — coba lagi sekarang.
       showSaveStatus('Koneksi kembali, memuat ulang...');
@@ -2290,6 +2303,8 @@
     });
   });
 
+  let pendingImageUpload = null; // { file, rowIdx, colId, retryCount } — dipakai buat retry otomatis
+
   async function handleImageFile(file){
     if (!file || pendingImageRowIndex === null || !pendingImageColId || !rows[pendingImageRowIndex]) return;
 
@@ -2306,8 +2321,21 @@
     };
     reader.readAsDataURL(file);
 
-    // Upload file ASLI ke Supabase Storage — yang tersimpan ke database
-    // nantinya cuma URL pendek, bukan base64 raksasa.
+    pendingImageUpload = { file, rowIdx, colId, retryCount: 0 };
+    await attemptImageUpload();
+  }
+
+  async function attemptImageUpload() {
+    if (!pendingImageUpload) return;
+    const { file, rowIdx, colId } = pendingImageUpload;
+
+    if (!navigator.onLine) {
+      // Jelas offline — jangan buang percobaan. Preview base64 tetap
+      // kelihatan di layar, tinggal nunggu koneksi balik buat auto-retry.
+      showSaveStatus('Foto tersimpan di HP, nunggu koneksi buat upload', true, true);
+      return;
+    }
+
     showSaveStatus('Mengunggah foto...');
     const ext = (file.name && file.name.includes('.')) ? file.name.split('.').pop() : 'jpg';
     const path = `${targetFolderId || 'tanpa-folder'}/${Date.now()}-${colId}.${ext}`;
@@ -2319,7 +2347,10 @@
 
     if (uploadError) {
       console.error('Gagal upload foto:', uploadError.message);
-      showSaveStatus('Gagal upload foto', true);
+      pendingImageUpload.retryCount++;
+      const delay = Math.min(30000, 3000 * pendingImageUpload.retryCount);
+      showSaveStatus(`Gagal upload foto — mencoba lagi (${pendingImageUpload.retryCount})...`, true, true);
+      setTimeout(attemptImageUpload, delay);
       return;
     }
 
@@ -2327,8 +2358,10 @@
 
     if (rows[rowIdx]) {
       rows[rowIdx].cells[colId] = urlData.publicUrl;
-      renderRows();
+      renderRows(); // ini otomatis memicu autosave, nyimpen URL foto ke database
     }
+    pendingImageUpload = null;
+    showSaveStatus('Foto tersimpan');
   }
   cameraCaptureInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
   cameraGalleryInput.addEventListener('change', (e) => { handleImageFile(e.target.files[0]); e.target.value = ''; });
