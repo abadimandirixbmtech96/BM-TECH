@@ -1395,6 +1395,7 @@
   const urlParams = new URLSearchParams(window.location.search);
   let currentNoteId = urlParams.get('id') || null;
   const targetFolderId = urlParams.get('folder') || null;
+  let lastKnownUpdatedAt = null; // dipakai buat deteksi konflik (optimistic concurrency)
 
   if (currentNoteId) {
     // Note yang SUDAH ADA: jangan render tabel default kosong dulu (bikin
@@ -1483,6 +1484,7 @@
     }
 
     existingNoteLoadFailed = false;
+    lastKnownUpdatedAt = note.updated_at;
     let loadedHasTable = hasTable;
     let loadedNoteBody = noteBody;
 
@@ -1567,12 +1569,17 @@
     let result;
 
     if (currentNoteId) {
-      result = await supabaseClient
-        .from('notes')
-        .update(payload)
-        .eq('id', currentNoteId)
-        .select()
-        .single();
+      let query = supabaseClient.from('notes').update(payload).eq('id', currentNoteId);
+      // Kalau kita tahu kapan terakhir note ini diubah, syaratkan updated_at
+      // masih SAMA persis — kalau sudah beda (diubah di tempat lain sejak
+      // kita buka), update ini nggak akan kena baris manapun (0 rows),
+      // ketimbang diam-diam nimpa perubahan orang lain.
+      if (lastKnownUpdatedAt) query = query.eq('updated_at', lastKnownUpdatedAt);
+      result = await query.select().single();
+
+      if (result.error && (result.error.code === 'PGRST116' || /0 rows|no rows/i.test(result.error.message || ''))) {
+        return await handleSaveConflict(payload);
+      }
     } else {
       result = await supabaseClient
         .from('notes')
@@ -1589,8 +1596,45 @@
     }
 
     currentNoteId = result.data.id;
+    lastKnownUpdatedAt = result.data.updated_at;
     window.parent.postMessage('note-autosaved', '*');
     return true;
+  }
+
+  // Note ini ternyata sudah diubah di tempat lain sejak kita buka (device
+  // lain, admin lain login bareng, dsb) — JANGAN diam-diam nimpa. Tanya dulu.
+  async function handleSaveConflict(myPayload) {
+    const timpaVersiSaya = confirm(
+      'Note ini sudah diubah di tempat lain sejak kamu buka (mungkin device/admin lain). ' +
+      'Perubahanmu tetap aman tersimpan di HP ini.\n\n' +
+      'Pilih OK untuk TIMPA dengan versi kamu (perubahan di tempat lain akan hilang), ' +
+      'atau Batal untuk MUAT ULANG versi terbaru (perubahanmu di sesi ini akan dibuang).'
+    );
+
+    if (timpaVersiSaya) {
+      // Paksa timpa: update tanpa syarat updated_at.
+      const forced = await supabaseClient
+        .from('notes')
+        .update(myPayload)
+        .eq('id', currentNoteId)
+        .select()
+        .single();
+
+      if (forced.error) {
+        showSaveStatus('Gagal tersimpan', true);
+        return false;
+      }
+      lastKnownUpdatedAt = forced.data.updated_at;
+      window.parent.postMessage('note-autosaved', '*');
+      return true;
+    }
+
+    // Muat ulang versi terbaru dari server, buang perubahan sesi ini
+    clearLocalDraft();
+    hasUnsyncedChanges = false;
+    showSaveStatus('Memuat versi terbaru...', false, true);
+    currentNoteId && await loadExistingNote();
+    return false;
   }
 
   // ---------- Indikator status simpan ----------
