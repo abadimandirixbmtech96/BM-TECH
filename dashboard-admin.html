@@ -70,7 +70,16 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   body {
@@ -1209,6 +1218,33 @@
   .nas-folder-row:active { background: rgba(255, 255, 255, 0.06); }
   .nas-folder-row svg { width: 19px; height: 19px; flex-shrink: 0; }
 
+  /* --- Mini Toast: notifikasi singkat auto-hilang (buat aksi ringan kayak Pin) --- */
+  .mini-toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--safe-bottom) + 90px);
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(28, 27, 30, 0.92);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    z-index: 250;
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    transition: opacity 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .mini-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .mini-toast svg { width: 15px; height: 15px; color: var(--accent-yellow); flex-shrink: 0; }
+
   /* --- Settings Top Header (dipakai overlay Analisa) --- */
   .settings-top {
     display: flex;
@@ -1551,16 +1587,6 @@
     .analytics-overlay .analytics-search-box { display: none !important; }
   }
 </style>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#F0A529">
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW register gagal:', err));
-    });
-  }
-</script>
-
 </head>
 <body>
 
@@ -1946,6 +1972,12 @@
   <div id="noteActionContent"></div>
 </div>
 
+<!-- Mini Toast: notifikasi singkat auto-hilang -->
+<div class="mini-toast" id="miniToast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="miniToastText"></span>
+</div>
+
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -1987,8 +2019,7 @@
     // Lolos verifikasi: tampilkan halaman & muat data asli
     document.getElementById('authGuardScreen').style.display = 'none';
     document.getElementById('screenContainer').style.display = 'flex';
-    await loadCategories();
-    loadAllNotesInDashboard(); // tampilan default: gabungan semua folder
+    loadCategories();
 
     // --- Realtime: dashboard otomatis update kalau ada perubahan di tabel
     // folders/notes dari MANA PUN (editor di tab ini, device lain, admin
@@ -2065,9 +2096,7 @@
     renderCategories();
 
     // Kalau ada kategori aktif sebelumnya, muat ulang notes-nya juga
-    if (activeCategoryId === '__all__') {
-      loadAllNotesInDashboard();
-    } else if (activeCategoryId) {
+    if (activeCategoryId) {
       loadNotesForCategory(activeCategoryId);
     }
   }
@@ -2096,20 +2125,9 @@
   // Render Kategori di Drawer
   function renderCategories() {
     const container = document.getElementById('categoryFolderList');
-
-    const totalAllNotes = (categoriesData || []).reduce((sum, c) => sum + (c.count || 0), 0);
-    const allRowHtml = `
-      <div class="folder-item ${activeCategoryId === '__all__' ? 'active' : ''}" data-cat-id="__all__">
-        <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="#9B9B9B" stroke-width="2"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg>
-          <span>All</span>
-        </div>
-        <span class="folder-count">${totalAllNotes} &rsaquo;</span>
-      </div>
-    `;
-
+    
     if (!categoriesData || categoriesData.length === 0) {
-      container.innerHTML = allRowHtml + `
+      container.innerHTML = `
         <div class="drawer-empty-category">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
@@ -2117,11 +2135,10 @@
           <p>Belum ada kategori</p>
         </div>
       `;
-      wireAllFolderRow(container);
       return;
     }
 
-    container.innerHTML = allRowHtml + categoriesData.map(cat => `
+    container.innerHTML = categoriesData.map(cat => `
       <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -2143,11 +2160,8 @@
       </div>
     `).join('');
 
-    wireAllFolderRow(container);
-
     // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin popup Edit/Delete di bawah row itu.
-    // Row 'All' dikecualikan — itu sintetis (gabungan semua folder), bukan folder asli di database.
-    container.querySelectorAll('.folder-item[data-cat-id]:not([data-cat-id="__all__"])').forEach(item => {
+    container.querySelectorAll('.folder-item[data-cat-id]').forEach(item => {
       let pressTimer = null;
       let longPressed = false;
 
@@ -2189,38 +2203,6 @@
         }
       });
     });
-  }
-
-  // Row 'All' di drawer: klik = tampilkan semua notes lintas folder
-  function wireAllFolderRow(container) {
-    const allRow = container.querySelector('.folder-item[data-cat-id="__all__"]');
-    if (!allRow) return;
-    allRow.addEventListener('click', () => {
-      drawer.classList.remove('open');
-      drawerOverlay.classList.remove('open');
-      loadAllNotesInDashboard();
-    });
-  }
-
-  // Ambil SEMUA notes lintas folder (buat tampilan 'All')
-  async function loadAllNotesInDashboard() {
-    activeCategoryId = '__all__';
-    document.getElementById('currentCategoryTitle').innerText = 'ALL';
-
-    const { data, error } = await supabaseClient
-      .from('notes')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Gagal memuat semua notes:', error.message);
-      notesData = [];
-    } else {
-      notesData = (data || []).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
-    }
-
-    renderCategories(); // refresh biar row 'All' kelihatan aktif (highlight)
-    renderNotes();
   }
 
   // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
@@ -2273,51 +2255,6 @@
   }
 
   // Render Catatan / Tabel
-  // Format badge waktu dari created_at ASLI (timestamp database, tidak pernah
-  // berubah walau note-nya di-edit berkali-kali) — bukan dari date_tag yang
-  // sayangnya di-generate ULANG tiap autosave (jadi nunjukin waktu edit
-  // terakhir, bukan kapan note itu pertama kali dibuat).
-  function formatNoteTimestamp(createdAtIso) {
-    if (!createdAtIso) return 'Recent';
-    const d = new Date(createdAtIso);
-    if (isNaN(d)) return 'Recent';
-
-    const now = new Date();
-    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-
-    if (sameDay) {
-      let h = d.getHours();
-      const m = String(d.getMinutes()).padStart(2, '0');
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12; if (h === 0) h = 12;
-      return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
-    }
-    const dd = String(d.getDate()).padStart(2, '0');
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    return `${dd}/${mm}/${d.getFullYear()}`;
-  }
-
-  // Label pengelompokan dinamis berdasarkan umur note TERTUA yang lagi
-  // ditampilkan — bukan lagi teks mati "Previous 7 Days" yang muncul apa
-  // adanya walau notes-nya sebenarnya sudah berumur berbulan-bulan.
-  function computeSubtitleLabel(notes) {
-    if (!notes || notes.length === 0) return '';
-    const now = new Date();
-    let oldest = null;
-    notes.forEach(n => {
-      const d = new Date(n.created_at);
-      if (!isNaN(d) && (!oldest || d < oldest)) oldest = d;
-    });
-    if (!oldest) return '';
-
-    const diffDays = (now - oldest) / (1000 * 60 * 60 * 24);
-    if (diffDays < 1) return 'Hari Ini';
-    if (diffDays <= 7) return '7 Hari Terakhir';
-    if (diffDays <= 31) return 'Bulan Ini';
-    if (diffDays <= 366) return 'Tahun Ini';
-    return 'Semua Waktu';
-  }
-
   function renderNotes() {
     const container = document.getElementById('notesList');
     const subtitleEl = document.getElementById('currentCategorySubtitle');
@@ -2341,10 +2278,7 @@
       return;
     }
 
-    if (subtitleEl) {
-      subtitleEl.style.display = 'block';
-      subtitleEl.textContent = computeSubtitleLabel(notesData);
-    }
+    if (subtitleEl) subtitleEl.style.display = 'block';
     container.style.display = 'grid';
     container.innerHTML = notesData.map((note, idx) => `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
@@ -2352,7 +2286,7 @@
           <h2 class="note-title">${note.title || 'Untitled'}</h2>
           <p class="note-desc">${note.preview || ''}</p>
         </div>
-        <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
+        <span class="note-date-tag">${note.date_tag || 'Recent'}</span>
         <div class="note-checkbox">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -2622,23 +2556,21 @@
 
   noteActionOverlay.addEventListener('click', closeActionSheet);
 
-  // --- Pin ---
-  document.getElementById('btnSelPin').addEventListener('click', () => {
-    const count = selectedNoteIds.size;
-    openActionSheet(`
-      <p class="nas-title">Pin ${count} Note?</p>
-      <p class="nas-text">Note yang di-pin bakal selalu muncul paling atas daftar.</p>
-      <button class="nas-btn nas-btn-primary" id="nasConfirmPin">Pin Sekarang</button>
-      <button class="nas-btn nas-btn-cancel" id="nasCancel">Batal</button>
-    `);
-    document.getElementById('nasConfirmPin').addEventListener('click', async () => {
-      closeActionSheet();
-      await handlePinSelected();
-    });
-    document.getElementById('nasCancel').addEventListener('click', closeActionSheet);
-  });
+  // --- Mini Toast ---
+  let miniToastTimer = null;
+  function showMiniToast(message) {
+    const toast = document.getElementById('miniToast');
+    document.getElementById('miniToastText').textContent = message;
+    toast.classList.add('show');
+    clearTimeout(miniToastTimer);
+    miniToastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // --- Pin: langsung jalan, nggak perlu konfirmasi (beda sama Hapus yang destruktif) ---
+  document.getElementById('btnSelPin').addEventListener('click', handlePinSelected);
 
   async function handlePinSelected() {
+    const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
     const { error } = await supabaseClient.from('notes').update({ pinned: true }).in('id', ids);
 
@@ -2649,6 +2581,7 @@
 
     exitSelectionMode();
     loadCategories();
+    showMiniToast(`${count} note dipin`);
   }
 
   // --- Pindah Folder ---
@@ -2680,6 +2613,7 @@
   });
 
   async function handleMoveSelected(targetFolderId) {
+    const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
     const { error } = await supabaseClient.from('notes').update({ folder_id: targetFolderId }).in('id', ids);
 
@@ -2690,6 +2624,7 @@
 
     exitSelectionMode();
     loadCategories();
+    showMiniToast(`${count} note dipindahkan`);
   }
 
   // --- Hapus ---
@@ -2709,6 +2644,7 @@
   });
 
   async function handleDeleteSelected() {
+    const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
     const { error } = await supabaseClient.from('notes').delete().in('id', ids);
 
@@ -2719,6 +2655,7 @@
 
     exitSelectionMode();
     loadCategories();
+    showMiniToast(`${count} note dihapus`);
   }
 
   // --- Drawer Folder Navigation ---
@@ -2912,7 +2849,7 @@
 
   // --- Tombol Pensil (compose) di bottom bar: buat catatan baru di folder aktif ---
   document.getElementById('btnComposePencil').addEventListener('click', () => {
-    if (!activeCategoryId || activeCategoryId === '__all__') {
+    if (!activeCategoryId) {
       alert('Pilih folder dulu sebelum bikin catatan baru.');
       return;
     }
@@ -2926,17 +2863,7 @@
   function openEditor(noteId = null, extra = {}) {
     const params = new URLSearchParams();
     if (noteId) params.set('id', noteId);
-
-    let folderId = extra.folder;
-    if (!folderId && noteId) {
-      // Note yang sudah ada — pakai folder ASLI-nya, bukan activeCategoryId
-      // (yang bisa jadi '__all__' kalau lagi di tampilan All)
-      const existing = notesData.find(n => n.id === noteId);
-      folderId = existing ? existing.folder_id : null;
-    }
-    if (!folderId && activeCategoryId && activeCategoryId !== '__all__') {
-      folderId = activeCategoryId;
-    }
+    const folderId = extra.folder || activeCategoryId;
     if (folderId) params.set('folder', folderId);
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);

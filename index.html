@@ -56,7 +56,16 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    outline: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   body.light-theme {
@@ -1433,16 +1442,6 @@
     .analytics-overlay .analytics-search-box { display: none !important; }
   }
 </style>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#F0A529">
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW register gagal:', err));
-    });
-  }
-</script>
-
 </head>
 <body>
 
@@ -2952,10 +2951,59 @@
   });
 
   // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
+  // Bikin salinan tabel khusus buat di-screenshot: warna solid hardcode (bukan CSS
+  // variable tema), lebar penuh sesuai isi kolom (nggak kepotong batas layar),
+  // ditaruh di luar layar. Ini biar hasil export selalu konsisten kontrasnya
+  // dan nampilin SEMUA kolom, terlepas dari tema/scroll yang lagi aktif di layar.
+  function buildExportTableEl(note) {
+    const content = note.content;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed; left:-99999px; top:0; background:#ffffff; padding:24px; width:max-content;';
+
+    const title = document.createElement('h2');
+    title.textContent = note.title || 'Untitled';
+    title.style.cssText = "font-family:'Inter',sans-serif; font-size:19px; font-weight:800; color:#1a1a1a; margin:0 0 16px 0;";
+    wrap.appendChild(title);
+
+    const table = document.createElement('table');
+    table.style.cssText = "border-collapse:collapse; font-family:'Inter',sans-serif; font-size:13px;";
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    content.columns.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col.label || '';
+      th.style.cssText = 'background:#D9A536; color:#1C1B19; font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; padding:11px 16px; text-align:left; white-space:nowrap; border:1px solid #c7962d;';
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    content.rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      tr.style.background = i % 2 === 0 ? '#ffffff' : '#f4f4f4';
+      content.columns.forEach(col => {
+        const td = document.createElement('td');
+        const val = row.cells ? row.cells[col.id] : '';
+        td.textContent = col.type === 'image' ? (val ? '(gambar)' : '') : (val !== undefined && val !== null ? val : '');
+        td.style.cssText = 'padding:10px 16px; color:#1a1a1a; white-space:nowrap; border:1px solid #e2e2e2;';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+
   document.getElementById('btnShareExportImage').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const tableWrap = document.querySelector('#noteDetailOverlay .note-detail-table-wrap');
-    if (!tableWrap || !tableWrap.querySelector('table').rows.length) {
+    const content = currentDetailNote.content;
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
     }
@@ -2963,23 +3011,37 @@
     closeShareSheet();
     showShareLoading('Membuat gambar...');
 
+    const exportEl = buildExportTableEl(currentDetailNote);
+
     try {
-      const canvas = await html2canvas(tableWrap, {
-        backgroundColor: '#141416',
+      const canvas = await html2canvas(exportEl, {
+        backgroundColor: '#ffffff',
         scale: 2,
         useCORS: true
       });
 
-      const link = document.createElement('a');
-      link.download = `${safeFileName(currentDetailNote.title)}.png`;
-      link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // Pakai Blob + Object URL, BUKAN data URL base64 langsung — di Android Chrome,
+      // data URL yang panjang sering dianggap kayak mau buka app eksternal
+      // dan gagal dengan pesan "No apps can perform this action".
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          alert('Gagal membuat gambar: browser tidak mendukung.');
+          return;
+        }
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${safeFileName(currentDetailNote.title)}.png`;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+      }, 'image/png');
     } catch (err) {
       console.error('Gagal export gambar:', err);
       alert('Gagal membuat gambar: ' + err.message);
     } finally {
+      document.body.removeChild(exportEl);
       hideShareLoading();
     }
   });

@@ -818,16 +818,6 @@
   });
 </script>
 
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#F0A529">
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW register gagal:', err));
-    });
-  }
-</script>
-
 </head>
 <body>
 
