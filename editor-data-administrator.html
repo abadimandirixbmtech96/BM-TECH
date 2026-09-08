@@ -166,12 +166,12 @@
     opacity:0.4;
     pointer-events:none;
   }
-  #moreScrim{
+  #moreScrim, #templateNameScrim, #templatePickerScrim{
     opacity:0;
     pointer-events:none;
     transition:opacity .15s ease;
   }
-  #moreScrim.open{ opacity:1; pointer-events:auto; }
+  #moreScrim.open, #templateNameScrim.open, #templatePickerScrim.open{ opacity:1; pointer-events:auto; }
   #moreMenu{
     position:fixed;
     top:calc(var(--safe-top) + 62px);
@@ -186,6 +186,104 @@
     opacity:1;
     pointer-events:auto;
     transform:translateY(0) scale(1);
+  }
+
+  .toolbtn-wide{
+    width:auto !important;
+    padding:0 16px 0 12px;
+    gap:8px;
+    display:flex;
+    align-items:center;
+  }
+  .toolbtn-wide span{
+    font-size:14px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
+  .template-name-modal{
+    position:fixed;
+    left:50%; top:50%;
+    transform:translate(-50%, -50%) scale(0.95);
+    width:min(88vw, 340px);
+    background:rgba(26,24,21,0.95);
+    backdrop-filter:blur(26px) saturate(1.3);
+    -webkit-backdrop-filter:blur(26px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 22px 50px rgba(0,0,0,0.4);
+    z-index:96;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .template-name-modal.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .tn-title{
+    color:#F2EFE9;
+    font-size:15px;
+    font-weight:700;
+    margin-bottom:12px;
+  }
+  .tn-input{
+    width:100%;
+    height:44px;
+    border-radius:11px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(255,255,255,0.06);
+    color:#F2EFE9;
+    font-size:15px;
+    font-family:inherit;
+    padding:0 14px;
+    outline:none;
+    box-sizing:border-box;
+  }
+  .tn-input::placeholder{ color:rgba(242,239,233,0.4); }
+  .tn-actions{
+    display:flex;
+    gap:10px;
+    margin-top:16px;
+  }
+  .tn-actions button{
+    flex:1;
+    height:42px;
+    border:none;
+    border-radius:11px;
+    font-size:14px;
+    font-weight:700;
+    font-family:inherit;
+    background:rgba(255,255,255,0.08);
+    color:#F2EFE9;
+  }
+  .tn-actions button.tn-confirm{
+    background:var(--accent);
+    color:#241C08;
+  }
+  .tn-actions button:disabled{ opacity:0.5; }
+
+  .template-picker{
+    max-height:60vh;
+    overflow-y:auto;
+    left:50%; top:50%;
+    width:min(88vw, 340px);
+    transform:translate(-50%, -50%) scale(0.95);
+    opacity:0;
+    pointer-events:none;
+    z-index:96;
+    transition:opacity .18s ease, transform .18s ease;
+    animation:none;
+  }
+  .template-picker.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  .template-picker button{
+    width:100%;
   }
 
   .app-toast{
@@ -884,7 +982,7 @@
   </div>
 
   <!-- BOTTOM FLOATING TOOLBAR -->
-  <div class="bottombar">
+  <div class="bottombar" id="bottombarNormal">
     <div class="glass-pill">
       <button class="toolbtn" id="btnAa" aria-label="Format teks">
         <span class="aa-label">Aa</span>
@@ -908,6 +1006,44 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path></svg>
       Hapus Tabel
     </button>
+    <button data-action="new-template" id="moreNewTemplate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+      Buat Template Baru
+    </button>
+    <button data-action="pick-template" id="morePickTemplate">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"></rect><line x1="3.5" y1="10.5" x2="20.5" y2="10.5"></line><line x1="3.5" y1="15.5" x2="20.5" y2="15.5"></line><line x1="10.5" y1="3.5" x2="10.5" y2="20.5"></line></svg>
+      Pilih Template
+    </button>
+  </div>
+
+  <!-- TEMPLATE MODE BOTTOM BAR -->
+  <div class="bottombar" id="bottombarTemplate" style="display:none;">
+    <div class="glass-pill">
+      <button class="toolbtn" id="btnTemplateCancel" aria-label="Batal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"></line><line x1="18" y1="6" x2="6" y2="18"></line></svg>
+      </button>
+      <button class="toolbtn toolbtn-wide" id="btnTemplateSave" aria-label="Simpan Template">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6"></polyline></svg>
+        <span>Simpan Template</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- TEMPLATE NAME POPUP -->
+  <div class="menu-scrim" id="templateNameScrim"></div>
+  <div class="template-name-modal" id="templateNameModal">
+    <div class="tn-title">Nama Template</div>
+    <input type="text" id="templateNameInput" class="tn-input" placeholder="misal: Buku Hutang">
+    <div class="tn-actions">
+      <button id="templateNameCancel">Batal</button>
+      <button id="templateNameConfirm" class="tn-confirm">Simpan</button>
+    </div>
+  </div>
+
+  <!-- TEMPLATE PICKER POPUP -->
+  <div class="menu-scrim" id="templatePickerScrim"></div>
+  <div class="row-menu template-picker" id="templatePicker">
+    <div id="templatePickerList"></div>
   </div>
 
   <!-- TOAST -->
@@ -1739,6 +1875,7 @@
 
   function scheduleAutosave() {
     if (existingNoteLoadFailed) return; // data asli belum berhasil dimuat — JANGAN simpan apapun dulu
+    if (inTemplateMode) return; // lagi mendesain kolom template — bukan data note asli, jangan disimpan sebagai note
 
     saveLocalDraft(); // instan, tiap ketikan — INI yang benar-benar menjamin datanya nggak hilang
     hasUnsyncedChanges = true;
@@ -1989,6 +2126,150 @@
     deleteTable();
   });
   updateTableIconState();
+
+  // ---------- Templates (Supabase table_templates) ----------
+  let inTemplateMode = false;
+  let templateBackup = null; // { columns, rows, hasTable } — the real note, parked while building a template
+
+  const bottombarNormal = document.getElementById('bottombarNormal');
+  const bottombarTemplate = document.getElementById('bottombarTemplate');
+  const moreNewTemplate = document.getElementById('moreNewTemplate');
+  const morePickTemplate = document.getElementById('morePickTemplate');
+
+  function enterTemplateMode(){
+    if (inTemplateMode) return;
+    templateBackup = {
+      columns: JSON.parse(JSON.stringify(columns)),
+      rows: JSON.parse(JSON.stringify(rows)),
+      hasTable
+    };
+    columns = [ { id: 'no', label: 'No', type: 'no', placeholder: 'No' } ];
+    rows = [ { cells: makeEmptyRowCells(columns) } ];
+    hasTable = true;
+    renderHeader();
+    renderRows();
+    tableScrollEl.classList.remove('hidden');
+    inTemplateMode = true;
+    bottombarNormal.style.display = 'none';
+    bottombarTemplate.style.display = 'flex';
+    closeMoreMenu();
+    showToast('Mode buat template — susun kolomnya, lalu Simpan');
+  }
+
+  function exitTemplateMode(){
+    if (templateBackup) {
+      columns = templateBackup.columns;
+      rows = templateBackup.rows;
+      hasTable = templateBackup.hasTable;
+      templateBackup = null;
+    }
+    renderHeader();
+    renderRows();
+    tableScrollEl.classList.toggle('hidden', !hasTable);
+    updateTableIconState();
+    inTemplateMode = false;
+    bottombarTemplate.style.display = 'none';
+    bottombarNormal.style.display = 'flex';
+  }
+
+  moreNewTemplate.addEventListener('click', enterTemplateMode);
+  document.getElementById('btnTemplateCancel').addEventListener('click', exitTemplateMode);
+
+  // ---- Save-as-template name popup ----
+  const templateNameScrim = document.getElementById('templateNameScrim');
+  const templateNameModal = document.getElementById('templateNameModal');
+  const templateNameInput = document.getElementById('templateNameInput');
+  const templateNameConfirm = document.getElementById('templateNameConfirm');
+
+  function openTemplateNamePopup(){
+    templateNameInput.value = '';
+    templateNameScrim.classList.add('open');
+    templateNameModal.classList.add('open');
+    setTimeout(() => templateNameInput.focus(), 60);
+  }
+  function closeTemplateNamePopup(){
+    templateNameScrim.classList.remove('open');
+    templateNameModal.classList.remove('open');
+  }
+  document.getElementById('btnTemplateSave').addEventListener('click', openTemplateNamePopup);
+  document.getElementById('templateNameCancel').addEventListener('click', closeTemplateNamePopup);
+  templateNameScrim.addEventListener('click', closeTemplateNamePopup);
+
+  templateNameConfirm.addEventListener('click', async () => {
+    const name = templateNameInput.value.trim();
+    if (!name) { showToast('Isi nama template dulu'); return; }
+    templateNameConfirm.disabled = true;
+    templateNameConfirm.textContent = 'Menyimpan...';
+    try {
+      const { error } = await supabaseClient.from('table_templates').insert({ name, columns });
+      if (error) throw error;
+      showToast('Template "' + name + '" tersimpan');
+      closeTemplateNamePopup();
+      exitTemplateMode();
+    } catch (err) {
+      console.error('[template] gagal simpan:', err);
+      showToast('Gagal simpan template');
+    } finally {
+      templateNameConfirm.disabled = false;
+      templateNameConfirm.textContent = 'Simpan';
+    }
+  });
+
+  // ---- Pick-a-template popup ----
+  const templatePickerScrim = document.getElementById('templatePickerScrim');
+  const templatePicker = document.getElementById('templatePicker');
+  const templatePickerList = document.getElementById('templatePickerList');
+
+  function closeTemplatePicker(){
+    templatePickerScrim.classList.remove('open');
+    templatePicker.classList.remove('open');
+  }
+
+  async function openTemplatePicker(){
+    templatePickerScrim.classList.add('open');
+    templatePicker.classList.add('open');
+    templatePickerList.innerHTML = '<button disabled>Memuat...</button>';
+    try {
+      const { data, error } = await supabaseClient
+        .from('table_templates')
+        .select('id, name, columns')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (!data || !data.length) {
+        templatePickerList.innerHTML = '<button disabled>Belum ada template tersimpan</button>';
+        return;
+      }
+      templatePickerList.innerHTML = data.map((t, i) => `<button data-idx="${i}">${t.name}</button>`).join('');
+      templatePickerList.querySelectorAll('[data-idx]').forEach(btn => {
+        btn.addEventListener('click', () => applyTemplate(data[parseInt(btn.dataset.idx, 10)]));
+      });
+    } catch (err) {
+      console.error('[template] gagal memuat daftar:', err);
+      templatePickerList.innerHTML = '<button disabled>Gagal memuat template</button>';
+    }
+  }
+
+  function applyTemplate(t){
+    const pre = snapshot();
+    columns = t.columns;
+    rows = [ { cells: makeEmptyRowCells(columns) } ];
+    hasTable = true;
+    renderHeader();
+    renderRows();
+    tableScrollEl.classList.remove('hidden');
+    pushHistory(pre);
+    updateTableIconState();
+    closeTemplatePicker();
+    showToast('Template "' + t.name + '" diterapkan');
+    scheduleAutosave();
+  }
+
+  morePickTemplate.addEventListener('click', () => {
+    if (hasTable) { closeMoreMenu(); showToast('Hapus tabel dulu sebelum pilih template'); return; }
+    closeMoreMenu();
+    openTemplatePicker();
+  });
+  templatePickerScrim.addEventListener('click', closeTemplatePicker);
 
   // ---------- Aa formatting panel ----------
   const formatPanel = document.getElementById('formatPanel');

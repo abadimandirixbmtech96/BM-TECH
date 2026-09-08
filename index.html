@@ -1908,6 +1908,49 @@
     });
   }
 
+  // Format badge waktu dari created_at ASLI (bukan date_tag yang di-generate
+  // ulang tiap autosave, jadi nunjukin waktu edit terakhir bukan kapan
+  // note itu pertama kali dibuat)
+  function formatNoteTimestamp(createdAtIso) {
+    if (!createdAtIso) return 'Recent';
+    const d = new Date(createdAtIso);
+    if (isNaN(d)) return 'Recent';
+
+    const now = new Date();
+    const sameDay = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+
+    if (sameDay) {
+      let h = d.getHours();
+      const m = String(d.getMinutes()).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12; if (h === 0) h = 12;
+      return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
+    }
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  // Label pengelompokan dinamis berdasarkan umur note tertua yang lagi
+  // ditampilkan — bukan teks mati "Previous 7 Days"
+  function computeSubtitleLabel(notes) {
+    if (!notes || notes.length === 0) return '';
+    const now = new Date();
+    let oldest = null;
+    notes.forEach(n => {
+      const d = new Date(n.created_at);
+      if (!isNaN(d) && (!oldest || d < oldest)) oldest = d;
+    });
+    if (!oldest) return '';
+
+    const diffDays = (now - oldest) / (1000 * 60 * 60 * 24);
+    if (diffDays < 1) return 'Hari Ini';
+    if (diffDays <= 7) return '7 Hari Terakhir';
+    if (diffDays <= 31) return 'Bulan Ini';
+    if (diffDays <= 366) return 'Tahun Ini';
+    return 'Semua Waktu';
+  }
+
   function renderNotes() {
     const container = document.getElementById('notesList');
     const allCountTag = document.getElementById('allCountTag');
@@ -1938,6 +1981,7 @@
 
     pageTitleEl.style.display = 'block';
     periodLabelEl.style.display = 'block';
+    periodLabelEl.textContent = computeSubtitleLabel(visibleNotes);
     container.style.display = 'grid';
     container.innerHTML = visibleNotes.map((note, idx) => `
       <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
@@ -1945,7 +1989,7 @@
           <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
           <p class="note-desc">${escapeHtml(note.preview || '')}</p>
         </div>
-        <span class="note-date-tag">${escapeHtml(note.date_tag || 'Recent')}</span>
+        <span class="note-date-tag">${escapeHtml(formatNoteTimestamp(note.created_at))}</span>
       </div>
     `).join('');
 
