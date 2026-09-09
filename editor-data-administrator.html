@@ -166,12 +166,50 @@
     opacity:0.4;
     pointer-events:none;
   }
-  #moreScrim, #templateNameScrim, #templatePickerScrim{
+  #moreScrim, #templateNameScrim, #confirmScrim, #templateItemScrim{
     opacity:0;
     pointer-events:none;
     transition:opacity .15s ease;
   }
-  #moreScrim.open, #templateNameScrim.open, #templatePickerScrim.open{ opacity:1; pointer-events:auto; }
+  #moreScrim.open, #templateNameScrim.open, #confirmScrim.open, #templateItemScrim.open{ opacity:1; pointer-events:auto; }
+  #confirmModal{
+    position:fixed;
+    left:50%; top:50%;
+    transform:translate(-50%, -50%) scale(0.95);
+    width:min(88vw, 340px);
+    background:rgba(26,24,21,0.95);
+    backdrop-filter:blur(26px) saturate(1.3);
+    -webkit-backdrop-filter:blur(26px) saturate(1.3);
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 22px 50px rgba(0,0,0,0.4);
+    z-index:97;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  #confirmModal.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
+  #templateItemMenu{
+    position:fixed;
+    left:50%; top:50%;
+    width:190px;
+    transform:translate(-50%, -50%) scale(0.95);
+    opacity:0;
+    pointer-events:none;
+    z-index:98;
+    transition:opacity .16s ease, transform .16s ease;
+    animation:none;
+  }
+  #templateItemMenu.open{
+    opacity:1;
+    pointer-events:auto;
+    transform:translate(-50%, -50%) scale(1);
+  }
   #moreMenu{
     position:fixed;
     top:calc(var(--safe-top) + 62px);
@@ -265,27 +303,38 @@
   }
   .tn-actions button:disabled{ opacity:0.5; }
 
-  .template-picker{
-    max-height:60vh;
+  .more-menu{ max-height:70vh; overflow-y:auto; }
+  .template-list{
+    max-height:40vh;
     overflow-y:auto;
-    left:50%; top:50%;
-    width:min(88vw, 340px);
-    transform:translate(-50%, -50%) scale(0.95);
-    opacity:0;
-    pointer-events:none;
-    z-index:96;
-    transition:opacity .18s ease, transform .18s ease;
-    animation:none;
+    border-top:1px solid rgba(255,255,255,0.1);
   }
-  .template-picker.open{
-    opacity:1;
-    pointer-events:auto;
-    transform:translate(-50%, -50%) scale(1);
-  }
-  .template-picker button{
+  .template-list button{
+    display:block;
     width:100%;
+    text-align:left;
+    padding:13px 16px;
+    background:transparent;
+    border:none;
+    color:#F2EFE9;
+    font-size:14.5px;
+    font-weight:500;
+    font-family:inherit;
   }
+  .template-list button:active{ background:rgba(255,255,255,0.1); }
+  .template-list button + button{ border-top:1px solid rgba(255,255,255,0.08); }
+  .template-list .template-empty{ color:rgba(242,239,233,0.5); pointer-events:none; }
 
+  .confirm-body{
+    color:rgba(242,239,233,0.75);
+    font-size:13.5px;
+    line-height:1.5;
+    margin-bottom:2px;
+  }
+  .tn-actions button.tn-danger{
+    background:#E2483D;
+    color:#fff;
+  }
   .app-toast{
     position:fixed;
     left:50%;
@@ -999,21 +1048,18 @@
     </div>
   </div>
 
-  <!-- MORE MENU (top bar ⋮) -->
+  <!-- MORE MENU (top bar ⋮) — Hapus Tabel + Add Template + template list, all in one popup -->
   <div class="menu-scrim" id="moreScrim"></div>
   <div class="row-menu more-menu" id="moreMenu">
     <button data-action="delete-table" id="moreDeleteTable" class="danger">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"></path></svg>
       Hapus Tabel
     </button>
-    <button data-action="new-template" id="moreNewTemplate">
+    <button data-action="add-template" id="moreAddTemplate">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
-      Buat Template Baru
+      Add Template
     </button>
-    <button data-action="pick-template" id="morePickTemplate">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2"></rect><line x1="3.5" y1="10.5" x2="20.5" y2="10.5"></line><line x1="3.5" y1="15.5" x2="20.5" y2="15.5"></line><line x1="10.5" y1="3.5" x2="10.5" y2="20.5"></line></svg>
-      Pilih Template
-    </button>
+    <div class="template-list" id="moreTemplateList"></div>
   </div>
 
   <!-- TEMPLATE MODE BOTTOM BAR -->
@@ -1029,10 +1075,10 @@
     </div>
   </div>
 
-  <!-- TEMPLATE NAME POPUP -->
+  <!-- TEMPLATE NAME POPUP (also reused for renaming) -->
   <div class="menu-scrim" id="templateNameScrim"></div>
   <div class="template-name-modal" id="templateNameModal">
-    <div class="tn-title">Nama Template</div>
+    <div class="tn-title" id="templateNameTitle">Nama Template</div>
     <input type="text" id="templateNameInput" class="tn-input" placeholder="misal: Buku Hutang">
     <div class="tn-actions">
       <button id="templateNameCancel">Batal</button>
@@ -1040,10 +1086,28 @@
     </div>
   </div>
 
-  <!-- TEMPLATE PICKER POPUP -->
-  <div class="menu-scrim" id="templatePickerScrim"></div>
-  <div class="row-menu template-picker" id="templatePicker">
-    <div id="templatePickerList"></div>
+  <!-- GENERIC CONFIRM DIALOG (delete table, delete template, etc.) -->
+  <div class="menu-scrim" id="confirmScrim"></div>
+  <div class="template-name-modal" id="confirmModal">
+    <div class="tn-title" id="confirmTitle">Yakin?</div>
+    <div class="confirm-body" id="confirmBody"></div>
+    <div class="tn-actions">
+      <button id="confirmCancel">Batal</button>
+      <button id="confirmOk" class="tn-confirm tn-danger">Hapus</button>
+    </div>
+  </div>
+
+  <!-- Small hold-menu for a template list item (Edit / Hapus) -->
+  <div class="menu-scrim" id="templateItemScrim"></div>
+  <div class="row-menu" id="templateItemMenu">
+    <button data-action="edit-template" id="templateItemEdit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 18.5 9.5 8 20H4v-4Z"></path></svg>
+      Edit Nama
+    </button>
+    <button data-action="delete-template" id="templateItemDelete" class="danger">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path></svg>
+      Hapus
+    </button>
   </div>
 
   <!-- TOAST -->
@@ -1194,11 +1258,7 @@
   // ---------- Dynamic table core ----------
   // Columns are user-defined (add/rename/delete). Each row stores its values
   // in `cells`, keyed by column id — so renaming a column never breaks data.
-  let columns = [
-    { id: 'no',      label: 'No',      type: 'no',   placeholder: 'No' },
-    { id: 'tanggal', label: 'Tanggal', type: 'date', placeholder: 'Tanggal' },
-    { id: 'jam',     label: 'Jam',     type: 'time', placeholder: 'Jam' }
-  ];
+  let columns = [];
 
   function nowDateLabel(){
     const d = new Date();
@@ -2070,58 +2130,120 @@
 
   function updateTableIconState(){
     btnTableCreate.classList.toggle('dimmed', hasTable);
-    moreDeleteTable.disabled = !hasTable;
+  }
+
+  // A brand-new table is completely blank — one unnamed column, no preset
+  // No/Tanggal/Jam. The user builds it manually from scratch.
+  function blankStarterColumns(){
+    return [ { id: newColId(), label: '', type: 'text', placeholder: 'Kolom Baru' } ];
   }
 
   function createTable(){
     if (hasTable) return; // already exists — icon just sits dimmed, no action
     const pre = snapshot();
     hasTable = true;
+    columns = blankStarterColumns();
+    rows = [ { cells: makeEmptyRowCells(columns) } ];
+    renderHeader();
+    renderRows();
     tableScrollEl.classList.remove('hidden');
     pushHistory(pre);
     updateTableIconState();
-    scheduleAutosave(); // toggle class doang, MutationObserver nggak nangkep ini
+    scheduleAutosave();
   }
 
   function deleteTable(){
     if (!hasTable) return;
-    const pre = snapshot();
-    hasTable = false;
-    columns = [
-      { id: 'no',      label: 'No',      type: 'no',   placeholder: 'No' },
-      { id: 'tanggal', label: 'Tanggal', type: 'date', placeholder: 'Tanggal' },
-      { id: 'jam',     label: 'Jam',     type: 'time', placeholder: 'Jam' }
-    ];
-    rows = [ { cells: makeEmptyRowCells(columns) } ];
-    renderHeader();
-    renderRows();
-    tableScrollEl.classList.add('hidden');
-    pushHistory(pre);
-    updateTableIconState();
-    showToast('Tabel dihapus');
-    scheduleAutosave(); // pastikan tersimpan walau renderHeader/Rows kebetulan gak selalu ke-catch observer
+    showConfirm('Hapus Tabel?', 'Semua kolom dan data di dalam tabel ini akan hilang.', 'Hapus', () => {
+      const pre = snapshot();
+      hasTable = false;
+      columns = [];
+      rows = [ { cells: {} } ];
+      renderHeader();
+      renderRows();
+      tableScrollEl.classList.add('hidden');
+      pushHistory(pre);
+      updateTableIconState();
+      showToast('Tabel dihapus');
+      scheduleAutosave();
+    });
   }
 
   btnTableCreate.addEventListener('click', createTable);
 
-  // ---------- More menu (top bar ⋮) ----------
+  // ---------- Generic confirm dialog ----------
+  const confirmScrim = document.getElementById('confirmScrim');
+  const confirmModal = document.getElementById('confirmModal');
+  const confirmTitleEl = document.getElementById('confirmTitle');
+  const confirmBodyEl = document.getElementById('confirmBody');
+  const confirmOkBtn = document.getElementById('confirmOk');
+  const confirmCancelBtn = document.getElementById('confirmCancel');
+  let pendingConfirmAction = null;
+
+  function showConfirm(title, body, okLabel, onConfirm){
+    confirmTitleEl.textContent = title;
+    confirmBodyEl.textContent = body;
+    confirmOkBtn.textContent = okLabel || 'Hapus';
+    pendingConfirmAction = onConfirm;
+    confirmScrim.classList.add('open');
+    confirmModal.classList.add('open');
+  }
+  function closeConfirm(){
+    confirmScrim.classList.remove('open');
+    confirmModal.classList.remove('open');
+    pendingConfirmAction = null;
+  }
+  confirmCancelBtn.addEventListener('click', closeConfirm);
+  confirmScrim.addEventListener('click', closeConfirm);
+  confirmOkBtn.addEventListener('click', () => {
+    const action = pendingConfirmAction;
+    closeConfirm();
+    if (action) action();
+  });
+
+  // ---------- More menu (top bar ⋮): Hapus Tabel + Add Template + template list ----------
   const moreScrim = document.getElementById('moreScrim');
   const moreMenu = document.getElementById('moreMenu');
   const moreDeleteTable = document.getElementById('moreDeleteTable');
+  const moreAddTemplate = document.getElementById('moreAddTemplate');
+  const moreTemplateList = document.getElementById('moreTemplateList');
   const btnMoreTop = document.getElementById('btnMore');
 
   function closeMoreMenu(){
     moreScrim.classList.remove('open');
     moreMenu.classList.remove('open');
   }
+
+  async function refreshTemplateList(){
+    moreTemplateList.innerHTML = '<button class="template-empty" disabled>Memuat...</button>';
+    try {
+      const { data, error } = await supabaseClient
+        .from('table_templates')
+        .select('id, name, columns')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      if (!data || !data.length) {
+        moreTemplateList.innerHTML = '<button class="template-empty" disabled>Belum ada template</button>';
+        return;
+      }
+      moreTemplateList.innerHTML = data.map((t, i) => `<button data-idx="${i}">${t.name}</button>`).join('');
+      moreTemplateList.querySelectorAll('[data-idx]').forEach(btn => {
+        const t = data[parseInt(btn.dataset.idx, 10)];
+        bindTemplateItemPress(btn, t);
+      });
+    } catch (err) {
+      console.error('[template] gagal memuat daftar:', err);
+      moreTemplateList.innerHTML = '<button class="template-empty" disabled>Gagal memuat template</button>';
+    }
+  }
+
   btnMoreTop.addEventListener('click', () => {
-    if (!hasTable) { showToast('Belum ada tabel'); return; }
     moreScrim.classList.add('open');
     moreMenu.classList.add('open');
+    refreshTemplateList();
   });
   moreScrim.addEventListener('click', closeMoreMenu);
   moreDeleteTable.addEventListener('click', () => {
-    if (moreDeleteTable.disabled) return;
     closeMoreMenu();
     deleteTable();
   });
@@ -2130,11 +2252,10 @@
   // ---------- Templates (Supabase table_templates) ----------
   let inTemplateMode = false;
   let templateBackup = null; // { columns, rows, hasTable } — the real note, parked while building a template
+  let editingTemplateId = null; // non-null while the name popup is being used to RENAME instead of create
 
   const bottombarNormal = document.getElementById('bottombarNormal');
   const bottombarTemplate = document.getElementById('bottombarTemplate');
-  const moreNewTemplate = document.getElementById('moreNewTemplate');
-  const morePickTemplate = document.getElementById('morePickTemplate');
 
   function enterTemplateMode(){
     if (inTemplateMode) return;
@@ -2172,24 +2293,36 @@
     bottombarNormal.style.display = 'flex';
   }
 
-  moreNewTemplate.addEventListener('click', enterTemplateMode);
+  moreAddTemplate.addEventListener('click', enterTemplateMode);
   document.getElementById('btnTemplateCancel').addEventListener('click', exitTemplateMode);
 
-  // ---- Save-as-template name popup ----
+  // ---- Save-as-template / rename-template name popup (shared) ----
   const templateNameScrim = document.getElementById('templateNameScrim');
   const templateNameModal = document.getElementById('templateNameModal');
+  const templateNameTitle = document.getElementById('templateNameTitle');
   const templateNameInput = document.getElementById('templateNameInput');
   const templateNameConfirm = document.getElementById('templateNameConfirm');
 
   function openTemplateNamePopup(){
+    editingTemplateId = null;
+    templateNameTitle.textContent = 'Nama Template';
     templateNameInput.value = '';
     templateNameScrim.classList.add('open');
     templateNameModal.classList.add('open');
     setTimeout(() => templateNameInput.focus(), 60);
   }
+  function openRenameTemplatePopup(t){
+    editingTemplateId = t.id;
+    templateNameTitle.textContent = 'Ubah Nama Template';
+    templateNameInput.value = t.name;
+    templateNameScrim.classList.add('open');
+    templateNameModal.classList.add('open');
+    setTimeout(() => { templateNameInput.focus(); templateNameInput.select(); }, 60);
+  }
   function closeTemplateNamePopup(){
     templateNameScrim.classList.remove('open');
     templateNameModal.classList.remove('open');
+    editingTemplateId = null;
   }
   document.getElementById('btnTemplateSave').addEventListener('click', openTemplateNamePopup);
   document.getElementById('templateNameCancel').addEventListener('click', closeTemplateNamePopup);
@@ -2199,13 +2332,21 @@
     const name = templateNameInput.value.trim();
     if (!name) { showToast('Isi nama template dulu'); return; }
     templateNameConfirm.disabled = true;
-    templateNameConfirm.textContent = 'Menyimpan...';
+    templateNameConfirm.textContent = editingTemplateId ? 'Menyimpan...' : 'Menyimpan...';
     try {
-      const { error } = await supabaseClient.from('table_templates').insert({ name, columns });
-      if (error) throw error;
-      showToast('Template "' + name + '" tersimpan');
-      closeTemplateNamePopup();
-      exitTemplateMode();
+      if (editingTemplateId) {
+        const { error } = await supabaseClient.from('table_templates').update({ name }).eq('id', editingTemplateId);
+        if (error) throw error;
+        showToast('Nama template diubah');
+        closeTemplateNamePopup();
+        refreshTemplateList();
+      } else {
+        const { error } = await supabaseClient.from('table_templates').insert({ name, columns });
+        if (error) throw error;
+        showToast('Template "' + name + '" tersimpan');
+        closeTemplateNamePopup();
+        exitTemplateMode();
+      }
     } catch (err) {
       console.error('[template] gagal simpan:', err);
       showToast('Gagal simpan template');
@@ -2214,40 +2355,6 @@
       templateNameConfirm.textContent = 'Simpan';
     }
   });
-
-  // ---- Pick-a-template popup ----
-  const templatePickerScrim = document.getElementById('templatePickerScrim');
-  const templatePicker = document.getElementById('templatePicker');
-  const templatePickerList = document.getElementById('templatePickerList');
-
-  function closeTemplatePicker(){
-    templatePickerScrim.classList.remove('open');
-    templatePicker.classList.remove('open');
-  }
-
-  async function openTemplatePicker(){
-    templatePickerScrim.classList.add('open');
-    templatePicker.classList.add('open');
-    templatePickerList.innerHTML = '<button disabled>Memuat...</button>';
-    try {
-      const { data, error } = await supabaseClient
-        .from('table_templates')
-        .select('id, name, columns')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      if (!data || !data.length) {
-        templatePickerList.innerHTML = '<button disabled>Belum ada template tersimpan</button>';
-        return;
-      }
-      templatePickerList.innerHTML = data.map((t, i) => `<button data-idx="${i}">${t.name}</button>`).join('');
-      templatePickerList.querySelectorAll('[data-idx]').forEach(btn => {
-        btn.addEventListener('click', () => applyTemplate(data[parseInt(btn.dataset.idx, 10)]));
-      });
-    } catch (err) {
-      console.error('[template] gagal memuat daftar:', err);
-      templatePickerList.innerHTML = '<button disabled>Gagal memuat template</button>';
-    }
-  }
 
   function applyTemplate(t){
     const pre = snapshot();
@@ -2259,17 +2366,71 @@
     tableScrollEl.classList.remove('hidden');
     pushHistory(pre);
     updateTableIconState();
-    closeTemplatePicker();
+    closeMoreMenu();
     showToast('Template "' + t.name + '" diterapkan');
     scheduleAutosave();
   }
 
-  morePickTemplate.addEventListener('click', () => {
-    if (hasTable) { closeMoreMenu(); showToast('Hapus tabel dulu sebelum pilih template'); return; }
-    closeMoreMenu();
-    openTemplatePicker();
+  // ---- Hold a template item to Edit/Hapus it; a quick tap applies it ----
+  const templateItemScrim = document.getElementById('templateItemScrim');
+  const templateItemMenu = document.getElementById('templateItemMenu');
+  let templateItemPending = null;
+
+  function closeTemplateItemMenu(){
+    templateItemScrim.classList.remove('open');
+    templateItemMenu.classList.remove('open');
+    templateItemPending = null;
+  }
+  templateItemScrim.addEventListener('click', closeTemplateItemMenu);
+  document.getElementById('templateItemEdit').addEventListener('click', () => {
+    const t = templateItemPending;
+    closeTemplateItemMenu();
+    if (t) openRenameTemplatePopup(t);
   });
-  templatePickerScrim.addEventListener('click', closeTemplatePicker);
+  document.getElementById('templateItemDelete').addEventListener('click', () => {
+    const t = templateItemPending;
+    closeTemplateItemMenu();
+    if (!t) return;
+    showConfirm('Hapus Template?', 'Template "' + t.name + '" akan dihapus permanen.', 'Hapus', async () => {
+      try {
+        const { error } = await supabaseClient.from('table_templates').delete().eq('id', t.id);
+        if (error) throw error;
+        showToast('Template dihapus');
+        refreshTemplateList();
+      } catch (err) {
+        console.error('[template] gagal hapus:', err);
+        showToast('Gagal hapus template');
+      }
+    });
+  });
+
+  function bindTemplateItemPress(btn, t){
+    let pressTimer = null;
+    let longPressed = false;
+    const HOLD_MS = 550;
+
+    const start = () => {
+      longPressed = false;
+      pressTimer = setTimeout(() => {
+        longPressed = true;
+        templateItemPending = t;
+        templateItemScrim.classList.add('open');
+        templateItemMenu.classList.add('open');
+      }, HOLD_MS);
+    };
+    const cancelPress = () => { clearTimeout(pressTimer); };
+    const end = () => {
+      clearTimeout(pressTimer);
+      if (longPressed) return;
+      if (hasTable) { showToast('Hapus tabel dulu sebelum pilih template'); return; }
+      applyTemplate(t);
+    };
+
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', end);
+    btn.addEventListener('pointercancel', cancelPress);
+    btn.addEventListener('pointerleave', cancelPress);
+  }
 
   // ---------- Aa formatting panel ----------
   const formatPanel = document.getElementById('formatPanel');
