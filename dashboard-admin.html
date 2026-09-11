@@ -2074,6 +2074,15 @@
   let activeCategoryId = null;
   let deleteModeCatId = null; // id folder yang lagi nampilin tombol "Hapus" (habis di-hold)
 
+  // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
+  // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
+  document.addEventListener('click', (e) => {
+    if (!deleteModeCatId) return;
+    if (e.target.closest(`.folder-item[data-cat-id="${deleteModeCatId}"]`)) return;
+    deleteModeCatId = null;
+    renderCategories();
+  });
+
   // Ambil semua folder kategori + jumlah note di masing-masing folder
   async function loadCategories() {
     const { data: folders, error: folderError } = await supabaseClient
@@ -2090,7 +2099,8 @@
 
     const { data: allNotes, error: notesError } = await supabaseClient
       .from('notes')
-      .select('id, folder_id');
+      .select('id, folder_id')
+      .is('deleted_at', null);
 
     const countByFolder = {};
     if (!notesError && allNotes) {
@@ -2129,6 +2139,7 @@
       .from('notes')
       .select('*')
       .eq('folder_id', catId)
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -2259,6 +2270,7 @@
     const { data, error } = await supabaseClient
       .from('notes')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -2272,16 +2284,18 @@
     renderNotes();
   }
 
-  // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
+  // Hapus folder (dipicu tombol Hapus yang muncul saat di-hold). Notes di
+  // dalamnya di-SOFT-DELETE (ditandai, bukan dihapus permanen) — biar salah
+  // hapus folder nggak bikin puluhan transaksi hilang selamanya.
   async function handleDeleteCategory(catId, catName) {
-    const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya juga akan terhapus permanen.`);
+    const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya akan dipindah ke Recently Deleted.`);
     if (!confirmDelete) return;
 
     deleteModeCatId = null;
 
     const { error: notesDeleteError } = await supabaseClient
       .from('notes')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq('folder_id', catId);
 
     if (notesDeleteError) {
@@ -2760,7 +2774,12 @@
   async function handleDeleteSelected() {
     const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
-    const { error } = await supabaseClient.from('notes').delete().in('id', ids);
+    // Soft-delete: cuma ditandai, TIDAK benar-benar dihapus dari database.
+    // Biar salah pencet pas bulk-select nggak bikin data hilang permanen.
+    const { error } = await supabaseClient
+      .from('notes')
+      .update({ deleted_at: new Date().toISOString() })
+      .in('id', ids);
 
     if (error) {
       alert('Gagal menghapus note: ' + error.message);
@@ -2889,6 +2908,8 @@
     selectedFolderColor = editingCat ? editingCat.color : '#D9A536';
     newFolderModalTitle.textContent = editingCat ? 'Edit Folder' : 'New Folder';
     btnNewFolderComplete.textContent = editingCat ? 'Simpan' : 'Completed';
+    btnNewFolderComplete.disabled = false;
+    isSavingFolder = false;
 
     newFolderPreview.style.background = selectedFolderColor;
     document.querySelectorAll('.nf-swatch').forEach(s => {
@@ -2928,10 +2949,19 @@
     });
   });
 
-  async function handleCreateCategory() {
-    const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
+  let isSavingFolder = false; // guard: cegah tap dobel pas request masih jalan
 
-    if (editingFolderId) {
+  async function handleCreateCategory() {
+    if (isSavingFolder) return; // udah ada request jalan, abaikan tap kedua
+
+    const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
+    const isEditing = !!editingFolderId;
+
+    isSavingFolder = true;
+    btnNewFolderComplete.disabled = true;
+    btnNewFolderComplete.textContent = isEditing ? 'Menyimpan...' : 'Membuat...';
+
+    if (isEditing) {
       // Mode edit: update folder yang sudah ada
       const { error } = await supabaseClient
         .from('folders')
@@ -2940,6 +2970,9 @@
 
       if (error) {
         alert('Gagal menyimpan perubahan folder: ' + error.message);
+        isSavingFolder = false;
+        btnNewFolderComplete.disabled = false;
+        btnNewFolderComplete.textContent = 'Simpan';
         return;
       }
     } else {
@@ -2950,10 +2983,14 @@
 
       if (error) {
         alert('Gagal membuat kategori: ' + error.message);
+        isSavingFolder = false;
+        btnNewFolderComplete.disabled = false;
+        btnNewFolderComplete.textContent = 'Completed';
         return;
       }
     }
 
+    isSavingFolder = false;
     closeNewFolderModal();
     loadCategories();
   }
@@ -3033,6 +3070,7 @@
     const { data, error } = await supabaseClient
       .from('notes')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
