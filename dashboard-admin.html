@@ -65,6 +65,23 @@
     color: #000000 !important;
   }
 
+  /* Elemen "glass pill" yang latarnya sebelumnya hardcode gelap — disamakan
+     supaya beneran ikut tema (dulu teksnya bisa ke-cover sama backgroundnya
+     sendiri di mode light: search bar utama, tombol pensil, search box di
+     overlay Search & Analisa, bottom bar Pin/Pindah/Hapus pas seleksi note). */
+  body.theme-light .search-pill,
+  body.theme-light .btn-compose-pencil,
+  body.theme-light .search-input-box,
+  body.theme-light .analytics-search-box,
+  body.theme-light .selection-bottom-bar {
+    background: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  body.theme-light .chip {
+    background: rgba(0, 0, 0, 0.06) !important;
+    color: #000000 !important;
+  }
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -595,11 +612,11 @@
     font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
-    color: var(--text-primary);
+    color: #fff;
   }
   .folder-menu-item:active { background: rgba(255, 255, 255, 0.07); }
   .folder-menu-item.danger { color: #F0555C; }
-  .folder-menu-item + .folder-menu-item { border-top: 1px solid var(--card-border-dark); }
+  .folder-menu-item + .folder-menu-item { border-top: 1px solid rgba(255, 255, 255, 0.1); }
   .folder-menu-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 
   .folder-item.menu-open { background: rgba(255, 255, 255, 0.06); position: relative; z-index: 25; }
