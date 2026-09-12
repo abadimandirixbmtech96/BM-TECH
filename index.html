@@ -1203,27 +1203,6 @@
     width: fit-content;
   }
 
-  .btn-share-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-    margin-top: 16px;
-    padding: 14px;
-    background: var(--glass-pill-bg);
-    border: 1px solid var(--glass-pill-border);
-    border-radius: var(--radius-pill);
-    color: var(--text-primary);
-    font-size: 13.5px;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease;
-  }
-  .btn-share-link:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.1); }
-  .btn-share-link svg { width: 17px; height: 17px; color: var(--accent-yellow); }
-
   .note-detail-table-wrap {
     flex: 1;
     overflow: auto;
@@ -1409,6 +1388,7 @@
   }
   .share-option-icon.pdf { background: rgba(240, 85, 92, 0.15); color: #F0555C; }
   .share-option-icon.img { background: rgba(61, 214, 140, 0.15); color: #3DD68C; }
+  .share-option-icon.link { background: rgba(240, 165, 41, 0.15); color: var(--accent-yellow); }
   .share-option-icon svg { width: 22px; height: 22px; }
   .share-option-title { font-size: 14.5px; font-weight: 700; }
   .share-option-sub { font-size: 11.5px; font-weight: 500; color: rgba(255, 255, 255, 0.55); margin-top: 2px; }
@@ -1632,10 +1612,6 @@
   <div class="note-detail-table-wrap">
     <table class="note-detail-table" id="noteDetailTable"></table>
   </div>
-  <button class="btn-share-link" id="btnShareLink">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-    Bagikan Link Tabel Ini
-  </button>
 </div>
 
 <!-- Lightbox: lihat gambar ukuran penuh (tap thumbnail di tabel) -->
@@ -1651,6 +1627,16 @@
 <div class="share-sheet" id="shareSheet">
   <div class="share-sheet-handle"></div>
   <p class="share-sheet-title">Bagikan Tabel</p>
+
+  <div class="share-option-btn" id="btnShareCopyLink">
+    <div class="share-option-icon link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    </div>
+    <div>
+      <p class="share-option-title">Bagikan Link</p>
+      <p class="share-option-sub">Copy link, tinggal tempel di WhatsApp/sosmed</p>
+    </div>
+  </div>
 
   <div class="share-option-btn" id="btnShareExportPdf">
     <div class="share-option-icon pdf">
@@ -2965,8 +2951,9 @@
 
   // --- Bagikan Link Tabel: link ini lewat /api/share/<id> biar banner WA/sosmed
   // ikut nama tabelnya (lihat catatan di file /api/share/[id].js)
-  document.getElementById('btnShareLink').addEventListener('click', async () => {
+  document.getElementById('btnShareCopyLink').addEventListener('click', async () => {
     if (!currentDetailNote) return;
+    closeShareSheet();
 
     const link = `${window.location.origin}/api/share/${currentDetailNote.id}`;
 
