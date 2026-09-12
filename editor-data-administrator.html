@@ -414,24 +414,10 @@
     min-width:24px;
     cursor:text;
   }
-  .th-menu-btn{
-    flex:0 0 auto;
-    width:22px; height:22px;
-    border:none; background:transparent;
-    color:var(--ink-soft);
-    border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .12s ease;
-  }
-  th:focus-within .th-menu-btn{ opacity:1; pointer-events:auto; }
   th:focus-within{
     box-shadow:inset 0 0 0 2px var(--accent);
     background:rgba(201,147,47,0.06);
   }
-  .th-menu-btn:active{ background:rgba(0,0,0,0.08); transform:scale(0.9); }
-  .th-menu-btn svg{ width:14px; height:14px; }
   thead th:last-child, tbody td:last-child{border-right:none;}
   tbody td{
     padding:12px 12px;
@@ -590,22 +576,26 @@
     pointer-events:none;
     background:#F2B705;
   }
-  .row-menu-btn{
-    width:28px; height:28px;
-    border:none; background:transparent;
-    color:var(--ink-soft);
-    border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0;
-    pointer-events:none;
-    transition:opacity .12s ease;
-  }
-  tr:focus-within .row-menu-btn{ opacity:1; pointer-events:auto; }
   tr:focus-within td{
     box-shadow:inset 0 2px 0 0 var(--accent), inset 0 -2px 0 0 var(--accent);
   }
-  .row-menu-btn:active{background:rgba(0,0,0,0.06); transform:scale(0.9);}
-  .row-menu-btn svg{width:16px; height:16px;}
+
+  .floating-col-menu-btn, .floating-row-menu-btn{
+    position:fixed;
+    display:none;
+    transform:translate(-50%, -50%);
+    border:none;
+    background:var(--accent);
+    color:#241C08;
+    border-radius:9px;
+    align-items:center; justify-content:center;
+    box-shadow:0 3px 10px rgba(0,0,0,0.25);
+    z-index:50;
+  }
+  .floating-col-menu-btn{ width:32px; height:20px; }
+  .floating-row-menu-btn{ width:20px; height:32px; }
+  .floating-col-menu-btn svg, .floating-row-menu-btn svg{ width:15px; height:15px; }
+  .floating-col-menu-btn:active, .floating-row-menu-btn:active{ transform:translate(-50%, -50%) scale(0.9); }
 
   /* ---------- Bottom floating toolbar ---------- */
   .bottombar{
@@ -1110,6 +1100,15 @@
     </button>
   </div>
 
+  <!-- Floating ⋮ triggers, positioned outside the table cells (above the
+       selected column, to the left of the selected row) -->
+  <button class="floating-col-menu-btn" id="colMenuTrigger" aria-label="Menu kolom">
+    <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="19" cy="12" r="1.7"></circle></svg>
+  </button>
+  <button class="floating-row-menu-btn" id="rowMenuTrigger" aria-label="Menu baris">
+    <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+  </button>
+
   <!-- TOAST -->
   <div class="app-toast" id="appToast"></div>
 
@@ -1296,25 +1295,63 @@
 
   function newColId(){ return 'col_' + Math.random().toString(36).slice(2, 9); }
 
+  // ---------- Floating ⋮ triggers (positioned outside the cell, matching
+  // the reference: "..." above a selected column, "⋮" left of a selected row) ----------
+  const colMenuTrigger = document.getElementById('colMenuTrigger');
+  const rowMenuTrigger = document.getElementById('rowMenuTrigger');
+
+  function positionColMenuTrigger(thEl, colIndex){
+    if (!thEl) return;
+    const rect = thEl.getBoundingClientRect();
+    colMenuTrigger.style.left = (rect.left + rect.width / 2) + 'px';
+    colMenuTrigger.style.top = Math.max(rect.top - 16, 64) + 'px';
+    colMenuTrigger.dataset.colIndex = colIndex;
+    colMenuTrigger.style.display = 'flex';
+  }
+  function hideColMenuTrigger(){ colMenuTrigger.style.display = 'none'; }
+
+  function positionRowMenuTrigger(trEl, rowIndex){
+    if (!trEl) return;
+    const rect = trEl.getBoundingClientRect();
+    rowMenuTrigger.style.left = Math.max(rect.left - 16, 20) + 'px';
+    rowMenuTrigger.style.top = (rect.top + rect.height / 2) + 'px';
+    rowMenuTrigger.dataset.rowIndex = rowIndex;
+    rowMenuTrigger.style.display = 'flex';
+  }
+  function hideRowMenuTrigger(){ rowMenuTrigger.style.display = 'none'; }
+
+  // Keep the cell's focus/selection alive when tapping the trigger — otherwise
+  // the blur-triggered hide would race the click and the menu would never open.
+  colMenuTrigger.addEventListener('mousedown', e => e.preventDefault());
+  rowMenuTrigger.addEventListener('mousedown', e => e.preventDefault());
+  colMenuTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openColumnMenu(colMenuTrigger, parseInt(colMenuTrigger.dataset.colIndex, 10));
+  });
+  rowMenuTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openRowMenu(rowMenuTrigger, parseInt(rowMenuTrigger.dataset.rowIndex, 10));
+  });
+
   // ---------- Header (columns) ----------
   function renderHeader(){
     const thead = document.getElementById('tableHead');
     thead.innerHTML = `<tr>${columns.map((col, idx) => `
       <th data-col-index="${idx}">
-        <div class="th-inner">
-          <span class="th-label" contenteditable="true" data-col-index="${idx}" data-placeholder="${col.placeholder || ''}">${col.label}</span>
-          <button class="th-menu-btn" data-col-index="${idx}" aria-label="Menu kolom">
-            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
-          </button>
-        </div>
-      </th>`).join('')}<th style="min-width:36px;"></th></tr>`;
+        <span class="th-label" contenteditable="true" data-col-index="${idx}" data-placeholder="${col.placeholder || ''}">${col.label}</span>
+      </th>`).join('')}</tr>`;
     bindHeaderEvents();
   }
 
   function bindHeaderEvents(){
     const thead = document.getElementById('tableHead');
     thead.querySelectorAll('.th-label').forEach(el => {
-      el.addEventListener('focusin', () => { enterEditMode(); lastActiveCell = el; });
+      el.addEventListener('focusin', () => {
+        enterEditMode();
+        lastActiveCell = el;
+        positionColMenuTrigger(el.closest('th'), parseInt(el.dataset.colIndex, 10));
+      });
+      el.addEventListener('focusout', hideColMenuTrigger);
       el.addEventListener('input', () => {
         const idx = parseInt(el.dataset.colIndex, 10);
         if (!columns[idx]) return;
@@ -1323,12 +1360,6 @@
         columns[idx].label = el.innerText;
         const post = snapshot();
         if (post !== pre) pushHistory(pre);
-      });
-    });
-    thead.querySelectorAll('.th-menu-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openColumnMenu(e.currentTarget, parseInt(e.currentTarget.dataset.colIndex, 10));
       });
     });
   }
@@ -1419,11 +1450,7 @@
         }
         return `<td contenteditable="true" data-field="${col.id}">${val}</td>`;
       }).join('');
-      return `<tr>${cellsHtml}<td class="row-handle">
-          <button class="row-menu-btn" aria-label="Menu baris">
-            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
-          </button>
-        </td></tr>`;
+      return `<tr>${cellsHtml}</tr>`;
     }).join('');
     bindRowEvents();
   }
@@ -1438,6 +1465,10 @@
     // keep the data model in sync with anything the user types, AND capture
     // one undo step per keystroke (not per editing session) so undo/redo
     // moves one character at a time, like normal text undo.
+    tbody().querySelectorAll('td').forEach(td => {
+      td.addEventListener('focusin', () => positionRowMenuTrigger(td.closest('tr'), rowIndexOf(td)));
+      td.addEventListener('focusout', hideRowMenuTrigger);
+    });
     tbody().querySelectorAll('[data-field]').forEach(el=>{
       el.addEventListener('input', ()=>{
         const idx = rowIndexOf(el);
@@ -1447,12 +1478,6 @@
         rows[idx].cells[el.dataset.field] = el.innerText;
         const post = snapshot();
         if (post !== pre) pushHistory(pre);
-      });
-    });
-    tbody().querySelectorAll('.row-menu-btn').forEach(btn=>{
-      btn.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        openRowMenu(e.currentTarget, rowIndexOf(e.currentTarget));
       });
     });
   }
@@ -3200,11 +3225,15 @@
 
     if (pointers.size === 1) {
       if (!p.dragging) {
-        const moved = Math.hypot(p.x - p.startX, p.y - p.startY);
+        const totalDx = p.x - p.startX, totalDy = p.y - p.startY;
+        const moved = Math.hypot(totalDx, totalDy);
         if (moved < DRAG_THRESHOLD) return; // still could be a tap — don't touch anything yet
         // Threshold crossed: this is a real drag, not a tap. Take over the
         // gesture, and cancel any focus a tap-sensitive element may have grabbed.
         p.dragging = true;
+        // Lock to whichever axis dominates the initial movement — dragging
+        // sideways can no longer drift up/down in the same gesture, and vice versa.
+        p.lockedAxis = Math.abs(totalDx) >= Math.abs(totalDy) ? 'x' : 'y';
         viewport.setPointerCapture(e.pointerId);
         canvas.classList.add('panning');
         if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
@@ -3214,7 +3243,9 @@
       e.preventDefault();
       const now = performance.now();
       const dt = Math.max(1, now - lastMoveT);
-      const dx = e.movementX || 0, dy = e.movementY || 0;
+      let dx = e.movementX || 0, dy = e.movementY || 0;
+      if (p.lockedAxis === 'x') dy = 0;
+      else if (p.lockedAxis === 'y') dx = 0;
       vx = vx * 0.7 + (dx / dt) * 0.3;
       vy = vy * 0.7 + (dy / dt) * 0.3;
       lastMoveT = now;
