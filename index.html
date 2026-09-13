@@ -2949,13 +2949,36 @@
   shareSheetOverlay.addEventListener('click', closeShareSheet);
   document.getElementById('btnShareCancel').addEventListener('click', closeShareSheet);
 
-  // --- Bagikan Link Tabel: link ini lewat /api/share/<id> biar banner WA/sosmed
-  // ikut nama tabelnya (lihat catatan di file /api/share/[id].js)
+  // Ubah teks jadi slug URL yang rapi: huruf kecil, spasi/simbol jadi strip
+  function slugify(str) {
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // buang aksen kalau ada
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'folder';
+  }
+
+  function formatDateForSlug(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  }
+
+  // --- Bagikan Link Tabel: link-nya berbentuk nama-folder-tanggal-<id asli>,
+  // bukan cuma UUID acak — bagian id di paling belakang itu yang beneran
+  // dipakai server buat cari note-nya (lihat /api/share/[id].js), sisanya
+  // (nama folder + tanggal) cuma hiasan biar link-nya gampang dibaca manusia.
   document.getElementById('btnShareCopyLink').addEventListener('click', async () => {
     if (!currentDetailNote) return;
     closeShareSheet();
 
-    const link = `${window.location.origin}/api/share/${currentDetailNote.id}`;
+    const folderSlug = slugify(currentDetailNote.folder);
+    const dateSlug = formatDateForSlug(currentDetailNote.created_at);
+    const prettySlug = [folderSlug, dateSlug, currentDetailNote.id].filter(Boolean).join('-');
+
+    const link = `${window.location.origin}/api/share/${prettySlug}`;
 
     try {
       await navigator.clipboard.writeText(link);
