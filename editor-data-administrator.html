@@ -3030,6 +3030,7 @@
 
   // gesture/tap tracking (so pinch-end never gets mistaken for a tap)
   let gestureHadMultiTouch = false;
+  let hasUserPanned = false;
   let lastValidTapTime = 0;
 
   // velocity tracking for momentum fling
@@ -3182,6 +3183,7 @@
     }
     if (pointers.size === 2) {
       gestureHadMultiTouch = true;
+      hasUserPanned = true;
       // A second finger landing means this is definitely a pinch, not a tap-to-edit —
       // cancel any focus that might already be underway and take over the gesture.
       if (document.activeElement && document.activeElement !== document.body && document.activeElement.blur) {
@@ -3231,6 +3233,7 @@
         // Threshold crossed: this is a real drag, not a tap. Take over the
         // gesture, and cancel any focus a tap-sensitive element may have grabbed.
         p.dragging = true;
+        hasUserPanned = true;
         // Lock to whichever axis dominates the initial movement — dragging
         // sideways can no longer drift up/down in the same gesture, and vice versa.
         p.lockedAxis = Math.abs(totalDx) >= Math.abs(totalDy) ? 'x' : 'y';
@@ -3342,6 +3345,16 @@
   });
   window.addEventListener('load', () => fitToScreen(false));
   requestAnimationFrame(() => fitToScreen(false));
+
+  // Custom web fonts (Inter, Poppins, ...) load asynchronously. If the very
+  // first fit ran before they finished, it measured fallback-font widths —
+  // re-fit once fonts are actually ready so pan bounds aren't stale on the
+  // very first drag (this is what made the first swipe feel like it needed
+  // a second attempt to actually move). Skip it if the user already started
+  // interacting by then, so it never yanks their view mid-gesture.
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { if (!hasUserPanned) fitToScreen(false); });
+  }
 </script>
 
 </body>
