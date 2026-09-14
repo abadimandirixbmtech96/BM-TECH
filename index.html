@@ -72,6 +72,13 @@
   body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
   body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
   body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+
+  /* Mode Tebal — terpisah dari bentuk font, bisa dikombinasi sama pilihan manapun
+     di atas. Ini yang bikin teks lebih jelas/nggak bikin capek mata. */
+  body.font-bold-mode * { font-weight: 700 !important; }
 
   body.light-theme {
     --bg-dark: #F2F1EC;
@@ -1706,6 +1713,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
       </div>
     </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Tebal (Bold)</span>
+      <div class="toggle-switch" id="toggleFontBold"></div>
+    </div>
     <div class="settings-row clickable" id="rowSyncCloud">
       <span class="settings-row-label">Sync to Cloud Database</span>
       <div class="settings-row-right">
@@ -2866,6 +2877,9 @@
   const FONT_OPTIONS = [
     { id: 'default', label: 'Default', className: '' },
     { id: 'serif', label: 'Serif', className: 'font-serif' },
+    { id: 'klasik', label: 'Klasik (Times)', className: 'font-klasik' },
+    { id: 'humanis', label: 'Humanis (mudah dibaca)', className: 'font-humanis' },
+    { id: 'kompak', label: 'Kompak (ramping)', className: 'font-kompak' },
     { id: 'mono', label: 'Monospace', className: 'font-mono' },
     { id: 'rounded', label: 'Rounded', className: 'font-rounded' }
   ];
@@ -2899,6 +2913,19 @@
   }
 
   applyFontChoice(localStorage.getItem('bm-font') || 'default');
+
+  // --- Toggle Tebal (Bold) — terpisah, bisa dikombinasi sama font manapun ---
+  const toggleFontBold = document.getElementById('toggleFontBold');
+  const savedBold = localStorage.getItem('bm-font-bold');
+  if (savedBold === 'on') {
+    document.body.classList.add('font-bold-mode');
+    toggleFontBold.classList.add('active');
+  }
+  toggleFontBold.addEventListener('click', () => {
+    const isBold = document.body.classList.toggle('font-bold-mode');
+    toggleFontBold.classList.toggle('active', isBold);
+    localStorage.setItem('bm-font-bold', isBold ? 'on' : 'off');
+  });
 
   document.getElementById('rowFontChoice').addEventListener('click', () => {
     renderFontPickerList();

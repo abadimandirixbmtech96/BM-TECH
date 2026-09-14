@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Dashboard-Admin</title>
+<title>Infinix Notes Viewer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -645,6 +645,21 @@
     opacity: 0.3;
   }
 
+  .btn-retry-load,
+  .btn-retry-load-notes {
+    margin-top: 4px;
+    padding: 9px 18px;
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    border-radius: var(--radius-pill);
+    color: var(--text-primary);
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-retry-load:active,
+  .btn-retry-load-notes:active { background: rgba(255, 255, 255, 0.12); }
+
   .drawer-footer {
     display: flex;
     justify-content: space-around;
@@ -1116,6 +1131,23 @@
   .note-card.selected { transform: scale(0.97); }
   .note-card.selected .note-checkbox { background: var(--accent-yellow); border-color: var(--accent-yellow); }
   .note-card.selected .note-checkbox svg { color: #1C1B19; }
+
+  .note-pin-badge {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transform: rotate(-40deg);
+  }
+  .note-pin-badge svg { width: 12px; height: 12px; color: var(--accent-yellow); }
 
   /* --- Bottom bar mode seleksi (Pin / Pindah Folder / Hapus) --- */
   .selection-bottom-bar {
@@ -2073,6 +2105,8 @@
   let notesData = [];      // Daftar tabel/catatan di dalam kategori aktif
   let activeCategoryId = null;
   let deleteModeCatId = null; // id folder yang lagi nampilin tombol "Hapus" (habis di-hold)
+  let categoriesLoadFailed = false; // true = gagal fetch (bukan beneran kosong), biar pesannya nggak nyesatin
+  let notesLoadFailed = false;
 
   // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
   // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
@@ -2093,14 +2127,15 @@
     if (folderError) {
       console.error('Gagal memuat folder:', folderError.message);
       categoriesData = [];
+      categoriesLoadFailed = true;
       renderCategories();
       return;
     }
+    categoriesLoadFailed = false;
 
     const { data: allNotes, error: notesError } = await supabaseClient
       .from('notes')
-      .select('id, folder_id')
-      .is('deleted_at', null);
+      .select('id, folder_id');
 
     const countByFolder = {};
     if (!notesError && allNotes) {
@@ -2139,13 +2174,14 @@
       .from('notes')
       .select('*')
       .eq('folder_id', catId)
-      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Gagal memuat notes:', error.message);
       notesData = [];
+      notesLoadFailed = true;
     } else {
+      notesLoadFailed = false;
       // Note yang di-pin selalu tampil paling atas
       notesData = (data || []).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
     }
@@ -2169,14 +2205,25 @@
     `;
 
     if (!categoriesData || categoriesData.length === 0) {
-      container.innerHTML = allRowHtml + `
+      container.innerHTML = allRowHtml + (categoriesLoadFailed ? `
+        <div class="drawer-empty-category">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p>Gagal memuat data — cek koneksi</p>
+          <button class="btn-retry-load" id="btnRetryFolders">Coba Lagi</button>
+        </div>
+      ` : `
         <div class="drawer-empty-category">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
           </svg>
           <p>Belum ada kategori</p>
         </div>
-      `;
+      `);
+      if (categoriesLoadFailed) {
+        document.getElementById('btnRetryFolders').addEventListener('click', loadCategories);
+      }
       wireAllFolderRow(container);
       return;
     }
@@ -2270,13 +2317,14 @@
     const { data, error } = await supabaseClient
       .from('notes')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Gagal memuat semua notes:', error.message);
       notesData = [];
+      notesLoadFailed = true;
     } else {
+      notesLoadFailed = false;
       notesData = (data || []).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
     }
 
@@ -2284,18 +2332,16 @@
     renderNotes();
   }
 
-  // Hapus folder (dipicu tombol Hapus yang muncul saat di-hold). Notes di
-  // dalamnya di-SOFT-DELETE (ditandai, bukan dihapus permanen) — biar salah
-  // hapus folder nggak bikin puluhan transaksi hilang selamanya.
+  // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
   async function handleDeleteCategory(catId, catName) {
-    const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya akan dipindah ke Recently Deleted.`);
+    const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya juga akan terhapus permanen.`);
     if (!confirmDelete) return;
 
     deleteModeCatId = null;
 
     const { error: notesDeleteError } = await supabaseClient
       .from('notes')
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq('folder_id', catId);
 
     if (notesDeleteError) {
@@ -2388,18 +2434,34 @@
       // Belum ada data asli dari Supabase — jangan tampilkan label seolah-olah ada isinya
       if (subtitleEl) subtitleEl.style.display = 'none';
       container.style.display = 'block';
-      container.innerHTML = `
-        <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-            <polyline points="10 9 9 9 8 9"/>
-          </svg>
-          <p>belum ada data</p>
-        </div>
-      `;
+      if (notesLoadFailed) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p>Gagal memuat data — cek koneksi</p>
+            <button class="btn-retry-load-notes" id="btnRetryNotes">Coba Lagi</button>
+          </div>
+        `;
+        document.getElementById('btnRetryNotes').addEventListener('click', () => {
+          if (activeCategoryId === '__all__') loadAllNotesInDashboard();
+          else if (activeCategoryId) loadNotesForCategory(activeCategoryId);
+        });
+      } else {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+            <p>belum ada data</p>
+          </div>
+        `;
+      }
       return;
     }
 
@@ -2410,6 +2472,11 @@
     container.style.display = 'grid';
     container.innerHTML = notesData.map((note, idx) => `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+        ${note.pinned ? `
+          <div class="note-pin-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 0 0-5 5c0 1.86.9 3.4 2.19 4.42L7 16h4v6h2v-6h4l-2.19-4.58A5.99 5.99 0 0 0 17 7a5 5 0 0 0-5-5z"/></svg>
+          </div>
+        ` : ''}
         <div class="note-content-layer">
           <h2 class="note-title">${note.title || 'Untitled'}</h2>
           <p class="note-desc">${note.preview || ''}</p>
@@ -2774,12 +2841,7 @@
   async function handleDeleteSelected() {
     const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
-    // Soft-delete: cuma ditandai, TIDAK benar-benar dihapus dari database.
-    // Biar salah pencet pas bulk-select nggak bikin data hilang permanen.
-    const { error } = await supabaseClient
-      .from('notes')
-      .update({ deleted_at: new Date().toISOString() })
-      .in('id', ids);
+    const { error } = await supabaseClient.from('notes').delete().in('id', ids);
 
     if (error) {
       alert('Gagal menghapus note: ' + error.message);
@@ -2847,38 +2909,109 @@
   const searchOverlay = document.getElementById('searchOverlay');
   const btnSearchBack = document.getElementById('btnSearchBack');
 
-  btnSearchOpen.addEventListener('click', () => {
+  btnSearchOpen.addEventListener('click', async () => {
     searchOverlay.classList.add('open');
     renderSearchResults('');
     setTimeout(() => document.getElementById('searchInputField').focus(), 250);
+    await loadAllNotesForAnalytics(); // biar search bisa nyari isi tabel juga, bukan cuma nama folder
   });
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
-  // Search folder (data asli dari categoriesData, bukan hardcode)
+  function highlightMatch(text, query) {
+    const safe = escapeHtml(text || '');
+    if (!query) return safe;
+    const idx = safe.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return safe;
+    return safe.slice(0, idx) + '<mark>' + safe.slice(idx, idx + query.length) + '</mark>' + safe.slice(idx + query.length);
+  }
+
+  // Cari kata kunci di dalam ISI TABEL sungguhan (content.rows), sama kayak search publik
+  function findMatchInContent(content, q) {
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return null;
+    for (const row of content.rows) {
+      for (const col of content.columns) {
+        const val = row.cells ? row.cells[col.id] : '';
+        if (val && col.type !== 'image' && String(val).toLowerCase().includes(q)) {
+          return { label: col.label || 'Kolom', value: String(val) };
+        }
+      }
+    }
+    return null;
+  }
+
+  // Search folder (nama) DAN note (judul + isi tabel) — dua-duanya data asli,
+  // bukan hardcode. Folder ke-tap buka folder-nya, note ke-tap buka editor-nya.
   function renderSearchResults(term) {
     const list = document.getElementById('searchResultsList');
     const q = term.trim().toLowerCase();
-    const matches = q ? categoriesData.filter(c => c.name.toLowerCase().includes(q)) : categoriesData;
 
-    if (matches.length === 0) {
-      list.innerHTML = `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">${q ? 'Folder tidak ditemukan' : 'Belum ada folder'}</p>`;
+    if (!q) {
+      list.innerHTML = categoriesData.length === 0
+        ? `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">Belum ada folder</p>`
+        : categoriesData.map(cat => `
+            <div class="folder-item" data-type="folder" data-cat-id="${cat.id}">
+              <div class="folder-item-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                <span>${escapeHtml(cat.name)}</span>
+              </div>
+              <span class="folder-count">${cat.count || 0} &rsaquo;</span>
+            </div>
+          `).join('');
+      wireSearchResultClicks();
       return;
     }
 
-    list.innerHTML = matches.map(cat => `
-      <div class="folder-item" data-cat-id="${cat.id}">
+    const folderMatches = categoriesData.filter(c => c.name.toLowerCase().includes(q));
+
+    const noteMatches = allNotesData
+      .map(n => {
+        const titleMatch = (n.title || '').toLowerCase().includes(q);
+        const cellMatch = findMatchInContent(n.content, q);
+        if (!titleMatch && !cellMatch) return null;
+        return { note: n, cellMatch };
+      })
+      .filter(Boolean);
+
+    if (folderMatches.length === 0 && noteMatches.length === 0) {
+      list.innerHTML = `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">"${escapeHtml(term.trim())}" tidak ditemukan</p>`;
+      return;
+    }
+
+    const folderHtml = folderMatches.map(cat => `
+      <div class="folder-item" data-type="folder" data-cat-id="${cat.id}">
         <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span>${cat.name}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>${highlightMatch(cat.name, term.trim())}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
       </div>
     `).join('');
 
-    list.querySelectorAll('.folder-item').forEach(item => {
+    const noteHtml = noteMatches.map(({ note: n, cellMatch }) => `
+      <div class="folder-item" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>${highlightMatch(n.title || 'Untitled', term.trim())}${cellMatch ? ` &middot; <span style="font-weight:400; color:var(--text-secondary);">${escapeHtml(cellMatch.label)}: ${highlightMatch(cellMatch.value, term.trim())}</span>` : ''}</span>
+        </div>
+        <span class="folder-count">${escapeHtml(n.folder || 'Uncategorized')}</span>
+      </div>
+    `).join('');
+
+    list.innerHTML = folderHtml + noteHtml;
+    wireSearchResultClicks();
+  }
+
+  function wireSearchResultClicks() {
+    document.querySelectorAll('#searchResultsList [data-type="folder"]').forEach(item => {
       item.addEventListener('click', () => {
         searchOverlay.classList.remove('open');
         selectCategory(item.dataset.catId);
+      });
+    });
+    document.querySelectorAll('#searchResultsList [data-type="note"]').forEach(item => {
+      item.addEventListener('click', () => {
+        searchOverlay.classList.remove('open');
+        openEditor(item.dataset.noteId, { folder: item.dataset.folderId });
       });
     });
   }
@@ -3070,7 +3203,6 @@
     const { data, error } = await supabaseClient
       .from('notes')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
