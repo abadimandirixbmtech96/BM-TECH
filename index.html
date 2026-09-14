@@ -68,6 +68,11 @@
     user-select: text;
   }
 
+  /* --- Pilihan Font (tersimpan di localStorage, sinkron ke semua halaman) --- */
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+
   body.light-theme {
     --bg-dark: #F2F1EC;
     --card-surface-dark: #FFFFFF;
@@ -869,6 +874,19 @@
   }
 
   .liquid-alert-btn:active { opacity: 0.85; }
+
+  .font-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+  }
+  .font-picker-item:last-child { border-bottom: none; }
+  .font-picker-item span.font-picker-name { font-size: 14.5px; font-weight: 600; color: #fff; }
+  .font-picker-item svg { width: 18px; height: 18px; color: var(--accent-yellow); visibility: hidden; }
+  .font-picker-item.selected svg { visibility: visible; }
 
   /* --- Analytics Overlay --- */
   .analytics-overlay {
@@ -1681,6 +1699,13 @@
       <span class="settings-row-label">Dark Theme</span>
       <div class="toggle-switch active" id="toggleDarkTheme"></div>
     </div>
+    <div class="settings-row clickable" id="rowFontChoice">
+      <span class="settings-row-label">Font</span>
+      <div class="settings-row-right">
+        <span class="settings-row-status" id="fontChoiceStatus">Default</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
     <div class="settings-row clickable" id="rowSyncCloud">
       <span class="settings-row-label">Sync to Cloud Database</span>
       <div class="settings-row-right">
@@ -1712,6 +1737,15 @@
     <p class="liquid-alert-title" id="liquidAlertTitle">Judul</p>
     <p class="liquid-alert-text" id="liquidAlertText">Isi pesan.</p>
     <button class="liquid-alert-btn" id="liquidAlertClose">Tutup</button>
+  </div>
+</div>
+
+<!-- Modal Pilihan Font -->
+<div class="liquid-alert-backdrop" id="fontPickerBackdrop">
+  <div class="liquid-alert-box" style="text-align:left;">
+    <p class="liquid-alert-title" style="text-align:center;">Pilih Font</p>
+    <div id="fontPickerList" style="display:flex; flex-direction:column; gap:4px; margin-bottom:16px;"></div>
+    <button class="liquid-alert-btn" id="fontPickerClose">Tutup</button>
   </div>
 </div>
 
@@ -1867,6 +1901,7 @@
     const { data, error } = await supabaseClient
       .from('notes')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -2823,6 +2858,59 @@
     toggleDarkTheme.classList.toggle('active', !isLight);
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
     if (analyticsOverlay.classList.contains('open')) renderIncomeCard();
+  });
+
+  // --- Pilihan Font (tersimpan di localStorage key 'bm-font', kepakai
+  // otomatis di index.html, dashboard-admin.html, admin-login.html, dan
+  // editor-data-administrator.html — semuanya baca key yang SAMA) ---
+  const FONT_OPTIONS = [
+    { id: 'default', label: 'Default', className: '' },
+    { id: 'serif', label: 'Serif', className: 'font-serif' },
+    { id: 'mono', label: 'Monospace', className: 'font-mono' },
+    { id: 'rounded', label: 'Rounded', className: 'font-rounded' }
+  ];
+
+  function applyFontChoice(fontId) {
+    FONT_OPTIONS.forEach(f => { if (f.className) document.body.classList.remove(f.className); });
+    const chosen = FONT_OPTIONS.find(f => f.id === fontId) || FONT_OPTIONS[0];
+    if (chosen.className) document.body.classList.add(chosen.className);
+    document.getElementById('fontChoiceStatus').textContent = chosen.label;
+  }
+
+  function renderFontPickerList() {
+    const savedFont = localStorage.getItem('bm-font') || 'default';
+    const list = document.getElementById('fontPickerList');
+    list.innerHTML = FONT_OPTIONS.map(f => `
+      <div class="font-picker-item ${f.id === savedFont ? 'selected' : ''}" data-font-id="${f.id}">
+        <span class="font-picker-name">${f.label}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.font-picker-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const fontId = el.dataset.fontId;
+        localStorage.setItem('bm-font', fontId);
+        applyFontChoice(fontId);
+        renderFontPickerList();
+        document.getElementById('fontPickerBackdrop').classList.remove('open');
+      });
+    });
+  }
+
+  applyFontChoice(localStorage.getItem('bm-font') || 'default');
+
+  document.getElementById('rowFontChoice').addEventListener('click', () => {
+    renderFontPickerList();
+    document.getElementById('fontPickerBackdrop').classList.add('open');
+  });
+  document.getElementById('fontPickerClose').addEventListener('click', () => {
+    document.getElementById('fontPickerBackdrop').classList.remove('open');
+  });
+  document.getElementById('fontPickerBackdrop').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('fontPickerBackdrop')) {
+      document.getElementById('fontPickerBackdrop').classList.remove('open');
+    }
   });
 
   // --- Liquid Glass Alert (dipakai oleh Sync/User Agreement/Privacy Policy) ---
