@@ -2,10 +2,12 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Workshop Notes</title>
+<meta name="theme-color" content="#F6F1E7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15140F" media="(prefers-color-scheme: dark)">
+<title>Editor-Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Work+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -38,6 +40,28 @@
     --safe-bottom:env(safe-area-inset-bottom,0px);
     --safe-left:env(safe-area-inset-left,0px);
     --safe-right:env(safe-area-inset-right,0px);
+    --overlay-weak:rgba(0,0,0,0.06);
+    --overlay-mid:rgba(0,0,0,0.05);
+    --skeleton-a:rgba(0,0,0,0.06);
+    --skeleton-b:rgba(0,0,0,0.12);
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper:#15140F;
+      --paper-alt:#1B1A15;
+      --ink:#EDEAE2;
+      --ink-soft:#9B948A;
+      --line:#332F27;
+      --line-soft:#26241D;
+      --glass-bg:rgba(30,28,23,0.55);
+      --glass-border:rgba(255,255,255,0.09);
+      --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
+      --overlay-weak:rgba(255,255,255,0.08);
+      --overlay-mid:rgba(255,255,255,0.06);
+      --skeleton-a:rgba(255,255,255,0.06);
+      --skeleton-b:rgba(255,255,255,0.13);
+    }
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
@@ -85,7 +109,7 @@
     padding:4px;
   }
   .icon-btn{
-    width:36px; height:36px;
+    width:44px; height:44px;
     display:flex; align-items:center; justify-content:center;
     border:none; background:transparent;
     border-radius:50%;
@@ -94,7 +118,7 @@
   }
   .icon-btn:active{
     transform:scale(0.88);
-    background:rgba(0,0,0,0.06);
+    background:var(--overlay-weak);
   }
   .icon-btn svg{width:17px; height:17px;}
   .icon-btn.disabled{opacity:0.32;}
@@ -274,7 +298,7 @@
     border:1px solid rgba(255,255,255,0.12);
     background:rgba(255,255,255,0.06);
     color:#F2EFE9;
-    font-size:15px;
+    font-size:16px;
     font-family:inherit;
     padding:0 14px;
     outline:none;
@@ -451,7 +475,7 @@
     border:none; border-radius:9px;
     display:flex; align-items:center; justify-content:center;
     overflow:hidden;
-    background:rgba(0,0,0,0.05);
+    background:var(--overlay-mid);
     color:var(--ink-soft);
   }
   .img-thumb img{ width:100%; height:100%; object-fit:cover; }
@@ -459,14 +483,14 @@
   .img-empty svg{ width:17px; height:17px; }
   .img-remove{
     position:absolute;
-    top:-6px; right:-6px;
-    width:19px; height:19px;
+    top:-8px; right:-8px;
+    width:24px; height:24px;
     border-radius:50%;
     border:2px solid var(--paper);
     background:#3A3733;
     color:#fff;
-    font-size:12px;
-    line-height:15px;
+    font-size:13px;
+    line-height:20px;
     text-align:center;
     padding:0;
   }
@@ -590,10 +614,10 @@
     border-radius:9px;
     align-items:center; justify-content:center;
     box-shadow:0 3px 10px rgba(0,0,0,0.25);
-    z-index:50;
+    z-index:30;
   }
-  .floating-col-menu-btn{ width:32px; height:20px; }
-  .floating-row-menu-btn{ width:20px; height:32px; }
+  .floating-col-menu-btn{ width:40px; height:28px; }
+  .floating-row-menu-btn{ width:28px; height:40px; }
   .floating-col-menu-btn svg, .floating-row-menu-btn svg{ width:15px; height:15px; }
   .floating-col-menu-btn:active, .floating-row-menu-btn:active{ transform:translate(-50%, -50%) scale(0.9); }
 
@@ -616,7 +640,7 @@
     color:var(--ink);
     transition:transform .15s ease, background .15s ease, color .15s ease;
   }
-  .toolbtn:active{transform:scale(0.88); background:rgba(0,0,0,0.06);}
+  .toolbtn:active{transform:scale(0.88); background:var(--overlay-weak);}
   .toolbtn svg{width:21px; height:21px;}
   .toolbtn.active-tool{color:var(--accent); background:rgba(201,147,47,0.12);}
   .toolbtn.stub{opacity:0.4;}
@@ -1448,7 +1472,8 @@
             }
           </td>`;
         }
-        return `<td contenteditable="true" data-field="${col.id}">${val}</td>`;
+        const modeAttr = col.id === 'harga' ? ' inputmode="decimal"' : '';
+        return `<td contenteditable="true" data-field="${col.id}"${modeAttr}>${val}</td>`;
       }).join('');
       return `<tr>${cellsHtml}</tr>`;
     }).join('');
@@ -1641,7 +1666,7 @@
     skeleton.id = 'editorLoadingSkeleton';
     skeleton.style.cssText = 'display:flex; flex-direction:column; gap:10px; padding:20px 4px;';
     skeleton.innerHTML = [40, 90, 70].map(w =>
-      `<div style="height:16px; width:${w}%; border-radius:8px; background:linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12), rgba(0,0,0,0.06)); background-size:200% 100%; animation:editorSkeletonPulse 1.1s ease-in-out infinite;"></div>`
+      `<div style="height:16px; width:${w}%; border-radius:8px; background:linear-gradient(90deg, var(--skeleton-a), var(--skeleton-b), var(--skeleton-a)); background-size:200% 100%; animation:editorSkeletonPulse 1.1s ease-in-out infinite;"></div>`
     ).join('');
     document.getElementById('notesTable').style.display = 'none';
     wrap.appendChild(skeleton);
@@ -2066,6 +2091,18 @@
   const topbarEdit = document.getElementById('topbarEdit');
   let lastActiveCell = null;
 
+  // Kolom tertentu (harga) selalu butuh keyboard numerik saat diedit — dipakai
+  // sebagai fallback tiap kali kita "restore" inputmode setelah disuppress.
+  function defaultInputMode(cell){
+    return (cell && cell.dataset && cell.dataset.field === 'harga') ? 'decimal' : null;
+  }
+  function restoreDefaultInputMode(cell){
+    if (!cell) return;
+    const mode = defaultInputMode(cell);
+    if (mode) cell.setAttribute('inputmode', mode);
+    else cell.removeAttribute('inputmode');
+  }
+
   function enterEditMode(){
     if (topbarEdit.style.display === 'flex') return;
     topbarNormal.style.display = 'none';
@@ -2076,7 +2113,7 @@
     setDrawMode(false);
   }
   function exitEditMode(){
-    if (lastActiveCell) lastActiveCell.removeAttribute('inputmode');
+    if (lastActiveCell) restoreDefaultInputMode(lastActiveCell);
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     closeRowMenu();
     closeFormatPanel(false);
@@ -2263,6 +2300,8 @@
   }
 
   btnMoreTop.addEventListener('click', () => {
+    hideColMenuTrigger();
+    hideRowMenuTrigger();
     moreScrim.classList.add('open');
     moreMenu.classList.add('open');
     refreshTemplateList();
@@ -2473,7 +2512,7 @@
     const sel = window.getSelection();
     const range = sel && sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
     if (suppressed) cell.setAttribute('inputmode', 'none');
-    else cell.removeAttribute('inputmode');
+    else restoreDefaultInputMode(cell);
     cell.blur();
     cell.focus({ preventScroll: true });
     if (range) { sel.removeAllRanges(); sel.addRange(range); }
