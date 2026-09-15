@@ -16,7 +16,7 @@
 const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
 const SITE_URL = 'https://dashboard-bm-tech.vercel.app';
-const DEFAULT_IMAGE = `${SITE_URL}/logo-login.jpg`;
+const DEFAULT_IMAGE = `${SITE_URL}/dashboard-bm-tech.jpg`;
 const DEFAULT_TITLE = 'BM-TECH Notes';
 const DEFAULT_DESC = 'Lihat data & tabel workshop BM-TECH.';
 
