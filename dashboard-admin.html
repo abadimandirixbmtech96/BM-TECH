@@ -855,7 +855,7 @@
     outline: none;
   }
 
-  .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .chips-container { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
   .chip {
     background: #1C1C1E;
     color: #D1D1D6;
@@ -865,6 +865,91 @@
     font-weight: 500;
     cursor: pointer;
   }
+
+  /* --- Search results: "Found N results" + filter folder --- */
+  .search-results-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 4px 0 10px 0;
+    position: relative;
+  }
+  .search-results-count { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+  .search-filter-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .search-filter-btn svg { width: 15px; height: 15px; }
+  .search-filter-btn.active { color: var(--accent-yellow); border-color: var(--accent-yellow); }
+
+  .search-filter-popup {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    min-width: 190px;
+    max-height: 50vh;
+    overflow-y: auto;
+    background: #1C1B1E;
+    border: 1px solid var(--card-border-dark);
+    border-radius: 14px;
+    z-index: 30;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+  }
+  .search-filter-popup.open { display: block; }
+  .search-filter-option {
+    padding: 12px 16px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .search-filter-option:active { background: rgba(255, 255, 255, 0.07); }
+  .search-filter-option + .search-filter-option { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+  .search-filter-option.selected { color: var(--accent-yellow); }
+
+  /* --- Kartu hasil pencarian note, gaya Infinix Notes --- */
+  .search-note-card {
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--card-border-dark);
+    cursor: pointer;
+  }
+  .search-note-card:active { background: rgba(255, 255, 255, 0.04); }
+  .search-note-title { font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 9px; line-height: 1.2; }
+  .search-note-meta-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .search-note-time-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--glass-pill-bg);
+    padding: 4px 10px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .search-note-match-text { font-size: 14.5px; font-weight: 700; color: var(--accent-yellow); }
+  .search-note-folder-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+  .search-note-folder-row svg { width: 15px; height: 15px; flex-shrink: 0; }
 
   /* --- Modal Container for Editor Viewer --- */
   .editor-modal {
@@ -1855,6 +1940,13 @@
       <input type="text" id="searchInputField" placeholder="Cari folder...">
     </div>
   </div>
+  <div class="search-results-header" id="searchResultsHeader" style="display:none;">
+    <p class="search-results-count" id="searchResultsCount"></p>
+    <button class="search-filter-btn" id="btnSearchFilter" aria-label="Filter folder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </button>
+    <div class="search-filter-popup" id="searchFilterPopup"></div>
+  </div>
   <div class="chips-container" id="searchResultsList"></div>
 </div>
 
@@ -2107,6 +2199,7 @@
   let deleteModeCatId = null; // id folder yang lagi nampilin tombol "Hapus" (habis di-hold)
   let categoriesLoadFailed = false; // true = gagal fetch (bukan beneran kosong), biar pesannya nggak nyesatin
   let notesLoadFailed = false;
+  const LAST_FOLDER_KEY = 'bm-admin-last-folder'; // simpen folder terakhir dibuka, biar kebuka lagi pas reload
 
   // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
   // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
@@ -2155,6 +2248,18 @@
         count: countByFolder[f.id] || 0,
         active: f.id === activeCategoryId
       }));
+
+    // Restore folder terakhir dari localStorage — CUMA di load pertama kali
+    // (activeCategoryId masih kosong), biar refresh realtime nggak maksa balik
+    // ke situ terus kalau admin lagi buka folder lain pas ada perubahan data.
+    if (!activeCategoryId) {
+      const savedFolderId = localStorage.getItem(LAST_FOLDER_KEY);
+      if (savedFolderId === '__all__') {
+        activeCategoryId = '__all__';
+      } else if (savedFolderId && categoriesData.some(c => c.id === savedFolderId)) {
+        activeCategoryId = savedFolderId;
+      }
+    }
 
     renderCategories();
 
@@ -2306,6 +2411,7 @@
       drawer.classList.remove('open');
       drawerOverlay.classList.remove('open');
       loadAllNotesInDashboard();
+      localStorage.setItem(LAST_FOLDER_KEY, '__all__');
     });
   }
 
@@ -2379,6 +2485,20 @@
     drawerOverlay.classList.remove('open');
     renderCategories();
     loadNotesForCategory(catId);
+    localStorage.setItem(LAST_FOLDER_KEY, catId);
+  }
+
+  // Selalu format jam (HH:MM AM/PM), beda sama formatNoteTimestamp yang fallback
+  // ke tanggal kalau bukan hari ini — dipakai di kartu hasil search, karena
+  // tanggalnya udah ditampilin terpisah sebagai judul besar di atasnya.
+  function formatTimeOnly(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    let h = d.getHours();
+    const m = String(d.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
   }
 
   // Format badge waktu dari created_at ASLI (timestamp database, tidak pernah
@@ -2911,6 +3031,9 @@
 
   btnSearchOpen.addEventListener('click', async () => {
     searchOverlay.classList.add('open');
+    searchFolderFilter = null;
+    btnSearchFilter.classList.remove('active');
+    document.getElementById('searchInputField').value = '';
     renderSearchResults('');
     setTimeout(() => document.getElementById('searchInputField').focus(), 250);
     await loadAllNotesForAnalytics(); // biar search bisa nyari isi tabel juga, bukan cuma nama folder
@@ -2939,13 +3062,58 @@
     return null;
   }
 
+  let searchFolderFilter = null; // null = semua folder, atau id folder spesifik
+
+  // --- Filter folder di search: All + daftar folder yang ada ---
+  const btnSearchFilter = document.getElementById('btnSearchFilter');
+  const searchFilterPopup = document.getElementById('searchFilterPopup');
+
+  function renderSearchFilterOptions() {
+    const allOption = `
+      <div class="search-filter-option ${searchFolderFilter === null ? 'selected' : ''}" data-filter-id="">
+        <span>All</span>
+      </div>
+    `;
+    const folderOptions = categoriesData.map(cat => `
+      <div class="search-filter-option ${searchFolderFilter === cat.id ? 'selected' : ''}" data-filter-id="${cat.id}">
+        <span>${escapeHtml(cat.name)}</span>
+      </div>
+    `).join('');
+
+    searchFilterPopup.innerHTML = allOption + folderOptions;
+    searchFilterPopup.querySelectorAll('.search-filter-option').forEach(opt => {
+      opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        searchFolderFilter = opt.dataset.filterId || null;
+        btnSearchFilter.classList.toggle('active', !!searchFolderFilter);
+        searchFilterPopup.classList.remove('open');
+        renderSearchResults(document.getElementById('searchInputField').value);
+      });
+    });
+  }
+
+  btnSearchFilter.addEventListener('click', (e) => {
+    e.stopPropagation();
+    renderSearchFilterOptions();
+    searchFilterPopup.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!searchFilterPopup.classList.contains('open')) return;
+    if (e.target.closest('.search-filter-popup') || e.target.closest('#btnSearchFilter')) return;
+    searchFilterPopup.classList.remove('open');
+  });
+
   // Search folder (nama) DAN note (judul + isi tabel) — dua-duanya data asli,
   // bukan hardcode. Folder ke-tap buka folder-nya, note ke-tap buka editor-nya.
   function renderSearchResults(term) {
     const list = document.getElementById('searchResultsList');
+    const headerEl = document.getElementById('searchResultsHeader');
+    const countEl = document.getElementById('searchResultsCount');
     const q = term.trim().toLowerCase();
 
     if (!q) {
+      headerEl.style.display = 'none';
+      searchFilterPopup.classList.remove('open');
       list.innerHTML = categoriesData.length === 0
         ? `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">Belum ada folder</p>`
         : categoriesData.map(cat => `
@@ -2961,9 +3129,16 @@
       return;
     }
 
-    const folderMatches = categoriesData.filter(c => c.name.toLowerCase().includes(q));
+    headerEl.style.display = 'flex';
+
+    // Kalau lagi filter ke folder tertentu, jangan tampilin hasil folder-name-match —
+    // fokus nyari NOTE di dalam folder itu doang.
+    const folderMatches = searchFolderFilter
+      ? []
+      : categoriesData.filter(c => c.name.toLowerCase().includes(q));
 
     const noteMatches = allNotesData
+      .filter(n => !searchFolderFilter || n.folder_id === searchFolderFilter)
       .map(n => {
         const titleMatch = (n.title || '').toLowerCase().includes(q);
         const cellMatch = findMatchInContent(n.content, q);
@@ -2971,6 +3146,8 @@
         return { note: n, cellMatch };
       })
       .filter(Boolean);
+
+    countEl.textContent = `Found ${folderMatches.length + noteMatches.length} results`;
 
     if (folderMatches.length === 0 && noteMatches.length === 0) {
       list.innerHTML = `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">"${escapeHtml(term.trim())}" tidak ditemukan</p>`;
@@ -2987,13 +3164,19 @@
       </div>
     `).join('');
 
+    // Kartu note, gaya Infinix Notes: judul besar (tanggal/nama tabel), baris jam
+    // + kata yang ke-match (kalau ketemunya dari isi sel tabel), lalu nama folder.
     const noteHtml = noteMatches.map(({ note: n, cellMatch }) => `
-      <div class="folder-item" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}">
-        <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span>${highlightMatch(n.title || 'Untitled', term.trim())}${cellMatch ? ` &middot; <span style="font-weight:400; color:var(--text-secondary);">${escapeHtml(cellMatch.label)}: ${highlightMatch(cellMatch.value, term.trim())}</span>` : ''}</span>
+      <div class="search-note-card" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}">
+        <p class="search-note-title">${highlightMatch(n.title || 'Untitled', term.trim())}</p>
+        <div class="search-note-meta-row">
+          <span class="search-note-time-badge">${escapeHtml(formatTimeOnly(n.created_at))}</span>
+          ${cellMatch ? `<span class="search-note-match-text">${highlightMatch(cellMatch.value, term.trim())}</span>` : ''}
         </div>
-        <span class="folder-count">${escapeHtml(n.folder || 'Uncategorized')}</span>
+        <div class="search-note-folder-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>${escapeHtml((n.folder || 'Uncategorized').toUpperCase())}</span>
+        </div>
       </div>
     `).join('');
 

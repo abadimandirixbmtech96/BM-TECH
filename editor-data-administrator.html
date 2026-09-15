@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#F6F1E7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#15140F" media="(prefers-color-scheme: dark)">
-<title>Editor-Notes</title>
+<title>Workshop Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&family=Work+Sans:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2123,8 +2123,25 @@
 
   document.getElementById('btnEditBack').addEventListener('click', exitEditMode);
   document.getElementById('btnDone').addEventListener('click', exitEditMode);
+  function openMoreMenu(){
+    hideColMenuTrigger();
+    hideRowMenuTrigger();
+    moreScrim.classList.add('open');
+    moreMenu.classList.add('open');
+    refreshTemplateList();
+  }
+  // Dua listener sengaja dipasang: 'pointerdown' supaya menu kebuka SEBELUM
+  // keyboard di HP sempat nutup & nge-reflow layar (yang biasa bikin tap
+  // pertama meleset saat lagi fokus ngetik di sel). 'click' cuma fallback
+  // kalau pointerdown gak sempat kepanggil (mis. dari assistive tech).
+  let moreMenuArmedAt = 0;
+  document.getElementById('btnEditMore').addEventListener('pointerdown', () => {
+    moreMenuArmedAt = Date.now();
+    openMoreMenu();
+  });
   document.getElementById('btnEditMore').addEventListener('click', () => {
-    console.log('More (edit mode) ditekan — menyusul di step berikutnya');
+    if (Date.now() - moreMenuArmedAt < 500) return; // sudah kebuka lewat pointerdown
+    openMoreMenu();
   });
   document.getElementById('btnUndo').addEventListener('click', undo);
   document.getElementById('btnRedo').addEventListener('click', redo);
@@ -2299,13 +2316,7 @@
     }
   }
 
-  btnMoreTop.addEventListener('click', () => {
-    hideColMenuTrigger();
-    hideRowMenuTrigger();
-    moreScrim.classList.add('open');
-    moreMenu.classList.add('open');
-    refreshTemplateList();
-  });
+  btnMoreTop.addEventListener('click', openMoreMenu);
   moreScrim.addEventListener('click', closeMoreMenu);
   moreDeleteTable.addEventListener('click', () => {
     closeMoreMenu();
