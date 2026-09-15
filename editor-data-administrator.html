@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#F6F1E7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#15140F" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" id="themeColorMeta" content="#F6F1E7">
 <title>Workshop Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,25 +45,26 @@
     --skeleton-b:rgba(0,0,0,0.12);
   }
 
-  @media (prefers-color-scheme: dark){
-    :root{
-      --paper:#15140F;
-      --paper-alt:#1B1A15;
-      --ink:#EDEAE2;
-      --ink-soft:#9B948A;
-      --line:#332F27;
-      --line-soft:#26241D;
-      --glass-bg:rgba(30,28,23,0.55);
-      --glass-border:rgba(255,255,255,0.09);
-      --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
-      --overlay-weak:rgba(255,255,255,0.08);
-      --overlay-mid:rgba(255,255,255,0.06);
-      --skeleton-a:rgba(255,255,255,0.06);
-      --skeleton-b:rgba(255,255,255,0.13);
-    }
+  /* Dark surface — dipicu manual dari tema latar belakang yang dipilih user
+     (bg-swatch dark:true), BUKAN mengikuti pengaturan sistem/device lagi. */
+  body.surface-dark{
+    --paper:#15140F;
+    --paper-alt:#1B1A15;
+    --ink:#EDEAE2;
+    --ink-soft:#9B948A;
+    --line:#332F27;
+    --line-soft:#26241D;
+    --glass-bg:rgba(30,28,23,0.55);
+    --glass-border:rgba(255,255,255,0.09);
+    --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
+    --overlay-weak:rgba(255,255,255,0.08);
+    --overlay-mid:rgba(255,255,255,0.06);
+    --skeleton-a:rgba(255,255,255,0.06);
+    --skeleton-b:rgba(255,255,255,0.13);
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
   html,body{height:100%;}
   body{
     margin:0;
@@ -110,6 +110,7 @@
   }
   .icon-btn{
     width:44px; height:44px;
+    touch-action:manipulation;
     display:flex; align-items:center; justify-content:center;
     border:none; background:transparent;
     border-radius:50%;
@@ -1118,6 +1119,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 18.5 9.5 8 20H4v-4Z"></path></svg>
       Edit Nama
     </button>
+    <button data-action="edit-template-content" id="templateItemEditContent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="9" y1="10" x2="9" y2="20"></line></svg>
+      Edit Isi Template
+    </button>
     <button data-action="delete-template" id="templateItemDelete" class="danger">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 20 7"></polyline><path d="M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13"></path></svg>
       Hapus
@@ -1265,6 +1270,11 @@
       <button class="bg-swatch" data-bg="cream" aria-label="Cream"></button>
       <button class="bg-swatch" data-bg="lined" aria-label="Kertas bergaris"></button>
       <button class="bg-swatch" data-bg="grid" aria-label="Kertas grid"></button>
+      <button class="bg-swatch" data-bg="sky" aria-label="Biru muda"></button>
+      <button class="bg-swatch" data-bg="mint" aria-label="Hijau muda"></button>
+      <button class="bg-swatch" data-bg="blossom" aria-label="Pink muda"></button>
+      <button class="bg-swatch" data-bg="navy" aria-label="Navy"></button>
+      <button class="bg-swatch" data-bg="black" aria-label="Hitam pekat"></button>
       <button class="bg-swatch bg-swatch-add" id="bgAddBtn" aria-label="Pilih dari galeri">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
       </button>
@@ -2123,26 +2133,16 @@
 
   document.getElementById('btnEditBack').addEventListener('click', exitEditMode);
   document.getElementById('btnDone').addEventListener('click', exitEditMode);
+  let moreMenuOpenedAt = 0;
   function openMoreMenu(){
     hideColMenuTrigger();
     hideRowMenuTrigger();
+    moreMenuOpenedAt = Date.now();
     moreScrim.classList.add('open');
     moreMenu.classList.add('open');
     refreshTemplateList();
   }
-  // Dua listener sengaja dipasang: 'pointerdown' supaya menu kebuka SEBELUM
-  // keyboard di HP sempat nutup & nge-reflow layar (yang biasa bikin tap
-  // pertama meleset saat lagi fokus ngetik di sel). 'click' cuma fallback
-  // kalau pointerdown gak sempat kepanggil (mis. dari assistive tech).
-  let moreMenuArmedAt = 0;
-  document.getElementById('btnEditMore').addEventListener('pointerdown', () => {
-    moreMenuArmedAt = Date.now();
-    openMoreMenu();
-  });
-  document.getElementById('btnEditMore').addEventListener('click', () => {
-    if (Date.now() - moreMenuArmedAt < 500) return; // sudah kebuka lewat pointerdown
-    openMoreMenu();
-  });
+  document.getElementById('btnEditMore').addEventListener('click', openMoreMenu);
   document.getElementById('btnUndo').addEventListener('click', undo);
   document.getElementById('btnRedo').addEventListener('click', redo);
 
@@ -2317,7 +2317,10 @@
   }
 
   btnMoreTop.addEventListener('click', openMoreMenu);
-  moreScrim.addEventListener('click', closeMoreMenu);
+  moreScrim.addEventListener('click', () => {
+    if (Date.now() - moreMenuOpenedAt < 300) return; // anti self-close: klik ini masih bagian dari tap yang sama yang baru buka menu
+    closeMoreMenu();
+  });
   moreDeleteTable.addEventListener('click', () => {
     closeMoreMenu();
     deleteTable();
@@ -2328,6 +2331,8 @@
   let inTemplateMode = false;
   let templateBackup = null; // { columns, rows, hasTable } — the real note, parked while building a template
   let editingTemplateId = null; // non-null while the name popup is being used to RENAME instead of create
+  let editingTemplateContent = false; // true = we're editing an EXISTING template's columns (not just its name)
+  let editingTemplateName = '';
 
   const bottombarNormal = document.getElementById('bottombarNormal');
   const bottombarTemplate = document.getElementById('bottombarTemplate');
@@ -2352,6 +2357,32 @@
     showToast('Mode buat template — susun kolomnya, lalu Simpan');
   }
 
+  // Sama seperti enterTemplateMode(), tapi mulai dari kolom template YANG
+  // SUDAH ADA (bukan kosong) supaya user bisa ubah isinya, lalu Simpan akan
+  // meng-UPDATE template tsb, bukan bikin template baru.
+  function enterTemplateEditMode(t){
+    if (inTemplateMode) return;
+    templateBackup = {
+      columns: JSON.parse(JSON.stringify(columns)),
+      rows: JSON.parse(JSON.stringify(rows)),
+      hasTable
+    };
+    columns = JSON.parse(JSON.stringify(t.columns));
+    rows = [ { cells: makeEmptyRowCells(columns) } ];
+    hasTable = true;
+    renderHeader();
+    renderRows();
+    tableScrollEl.classList.remove('hidden');
+    inTemplateMode = true;
+    editingTemplateContent = true;
+    editingTemplateId = t.id;
+    editingTemplateName = t.name;
+    bottombarNormal.style.display = 'none';
+    bottombarTemplate.style.display = 'flex';
+    closeMoreMenu();
+    showToast('Mode edit template "' + t.name + '" — ubah kolomnya, lalu Simpan');
+  }
+
   function exitTemplateMode(){
     if (templateBackup) {
       columns = templateBackup.columns;
@@ -2364,6 +2395,9 @@
     tableScrollEl.classList.toggle('hidden', !hasTable);
     updateTableIconState();
     inTemplateMode = false;
+    editingTemplateContent = false;
+    editingTemplateId = null;
+    editingTemplateName = '';
     bottombarTemplate.style.display = 'none';
     bottombarNormal.style.display = 'flex';
   }
@@ -2380,6 +2414,7 @@
 
   function openTemplateNamePopup(){
     editingTemplateId = null;
+    editingTemplateContent = false;
     templateNameTitle.textContent = 'Nama Template';
     templateNameInput.value = '';
     templateNameScrim.classList.add('open');
@@ -2388,6 +2423,7 @@
   }
   function openRenameTemplatePopup(t){
     editingTemplateId = t.id;
+    editingTemplateContent = false;
     templateNameTitle.textContent = 'Ubah Nama Template';
     templateNameInput.value = t.name;
     templateNameScrim.classList.add('open');
@@ -2397,9 +2433,25 @@
   function closeTemplateNamePopup(){
     templateNameScrim.classList.remove('open');
     templateNameModal.classList.remove('open');
-    editingTemplateId = null;
+    // Kalau lagi mode edit-isi-template, jangan lepas editingTemplateId
+    // pas cuma nutup popup nama doang (user masih di dalam mode build,
+    // belum tentu batal edit) — biar target update-nya gak ke-reset.
+    if (!editingTemplateContent) editingTemplateId = null;
   }
-  document.getElementById('btnTemplateSave').addEventListener('click', openTemplateNamePopup);
+  document.getElementById('btnTemplateSave').addEventListener('click', () => {
+    if (editingTemplateContent && editingTemplateId) {
+      // Lagi edit isi template yang sudah ada — popup nama dibuka pre-filled,
+      // tapi editingTemplateId/editingTemplateContent TETAP dipertahankan
+      // (beda dari openTemplateNamePopup() yang selalu reset ke mode "baru").
+      templateNameTitle.textContent = 'Simpan Perubahan Template';
+      templateNameInput.value = editingTemplateName;
+      templateNameScrim.classList.add('open');
+      templateNameModal.classList.add('open');
+      setTimeout(() => { templateNameInput.focus(); templateNameInput.select(); }, 60);
+    } else {
+      openTemplateNamePopup();
+    }
+  });
   document.getElementById('templateNameCancel').addEventListener('click', closeTemplateNamePopup);
   templateNameScrim.addEventListener('click', closeTemplateNamePopup);
 
@@ -2407,13 +2459,15 @@
     const name = templateNameInput.value.trim();
     if (!name) { showToast('Isi nama template dulu'); return; }
     templateNameConfirm.disabled = true;
-    templateNameConfirm.textContent = editingTemplateId ? 'Menyimpan...' : 'Menyimpan...';
+    templateNameConfirm.textContent = 'Menyimpan...';
     try {
       if (editingTemplateId) {
-        const { error } = await supabaseClient.from('table_templates').update({ name }).eq('id', editingTemplateId);
+        const payload = editingTemplateContent ? { name, columns } : { name };
+        const { error } = await supabaseClient.from('table_templates').update(payload).eq('id', editingTemplateId);
         if (error) throw error;
-        showToast('Nama template diubah');
+        showToast(editingTemplateContent ? 'Template diperbarui' : 'Nama template diubah');
         closeTemplateNamePopup();
+        if (editingTemplateContent) exitTemplateMode();
         refreshTemplateList();
       } else {
         const { error } = await supabaseClient.from('table_templates').insert({ name, columns });
@@ -2461,6 +2515,11 @@
     const t = templateItemPending;
     closeTemplateItemMenu();
     if (t) openRenameTemplatePopup(t);
+  });
+  document.getElementById('templateItemEditContent').addEventListener('click', () => {
+    const t = templateItemPending;
+    closeTemplateItemMenu();
+    if (t) enterTemplateEditMode(t);
   });
   document.getElementById('templateItemDelete').addEventListener('click', () => {
     const t = templateItemPending;
@@ -2675,11 +2734,16 @@
 
   // ---------- Background picker ----------
   const BG_PRESETS = {
-    none: null, // falls back to the default --paper color
-    gradient: 'linear-gradient(160deg, #FFCC8F, #FF8A4C)',
-    cream: '#ECE0C8',
-    lined: 'repeating-linear-gradient(to bottom, transparent 0px, transparent 26px, rgba(28,27,25,0.14) 27px), #FCFAF3',
-    grid: 'repeating-linear-gradient(to right, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), repeating-linear-gradient(to bottom, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), #FCFAF3'
+    none: { css:null, dark:false }, // falls back to the default --paper color
+    gradient: { css:'linear-gradient(160deg, #FFCC8F, #FF8A4C)', dark:false },
+    cream: { css:'#ECE0C8', dark:false },
+    lined: { css:'repeating-linear-gradient(to bottom, transparent 0px, transparent 26px, rgba(28,27,25,0.14) 27px), #FCFAF3', dark:false },
+    grid: { css:'repeating-linear-gradient(to right, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), repeating-linear-gradient(to bottom, rgba(28,27,25,0.10) 0, rgba(28,27,25,0.10) 1px, transparent 1px, transparent 22px), #FCFAF3', dark:false },
+    sky: { css:'#DCEAF6', dark:false },
+    mint: { css:'#DCEBD8', dark:false },
+    blossom: { css:'#F6DCE4', dark:false },
+    navy: { css:'linear-gradient(160deg, #1B2A4A, #101828)', dark:true },
+    black: { css:'#0B0B0B', dark:true }
   };
 
   const bgPanel = document.getElementById('bgPanel');
@@ -2694,9 +2758,10 @@
 
   bgSwatchButtons.forEach(btn => {
     const key = btn.dataset.bg;
-    if (BG_PRESETS[key]) btn.style.background = BG_PRESETS[key];
+    const preset = BG_PRESETS[key];
+    if (preset && preset.css) btn.style.background = preset.css;
     btn.addEventListener('click', () => {
-      applyBackground(BG_PRESETS[key] || '');
+      applyBackground(preset ? preset.css : '', preset ? preset.dark : false);
       setSelectedSwatch(btn);
     });
   });
@@ -2706,8 +2771,11 @@
     if (btn) btn.classList.add('selected');
   }
 
-  function applyBackground(css){
-    document.body.style.background = css;
+  const themeColorMeta = document.getElementById('themeColorMeta');
+  function applyBackground(css, dark){
+    document.body.style.background = css || '';
+    document.body.classList.toggle('surface-dark', !!dark);
+    if (themeColorMeta) themeColorMeta.setAttribute('content', dark ? '#15140F' : '#F6F1E7');
   }
 
   function closeBgPanel(){
@@ -2727,7 +2795,7 @@
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      applyBackground(`center / cover no-repeat url(${reader.result})`);
+      applyBackground(`center / cover no-repeat url(${reader.result})`, false);
       setSelectedSwatch(bgAddBtn);
       closeBgPanel();
     };

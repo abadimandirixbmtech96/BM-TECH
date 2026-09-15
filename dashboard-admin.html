@@ -30,6 +30,17 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  /* --- Pilihan Font (dipilih dari Settings index.html, disinkronkan lewat
+     localStorage key 'bm-font' & 'bm-font-bold' — sama persis di semua
+     halaman) --- */
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-bold-mode * { font-weight: 700 !important; }
+
   body.theme-light {
     --bg-dark: #F5F5F7;
     --card-surface-dark: #FFFFFF;
@@ -2999,6 +3010,21 @@
   if (savedTheme === 'light') {
     document.body.classList.add('theme-light');
     themeCheckbox.checked = false;
+  }
+
+  // Terapkan pilihan Font & Bold yang tersimpan dari Settings index.html —
+  // halaman ini tidak punya UI pilihannya sendiri, cuma ikut nerapin biar
+  // konsisten di semua halaman.
+  const FONT_CLASS_BY_ID = {
+    serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis',
+    kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded'
+  };
+  const savedFont = localStorage.getItem('bm-font');
+  if (savedFont && FONT_CLASS_BY_ID[savedFont]) {
+    document.body.classList.add(FONT_CLASS_BY_ID[savedFont]);
+  }
+  if (localStorage.getItem('bm-font-bold') === 'on') {
+    document.body.classList.add('font-bold-mode');
   }
 
   btnOpenSettings.addEventListener('click', () => {
