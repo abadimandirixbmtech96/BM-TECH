@@ -172,6 +172,21 @@
     color:var(--ink);
   }
 
+  /* Judul & isi catatan bisa diedit (contenteditable), tapi tap-lama
+     SEBELUM elemen ini difokus jangan sampai munculin toolbar seleksi
+     teks bawaan HP (Copy/Share/Select All) — itu nabrak sama menu App.
+     Begitu difokus (beneran lagi ngetik/edit), seleksi teks tetap aktif
+     normal biar select-all/ganti isi tetap bisa. */
+  #noteTitle, #noteBody{
+    -webkit-touch-callout:none;
+    -webkit-user-select:none;
+    user-select:none;
+  }
+  #noteTitle:focus, #noteBody:focus{
+    -webkit-user-select:text;
+    user-select:text;
+  }
+
   .table-caption{display:none;}
 
   .note-body{
@@ -1306,6 +1321,16 @@
     return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
   }
 
+  // Sama seperti kolom "No" yang keisi otomatis pas tabel baru dibuat, judul
+  // tabel juga diisi otomatis dengan tanggal+jam saat itu — TAPI cuma kalau
+  // judulnya masih kosong, biar gak numpuk judul yang udah pernah diisi manual.
+  function autoFillTitleIfEmpty(){
+    const titleEl = document.getElementById('noteTitle');
+    if (titleEl.innerText.trim()) return;
+    titleEl.innerText = `${nowDateLabel()} ${nowTimeLabel()}`;
+    noteTitle = titleEl.innerText;
+  }
+
   // "date"/"time" columns freeze their value the moment a row is created
   // (never recalculated on edit) — but stay editable if the user corrects them.
   function makeEmptyRowCells(cols){
@@ -2082,6 +2107,9 @@
 
   // Pressing Enter in any cell (header or body) moves focus to the next
   // editable cell in the same row, instead of inserting a line break.
+  // Kalau udah di sel PALING KANAN baris itu, lompat ke sel di KOLOM YANG
+  // SAMA pada baris berikutnya (header -> baris data pertama; baris data ->
+  // baris data setelahnya) — mirip Enter di spreadsheet.
   document.getElementById('notesTable').addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || e.shiftKey) return;
     if (!e.target.matches('[contenteditable="true"]')) return;
@@ -2091,9 +2119,19 @@
     let next = cell.nextElementSibling;
     while (next) {
       const editable = next.matches('[contenteditable="true"]') ? next : next.querySelector('[contenteditable="true"]');
-      if (editable) { editable.focus(); break; }
+      if (editable) { editable.focus(); return; }
       next = next.nextElementSibling;
     }
+    const row = cell.closest('tr');
+    if (!row) return;
+    const cellIndex = Array.prototype.indexOf.call(row.children, cell);
+    const inHeader = !!cell.closest('thead');
+    const nextRow = inHeader ? tableBodyEl.rows[0] : row.nextElementSibling;
+    if (!nextRow) return; // sudah baris paling bawah, gak ada lagi buat dituju
+    const targetCell = nextRow.children[cellIndex];
+    if (!targetCell) return;
+    const targetEditable = targetCell.matches('[contenteditable="true"]') ? targetCell : targetCell.querySelector('[contenteditable="true"]');
+    if (targetEditable) targetEditable.focus();
   });
 
   // ---------- Normal ↔ Edit mode ----------
@@ -2226,6 +2264,7 @@
     renderHeader();
     renderRows();
     tableScrollEl.classList.remove('hidden');
+    autoFillTitleIfEmpty();
     pushHistory(pre);
     updateTableIconState();
     scheduleAutosave();
@@ -2493,6 +2532,7 @@
     renderHeader();
     renderRows();
     tableScrollEl.classList.remove('hidden');
+    autoFillTitleIfEmpty();
     pushHistory(pre);
     updateTableIconState();
     closeMoreMenu();
