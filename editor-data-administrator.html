@@ -1479,9 +1479,12 @@
 
   function addColumnAfter(index, type){
     const pre = snapshot();
-    const col = { id: newColId(), label: '', type: type, placeholder: type === 'image' ? 'Gambar' : 'Kolom Baru' };
+    const placeholders = { image: 'Gambar', date: 'Tanggal', time: 'Jam' };
+    const col = { id: newColId(), label: '', type: type, placeholder: placeholders[type] || 'Kolom Baru' };
     columns.splice(index + 1, 0, col);
-    rows.forEach(r => { r.cells[col.id] = ''; });
+    rows.forEach(r => {
+      r.cells[col.id] = type === 'date' ? nowDateLabel() : type === 'time' ? nowTimeLabel() : '';
+    });
     pushHistory(pre);
     renderHeader();
     renderRows();
@@ -1513,6 +1516,14 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="4.5" rx="1.2"></rect><rect x="3" y="14.5" width="18" height="4.5" rx="1.2"></rect><line x1="12" y1="9.5" x2="12" y2="14.5"></line></svg>
         Add Column
       </button>
+      <button data-action="adddate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><line x1="3" y1="10" x2="21" y2="10"></line><line x1="8" y1="3" x2="8" y2="7"></line><line x1="16" y1="3" x2="16" y2="7"></line></svg>
+        Add Tanggal
+      </button>
+      <button data-action="addtime">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15.5 14"></polyline></svg>
+        Add Jam
+      </button>
       <button data-action="addimg">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"></path><circle cx="12" cy="13" r="3"></circle></svg>
         Add Gambar
@@ -1538,6 +1549,8 @@
 
     scrim.addEventListener('pointerdown', closeColumnMenu);
     menu.querySelector('[data-action="addcol"]').addEventListener('click', () => { addColumnAfter(colIndex, 'text'); closeColumnMenu(); });
+    menu.querySelector('[data-action="adddate"]').addEventListener('click', () => { addColumnAfter(colIndex, 'date'); closeColumnMenu(); });
+    menu.querySelector('[data-action="addtime"]').addEventListener('click', () => { addColumnAfter(colIndex, 'time'); closeColumnMenu(); });
     menu.querySelector('[data-action="addimg"]').addEventListener('click', () => { addColumnAfter(colIndex, 'image'); closeColumnMenu(); });
     menu.querySelector('[data-action="delcol"]').addEventListener('click', () => { deleteColumn(colIndex); closeColumnMenu(); });
   }
