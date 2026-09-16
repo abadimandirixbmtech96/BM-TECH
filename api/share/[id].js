@@ -3,18 +3,32 @@
 // (judul & deskripsi ikut nama tabel/folder aslinya), karena crawler
 // WhatsApp/Facebook/dll cuma baca meta tag statis, nggak eksekusi JavaScript.
 //
-// Alurnya: orang buka link https://<domain>/api/share/<note_id>
-//   -> function ini query Supabase ambil judul note + nama foldernya
+// Alurnya: orang buka link https://<domain>/api/share/<nama-folder>-<tanggal>-<id_asli>
+//   -> function ini ekstrak id_asli (UUID) dari ujung slug-nya
+//   -> query Supabase ambil judul note + nama foldernya
 //   -> balikin HTML kecil isinya meta tag OG yang udah keisi data asli
 //   -> begitu manusia beneran buka link-nya (bukan crawler), langsung
-//      di-redirect ke index.html?note=<note_id> (app aslinya)
+//      di-redirect ke index.html?note=<id_asli> (app aslinya)
+//
+// Nama folder & tanggal di depan slug itu CUMA HIASAN biar link-nya gampang
+// dibaca manusia — yang beneran dipakai buat nyari data cuma UUID di ujungnya.
 
 const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
 const SITE_URL = 'https://dashboard-bm-tech.vercel.app';
-const DEFAULT_IMAGE = `${SITE_URL}/logo-login.jpg`;
+const DEFAULT_IMAGE = `${SITE_URL}/dashboard-bm-tech.jpg`;
 const DEFAULT_TITLE = 'BM-TECH Notes';
 const DEFAULT_DESC = 'Lihat data & tabel workshop BM-TECH.';
+
+// Slug-nya bisa berupa UUID polos (link versi lama) atau nama-folder-tanggal-UUID
+// (link versi baru) — dua-duanya harus tetap bisa dibuka, jadi selalu ambil
+// pola UUID di paling ujung string-nya, apa pun yang ada di depannya.
+const UUID_PATTERN = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+function extractNoteId(rawParam) {
+  const match = UUID_PATTERN.exec(rawParam || '');
+  return match ? match[1] : rawParam; // fallback: kalau polanya nggak ketemu, pakai apa adanya
+}
 
 function escapeHtmlAttr(str) {
   return String(str)
@@ -37,7 +51,8 @@ async function fetchJson(url) {
 }
 
 module.exports = async (req, res) => {
-  const { id } = req.query;
+  const rawParam = req.query.id;
+  const id = extractNoteId(rawParam);
 
   let title = DEFAULT_TITLE;
   let description = DEFAULT_DESC;
@@ -87,7 +102,7 @@ module.exports = async (req, res) => {
 <meta property="og:title" content="${safeTitle}">
 <meta property="og:description" content="${safeDesc}">
 <meta property="og:image" content="${DEFAULT_IMAGE}">
-<meta property="og:url" content="${SITE_URL}/api/share/${escapeHtmlAttr(id || '')}">
+<meta property="og:url" content="${SITE_URL}/api/share/${escapeHtmlAttr(rawParam || '')}">
 
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${safeTitle}">
