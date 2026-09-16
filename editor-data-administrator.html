@@ -19,7 +19,23 @@
      before) so the per-cell font picker can override this default per cell —
      every font offered there is also a specifically-named downloaded font,
      so it's equally immune to OS substitution. */
-  *{ font-family:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  :root{ --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  *{ font-family:var(--app-font); }
+
+  /* --- Sinkron Pilihan Font Global (localStorage key 'bm-font', SAMA
+     dengan index.html — dipilih lewat Settings di index.html, otomatis
+     kepakai di sini juga). Ditulis lewat CSS var (bukan !important) supaya
+     pilihan font per-sel dari Aa panel tetap menang untuk sel yang sudah
+     dikustom manual; var ini cuma jadi default untuk elemen yang belum
+     punya font-family sendiri. */
+  body.font-serif{ --app-font: Georgia, 'Times New Roman', Times, serif; }
+  body.font-mono{ --app-font: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+  body.font-rounded{ --app-font: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif; }
+  body.font-klasik{ --app-font: 'Times New Roman', Times, Georgia, serif; }
+  body.font-humanis{ --app-font: Verdana, Tahoma, Geneva, sans-serif; }
+  body.font-kompak{ --app-font: 'Arial Narrow', 'Segoe UI', Arial, sans-serif; }
+  body.font-bold-mode{ --app-font-weight:700; }
+  *{ font-weight:var(--app-font-weight, inherit); }
 </style>
 <style>
   :root{
@@ -1315,6 +1331,32 @@
 </div>
 
 <script>
+  // ---------- Sinkron Font Global (mengikuti pilihan di index.html) ----------
+  // Baca localStorage key 'bm-font' & 'bm-font-bold' — key yang SAMA dipakai
+  // index.html. Cukup toggle class di <body>; nilai font-family/font-weight
+  // aktualnya sudah didefinisikan lewat CSS var --app-font di atas, jadi
+  // pilihan font per-sel (Aa panel) tetap independen dan tidak ketimpa.
+  (function syncGlobalFont(){
+    const FONT_CLASS = {
+      default: '', serif: 'font-serif', klasik: 'font-klasik',
+      humanis: 'font-humanis', kompak: 'font-kompak',
+      mono: 'font-mono', rounded: 'font-rounded'
+    };
+    function apply(){
+      Object.values(FONT_CLASS).forEach(c => { if (c) document.body.classList.remove(c); });
+      const fontId = localStorage.getItem('bm-font') || 'default';
+      const cls = FONT_CLASS[fontId] || '';
+      if (cls) document.body.classList.add(cls);
+      document.body.classList.toggle('font-bold-mode', localStorage.getItem('bm-font-bold') === 'on');
+    }
+    apply();
+    // Update live kalau diubah dari tab/iframe lain yang sama origin
+    // (misal dari index.html sementara editor terbuka di iframe dashboard).
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'bm-font' || e.key === 'bm-font-bold') apply();
+    });
+  })();
+
   // ---------- Dynamic table core ----------
   // Columns are user-defined (add/rename/delete). Each row stores its values
   // in `cells`, keyed by column id — so renaming a column never breaks data.
