@@ -65,6 +65,12 @@
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
+  /* Feedback tap yang konsisten & cepat di SEMUA elemen interaktif — biar
+     kerasa "nempel" sama jari, bukan nunggu render. Selector spesifik yang
+     udah ada transition-nya sendiri otomatis override/menang. */
+  button, .bg-swatch, .floating-col-menu-btn, .floating-row-menu-btn{
+    transition:transform .1s ease, background .1s ease, opacity .1s ease;
+  }
   html,body{height:100%;}
   body{
     margin:0;
@@ -1008,6 +1014,12 @@
       </button>
     </div>
     <div class="glass-pill">
+      <button class="icon-btn" id="btnUndoNormal" aria-label="Undo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7 4 12l5 5"></path><path d="M4 12h11a5 5 0 0 1 0 10h-1"></path></svg>
+      </button>
+      <button class="icon-btn" id="btnRedoNormal" aria-label="Redo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l5 5-5 5"></path><path d="M20 12H9a5 5 0 0 0 0 10h1"></path></svg>
+      </button>
       <button class="icon-btn" id="btnBackground" aria-label="Latar belakang">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 4 4.5 7v3.5H7.5V19.5H16.5V10.5H19.5V7L15.5 4 13 6H11L8.5 4Z"></path></svg>
       </button>
@@ -1585,10 +1597,10 @@
   }
 
   function updateUndoRedoUI(){
-    const undoBtn = document.getElementById('btnUndo');
-    const redoBtn = document.getElementById('btnRedo');
-    undoBtn.classList.toggle('disabled', historyStack.length === 0);
-    redoBtn.classList.toggle('disabled', redoStack.length === 0);
+    const empty = historyStack.length === 0;
+    const noRedo = redoStack.length === 0;
+    ['btnUndo', 'btnUndoNormal'].forEach(id => document.getElementById(id).classList.toggle('disabled', empty));
+    ['btnRedo', 'btnRedoNormal'].forEach(id => document.getElementById(id).classList.toggle('disabled', noRedo));
   }
 
   function restoreState(state){
@@ -2079,7 +2091,10 @@
     }
     if (existingNoteLoadFailed) {
       // Tadi gagal muat data asli (misal karena offline) — coba lagi sekarang.
+      // Skeleton ditampilkan ulang biar pengalamannya konsisten sama loading
+      // pertama kali, bukan cuma teks status kecil doang.
       showSaveStatus('Koneksi kembali, memuat ulang...');
+      showEditorLoadingSkeleton();
       loadExistingNote();
       return;
     }
@@ -2183,6 +2198,8 @@
   document.getElementById('btnEditMore').addEventListener('click', openMoreMenu);
   document.getElementById('btnUndo').addEventListener('click', undo);
   document.getElementById('btnRedo').addEventListener('click', redo);
+  document.getElementById('btnUndoNormal').addEventListener('click', undo);
+  document.getElementById('btnRedoNormal').addEventListener('click', redo);
 
   // Entering a cell switches to edit mode and tracks which cell formatting should target.
   const tableBodyEl = document.getElementById('tableBody');
@@ -2234,11 +2251,11 @@
   // ---------- Toast (single reusable element — never stacks/spams) ----------
   const appToast = document.getElementById('appToast');
   let toastHideTimer = null;
-  function showToast(text){
+  function showToast(text, duration){
     appToast.textContent = text;
     appToast.classList.add('show');
     clearTimeout(toastHideTimer);
-    toastHideTimer = setTimeout(() => appToast.classList.remove('show'), 1800);
+    toastHideTimer = setTimeout(() => appToast.classList.remove('show'), duration || 1800);
   }
 
   // ---------- Table create / delete ----------
@@ -2268,6 +2285,20 @@
     pushHistory(pre);
     updateTableIconState();
     scheduleAutosave();
+    maybeShowGestureHint();
+  }
+
+  // Tips gestur cuma dimunculin SEKALI seumur hidup per HP (localStorage),
+  // dan ditunda dikit biar gak numpuk sama toast/animasi lain pas tabel
+  // baru aja dibuat.
+  function maybeShowGestureHint(){
+    try {
+      if (localStorage.getItem('gestureHintShown_v1')) return;
+      localStorage.setItem('gestureHintShown_v1', '1');
+    } catch (e) { return; }
+    setTimeout(() => {
+      showToast('Tips: cubit layar buat zoom, tahan kolom/baris buat opsi, double-tap buat pas-in tampilan', 4200);
+    }, 700);
   }
 
   function deleteTable(){
@@ -2544,13 +2575,19 @@
   const templateItemScrim = document.getElementById('templateItemScrim');
   const templateItemMenu = document.getElementById('templateItemMenu');
   let templateItemPending = null;
+  let templateItemMenuOpenedAt = 0;
 
   function closeTemplateItemMenu(){
     templateItemScrim.classList.remove('open');
     templateItemMenu.classList.remove('open');
     templateItemPending = null;
   }
-  templateItemScrim.addEventListener('click', closeTemplateItemMenu);
+  templateItemScrim.addEventListener('click', () => {
+    // Sama kayak more-menu: tap yang sama yang baru MEMBUKA menu ini (lewat
+    // long-press) gak boleh langsung dianggap "klik di luar" buat nutupnya.
+    if (Date.now() - templateItemMenuOpenedAt < 300) return;
+    closeTemplateItemMenu();
+  });
   document.getElementById('templateItemEdit').addEventListener('click', () => {
     const t = templateItemPending;
     closeTemplateItemMenu();
@@ -2588,6 +2625,7 @@
       pressTimer = setTimeout(() => {
         longPressed = true;
         templateItemPending = t;
+        templateItemMenuOpenedAt = Date.now();
         templateItemScrim.classList.add('open');
         templateItemMenu.classList.add('open');
       }, HOLD_MS);
@@ -3293,12 +3331,39 @@
   }
 
   // Fit whole table into the viewport — this becomes the zoom-out floor
-  function fitToScreen(animate){
-    cancelAnimationFrame(momentumRAF);
+  function computeFitScale(){
     const vpRect = viewport.getBoundingClientRect();
     const naturalWidth = canvas.scrollWidth;
-    if (!naturalWidth) return;
-    fitScale = Math.min(1, (vpRect.width - 16) / naturalWidth);
+    if (!naturalWidth || !vpRect.width) return fitScale; // konten belum siap diukur, pertahankan nilai lama
+    return Math.min(1, (vpRect.width - 16) / naturalWidth);
+  }
+
+  // Dipanggil tiap kali UKURAN KONTEN tabel berubah (nambah/hapus kolom-baris,
+  // insert gambar, ngetik yang bikin sel melebar, ganti template, dst) lewat
+  // ResizeObserver di bawah — bukan cuma pas load/resize window kayak
+  // sebelumnya. Ini yang bikin lantai zoom-out (fitScale) SELALU akurat, jadi
+  // cubit-zoom-out gak pernah kebentur batas basi yang bikin kerasa "ke-lock"
+  // dan gak perlu double-tap dulu buat "buka kuncinya".
+  function recomputeFitScale(){
+    const next = computeFitScale();
+    if (Math.abs(next - fitScale) < 0.001) return;
+    fitScale = next;
+    // Kalau scale user sekarang ternyata udah di bawah lantai yang baru
+    // (mis. tabel jadi lebih lebar dari sebelumnya), tarik balik biar valid —
+    // tapi cuma kalau memang di bawah floor, jadi zoom manual user yang
+    // masih sah gak ikut ke-reset.
+    if (scale < fitScale) {
+      scale = fitScale;
+      const p = clampPan(tx, ty, scale);
+      tx = p.x; ty = p.y;
+      apply();
+    }
+  }
+
+  function fitToScreen(animate){
+    cancelAnimationFrame(momentumRAF);
+    fitScale = computeFitScale();
+    if (!canvas.scrollWidth) return;
     scale = fitScale;
     const p = clampPan(8, 0, scale);
     tx = p.x; ty = p.y;
@@ -3512,6 +3577,15 @@
   // interacting by then, so it never yanks their view mid-gesture.
   if (document.fonts && document.fonts.ready) {
     document.fonts.ready.then(() => { if (!hasUserPanned) fitToScreen(false); });
+  }
+
+  // Jaring pengaman utama: pantau ukuran ASLI konten tabel terus-menerus,
+  // bukan cuma di momen load/resize/font-ready. Nambah kolom, ngetik sampai
+  // sel melebar, insert gambar, ganti template — semua otomatis bikin
+  // fitScale sinkron lagi lewat recomputeFitScale(), jadi cubit-zoom-out gak
+  // pernah kebentur lantai basi.
+  if (window.ResizeObserver) {
+    new ResizeObserver(() => recomputeFitScale()).observe(canvas);
   }
 </script>
 

@@ -49,7 +49,14 @@
     --radius-pill: 999px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --app-max-width: 480px;
   }
+
+  /* --- Responsive app width: kartu mobile tetap "potret", cuma melebar
+     bertahap di layar lebih besar biar nggak gepeng di tengah desktop --- */
+  @media (min-width: 600px)  { :root { --app-max-width: 560px; } }
+  @media (min-width: 900px)  { :root { --app-max-width: 640px; } }
+  @media (min-width: 1200px) { :root { --app-max-width: 720px; } }
 
   * {
     box-sizing: border-box;
@@ -119,7 +126,7 @@
 
   .screen-container {
     width: 100%;
-    max-width: 480px;
+    max-width: var(--app-max-width);
     height: 100%;
     position: relative;
     display: flex;
@@ -515,7 +522,8 @@
 
   .drawer {
     position: fixed;
-    top: 0; bottom: 0; left: 0;
+    top: 0; bottom: 0;
+    left: max(0px, calc((100vw - var(--app-max-width)) / 2));
     width: 82%;
     max-width: 320px;
     background: var(--card-surface-dark);
@@ -615,7 +623,12 @@
   /* --- Search Overlay --- */
   .search-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: var(--app-max-width);
+    margin: 0 auto;
     background: var(--bg-dark);
     z-index: 120;
     display: flex;
@@ -743,7 +756,12 @@
   /* --- Settings Overlay --- */
   .settings-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: var(--app-max-width);
+    margin: 0 auto;
     background: var(--bg-dark);
     z-index: 130;
     display: flex;
@@ -898,7 +916,12 @@
   /* --- Analytics Overlay --- */
   .analytics-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: var(--app-max-width);
+    margin: 0 auto;
     background: var(--bg-dark);
     z-index: 130;
     display: flex;
@@ -1191,7 +1214,12 @@
   /* --- Note Detail Overlay (read-only, publik cuma bisa lihat) --- */
   .note-detail-overlay {
     position: fixed;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: var(--app-max-width);
+    margin: 0 auto;
     background: var(--bg-dark);
     z-index: 130;
     display: flex;
@@ -1360,7 +1388,7 @@
   .share-sheet {
     position: fixed;
     left: 0; right: 0; bottom: 0;
-    max-width: 480px;
+    max-width: var(--app-max-width);
     margin: 0 auto;
     background: rgba(28, 27, 30, 0.85);
     backdrop-filter: blur(30px) saturate(180%);
@@ -1497,6 +1525,22 @@
     .analytics-overlay .custom-range-row,
     .analytics-overlay .export-row,
     .analytics-overlay .analytics-search-box { display: none !important; }
+  }
+
+  /* --- Desktop/tablet: beri latar pembeda di kiri-kanan kartu + garis tepi
+     tipis, biar kartu yang melebar terasa disengaja (bukan kolom sempit) --- */
+  @media (min-width: 600px) {
+    body { background-color: #0A0A0B; }
+    body.light-theme { background-color: #DFDCD1; }
+
+    .screen-container,
+    .search-overlay,
+    .settings-overlay,
+    .analytics-overlay,
+    .note-detail-overlay,
+    .drawer {
+      box-shadow: 0 0 0 1px var(--card-border-dark);
+    }
   }
 </style>
 </head>
