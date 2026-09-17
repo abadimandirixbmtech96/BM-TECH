@@ -427,6 +427,10 @@
     outline:none;
     border-radius:6px;
     cursor:text;
+    /* Gesture drag di dalam sel yang lagi fokus HARUS diserahin ke
+       pan/zoom custom (#content), bukan direbut browser buat text-selection
+       bawaan — makanya ini disamain sama .content, bukan cuma diwarisi. */
+    touch-action:none;
     transition:background .15s ease, box-shadow .15s ease;
   }
   [contenteditable="true"]:focus{
@@ -1479,8 +1483,8 @@
 
   function addColumnAfter(index, type){
     const pre = snapshot();
-    const placeholders = { image: 'Gambar', date: 'Tanggal', time: 'Jam' };
-    const col = { id: newColId(), label: '', type: type, placeholder: placeholders[type] || 'Kolom Baru' };
+    const labels = { image: 'Gambar', date: 'Tanggal', time: 'Jam' };
+    const col = { id: newColId(), label: labels[type] || '', type: type, placeholder: labels[type] || 'Kolom Baru' };
     columns.splice(index + 1, 0, col);
     rows.forEach(r => {
       r.cells[col.id] = type === 'date' ? nowDateLabel() : type === 'time' ? nowTimeLabel() : '';
@@ -2194,14 +2198,20 @@
     }
     const row = cell.closest('tr');
     if (!row) return;
-    const cellIndex = Array.prototype.indexOf.call(row.children, cell);
     const inHeader = !!cell.closest('thead');
     const nextRow = inHeader ? tableBodyEl.rows[0] : row.nextElementSibling;
     if (!nextRow) return; // sudah baris paling bawah, gak ada lagi buat dituju
-    const targetCell = nextRow.children[cellIndex];
-    if (!targetCell) return;
-    const targetEditable = targetCell.matches('[contenteditable="true"]') ? targetCell : targetCell.querySelector('[contenteditable="true"]');
-    if (targetEditable) targetEditable.focus();
+    // Bukan lompat ke kolom yang sama — tapi ke sel PALING AWAL di baris
+    // berikutnya yang MASIH KOSONG (ngelewatin yang udah otomatis keisi
+    // kayak No/Tanggal/Jam, atau yang udah pernah diisi sebelumnya).
+    let firstEditable = null;
+    for (const targetCell of nextRow.children) {
+      const targetEditable = targetCell.matches('[contenteditable="true"]') ? targetCell : targetCell.querySelector('[contenteditable="true"]');
+      if (!targetEditable) continue;
+      if (!firstEditable) firstEditable = targetEditable;
+      if (!targetEditable.textContent.trim()) { targetEditable.focus(); return; }
+    }
+    if (firstEditable) firstEditable.focus(); // semua udah keisi — tetep pindah, mulai dari sel paling awal
   });
 
   // ---------- Normal ↔ Edit mode ----------
@@ -3454,6 +3464,14 @@
       startX: e.clientX, startY: e.clientY, startT: Date.now(),
       dragging: false, target: e.target
     });
+
+    // Kalau tap ini jatuh PERSIS di sel yang lagi fokus (kayak abis ngetik),
+    // blur langsung di sini — jangan tunggu ambang drag (di bawah) kepenuhi
+    // dulu, soalnya di sela waktu itu browser sempat keburu ngerebut gesture-nya
+    // buat text-selection bawaan, bikin geser/pinch kerasa "ke-lock".
+    if (document.activeElement && document.activeElement.matches && document.activeElement.matches('[contenteditable="true"]') && document.activeElement.contains(e.target)) {
+      document.activeElement.blur();
+    }
 
     if (pointers.size === 1) {
       gestureHadMultiTouch = false;
