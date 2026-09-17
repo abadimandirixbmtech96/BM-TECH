@@ -58,6 +58,15 @@
   @media (min-width: 900px)  { :root { --app-max-width: 640px; } }
   @media (min-width: 1200px) { :root { --app-max-width: 720px; } }
 
+  /* --- Lebar khusus utk halaman tabel (Note Detail): dibuat lebih lega
+     dari kartu app biasa, biar semua kolom tabel kelihatan penuh di layar
+     lebar tanpa perlu geser horizontal --- */
+  :root { --table-max-width: var(--app-max-width); }
+  @media (min-width: 600px)  { :root { --table-max-width: 760px; } }
+  @media (min-width: 900px)  { :root { --table-max-width: 960px; } }
+  @media (min-width: 1200px) { :root { --table-max-width: 1160px; } }
+  @media (min-width: 1600px) { :root { --table-max-width: 1360px; } }
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -118,10 +127,20 @@
     background-color: var(--bg-dark);
     color: var(--text-primary);
     overflow: hidden;
-    height: 100vh;
+    height: 100vh;   /* fallback utk browser lama */
+    height: 100dvh;  /* dynamic viewport height: otomatis nyesuaiin saat toolbar Safari muncul/hilang */
     width: 100vw;
     display: flex;
     justify-content: center;
+  }
+
+  .app-stage {
+    position: relative;
+    width: 100%;
+    max-width: var(--app-max-width);
+    height: 100%;
+    margin: 0 auto;
+    overflow: hidden;
   }
 
   .screen-container {
@@ -507,7 +526,7 @@
 
   /* --- Drawer Folder Side Sheet --- */
   .drawer-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
@@ -521,9 +540,8 @@
   .drawer-overlay.open { opacity: 1; pointer-events: auto; }
 
   .drawer {
-    position: fixed;
-    top: 0; bottom: 0;
-    left: max(0px, calc((100vw - var(--app-max-width)) / 2));
+    position: absolute;
+    top: 0; bottom: 0; left: 0;
     width: 82%;
     max-width: 320px;
     background: var(--card-surface-dark);
@@ -622,13 +640,8 @@
 
   /* --- Search Overlay --- */
   .search-overlay {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: var(--app-max-width);
-    margin: 0 auto;
+    position: absolute;
+    inset: 0;
     background: var(--bg-dark);
     z-index: 120;
     display: flex;
@@ -755,13 +768,8 @@
 
   /* --- Settings Overlay --- */
   .settings-overlay {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: var(--app-max-width);
-    margin: 0 auto;
+    position: absolute;
+    inset: 0;
     background: var(--bg-dark);
     z-index: 130;
     display: flex;
@@ -844,7 +852,7 @@
 
   /* --- Liquid Glass Alert --- */
   .liquid-alert-backdrop {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.45);
     z-index: 300;
@@ -915,13 +923,8 @@
 
   /* --- Analytics Overlay --- */
   .analytics-overlay {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: var(--app-max-width);
-    margin: 0 auto;
+    position: absolute;
+    inset: 0;
     background: var(--bg-dark);
     z-index: 130;
     display: flex;
@@ -1218,7 +1221,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    max-width: var(--app-max-width);
+    max-width: var(--table-max-width);
     margin: 0 auto;
     background: var(--bg-dark);
     z-index: 130;
@@ -1313,7 +1316,7 @@
 
   /* --- Lightbox: tap thumbnail gambar buat lihat ukuran penuh --- */
   .image-lightbox-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.9);
     z-index: 200;
@@ -1373,7 +1376,7 @@
 
   /* --- Share Sheet: liquid glass popup dari bawah --- */
   .share-sheet-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
@@ -1386,10 +1389,8 @@
   .share-sheet-overlay.open { opacity: 1; pointer-events: auto; }
 
   .share-sheet {
-    position: fixed;
+    position: absolute;
     left: 0; right: 0; bottom: 0;
-    max-width: var(--app-max-width);
-    margin: 0 auto;
     background: rgba(28, 27, 30, 0.85);
     backdrop-filter: blur(30px) saturate(180%);
     -webkit-backdrop-filter: blur(30px) saturate(180%);
@@ -1462,7 +1463,7 @@
 
   /* --- Loading overlay ringan saat lagi generate PDF/Gambar --- */
   .share-loading-overlay {
-    position: fixed;
+    position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.55);
     z-index: 190;
@@ -1533,18 +1534,15 @@
     body { background-color: #0A0A0B; }
     body.light-theme { background-color: #DFDCD1; }
 
-    .screen-container,
-    .search-overlay,
-    .settings-overlay,
-    .analytics-overlay,
-    .note-detail-overlay,
-    .drawer {
+    .app-stage {
       box-shadow: 0 0 0 1px var(--card-border-dark);
     }
   }
 </style>
 </head>
 <body>
+
+<div class="app-stage">
 
 <div class="screen-container">
 
@@ -1909,6 +1907,8 @@
     <div class="upcoming-item" id="topCustomerCard" style="opacity:1;"></div>
   </div>
 </div>
+
+</div><!-- /app-stage -->
 
 <!-- Library Export PDF & Gambar (dipakai fitur Share di Note Detail) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
