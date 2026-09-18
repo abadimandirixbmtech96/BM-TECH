@@ -651,6 +651,46 @@
   .db-record-meta{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
   .db-record-note{ font-size:12px; color:var(--text-1); margin-top:8px; line-height:1.4; }
 
+  /* ---------- Tabel Riwayat (gaya sama seperti index.html) ---------- */
+  .riwayat-table-wrap{
+    overflow:auto;
+    border:1px solid var(--glass-border-soft);
+    border-radius:var(--radius-md);
+    max-height:70vh;
+  }
+  .riwayat-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:12.5px;
+  }
+  .riwayat-table thead th{
+    position:sticky;
+    top:0;
+    background:rgba(255,255,255,0.06);
+    color:var(--text-1);
+    font-weight:700;
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:9px 10px;
+    text-align:left;
+    white-space:nowrap;
+    border-bottom:1px solid var(--glass-border-soft);
+  }
+  .riwayat-table tbody td{
+    padding:9px 10px;
+    color:var(--text-0);
+    border-bottom:1px solid var(--glass-border-soft);
+    white-space:nowrap;
+    max-width:160px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .riwayat-table tbody tr:last-child td{ border-bottom:none; }
+  .riwayat-table tbody tr:nth-child(even){ background:rgba(255,255,255,0.02); }
+  .riwayat-table .cell-price{ color:var(--amber); font-weight:700; }
+  .riwayat-table .cell-muted{ color:var(--text-2); }
+
   ::selection{ background:rgba(255,171,92,0.3); }
 
   @media (max-width:360px){
@@ -737,7 +777,9 @@
     </div>
 
     <div class="section-label">Riwayat Barang</div>
-    <div id="dbRecordList"></div>
+    <div class="riwayat-table-wrap">
+      <table class="riwayat-table" id="dbRecordTable"></table>
+    </div>
     <div class="card glass empty-state" id="dbEmpty" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg>
       <div>Belum ada data untuk akun ini</div>
@@ -1110,7 +1152,7 @@
       no: '1',
       col_7vokwpy: tglSlash,
       col_gq28ofp: jam,
-      col_7y9vteq: myDisplayName,
+      col_7y9vteq: '',
       col_r7c2uzw: myDisplayName,
       col_c0olgg1: barangDanJumlah,
       col_4vr40wf: barangDibawa,
@@ -1193,6 +1235,20 @@
     });
     return col ? col.id : null;
   }
+  function findPJColId(columns){
+    // "P. JAWAB" (Buku Besar) / "PENANGGUNG JAWAB" (variasi lain) — staff yang mengerjakan
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => (c.label||'').toUpperCase().includes('JAWAB'));
+    return col ? col.id : null;
+  }
+  function findDibawaColId(columns){
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => {
+      const l = (c.label||'').toUpperCase();
+      return l.includes('DIBAWA') || l.includes('KELUAR');
+    });
+    return col ? col.id : null;
+  }
   function parseHargaCell(v){
     if(!v) return 0;
     const digits = String(v).replace(/[^0-9]/g,'');
@@ -1200,7 +1256,7 @@
   }
 
   async function loadAndRenderDatabase(){
-    const listEl = document.getElementById('dbRecordList');
+    const tableEl = document.getElementById('dbRecordTable');
     const emptyEl = document.getElementById('dbEmpty');
     const emptyText = emptyEl.querySelector('div');
 
@@ -1213,7 +1269,7 @@
       .order('created_at', { ascending: false });
 
     if(error){
-      listEl.innerHTML = '';
+      tableEl.innerHTML = '';
       emptyEl.style.display = '';
       emptyText.textContent = 'Gagal memuat data: ' + error.message;
       return;
@@ -1230,7 +1286,9 @@
       const colCustomer = findCustomerColId(columns);
       const colTanggal = findColId(columns, 'TANGGAL');
       const colJam = findColId(columns, 'JAM');
+      const colPJ = findPJColId(columns);
       const colBarang = findBarangJumlahColId(columns);
+      const colDibawa = findDibawaColId(columns);
       const colDitinggal = findColId(columns, 'DITINGGAL');
       const colKeterangan = findColId(columns, 'KETERANGAN');
       const colHarga = findHargaColId(columns);
@@ -1244,53 +1302,65 @@
           // Note milik admin/folder lain: hanya ambil baris yang nama customer-nya persis cocok
           if(!colCustomer) return;
           const custVal = (cells[colCustomer] || '').trim().toLowerCase();
-          if(custVal !== myNameLower) return;
+          if(!custVal || custVal !== myNameLower) return;
         }
 
+        // Baris kosong (belum diisi sama sekali) dilewati, biar tabel nggak penuh baris hampa
+        const barangVal = colBarang ? (cells[colBarang] || '').trim() : '';
+        const ketVal = colKeterangan ? (cells[colKeterangan] || '').trim() : '';
+        const hargaRawVal = colHarga ? (cells[colHarga] || '').trim() : '';
+        if(isOwnFolder === false && !barangVal && !ketVal && !hargaRawVal) return;
+
         entries.push({
-          tglJam: [colTanggal ? cells[colTanggal] : '', colJam ? cells[colJam] : ''].filter(Boolean).join(' • '),
-          barang: colBarang ? (cells[colBarang] || '') : '',
+          tanggal: colTanggal ? (cells[colTanggal] || '') : '',
+          jam: colJam ? (cells[colJam] || '') : '',
+          pj: colPJ ? (cells[colPJ] || '') : '',
+          customer: colCustomer ? (cells[colCustomer] || '') : myDisplayName,
+          barang: barangVal,
+          dibawa: colDibawa ? (cells[colDibawa] || '') : '',
           ditinggal: colDitinggal ? (cells[colDitinggal] || '').trim() : '',
-          keterangan: colKeterangan ? (cells[colKeterangan] || '') : '',
-          harga: colHarga ? parseHargaCell(cells[colHarga]) : 0,
+          keterangan: ketVal,
+          hargaRaw: hargaRawVal,
+          hargaNum: colHarga ? parseHargaCell(cells[colHarga]) : 0,
           createdAt: note.created_at
         });
       });
     });
 
-    // Urutkan terbaru dulu (tanggal note sebagai acuan urut, bukan teks tanggal per baris)
+    // Urutkan terbaru dulu
     entries.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     document.getElementById('dbRecapCount').textContent = entries.length;
-    document.getElementById('dbRecapPaid').textContent = formatRupiah(entries.reduce((s,e)=> s + e.harga, 0));
+    document.getElementById('dbRecapPaid').textContent = formatRupiah(entries.reduce((s,e)=> s + e.hargaNum, 0));
 
-    listEl.innerHTML = '';
     if(entries.length === 0){
+      tableEl.innerHTML = '';
       emptyText.textContent = 'Belum ada data untuk akun ini';
       emptyEl.style.display = '';
       return;
     }
     emptyEl.style.display = 'none';
 
-    entries.forEach(e=>{
-      const tampilTgl = e.tglJam || formatTanggal(new Date(e.createdAt));
-      const card = document.createElement('div');
-      card.className = 'db-record';
-      card.innerHTML = `
-        <div class="db-record-top">
-          <div class="db-record-date">${escapeHtml(tampilTgl)}</div>
-          <div class="db-record-price">${formatRupiah(e.harga)}</div>
-        </div>
-        <div class="db-record-items">${escapeHtml(e.barang || '—')}</div>
-        <div class="db-record-meta">
-          ${e.ditinggal
-            ? `<span class="left-tag">Ditinggal: ${escapeHtml(e.ditinggal)}</span>`
-            : `<span class="left-tag zero">Semua barang sudah dibawa</span>`}
-        </div>
-        ${e.keterangan ? `<div class="db-record-note">${escapeHtml(e.keterangan)}</div>` : ''}
-      `;
-      listEl.appendChild(card);
-    });
+    const headerCols = ['Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Keterangan','Harga'];
+    const theadHtml = '<thead><tr>' + headerCols.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead>';
+
+    const tbodyHtml = '<tbody>' + entries.map(e => {
+      const fallbackTgl = (!e.tanggal && !e.jam) ? formatTanggal(new Date(e.createdAt)) : '';
+      const cellsHtml = [
+        `<td class="cell-muted">${escapeHtml(e.tanggal.trim() || fallbackTgl || '—')}</td>`,
+        `<td class="cell-muted">${escapeHtml(e.jam.trim() || '—')}</td>`,
+        `<td>${escapeHtml(e.pj.trim() || '—')}</td>`,
+        `<td>${escapeHtml(e.customer.trim() || '—')}</td>`,
+        `<td>${escapeHtml(e.barang || '—')}</td>`,
+        `<td>${escapeHtml(e.dibawa.trim() || '—')}</td>`,
+        `<td>${escapeHtml(e.ditinggal || (e.dibawa || e.barang ? 'Tidak ada' : '—'))}</td>`,
+        `<td>${escapeHtml(e.keterangan || '—')}</td>`,
+        `<td class="cell-price">${e.hargaRaw ? formatRupiah(e.hargaNum) : '—'}</td>`
+      ].join('');
+      return '<tr>' + cellsHtml + '</tr>';
+    }).join('') + '</tbody>';
+
+    tableEl.innerHTML = theadHtml + tbodyHtml;
   }
 
   /* ================= INIT ================= */
