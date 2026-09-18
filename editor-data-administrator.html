@@ -223,6 +223,10 @@
   .table-scroll.hidden{ display:none; }
 
   .toolbtn.dimmed{ opacity:0.32; }
+  tbody tr.row-incomplete td{
+    box-shadow:inset 0 0 0 1px rgba(214,69,69,0.55);
+    background:rgba(214,69,69,0.08);
+  }
 
   .more-menu button.danger[disabled]{
     opacity:0.4;
@@ -1609,6 +1613,13 @@
         rows[idx].cells[el.dataset.field] = el.innerText;
         const post = snapshot();
         if (post !== pre) pushHistory(pre);
+        // Kalau baris ini abis dicap "belum lengkap" pas checklist, dan
+        // sekarang udah lengkap gara-gara ngetik ini, lepas tanda merahnya —
+        // gak perlu nunggu tombol checklist dipencet ulang.
+        const tr = el.closest('tr');
+        if (tr && tr.classList.contains('row-incomplete') && isRowComplete(rows[idx])) {
+          tr.classList.remove('row-incomplete');
+        }
       });
     });
   }
@@ -2272,7 +2283,17 @@
     if (!e.target.matches('[contenteditable="true"]')) return;
     enterEditMode();
     lastActiveCell = e.target;
+    requestAnimationFrame(() => ensureCellVisible(e.target));
   });
+
+  // Animasi keyboard kebuka butuh waktu — begitu visualViewport-nya selesai
+  // resize, cek ulang posisi sel yang lagi fokus (kalau ada) biar tetap
+  // gak ketutupan.
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      if (lastActiveCell && document.activeElement === lastActiveCell) ensureCellVisible(lastActiveCell);
+    });
+  }
 
   // Capitalizes just the first character as soon as it's typed (e.g. "yanto" → "Yanto").
   // Scoped to the very first character only, so cursor position stays simple/safe.
@@ -2975,11 +2996,46 @@
   // Kept as a no-op so other code that calls it doesn't break.
   function closeSharePanel(){}
 
-  // ---------- Checklist: deferred to phase 2 (needs redesign for dynamic columns) ----------
+  // ---------- Checklist: cek kelengkapan data per baris ----------
   const btnChecklist = document.getElementById('btnChecklist');
+
+  // Kolom "No" itu auto-isi & bukan data manusia, jadi gak masuk pengecekan.
+  // Semua tipe kolom lain (text/date/time/image) dianggap wajib diisi.
+  function isRowComplete(row){
+    return columns.every(col => {
+      if (col.type === 'no') return true;
+      const v = row.cells[col.id];
+      return v != null && String(v).trim() !== '';
+    });
+  }
+
   btnChecklist.addEventListener('click', () => {
     setDrawMode(false);
-    console.log('Checklist kelengkapan data — menyusul, perlu didesain ulang buat kolom dinamis');
+    if (!hasTable) { showToast('Belum ada tabel buat dicek'); return; }
+    const trs = [...tbody().querySelectorAll('tr')];
+    let incompleteCount = 0;
+    let firstIncompleteCell = null;
+    rows.forEach((row, i) => {
+      const complete = isRowComplete(row);
+      const tr = trs[i];
+      if (!tr) return;
+      tr.classList.toggle('row-incomplete', !complete);
+      if (!complete) {
+        incompleteCount++;
+        if (!firstIncompleteCell) {
+          const emptyCol = columns.find(col => col.type !== 'no' && !String(row.cells[col.id] || '').trim());
+          if (emptyCol) firstIncompleteCell = tr.querySelector(`[data-field="${emptyCol.id}"]`);
+        }
+      }
+    });
+    if (incompleteCount === 0) {
+      showToast('Semua data lengkap ✓');
+      return;
+    }
+    showToast(`${incompleteCount} baris belum lengkap — dikasih tanda merah`, 3200);
+    if (firstIncompleteCell) {
+      requestAnimationFrame(() => ensureCellVisible(firstIncompleteCell));
+    }
   });
 
   // ---------- Camera / Gallery: attach a photo to a row ----------
@@ -3313,6 +3369,39 @@
       top: Math.max(0, topRect.bottom + 12),
       bottom: Math.max(0, window.innerHeight - bottomRect.top + 12)
     };
+  }
+
+  // Begitu fokus pindah ke sel lain (tap manual ATAU lompat otomatis abis
+  // Enter), geser canvas dikit kalau perlu biar sel itu gak ketutupan
+  // topbar/bottombar/keyboard — jadi apa yang lagi diketik selalu kelihatan.
+  function ensureCellVisible(cell){
+    if (!cell) return;
+    const vpRect = viewport.getBoundingClientRect();
+    const chrome = getChrome();
+    const bottomRect = document.querySelector('.bottombar').getBoundingClientRect();
+    const vv = window.visualViewport;
+    // Keyboard di HP ngecilin visualViewport (bukan window.innerHeight di
+    // banyak browser) — pakai itu kalau ada, biar batas bawah yang "beneran
+    // kelihatan" ikut naik pas keyboard kebuka.
+    const visibleBottom = vv ? vv.height + vv.offsetTop : window.innerHeight;
+    const margin = 14;
+    const safeTop = chrome.top + margin;
+    const safeBottom = Math.min(bottomRect.top, visibleBottom) - margin;
+
+    const cellRect = cell.getBoundingClientRect();
+    let dx = 0, dy = 0;
+    if (cellRect.top < safeTop) dy = safeTop - cellRect.top;
+    else if (cellRect.bottom > safeBottom) dy = safeBottom - cellRect.bottom;
+    if (cellRect.left < vpRect.left + margin) dx = (vpRect.left + margin) - cellRect.left;
+    else if (cellRect.right > vpRect.right - margin) dx = (vpRect.right - margin) - cellRect.right;
+    if (!dx && !dy) return;
+
+    cancelAnimationFrame(momentumRAF);
+    const p = clampPan(tx + dx, ty + dy, scale);
+    tx = p.x; ty = p.y;
+    canvas.style.transition = 'transform .2s cubic-bezier(.22,.7,.32,1)';
+    requestAnimationFrame(apply);
+    setTimeout(() => { canvas.style.transition = ''; }, 220);
   }
 
   function panBounds(s){

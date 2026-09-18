@@ -1154,58 +1154,140 @@
     toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
   }
 
-  /* ================= DATABASE VIEW (portal customer, auto-filter dari Supabase) ================= */
+  /* ================= DATABASE VIEW (portal customer: data sendiri + riwayat lama yang cocok nama) ================= */
+  function findColId(columns, includesLabel){
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => (c.label||'').toUpperCase().includes(includesLabel));
+    return col ? col.id : null;
+  }
+  function findBarangJumlahColId(columns){
+    if(!Array.isArray(columns)) return null;
+    // Prioritas: kolom yang labelnya mengandung BARANG *dan* JUMLAH (paling spesifik),
+    // baru fallback ke kolom "BARANG" pertama kalau tidak ketemu (variasi penamaan lama).
+    const specific = columns.find(c => {
+      const l = (c.label||'').toUpperCase();
+      return l.includes('BARANG') && l.includes('JUMLAH');
+    });
+    if(specific) return specific.id;
+    return findColId(columns, 'BARANG');
+  }
+  function findCustomerColId(columns){
+    // Beberapa buku (BUKU BESAR) pakai label "CUSTOMER", tapi buku lain
+    // (BUKU HUTANG PIUTANG, sebagian BUKU PENGELUARAN) pakai "NAMA" untuk
+    // maksud yang sama (nama orangnya) — "NAMA BARANG" dikecualikan karena itu nama item, bukan nama orang.
+    if(!Array.isArray(columns)) return null;
+    let col = columns.find(c => (c.label||'').toUpperCase().includes('CUSTOMER'));
+    if(col) return col.id;
+    col = columns.find(c => {
+      const l = (c.label||'').toUpperCase();
+      return l.includes('NAMA') && !l.includes('BARANG');
+    });
+    return col ? col.id : null;
+  }
+  function findHargaColId(columns){
+    // HARGA (Buku Besar), NOMINAL (Buku Hutang Piutang), UANG YANG DIKELUARKAN (Buku Pengeluaran)
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => {
+      const l = (c.label||'').toUpperCase();
+      return l.includes('HARGA') || l.includes('NOMINAL') || l.includes('UANG');
+    });
+    return col ? col.id : null;
+  }
+  function parseHargaCell(v){
+    if(!v) return 0;
+    const digits = String(v).replace(/[^0-9]/g,'');
+    return digits ? parseInt(digits,10) : 0;
+  }
+
   async function loadAndRenderDatabase(){
     const listEl = document.getElementById('dbRecordList');
     const emptyEl = document.getElementById('dbEmpty');
+    const emptyText = emptyEl.querySelector('div');
 
+    // RLS otomatis membatasi: folder sendiri + semua note publik/admin (owner_username null).
+    // Note customer lain TIDAK ikut terbawa sama sekali.
     const { data, error } = await supabaseClient
       .from('notes')
-      .select('id, amount, content, created_at')
-      .eq('folder_id', myFolderId)
+      .select('id, folder_id, content, created_at')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if(error){
       listEl.innerHTML = '';
       emptyEl.style.display = '';
-      emptyEl.querySelector('div').textContent = 'Gagal memuat data: ' + error.message;
+      emptyText.textContent = 'Gagal memuat data: ' + error.message;
       return;
     }
 
-    myTransactions = data || [];
+    const myNameLower = myDisplayName.trim().toLowerCase();
+    const entries = [];
 
-    document.getElementById('dbRecapCount').textContent = myTransactions.length;
-    document.getElementById('dbRecapPaid').textContent = formatRupiah(myTransactions.reduce((s,t)=> s + (t.amount||0), 0));
+    (data || []).forEach(note => {
+      const content = note.content || {};
+      if(!content.hasTable || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
+
+      const columns = content.columns;
+      const colCustomer = findCustomerColId(columns);
+      const colTanggal = findColId(columns, 'TANGGAL');
+      const colJam = findColId(columns, 'JAM');
+      const colBarang = findBarangJumlahColId(columns);
+      const colDitinggal = findColId(columns, 'DITINGGAL');
+      const colKeterangan = findColId(columns, 'KETERANGAN');
+      const colHarga = findHargaColId(columns);
+
+      const isOwnFolder = note.folder_id === myFolderId;
+
+      content.rows.forEach(row => {
+        const cells = row.cells || {};
+
+        if(!isOwnFolder){
+          // Note milik admin/folder lain: hanya ambil baris yang nama customer-nya persis cocok
+          if(!colCustomer) return;
+          const custVal = (cells[colCustomer] || '').trim().toLowerCase();
+          if(custVal !== myNameLower) return;
+        }
+
+        entries.push({
+          tglJam: [colTanggal ? cells[colTanggal] : '', colJam ? cells[colJam] : ''].filter(Boolean).join(' • '),
+          barang: colBarang ? (cells[colBarang] || '') : '',
+          ditinggal: colDitinggal ? (cells[colDitinggal] || '').trim() : '',
+          keterangan: colKeterangan ? (cells[colKeterangan] || '') : '',
+          harga: colHarga ? parseHargaCell(cells[colHarga]) : 0,
+          createdAt: note.created_at
+        });
+      });
+    });
+
+    // Urutkan terbaru dulu (tanggal note sebagai acuan urut, bukan teks tanggal per baris)
+    entries.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    document.getElementById('dbRecapCount').textContent = entries.length;
+    document.getElementById('dbRecapPaid').textContent = formatRupiah(entries.reduce((s,e)=> s + e.harga, 0));
 
     listEl.innerHTML = '';
-    if(myTransactions.length === 0){
+    if(entries.length === 0){
+      emptyText.textContent = 'Belum ada data untuk akun ini';
       emptyEl.style.display = '';
       return;
     }
     emptyEl.style.display = 'none';
 
-    myTransactions.forEach(t=>{
-      const cells = (t.content && Array.isArray(t.content.rows) && t.content.rows[0] && t.content.rows[0].cells) || {};
-      const barangJumlah = cells.col_c0olgg1 || '—';
-      const ditinggalStr = cells.col_2jz56od && cells.col_2jz56od.trim() ? cells.col_2jz56od : null;
-      const keterangan = cells.col_kp4e28q || '';
-      const tgl = new Date(t.created_at);
-
+    entries.forEach(e=>{
+      const tampilTgl = e.tglJam || formatTanggal(new Date(e.createdAt));
       const card = document.createElement('div');
       card.className = 'db-record';
       card.innerHTML = `
         <div class="db-record-top">
-          <div class="db-record-date">${formatTanggal(tgl)}</div>
-          <div class="db-record-price">${formatRupiah(t.amount)}</div>
+          <div class="db-record-date">${escapeHtml(tampilTgl)}</div>
+          <div class="db-record-price">${formatRupiah(e.harga)}</div>
         </div>
-        <div class="db-record-items">${escapeHtml(barangJumlah)}</div>
+        <div class="db-record-items">${escapeHtml(e.barang || '—')}</div>
         <div class="db-record-meta">
-          ${ditinggalStr
-            ? `<span class="left-tag">Ditinggal: ${escapeHtml(ditinggalStr)}</span>`
+          ${e.ditinggal
+            ? `<span class="left-tag">Ditinggal: ${escapeHtml(e.ditinggal)}</span>`
             : `<span class="left-tag zero">Semua barang sudah dibawa</span>`}
         </div>
-        ${keterangan ? `<div class="db-record-note">${escapeHtml(keterangan)}</div>` : ''}
+        ${e.keterangan ? `<div class="db-record-note">${escapeHtml(e.keterangan)}</div>` : ''}
       `;
       listEl.appendChild(card);
     });
