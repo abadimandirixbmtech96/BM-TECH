@@ -2053,8 +2053,12 @@
 <div class="customer-form-sheet" id="customerFormSheet">
   <h3>Tambah Customer Baru</h3>
   <div class="customer-form-field">
-    <label for="inpCustUsername">Username (dipakai di link login, tanpa @ &amp; spasi)</label>
-    <input type="text" id="inpCustUsername" placeholder="contoh: yanto" autocomplete="off">
+    <label for="inpCustDisplayName">Nama Customer (boleh spasi, tampil di kolom tabel)</label>
+    <input type="text" id="inpCustDisplayName" placeholder="contoh: Puji Bengkel" autocomplete="off">
+  </div>
+  <div class="customer-form-field">
+    <label for="inpCustUsername">Username (untuk link login, tanpa spasi/simbol)</label>
+    <input type="text" id="inpCustUsername" placeholder="contoh: puji_bengkel" autocomplete="off">
   </div>
   <div class="customer-form-field">
     <label for="inpCustEmail">Email</label>
@@ -3179,6 +3183,7 @@
   const btnCustomerAddOpen = document.getElementById('btnCustomerAddOpen');
   const btnCustomerCancel = document.getElementById('btnCustomerCancel');
   const btnCustomerSubmit = document.getElementById('btnCustomerSubmit');
+  const inpCustDisplayName = document.getElementById('inpCustDisplayName');
   const inpCustUsername = document.getElementById('inpCustUsername');
   const inpCustEmail = document.getElementById('inpCustEmail');
   const inpCustPassword = document.getElementById('inpCustPassword');
@@ -3196,7 +3201,9 @@
   });
 
   function openCustomerForm() {
+    inpCustDisplayName.value = '';
     inpCustUsername.value = '';
+    inpCustUsername.dataset.autoFilled = 'true';
     inpCustEmail.value = '';
     inpCustPassword.value = '';
     customerFormError.style.display = 'none';
@@ -3210,6 +3217,21 @@
     customerFormSheet.classList.remove('open');
   }
   btnCustomerAddOpen.addEventListener('click', openCustomerForm);
+
+  // Auto-isi username dari Nama Customer (selama user belum ngetik manual di kolom username)
+  inpCustDisplayName.addEventListener('input', () => {
+    if (inpCustUsername.dataset.autoFilled !== 'false') {
+      inpCustUsername.value = inpCustDisplayName.value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 24);
+    }
+  });
+  inpCustUsername.addEventListener('input', () => {
+    inpCustUsername.dataset.autoFilled = 'false';
+  });
   btnCustomerCancel.addEventListener('click', closeCustomerForm);
   customerFormOverlay.addEventListener('click', closeCustomerForm);
 
@@ -3217,7 +3239,7 @@
     customerListEl.innerHTML = '<div class="customer-empty">Memuat data customer...</div>';
     const { data, error } = await supabaseClient
       .from('customers')
-      .select('id, username, email, created_at')
+      .select('id, username, email, display_name, created_at')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -3237,8 +3259,8 @@
       card.innerHTML = `
         <div class="customer-card-top">
           <div>
-            <div class="customer-card-name">@${escapeHtmlAdmin(c.username)}</div>
-            <div class="customer-card-email">${escapeHtmlAdmin(c.email)}</div>
+            <div class="customer-card-name">${escapeHtmlAdmin(c.display_name || c.username)}</div>
+            <div class="customer-card-email">@${escapeHtmlAdmin(c.username)} · ${escapeHtmlAdmin(c.email)}</div>
           </div>
         </div>
         <div class="customer-card-actions">
@@ -3277,12 +3299,18 @@
   });
 
   btnCustomerSubmit.addEventListener('click', async () => {
+    const displayName = inpCustDisplayName.value.trim();
     const username = inpCustUsername.value.trim().toLowerCase().replace(/^@+/, '');
     const email = inpCustEmail.value.trim();
     const password = inpCustPassword.value;
 
     customerFormError.style.display = 'none';
 
+    if (!displayName || displayName.length < 2 || displayName.length > 60) {
+      customerFormError.textContent = 'Nama customer wajib diisi (2-60 karakter).';
+      customerFormError.style.display = 'block';
+      return;
+    }
     if (!/^[a-z0-9_]{3,24}$/.test(username)) {
       customerFormError.textContent = 'Username harus 3-24 karakter: huruf kecil, angka, underscore.';
       customerFormError.style.display = 'block';
@@ -3319,7 +3347,7 @@
           'Authorization': 'Bearer ' + session.access_token,
           'apikey': SUPABASE_ANON_KEY
         },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({ username, email, password, display_name: displayName })
       });
       const result = await res.json();
 
@@ -3332,7 +3360,7 @@
       }
 
       closeCustomerForm();
-      showMiniToast('Customer @' + username + ' berhasil dibuat');
+      showMiniToast('Customer "' + displayName + '" berhasil dibuat');
       loadCustomerList();
       loadCategories(); // biar folder baru customer langsung muncul di drawer
 

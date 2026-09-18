@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/role-customer-:username", "destination": "/customer-tracking.html" }
+  ]
+}
