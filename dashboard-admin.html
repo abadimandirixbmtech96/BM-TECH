@@ -1001,6 +1001,93 @@
 
   .logout-row .settings-item-title { color: #F0555C; }
 
+  /* ---------- Kelola Customer ---------- */
+  .customer-screen {
+    position: fixed; inset: 0;
+    background: var(--bg-dark);
+    z-index: 260;
+    transform: translateX(100%);
+    transition: transform .28s cubic-bezier(.32,.72,0,1);
+    display: flex; flex-direction: column;
+    padding-top: var(--safe-top);
+    padding-bottom: var(--safe-bottom);
+  }
+  .customer-screen.open { transform: translateX(0); }
+  .customer-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    flex-shrink: 0;
+  }
+  .customer-header h2 { flex: 1; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .customer-add-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: none; background: var(--accent-yellow); color: #1C1B19;
+    font-size: 22px; font-weight: 700; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .customer-add-btn:active { transform: scale(0.92); }
+  .customer-list { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
+  .customer-card {
+    background: var(--card-surface-dark);
+    border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .customer-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .customer-card-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .customer-card-email { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+  .customer-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .customer-mini-btn {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--card-border-dark);
+    background: var(--glass-pill-bg);
+    color: var(--text-primary);
+    font-size: 12.5px; font-weight: 600;
+    cursor: pointer; text-align: center;
+  }
+  .customer-mini-btn.danger { color: #F0555C; }
+  .customer-empty { text-align: center; color: var(--text-secondary); padding: 60px 20px; font-size: 13.5px; }
+
+  .customer-form-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: 270; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+  }
+  .customer-form-overlay.open { opacity: 1; pointer-events: auto; }
+  .customer-form-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--card-surface-dark);
+    border-radius: 24px 24px 0 0;
+    padding: 18px 18px calc(18px + var(--safe-bottom));
+    z-index: 271;
+    transform: translateY(100%);
+    transition: transform .28s cubic-bezier(.32,.72,0,1);
+  }
+  .customer-form-sheet.open { transform: translateY(0); }
+  .customer-form-sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+  .customer-form-field { margin-bottom: 12px; }
+  .customer-form-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+  .customer-form-field input {
+    width: 100%; padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--card-border-dark);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    font-size: 14.5px; outline: none;
+  }
+  .customer-form-error { color: #F0555C; font-size: 12.5px; margin: -4px 0 10px; display: none; }
+  .customer-form-actions { display: flex; gap: 10px; margin-top: 6px; }
+  .customer-form-actions button {
+    flex: 1; padding: 13px; border-radius: var(--radius-pill); border: none;
+    font-size: 14.5px; font-weight: 700; cursor: pointer;
+  }
+  #btnCustomerCancel { background: var(--glass-pill-bg); color: var(--text-primary); }
+  #btnCustomerSubmit { background: var(--accent-yellow); color: #1C1B19; }
+  #btnCustomerSubmit:disabled { opacity: 0.5; pointer-events: none; }
+
   /* --- New Folder Bottom Sheet --- */
   .new-folder-overlay {
     position: fixed;
@@ -1870,6 +1957,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
       Analisa
     </button>
+    <button class="drawer-foot-btn" id="btnOpenCustomers">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Customer
+    </button>
     <button class="drawer-foot-btn" id="btnOpenSettings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Settings
@@ -1937,6 +2028,46 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="#F0555C" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Kelola Customer Screen -->
+<div class="customer-screen" id="customerScreen">
+  <div class="customer-header">
+    <button class="settings-back-btn" id="btnCustomerScreenBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <h2>Kelola Customer</h2>
+    <button class="customer-add-btn" id="btnCustomerAddOpen" aria-label="Tambah Customer">+</button>
+  </div>
+  <div class="customer-list" id="customerListEl">
+    <div class="customer-empty">Memuat data customer...</div>
+  </div>
+</div>
+
+<!-- Form Tambah Customer -->
+<div class="customer-form-overlay" id="customerFormOverlay"></div>
+<div class="customer-form-sheet" id="customerFormSheet">
+  <h3>Tambah Customer Baru</h3>
+  <div class="customer-form-field">
+    <label for="inpCustUsername">Username (dipakai di link login, tanpa @ &amp; spasi)</label>
+    <input type="text" id="inpCustUsername" placeholder="contoh: yanto" autocomplete="off">
+  </div>
+  <div class="customer-form-field">
+    <label for="inpCustEmail">Email</label>
+    <input type="email" id="inpCustEmail" placeholder="customer@email.com" autocomplete="off">
+  </div>
+  <div class="customer-form-field">
+    <label for="inpCustPassword">Password (min. 6 karakter)</label>
+    <input type="password" id="inpCustPassword" placeholder="Password login customer" autocomplete="off">
+  </div>
+  <div class="customer-form-error" id="customerFormError"></div>
+  <div class="customer-form-actions">
+    <button id="btnCustomerCancel">Batal</button>
+    <button id="btnCustomerSubmit">Buat Akun</button>
   </div>
 </div>
 
@@ -3036,6 +3167,186 @@
   btnSettingsBack.addEventListener('click', () => {
     settingsScreen.classList.remove('open');
   });
+
+  // --- Kelola Customer ---
+  const CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/create-customer';
+  const customerScreen = document.getElementById('customerScreen');
+  const btnOpenCustomers = document.getElementById('btnOpenCustomers');
+  const btnCustomerScreenBack = document.getElementById('btnCustomerScreenBack');
+  const customerListEl = document.getElementById('customerListEl');
+  const customerFormOverlay = document.getElementById('customerFormOverlay');
+  const customerFormSheet = document.getElementById('customerFormSheet');
+  const btnCustomerAddOpen = document.getElementById('btnCustomerAddOpen');
+  const btnCustomerCancel = document.getElementById('btnCustomerCancel');
+  const btnCustomerSubmit = document.getElementById('btnCustomerSubmit');
+  const inpCustUsername = document.getElementById('inpCustUsername');
+  const inpCustEmail = document.getElementById('inpCustEmail');
+  const inpCustPassword = document.getElementById('inpCustPassword');
+  const customerFormError = document.getElementById('customerFormError');
+
+  btnOpenCustomers.addEventListener('click', () => {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    customerScreen.classList.add('open');
+    loadCustomerList();
+  });
+
+  btnCustomerScreenBack.addEventListener('click', () => {
+    customerScreen.classList.remove('open');
+  });
+
+  function openCustomerForm() {
+    inpCustUsername.value = '';
+    inpCustEmail.value = '';
+    inpCustPassword.value = '';
+    customerFormError.style.display = 'none';
+    btnCustomerSubmit.disabled = false;
+    btnCustomerSubmit.textContent = 'Buat Akun';
+    customerFormOverlay.classList.add('open');
+    customerFormSheet.classList.add('open');
+  }
+  function closeCustomerForm() {
+    customerFormOverlay.classList.remove('open');
+    customerFormSheet.classList.remove('open');
+  }
+  btnCustomerAddOpen.addEventListener('click', openCustomerForm);
+  btnCustomerCancel.addEventListener('click', closeCustomerForm);
+  customerFormOverlay.addEventListener('click', closeCustomerForm);
+
+  async function loadCustomerList() {
+    customerListEl.innerHTML = '<div class="customer-empty">Memuat data customer...</div>';
+    const { data, error } = await supabaseClient
+      .from('customers')
+      .select('id, username, email, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      customerListEl.innerHTML = '<div class="customer-empty">Gagal memuat: ' + escapeHtmlAdmin(error.message) + '</div>';
+      return;
+    }
+    if (!data || data.length === 0) {
+      customerListEl.innerHTML = '<div class="customer-empty">Belum ada customer. Tekan tombol + untuk menambahkan.</div>';
+      return;
+    }
+
+    customerListEl.innerHTML = '';
+    data.forEach((c) => {
+      const loginUrl = 'https://dashboard-bm-tech.vercel.app/role-customer-' + c.username;
+      const card = document.createElement('div');
+      card.className = 'customer-card';
+      card.innerHTML = `
+        <div class="customer-card-top">
+          <div>
+            <div class="customer-card-name">@${escapeHtmlAdmin(c.username)}</div>
+            <div class="customer-card-email">${escapeHtmlAdmin(c.email)}</div>
+          </div>
+        </div>
+        <div class="customer-card-actions">
+          <button class="customer-mini-btn" data-action="copy" data-url="${loginUrl}">Salin Link Login</button>
+          <button class="customer-mini-btn danger" data-action="remove" data-id="${c.id}" data-username="${escapeHtmlAdmin(c.username)}">Hapus</button>
+        </div>
+      `;
+      customerListEl.appendChild(card);
+    });
+  }
+
+  customerListEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    if (btn.dataset.action === 'copy') {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.url);
+        showMiniToast('Link login disalin');
+      } catch {
+        showMiniToast(btn.dataset.url);
+      }
+    }
+
+    if (btn.dataset.action === 'remove') {
+      const username = btn.dataset.username;
+      if (!confirm('Hapus akses login customer "' + username + '"? Data/folder yang sudah ada tetap tersimpan, tapi customer ini tidak bisa login lagi.')) return;
+      const { error } = await supabaseClient.from('customers').delete().eq('id', btn.dataset.id);
+      if (error) {
+        alert('Gagal menghapus: ' + error.message);
+        return;
+      }
+      showMiniToast('Akses customer "' + username + '" dihapus');
+      loadCustomerList();
+    }
+  });
+
+  btnCustomerSubmit.addEventListener('click', async () => {
+    const username = inpCustUsername.value.trim().toLowerCase().replace(/^@+/, '');
+    const email = inpCustEmail.value.trim();
+    const password = inpCustPassword.value;
+
+    customerFormError.style.display = 'none';
+
+    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+      customerFormError.textContent = 'Username harus 3-24 karakter: huruf kecil, angka, underscore.';
+      customerFormError.style.display = 'block';
+      return;
+    }
+    if (!email.includes('@')) {
+      customerFormError.textContent = 'Email tidak valid.';
+      customerFormError.style.display = 'block';
+      return;
+    }
+    if (password.length < 6) {
+      customerFormError.textContent = 'Password minimal 6 karakter.';
+      customerFormError.style.display = 'block';
+      return;
+    }
+
+    btnCustomerSubmit.disabled = true;
+    btnCustomerSubmit.textContent = 'Memproses...';
+
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        customerFormError.textContent = 'Sesi admin habis, silakan login ulang.';
+        customerFormError.style.display = 'block';
+        btnCustomerSubmit.disabled = false;
+        btnCustomerSubmit.textContent = 'Buat Akun';
+        return;
+      }
+
+      const res = await fetch(CUSTOMER_FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ username, email, password })
+      });
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        customerFormError.textContent = result.error || 'Gagal membuat akun customer.';
+        customerFormError.style.display = 'block';
+        btnCustomerSubmit.disabled = false;
+        btnCustomerSubmit.textContent = 'Buat Akun';
+        return;
+      }
+
+      closeCustomerForm();
+      showMiniToast('Customer @' + username + ' berhasil dibuat');
+      loadCustomerList();
+      loadCategories(); // biar folder baru customer langsung muncul di drawer
+
+    } catch (err) {
+      customerFormError.textContent = 'Gagal terhubung ke server: ' + err.message;
+      customerFormError.style.display = 'block';
+      btnCustomerSubmit.disabled = false;
+      btnCustomerSubmit.textContent = 'Buat Akun';
+    }
+  });
+
+  function escapeHtmlAdmin(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
 
   themeCheckbox.addEventListener('change', (e) => {
     const isLight = !e.target.checked;
