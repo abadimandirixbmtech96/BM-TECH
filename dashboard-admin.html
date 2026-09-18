@@ -1818,6 +1818,250 @@
     .analytics-overlay .export-row,
     .analytics-overlay .analytics-search-box { display: none !important; }
   }
+
+  /* =====================================================================
+     --- Note Detail (Preview): tampil dulu sebelum masuk editor. Klik kartu
+     note di dashboard sekarang buka preview read-only ini (sama seperti
+     viewer publik), lalu tombol pensil di sini yang membuka editor.
+     ===================================================================== */
+  .note-detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    z-index: 150;
+    display: flex;
+    flex-direction: column;
+    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 20px) 16px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(15px);
+    transition: all 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .note-detail-overlay.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+  .note-detail-overlay .settings-top h2 {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .note-detail-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+
+  .note-detail-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+    width: fit-content;
+  }
+
+  .note-detail-table-wrap {
+    flex: 1;
+    overflow: auto;
+    border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-lg);
+  }
+
+  .note-detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+  .note-detail-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--card-surface-dark);
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 10px 12px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--card-border-dark);
+  }
+
+  .note-detail-table tbody td {
+    padding: 10px 12px;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--card-border-dark);
+    white-space: nowrap;
+  }
+  .note-detail-table tbody tr:last-child td { border-bottom: none; }
+
+  .note-detail-img { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; display: block; cursor: pointer; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .note-detail-img:active { transform: scale(0.92); }
+
+  .note-detail-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+  /* --- Tombol Share (liquid glass, beranimasi pulse) --- */
+  .btn-share-note { position: relative; }
+  .btn-share-note::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(240, 165, 41, 0.55);
+    animation: sharePulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    pointer-events: none;
+  }
+  @keyframes sharePulse {
+    0% { transform: scale(0.82); opacity: 0.9; }
+    70% { transform: scale(1.4); opacity: 0; }
+    100% { transform: scale(1.4); opacity: 0; }
+  }
+  .btn-share-note:active { transform: scale(0.9); }
+
+  /* --- Tombol Pensil: masuk ke editor (perilaku "klik note" yang lama) --- */
+  .btn-edit-note { background: var(--accent-yellow); color: #1C1B19; }
+  .btn-edit-note:active { transform: scale(0.9); }
+
+  /* --- Lightbox: tap thumbnail gambar buat lihat ukuran penuh --- */
+  .image-lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.88);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .image-lightbox-overlay.open { opacity: 1; pointer-events: auto; }
+  .image-lightbox-overlay img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    transform: scale(0.92);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .image-lightbox-overlay.open img { transform: scale(1); }
+  .image-lightbox-close {
+    position: absolute;
+    top: calc(var(--safe-top) + 16px);
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: none;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* --- Share Sheet: liquid glass popup dari bawah --- */
+  .share-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 170;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .share-sheet-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .share-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(28, 27, 30, 0.85);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    z-index: 180;
+    padding: 12px 20px calc(var(--safe-bottom) + 20px) 20px;
+    transform: translateY(100%);
+    transition: transform 0.38s cubic-bezier(0.18, 0.85, 0.3, 1);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  .share-sheet.open { transform: translateY(0); }
+
+  .share-sheet-handle { width: 40px; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.28); margin: 4px auto 18px auto; }
+  .share-sheet-title { font-size: 16.5px; font-weight: 800; color: #fff; text-align: center; margin-bottom: 20px; }
+
+  .share-option-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    color: #fff;
+    text-align: left;
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease;
+  }
+  .share-option-btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.1); }
+  .share-option-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .share-option-icon.pdf { background: rgba(240, 85, 92, 0.15); color: #F0555C; }
+  .share-option-icon.img { background: rgba(61, 214, 140, 0.15); color: #3DD68C; }
+  .share-option-icon.link { background: rgba(240, 165, 41, 0.15); color: var(--accent-yellow); }
+  .share-option-icon svg { width: 22px; height: 22px; }
+  .share-option-title { font-size: 14.5px; font-weight: 700; }
+  .share-option-sub { font-size: 11.5px; font-weight: 500; color: rgba(255, 255, 255, 0.55); margin-top: 2px; }
+
+  .share-sheet-cancel {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .share-sheet-cancel:active { background: rgba(255, 255, 255, 0.14); }
+
+  /* --- Loading overlay ringan saat lagi generate PDF/Gambar --- */
+  .share-loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 190;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .share-loading-overlay.show { display: flex; }
+  .share-loading-spinner {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--accent-yellow);
+    animation: shareSpin 0.7s linear infinite;
+  }
+  @keyframes shareSpin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -2147,6 +2391,81 @@
 </div>
 
 <!-- Analytics Overlay (Analisa & Laporan) -->
+<!-- Note Detail Overlay: preview read-only dulu sebelum masuk editor -->
+<div class="note-detail-overlay" id="noteDetailOverlay">
+  <div class="settings-top">
+    <button class="header-btn" id="btnNoteDetailBack">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2 id="noteDetailTitle">Untitled</h2>
+    <div class="note-detail-actions">
+      <button class="header-btn btn-share-note" id="btnNoteDetailShare" aria-label="Bagikan">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
+      <button class="header-btn btn-edit-note" id="btnNoteDetailEdit" aria-label="Ubah">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+      </button>
+    </div>
+  </div>
+  <span class="note-detail-badge">Mode Lihat Saja</span>
+  <div class="note-detail-table-wrap">
+    <table class="note-detail-table" id="noteDetailTable"></table>
+  </div>
+</div>
+
+<!-- Lightbox: lihat gambar ukuran penuh (tap thumbnail di tabel preview) -->
+<div class="image-lightbox-overlay" id="imageLightboxOverlay">
+  <button class="image-lightbox-close" id="btnLightboxClose">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <img id="lightboxImage" src="" alt="Gambar">
+</div>
+
+<!-- Share Sheet: pilihan Bagikan Link / Export PDF / Export Gambar -->
+<div class="share-sheet-overlay" id="shareSheetOverlay"></div>
+<div class="share-sheet" id="shareSheet">
+  <div class="share-sheet-handle"></div>
+  <p class="share-sheet-title">Bagikan Tabel</p>
+
+  <div class="share-option-btn" id="btnShareCopyLink">
+    <div class="share-option-icon link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+    </div>
+    <div>
+      <p class="share-option-title">Bagikan Link</p>
+      <p class="share-option-sub">Copy link, tinggal tempel di WhatsApp/sosmed</p>
+    </div>
+  </div>
+
+  <div class="share-option-btn" id="btnShareExportPdf">
+    <div class="share-option-icon pdf">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    </div>
+    <div>
+      <p class="share-option-title">Export ke PDF</p>
+      <p class="share-option-sub">Dokumen siap cetak, teksnya tetap bisa di-select</p>
+    </div>
+  </div>
+
+  <div class="share-option-btn" id="btnShareExportImage">
+    <div class="share-option-icon img">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    </div>
+    <div>
+      <p class="share-option-title">Export ke Gambar</p>
+      <p class="share-option-sub">PNG, gampang dikirim lewat WhatsApp/chat</p>
+    </div>
+  </div>
+
+  <button class="share-sheet-cancel" id="btnShareCancel">Batal</button>
+</div>
+
+<!-- Loading overlay saat generate PDF/Gambar -->
+<div class="share-loading-overlay" id="shareLoadingOverlay">
+  <div class="share-loading-spinner"></div>
+  <span id="shareLoadingText">Menyiapkan file...</span>
+</div>
+
 <div class="analytics-overlay" id="analyticsOverlay">
   <div class="settings-top">
     <button class="header-btn" id="btnAnalyticsBack">
@@ -2266,6 +2585,9 @@
 </div>
 
 <!-- Supabase Client SDK -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
@@ -2765,7 +3087,7 @@
         if (noteSelectionMode) {
           toggleNoteSelection(card.dataset.id);
         } else {
-          openEditor(card.dataset.id);
+          openNoteDetail(card.dataset.id);
         }
       });
 
@@ -3729,6 +4051,359 @@
       // Autosave real-time dari editor — cukup refresh data di background,
       // JANGAN menutup modal editor (user masih lagi ngetik).
       loadCategories();
+    }
+  });
+
+  // =====================================================================
+  // --- NOTE DETAIL (PREVIEW): klik kartu note sekarang buka preview
+  // read-only dulu (sama seperti viewer publik), BUKAN langsung ke editor.
+  // Tombol pensil di preview inilah yang membuka editor.
+  // =====================================================================
+  const noteDetailOverlay = document.getElementById('noteDetailOverlay');
+  let currentDetailNote = null; // note yang lagi dibuka di preview, dipakai fitur Share & tombol Edit
+
+  function openNoteDetail(noteId) {
+    const note = notesData.find(n => n.id === noteId);
+    if (!note) return;
+    currentDetailNote = note;
+
+    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+
+    const tableEl = document.getElementById('noteDetailTable');
+    const content = note.content;
+
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
+      tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
+    } else {
+      const cols = content.columns;
+      const theadHtml = '<thead><tr>' + cols.map(c => `<th>${escapeHtml(c.label || '')}</th>`).join('') + '</tr></thead>';
+      const tbodyHtml = '<tbody>' + content.rows.map(row => {
+        return '<tr>' + cols.map(c => {
+          const val = row.cells ? row.cells[c.id] : '';
+          if (c.type === 'image' && val) {
+            return `<td><img src="${escapeHtml(val)}" class="note-detail-img" alt="Gambar"></td>`;
+          }
+          return `<td>${escapeHtml(val || '')}</td>`;
+        }).join('') + '</tr>';
+      }).join('') + '</tbody>';
+      tableEl.innerHTML = theadHtml + tbodyHtml;
+    }
+
+    noteDetailOverlay.classList.add('open');
+  }
+
+  document.getElementById('btnNoteDetailBack').addEventListener('click', () => noteDetailOverlay.classList.remove('open'));
+
+  // Tombol pensil: tutup preview, lanjut ke editor seperti perilaku lama
+  document.getElementById('btnNoteDetailEdit').addEventListener('click', () => {
+    if (!currentDetailNote) return;
+    noteDetailOverlay.classList.remove('open');
+    openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });
+  });
+
+  // --- Lightbox: tap thumbnail gambar buat lihat ukuran penuh ---
+  const imageLightboxOverlay = document.getElementById('imageLightboxOverlay');
+  const lightboxImage = document.getElementById('lightboxImage');
+
+  function openLightbox(src) {
+    lightboxImage.src = src;
+    imageLightboxOverlay.classList.add('open');
+  }
+  function closeLightbox() {
+    imageLightboxOverlay.classList.remove('open');
+  }
+  imageLightboxOverlay.addEventListener('click', closeLightbox);
+  document.getElementById('btnLightboxClose').addEventListener('click', closeLightbox);
+
+  // Delegasi klik: tabel di-render ulang tiap buka note, jadi listener dipasang
+  // di container-nya (noteDetailTable), bukan per-<img> yang keburu hilang
+  document.getElementById('noteDetailTable').addEventListener('click', (e) => {
+    const img = e.target.closest('.note-detail-img');
+    if (img) openLightbox(img.src);
+  });
+
+  // =====================================================================
+  // --- FITUR SHARE: Bagikan Link, Export ke PDF (teks asli) & Export ke
+  // Gambar (screenshot tabel), sama seperti di viewer publik.
+  // =====================================================================
+  const shareSheetOverlay = document.getElementById('shareSheetOverlay');
+  const shareSheet = document.getElementById('shareSheet');
+  const shareLoadingOverlay = document.getElementById('shareLoadingOverlay');
+  const shareLoadingText = document.getElementById('shareLoadingText');
+
+  function openShareSheet() {
+    shareSheetOverlay.classList.add('open');
+    shareSheet.classList.add('open');
+  }
+  function closeShareSheet() {
+    shareSheetOverlay.classList.remove('open');
+    shareSheet.classList.remove('open');
+  }
+  function showShareLoading(text) {
+    shareLoadingText.textContent = text;
+    shareLoadingOverlay.classList.add('show');
+  }
+  function hideShareLoading() {
+    shareLoadingOverlay.classList.remove('show');
+  }
+
+  document.getElementById('btnNoteDetailShare').addEventListener('click', openShareSheet);
+  shareSheetOverlay.addEventListener('click', closeShareSheet);
+  document.getElementById('btnShareCancel').addEventListener('click', closeShareSheet);
+
+  // Ubah teks jadi slug URL yang rapi: huruf kecil, spasi/simbol jadi strip
+  function slugify(str) {
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // buang aksen kalau ada
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'folder';
+  }
+
+  function formatDateForSlug(iso) {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}-${mm}-${d.getFullYear()}`;
+  }
+
+  // --- Bagikan Link Tabel: link-nya berbentuk nama-folder-tanggal-<id asli>,
+  // sama seperti di viewer publik — nama foldernya diambil dari categoriesData
+  // karena notes di admin tidak menyimpan nama folder secara langsung.
+  document.getElementById('btnShareCopyLink').addEventListener('click', async () => {
+    if (!currentDetailNote) return;
+    closeShareSheet();
+
+    const cat = categoriesData.find(c => c.id === currentDetailNote.folder_id);
+    const folderSlug = slugify(cat ? cat.name : '');
+    const dateSlug = formatDateForSlug(currentDetailNote.created_at);
+    const prettySlug = [folderSlug, dateSlug, currentDetailNote.id].filter(Boolean).join('-');
+
+    const link = `${window.location.origin}/api/share/${prettySlug}`;
+
+    try {
+      await navigator.clipboard.writeText(link);
+      showLiquidAlert('Link Disalin!', 'Link tabel ini sudah disalin. Tinggal tempel (paste) di WhatsApp atau sosmed buat dibagikan.');
+    } catch (err) {
+      // Fallback kalau navigator.clipboard nggak didukung (browser lama / bukan HTTPS)
+      showLiquidAlert('Link Tabel Ini', link);
+    }
+  });
+
+  function safeFileName(str) {
+    return String(str || 'tabel').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'tabel';
+  }
+
+  // --- Export ke PDF: bikin tabel PDF asli dari data (bukan gambar), pakai jsPDF + autoTable ---
+  async function urlToBase64(url) {
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      return await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.error('Gagal ambil gambar buat PDF:', url, err);
+      return null;
+    }
+  }
+
+  function getImageFormat(dataUrl) {
+    const m = /^data:image\/(\w+);/.exec(dataUrl || '');
+    if (!m) return 'JPEG';
+    const fmt = m[1].toUpperCase();
+    return fmt === 'JPG' ? 'JPEG' : fmt;
+  }
+
+  document.getElementById('btnShareExportPdf').addEventListener('click', async () => {
+    if (!currentDetailNote) return;
+    const content = currentDetailNote.content;
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
+      alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
+      return;
+    }
+
+    closeShareSheet();
+    showShareLoading('Memuat gambar...');
+
+    try {
+      const imageColIds = content.columns.filter(c => c.type === 'image').map(c => c.id);
+      const imageCache = {}; // key: "rowIndex-colId" -> base64 data URL
+
+      if (imageColIds.length > 0) {
+        for (let r = 0; r < content.rows.length; r++) {
+          for (const colId of imageColIds) {
+            const val = content.rows[r].cells ? content.rows[r].cells[colId] : null;
+            if (val) {
+              const base64 = await urlToBase64(val);
+              if (base64) imageCache[`${r}-${colId}`] = base64;
+            }
+          }
+        }
+      }
+
+      showShareLoading('Membuat PDF...');
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+      const title = currentDetailNote.title || 'Untitled';
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text(title, 40, 36);
+
+      const head = [content.columns.map(c => c.label || '')];
+      const body = content.rows.map(row =>
+        content.columns.map(c => {
+          if (c.type === 'image') return '';
+          const val = row.cells ? row.cells[c.id] : '';
+          return val || '';
+        })
+      );
+
+      doc.autoTable({
+        head,
+        body,
+        startY: 50,
+        styles: { fontSize: 9, cellPadding: 6, overflow: 'linebreak', minCellHeight: 28 },
+        headStyles: { fillColor: [217, 165, 54], textColor: [30, 28, 20], fontStyle: 'bold' },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+        margin: { left: 30, right: 30 },
+        didDrawCell: (data) => {
+          if (data.section !== 'body') return;
+          const col = content.columns[data.column.index];
+          if (!col || col.type !== 'image') return;
+          const base64 = imageCache[`${data.row.index}-${col.id}`];
+          if (!base64) return;
+          const size = Math.min(data.cell.height - 6, 22);
+          try {
+            doc.addImage(base64, getImageFormat(base64), data.cell.x + 3, data.cell.y + 3, size, size);
+          } catch (imgErr) {
+            console.error('Gagal nyisip gambar ke PDF:', imgErr);
+          }
+        }
+      });
+
+      doc.save(`${safeFileName(title)}.pdf`);
+    } catch (err) {
+      console.error('Gagal export PDF:', err);
+      alert('Gagal membuat PDF: ' + err.message);
+    } finally {
+      hideShareLoading();
+    }
+  });
+
+  // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
+  function buildExportTableEl(note) {
+    const content = note.content;
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed; left:-99999px; top:0; background:#ffffff; padding:24px; width:max-content;';
+
+    const title = document.createElement('h2');
+    title.textContent = note.title || 'Untitled';
+    title.style.cssText = "font-family:'Inter',sans-serif; font-size:19px; font-weight:800; color:#1a1a1a; margin:0 0 16px 0;";
+    wrap.appendChild(title);
+
+    const table = document.createElement('table');
+    table.style.cssText = "border-collapse:collapse; font-family:'Inter',sans-serif; font-size:13px;";
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
+    content.columns.forEach(col => {
+      const th = document.createElement('th');
+      th.textContent = col.label || '';
+      th.style.cssText = 'background:#D9A536; color:#1C1B19; font-weight:700; text-transform:uppercase; font-size:11px; letter-spacing:0.03em; padding:11px 16px; text-align:left; white-space:nowrap; border:1px solid #c7962d;';
+      headRow.appendChild(th);
+    });
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    content.rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      tr.style.background = i % 2 === 0 ? '#ffffff' : '#f4f4f4';
+      content.columns.forEach(col => {
+        const td = document.createElement('td');
+        const val = row.cells ? row.cells[col.id] : '';
+        td.style.cssText = 'padding:10px 16px; color:#1a1a1a; white-space:nowrap; border:1px solid #e2e2e2;';
+        if (col.type === 'image' && val) {
+          const img = document.createElement('img');
+          img.src = val;
+          img.crossOrigin = 'anonymous';
+          img.style.cssText = 'width:48px; height:48px; object-fit:cover; border-radius:6px; display:block;';
+          td.appendChild(img);
+        } else {
+          td.textContent = val !== undefined && val !== null ? val : '';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    document.body.appendChild(wrap);
+    return wrap;
+  }
+
+  function waitForImages(container) {
+    const imgs = [...container.querySelectorAll('img')];
+    return Promise.all(imgs.map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise(resolve => {
+        img.onload = resolve;
+        img.onerror = resolve;
+      });
+    }));
+  }
+
+  document.getElementById('btnShareExportImage').addEventListener('click', async () => {
+    if (!currentDetailNote) return;
+    const content = currentDetailNote.content;
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
+      alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
+      return;
+    }
+
+    closeShareSheet();
+    showShareLoading('Membuat gambar...');
+
+    const exportEl = buildExportTableEl(currentDetailNote);
+
+    try {
+      await waitForImages(exportEl);
+
+      const canvas = await html2canvas(exportEl, {
+        backgroundColor: '#ffffff',
+        scale: 2,
+        useCORS: true
+      });
+
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          alert('Gagal membuat gambar: browser tidak mendukung.');
+          return;
+        }
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.download = `${safeFileName(currentDetailNote.title)}.png`;
+        link.href = blobUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Gagal export gambar:', err);
+      alert('Gagal membuat gambar: ' + err.message);
+    } finally {
+      document.body.removeChild(exportEl);
+      hideShareLoading();
     }
   });
 
