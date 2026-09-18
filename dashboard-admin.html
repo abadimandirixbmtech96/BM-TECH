@@ -3496,6 +3496,7 @@
 
   // --- Kelola Customer ---
   const CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/create-customer';
+  const DELETE_CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/delete-customer';
   const customerScreen = document.getElementById('customerScreen');
   const btnOpenCustomers = document.getElementById('btnOpenCustomers');
   const btnCustomerScreenBack = document.getElementById('btnCustomerScreenBack');
@@ -3609,14 +3610,46 @@
 
     if (btn.dataset.action === 'remove') {
       const username = btn.dataset.username;
-      if (!confirm('Hapus akses login customer "' + username + '"? Data/folder yang sudah ada tetap tersimpan, tapi customer ini tidak bisa login lagi.')) return;
-      const { error } = await supabaseClient.from('customers').delete().eq('id', btn.dataset.id);
-      if (error) {
-        alert('Gagal menghapus: ' + error.message);
-        return;
+      const custId = btn.dataset.id;
+      if (!confirm('Hapus akun customer "' + username + '" SEPENUHNYA (email, password, username login)? Folder & data tabel yang sudah dibuat TETAP tersimpan sebagai arsip.')) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Menghapus...';
+
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+          alert('Sesi admin habis, silakan login ulang.');
+          btn.disabled = false;
+          btn.textContent = 'Hapus';
+          return;
+        }
+
+        const res = await fetch(DELETE_CUSTOMER_FN_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ customer_id: custId })
+        });
+        const result = await res.json();
+
+        if (!res.ok || result.error) {
+          alert('Gagal menghapus: ' + (result.error || 'terjadi kesalahan'));
+          btn.disabled = false;
+          btn.textContent = 'Hapus';
+          return;
+        }
+
+        showMiniToast('Akun customer "' + username + '" dihapus sepenuhnya');
+        loadCustomerList();
+      } catch (err) {
+        alert('Gagal terhubung ke server: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Hapus';
       }
-      showMiniToast('Akses customer "' + username + '" dihapus');
-      loadCustomerList();
     }
   });
 
