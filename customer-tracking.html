@@ -1082,16 +1082,51 @@
     btnSimpan.textContent = 'Menyimpan...';
 
     const now = new Date();
-    const preview = itemsResult.map(it=> `${it.nama} ×${it.jumlahAwal}`).join(', ');
+    const DAY_NAMES_ID = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+    const pad2 = n => String(n).padStart(2,'0');
+    const tglSlash = pad2(now.getDate()) + '/' + pad2(now.getMonth()+1) + '/' + String(now.getFullYear()).slice(-2) + ' • ' + DAY_NAMES_ID[now.getDay()];
+    const jam = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+
+    const barangDanJumlah = itemsResult.map(it=> `${it.nama} ×${it.jumlahAwal}`).join(', ');
+    const barangDibawa = itemsResult.filter(it=>it.dibawa>0).map(it=> `${it.nama} ×${it.dibawa}`).join(', ');
+    const barangDitinggal = itemsResult.filter(it=>it.ditinggal>0).map(it=> `${it.nama} ×${it.ditinggal}`).join(', ');
+
+    // Skema content HARUS sama dengan yang dipakai seluruh aplikasi (table_templates
+    // "TABEL BUKU BESAR"): { columns:[...], rows:[{cells:{...}}], hasTable:true, noteBody:'' }
+    // supaya note ini kebaca benar di note-detail viewer admin, bukan JSON bebas.
+    const columns = [
+      { id:'no', type:'no', label:'No', placeholder:'No' },
+      { id:'col_7vokwpy', type:'date', label:'TANGGAL ', placeholder:'Tanggal' },
+      { id:'col_gq28ofp', type:'time', label:'JAM', placeholder:'Jam' },
+      { id:'col_7y9vteq', type:'text', label:'P. JAWAB', placeholder:'Kolom Baru' },
+      { id:'col_r7c2uzw', type:'text', label:'CUSTOMER ', placeholder:'Kolom Baru' },
+      { id:'col_c0olgg1', type:'text', label:'BARANG DAN JUMLAH ', placeholder:'Kolom Baru' },
+      { id:'col_4vr40wf', type:'text', label:'BARANG YANG DIBAWA ', placeholder:'Kolom Baru' },
+      { id:'col_2jz56od', type:'text', label:'BARANG YANG DITINGGAL ', placeholder:'Kolom Baru' },
+      { id:'col_kp4e28q', type:'text', label:'KETERANGAN ', placeholder:'Kolom Baru' },
+      { id:'col_sxolep0', type:'text', label:'HARGA ', placeholder:'Kolom Baru' }
+    ];
+    const row = { cells: {
+      no: '1',
+      col_7vokwpy: tglSlash,
+      col_gq28ofp: jam,
+      col_7y9vteq: myDisplayName,
+      col_r7c2uzw: myDisplayName,
+      col_c0olgg1: barangDanJumlah,
+      col_4vr40wf: barangDibawa,
+      col_2jz56od: barangDitinggal,
+      col_kp4e28q: keterangan,
+      col_sxolep0: harga.toLocaleString('id-ID')
+    }};
 
     const { error } = await supabaseClient.from('notes').insert({
       folder_id: myFolderId,
-      title: 'Transaksi ' + formatTanggal(now),
-      preview: preview,
+      title: tglSlash + ' ' + jam,
+      preview: tglSlash + '\n' + jam,
       amount: harga,
-      tx_category: 'customer_input',
-      date_tag: now.toISOString().slice(0,10),
-      content: { items: itemsResult, keterangan: keterangan, customer_display_name: myDisplayName }
+      tx_category: null,
+      date_tag: jam,
+      content: { columns, rows: [row], hasTable: true, noteBody: '' }
     });
 
     btnSimpan.disabled = false;
@@ -1151,13 +1186,10 @@
     emptyEl.style.display = 'none';
 
     myTransactions.forEach(t=>{
-      const c = t.content || {};
-      const items = c.items || [];
-      const barangJumlah = items.map(it=> `${it.nama} ×${it.jumlahAwal}`).join(', ');
-      const ditinggalList = items.filter(it=>it.ditinggal>0);
-      const ditinggalStr = ditinggalList.length
-        ? ditinggalList.map(it=> `${it.nama} ×${it.ditinggal}`).join(', ')
-        : null;
+      const cells = (t.content && Array.isArray(t.content.rows) && t.content.rows[0] && t.content.rows[0].cells) || {};
+      const barangJumlah = cells.col_c0olgg1 || '—';
+      const ditinggalStr = cells.col_2jz56od && cells.col_2jz56od.trim() ? cells.col_2jz56od : null;
+      const keterangan = cells.col_kp4e28q || '';
       const tgl = new Date(t.created_at);
 
       const card = document.createElement('div');
@@ -1173,7 +1205,7 @@
             ? `<span class="left-tag">Ditinggal: ${escapeHtml(ditinggalStr)}</span>`
             : `<span class="left-tag zero">Semua barang sudah dibawa</span>`}
         </div>
-        ${c.keterangan ? `<div class="db-record-note">${escapeHtml(c.keterangan)}</div>` : ''}
+        ${keterangan ? `<div class="db-record-note">${escapeHtml(keterangan)}</div>` : ''}
       `;
       listEl.appendChild(card);
     });
