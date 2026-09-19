@@ -2,14 +2,32 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Data-Customer-Tracking</title>
 <meta name="theme-color" content="#ffd600">
+<meta name="color-scheme" content="light dark">
+<script>
+/* Terapkan tema tersimpan sebelum halaman digambar supaya tidak berkedip */
+(function(){
+  var pref = 'default';
+  try{
+    var s = localStorage.getItem('bmtech-theme');
+    if(s === 'light' || s === 'dark' || s === 'default') pref = s;
+  }catch(e){}
+  var dark = pref === 'dark' || (pref === 'default' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  var root = document.documentElement;
+  root.setAttribute('data-theme', dark ? 'dark' : 'light');
+  root.setAttribute('data-theme-pref', pref);
+  var m = document.querySelector('meta[name="theme-color"]');
+  if(m) m.setAttribute('content', dark ? '#0f1011' : '#ffd600');
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root{
+    color-scheme:light;
     --ink:#000000;
     --paper:#ffffff;
     --bg:#dee1e4;
@@ -23,10 +41,34 @@
     --red-soft:#ffc7c2;
     --text-1:#2b2b2b;
     --text-2:#595959;
+    --on-accent:#000000;
+    --hazard:#000000;
+    --zebra:#f0f1f2;
+    --disabled-bg:#cfcfcf;
+    --disabled-fg:#5e5e5e;
+    --error-text:#b00020;
+    --overlay:rgba(0,0,0,0.6);
     --bw:3px;
     --bw-sm:2px;
     --shadow:4px 4px 0 var(--ink);
     --shadow-lg:6px 6px 0 var(--ink);
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ink:#f1f1ee;
+    --paper:#1b1c1f;
+    --bg:#0f1011;
+    --yellow-soft:#4d4300;
+    --blue-soft:#27325f;
+    --green-soft:#1f4d36;
+    --red-soft:#5e2823;
+    --text-1:#d6d6d3;
+    --text-2:#a4a4a0;
+    --zebra:#232529;
+    --disabled-bg:#2c2e32;
+    --disabled-fg:#8d8d8a;
+    --error-text:#ff9a90;
+    --overlay:rgba(0,0,0,0.72);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -37,11 +79,12 @@
     color:var(--ink);
     background:var(--bg);
     min-height:100vh;
+    min-height:100dvh;
     overflow-x:hidden;
     -webkit-font-smoothing:antialiased;
   }
   button{ font-family:inherit; color:inherit; }
-  ::selection{ background:var(--yellow); color:var(--ink); }
+  ::selection{ background:var(--yellow); color:var(--on-accent); }
 
   :focus-visible{ outline:3px solid var(--ink); outline-offset:3px; }
 
@@ -50,7 +93,12 @@
     max-width:560px;
     margin:0 auto;
     min-height:100vh;
-    padding:18px 16px 130px;
+    min-height:100dvh;
+    padding:
+      calc(18px + env(safe-area-inset-top))
+      max(16px, env(safe-area-inset-right))
+      calc(130px + env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
   }
 
   /* ---------- Top bar: papan nama bengkel dengan strip peringatan ---------- */
@@ -72,7 +120,7 @@
     left:0; right:0; bottom:0;
     height:16px;
     border-top:var(--bw) solid var(--ink);
-    background:repeating-linear-gradient(-45deg, var(--ink) 0 10px, var(--yellow) 10px 20px);
+    background:repeating-linear-gradient(-45deg, var(--hazard) 0 10px, var(--yellow) 10px 20px);
   }
   .brand{ display:flex; flex-direction:column; gap:3px; min-width:0; }
   .brand-title{
@@ -88,7 +136,7 @@
     line-height:1.3;
   }
 
-  .back-btn{
+  .settings-btn{
     width:44px; height:44px;
     padding:0;
     display:flex; align-items:center; justify-content:center;
@@ -99,8 +147,11 @@
     flex-shrink:0;
     transition:transform .08s ease, box-shadow .08s ease, background .12s ease;
   }
-  .back-btn:active{ transform:translate(3px,3px); box-shadow:0 0 0 var(--ink); background:var(--red-soft); }
-  .back-btn svg{ width:20px; height:20px; }
+  @media (hover:hover){ .settings-btn:hover{ background:var(--yellow-soft); } }
+  .settings-btn:active{ transform:translate(3px,3px); box-shadow:0 0 0 var(--ink); background:var(--yellow-soft); }
+  .settings-btn.active{ background:var(--yellow); color:var(--on-accent); }
+  .settings-btn svg{ width:22px; height:22px; transition:transform .35s ease; }
+  .settings-btn.active svg{ transform:rotate(60deg); }
 
   .user-chip{
     display:flex;
@@ -119,7 +170,7 @@
     background:var(--blue);
     border:var(--bw-sm) solid var(--ink);
     display:flex; align-items:center; justify-content:center;
-    font-weight:900; font-size:16px; color:var(--ink);
+    font-weight:900; font-size:16px; color:var(--on-accent);
     flex-shrink:0;
   }
   .user-meta{ line-height:1.2; min-width:0; }
@@ -172,7 +223,7 @@
     border-radius:0;
     padding:11px 12px;
     color:var(--ink);
-    font-size:15px;
+    font-size:16px;
     font-family:inherit;
     font-weight:600;
     outline:none;
@@ -193,7 +244,7 @@
     font-family:inherit;
     font-weight:800;
     font-size:15px;
-    color:var(--ink);
+    color:var(--on-accent);
     cursor:pointer;
     display:flex;
     align-items:center;
@@ -209,8 +260,8 @@
   }
   .btn:not(:disabled):active{ transform:translate(4px,4px); box-shadow:0 0 0 var(--ink); }
   .btn:disabled{
-    background:#cfcfcf;
-    color:#5e5e5e;
+    background:var(--disabled-bg);
+    color:var(--disabled-fg);
     border-style:dashed;
     box-shadow:none;
     cursor:not-allowed;
@@ -218,7 +269,8 @@
 
   .btn-primary{ background:var(--yellow); padding:12px 18px; }
   .btn-go{ background:var(--green); padding:12px 18px; }
-  .btn-ghost{ background:var(--paper); padding:12px 18px; }
+  .btn-ghost{ background:var(--paper); color:var(--ink); padding:12px 18px; }
+  .btn-danger{ background:var(--red); padding:12px 18px; }
   .btn-add{
     margin-top:16px;
     width:100%;
@@ -279,7 +331,7 @@
   .bottom-nav{
     position:fixed;
     left:50%;
-    bottom:20px;
+    bottom:calc(20px + env(safe-area-inset-bottom));
     transform:translateX(-50%);
     display:flex;
     width:min(380px, calc(100% - 32px));
@@ -307,7 +359,7 @@
   .nav-item + .nav-item{ border-left:var(--bw) solid var(--ink); }
   .nav-item svg{ width:17px; height:17px; flex-shrink:0; }
   .nav-item:active{ background:var(--yellow-soft); }
-  .nav-item.active{ background:var(--yellow); }
+  .nav-item.active{ background:var(--yellow); color:var(--on-accent); }
   .nav-item:focus-visible{ outline-offset:-7px; }
 
   /* ---------- Riwayat: pemilih bulan + ringkasan ---------- */
@@ -353,7 +405,7 @@
     border:var(--bw) solid var(--ink);
     box-shadow:var(--shadow-lg);
   }
-  .recap-money{ background:var(--yellow); }
+  .recap-money{ background:var(--yellow); color:var(--on-accent); }
   .recap-label{ font-size:13px; font-weight:700; margin-bottom:10px; line-height:1.25; }
   .recap-value{
     font-size:28px;
@@ -379,6 +431,7 @@
     overflow:auto;
     -webkit-overflow-scrolling:touch;
     max-height:70vh;
+    max-height:70dvh;
     background:var(--paper);
     border:var(--bw) solid var(--ink);
     box-shadow:var(--shadow-lg);
@@ -398,9 +451,9 @@
     white-space:nowrap;
     font-size:13px;
     font-weight:800;
-    color:var(--ink);
+    color:var(--on-accent);
     background:var(--yellow);
-    box-shadow:inset 0 -3px 0 var(--ink);
+    box-shadow:inset 0 -3px 0 var(--hazard);
   }
   .riwayat-table tbody td{
     padding:11px 12px;
@@ -414,27 +467,29 @@
     text-overflow:ellipsis;
   }
   .riwayat-table tbody tr:last-child td{ border-bottom:none; }
-  .riwayat-table tbody tr:nth-child(even){ background:#f0f1f2; }
+  .riwayat-table tbody tr:nth-child(even){ background:var(--zebra); }
   .riwayat-table .cell-price{ font-weight:900; background:var(--yellow-soft); }
   .riwayat-table .cell-muted{ color:var(--text-2); }
 
   /* ---------- Modal ---------- */
   .modal-overlay{
     position:fixed; inset:0;
-    background:rgba(0,0,0,0.6);
+    background:var(--overlay);
     z-index:100;
     display:flex;
     align-items:flex-end;
     justify-content:center;
     opacity:0;
     pointer-events:none;
-    transition:opacity .2s ease;
+    visibility:hidden;
+    transition:opacity .2s ease, visibility 0s linear .2s;
   }
-  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; visibility:visible; transition-delay:0s; }
   .modal-sheet{
     width:100%;
     max-width:560px;
     max-height:88vh;
+    max-height:88dvh;
     padding:12px 16px calc(18px + env(safe-area-inset-bottom));
     display:flex;
     flex-direction:column;
@@ -488,6 +543,7 @@
     padding:0 14px;
     background:var(--yellow);
     border-right:var(--bw) solid var(--ink);
+    color:var(--on-accent);
     font-weight:900;
     font-size:16px;
   }
@@ -512,7 +568,7 @@
     margin:-14px 0 22px;
     font-size:13px;
     font-weight:800;
-    color:#b00020;
+    color:var(--error-text);
   }
   .rp-input-wrap.error + .field-error{ display:block; }
 
@@ -550,14 +606,14 @@
     border:none;
     border-radius:0;
     background:var(--yellow);
-    color:var(--ink);
+    color:var(--on-accent);
     font-size:20px;
     font-weight:900;
     cursor:pointer;
   }
   .stepper button:first-child{ border-right:var(--bw-sm) solid var(--ink); }
   .stepper button:last-child{ border-left:var(--bw-sm) solid var(--ink); }
-  .stepper button:active{ background:var(--yellow-soft); }
+  .stepper button:active{ background:var(--yellow-soft); color:var(--ink); }
   .stepper .step-val{
     width:46px;
     display:flex; align-items:center; justify-content:center;
@@ -635,12 +691,12 @@
   .toast{
     position:fixed;
     left:50%;
-    bottom:112px;
+    bottom:calc(112px + env(safe-area-inset-bottom));
     transform:translateX(-50%) translateY(20px);
     padding:12px 18px;
     font-size:14px;
     font-weight:800;
-    color:var(--ink);
+    color:var(--on-accent);
     z-index:200;
     display:flex;
     align-items:center;
@@ -648,7 +704,8 @@
     opacity:0;
     pointer-events:none;
     transition:opacity .2s ease, transform .2s ease;
-    white-space:nowrap;
+    width:max-content;
+    max-width:calc(100% - 32px);
     background:var(--green);
     border:var(--bw) solid var(--ink);
     box-shadow:var(--shadow);
@@ -658,10 +715,211 @@
     transform:translateX(-50%) translateY(0);
     pointer-events:auto;
   }
-  .toast svg{ width:17px; height:17px; stroke:var(--ink); flex-shrink:0; }
+  .toast svg{ width:17px; height:17px; stroke:var(--on-accent); flex-shrink:0; }
+
+  /* ---------- Tata letak halaman Input (1 kolom di layar kecil, 2 kolom di layar lebar) ---------- */
+  .input-layout{ display:block; }
+  .recap-grid.recap-grid--2{ grid-template-columns:repeat(2, minmax(0,1fr)); }
+
+  /* Tabel daftar barang cuma 3 kolom: jangan dipaksa selebar tabel riwayat */
+  #itemTable{ min-width:0; }
+  #itemTable tbody td{ white-space:normal; overflow-wrap:anywhere; max-width:none; }
+  #itemTable th:last-child,
+  #itemTable td:last-child{ width:1%; white-space:nowrap; text-align:right; }
+  #itemTable thead th{ white-space:normal; }
+  #itemTable .icon-btn + .icon-btn{ margin-left:8px; }
+
+  .field input[type="date"]{ min-height:48px; }
+  #view-database > .db-note:first-child{ margin-top:16px; }
+
+  /* Pilihan "Sekalian Dibayar?" belum punya tanda aktif */
+  .carry-toggle button.active[data-choice="ya"]{ background:var(--green-soft); }
+  .carry-toggle button.active[data-choice="tidak"]{ background:var(--yellow-soft); }
+
+  /* ---------- Pengaturan ---------- */
+  .settings-desc{
+    margin:0 0 14px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--text-1);
+    line-height:1.45;
+  }
+  .theme-switch{ box-shadow:none; }
+  .theme-current{
+    flex:1;
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    padding:6px 4px;
+    text-align:center;
+  }
+  .theme-icon{
+    width:44px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--yellow);
+    color:var(--on-accent);
+    border:var(--bw-sm) solid var(--ink);
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .theme-icon svg{ width:24px; height:24px; }
+  .theme-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .theme-name{ font-size:17px; font-weight:900; letter-spacing:-0.01em; line-height:1.2; }
+  .theme-hint{ font-size:12.5px; font-weight:600; color:var(--text-1); line-height:1.3; }
+  .theme-dots{ display:flex; justify-content:center; gap:4px; margin-top:12px; }
+  .theme-dot{
+    width:40px; height:40px;
+    padding:0;
+    border:none;
+    background:none;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .theme-dot::before{
+    content:"";
+    width:14px; height:14px;
+    background:var(--paper);
+    border:var(--bw-sm) solid var(--ink);
+    transition:background .12s ease;
+  }
+  .theme-dot[aria-current="true"]::before{ background:var(--yellow); }
+  .btn-logout{ width:100%; padding:14px 18px; font-size:16px; }
+  .btn-logout svg{ width:19px; height:19px; }
+
+  /* ---------- Pop up konfirmasi keluar ---------- */
+  .alert-overlay{ align-items:center; padding:20px; z-index:150; }
+  .alert-box{
+    width:100%;
+    max-width:400px;
+    padding:20px;
+    background:var(--paper);
+    border:var(--bw) solid var(--ink);
+    box-shadow:var(--shadow-lg);
+    transform:translateY(16px);
+    transition:transform .2s cubic-bezier(.32,.72,0,1);
+  }
+  .alert-overlay.open .alert-box{ transform:translateY(0); }
+  .alert-head{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .alert-icon{
+    width:44px; height:44px;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--red);
+    color:var(--on-accent);
+    border:var(--bw-sm) solid var(--ink);
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .alert-icon svg{ width:22px; height:22px; }
+  .alert-title{ margin:0; font-size:19px; font-weight:900; letter-spacing:-0.01em; line-height:1.2; }
+  .alert-text{ margin:0 0 20px; font-size:14.5px; font-weight:600; color:var(--text-1); line-height:1.5; }
+  .alert-actions{ display:flex; gap:14px; }
+  .alert-actions .btn{ flex:1; padding:13px 12px; }
+
+  /* ---------- Responsif ---------- */
+
+  /* Tablet portrait */
+  @media (min-width:600px){
+    .app{
+      max-width:720px;
+      padding-top:calc(28px + env(safe-area-inset-top));
+    }
+    .topbar{ padding:18px 18px 38px; }
+    .brand-title{ font-size:28px; }
+    .brand-sub{ font-size:14px; }
+    .card{ padding:20px; }
+    .bottom-nav{ width:min(420px, calc(100% - 48px)); }
+    .toast{ bottom:calc(116px + env(safe-area-inset-bottom)); }
+
+    /* Pop up pindah dari lembar bawah ke dialog di tengah */
+    .modal-overlay{ align-items:center; padding:24px; }
+    .modal-sheet{
+      max-width:540px;
+      max-height:min(88vh, 760px);
+      max-height:min(88dvh, 760px);
+      padding:22px 24px 24px;
+      border-bottom:var(--bw) solid var(--ink);
+      box-shadow:var(--shadow-lg);
+    }
+    .modal-handle{ display:none; }
+  }
+
+  /* Laptop & desktop */
+  @media (min-width:900px){
+    .app{
+      max-width:1080px;
+      padding-left:max(32px, env(safe-area-inset-left));
+      padding-right:max(32px, env(safe-area-inset-right));
+    }
+    .input-layout{
+      display:grid;
+      grid-template-columns:minmax(300px, 380px) minmax(0, 1fr);
+      column-gap:32px;
+      align-items:start;
+    }
+    .input-form-col{ position:sticky; top:18px; }
+    .settings-grid{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      column-gap:32px;
+      align-items:start;
+    }
+    .recap-card{ padding:16px 18px 18px; }
+    .recap-label{ font-size:14px; }
+    .recap-value{ font-size:34px; }
+    .recap-value.small{ font-size:28px; }
+  }
+  @media (min-width:900px) and (max-height:700px){
+    .input-form-col{ position:static; }
+  }
+
+  /* Monitor lebar */
+  @media (min-width:1280px){
+    .app{ max-width:1200px; }
+    .input-layout{ grid-template-columns:minmax(340px, 420px) minmax(0, 1fr); }
+  }
+
+  /* HP sempit (<= 400px): tabel daftar barang dipadatkan supaya tombol edit & hapus selalu terlihat */
+  @media (max-width:400px){
+    #itemTable thead th,
+    #itemTable tbody td{ padding:10px 8px; }
+    #itemTable .icon-btn{ width:34px; height:34px; }
+    #itemTable .icon-btn + .icon-btn{ margin-left:6px; }
+  }
+
+  /* HP kecil (<= 359px) */
+  @media (max-width:359px){
+    .app{
+      padding-top:calc(12px + env(safe-area-inset-top));
+      padding-left:max(12px, env(safe-area-inset-left));
+      padding-right:max(12px, env(safe-area-inset-right));
+    }
+    .topbar{ padding:12px 12px 30px; gap:8px; }
+    .brand-title{ font-size:19px; }
+    .brand-sub{ font-size:12px; }
+    .settings-btn{ width:40px; height:40px; }
+    .card{ padding:12px; }
+    .nav-item{ font-size:13px; gap:6px; padding:12px 6px; }
+    .month-switch .month-label{ font-size:14px; }
+    .month-arrow{ width:38px; height:38px; }
+    .recap-grid{ gap:10px; }
+    .recap-value{ font-size:24px; }
+    .modal-title{ font-size:17px; }
+    .modal-footer, .alert-actions{ gap:10px; }
+    .theme-name{ font-size:15px; }
+  }
+
+  /* HP posisi landscape (layar pendek) */
+  @media (max-height:500px) and (orientation:landscape){
+    .app{ padding-bottom:calc(88px + env(safe-area-inset-bottom)); }
+    .bottom-nav{ bottom:calc(10px + env(safe-area-inset-bottom)); }
+    .nav-item{ padding:9px 8px; }
+    .toast{ bottom:calc(72px + env(safe-area-inset-bottom)); }
+    .modal-sheet{ max-height:94vh; max-height:94dvh; }
+  }
 
   @media (prefers-reduced-motion:reduce){
-    *{ transition:none !important; }
+    *{ transition:none !important; animation:none !important; }
   }
 </style>
 </head>
@@ -674,23 +932,25 @@
       <div class="brand-title">Dashboard Customer</div>
       <div class="brand-sub">Pencatatan pekerjaan bubut &amp; permesinan</div>
     </div>
-    <button type="button" class="back-btn" id="backBtn" aria-label="Keluar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <button type="button" class="settings-btn" id="settingsBtn" aria-label="Pengaturan" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
     </button>
   </header>
 
   <!-- User chip -->
   <div class="user-chip">
-    <div class="user-avatar" id="userAvatar">R</div>
+    <div class="user-avatar" id="userAvatar">?</div>
     <div class="user-meta">
-      <div class="user-name" id="userName">Rizky</div>
-      <div class="user-role" id="userRole">employee</div>
+      <div class="user-name" id="userName">Anonymous</div>
+      <div class="user-role" id="userRole">???</div>
     </div>
   </div>
 
   <!-- ============ VIEW: INPUT DATA ============ -->
   <div id="view-input">
+   <div class="input-layout">
 
+    <div class="input-form-col">
     <div class="section-label">Tambah Barang</div>
     <div class="card">
       <div class="field">
@@ -698,8 +958,8 @@
         <input type="text" id="inpNama" placeholder="Contoh: Blok Mio, Piston (pisahkan koma kalau lebih dari satu)" autocomplete="off">
       </div>
       <div class="field" style="margin-top:12px;">
-        <label for="inpKeteranganAwal">Keterangan (mau diapain barangnya, opsional)</label>
-        <textarea id="inpKeteranganAwal" placeholder="Contoh: Ganti seal, cat ulang"></textarea>
+        <label for="inpKeteranganAwal">Keterangan (mau diapain barangnya)</label>
+        <textarea id="inpKeteranganAwal" placeholder="Contoh: Lemer, ganti stang dll."></textarea>
       </div>
       <button type="button" class="btn btn-primary btn-add" id="btnAddItem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -707,8 +967,11 @@
       </button>
     </div>
 
+    </div><!-- /input-form-col -->
+
+    <div class="input-list-col">
     <div class="section-label">Daftar Barang</div>
-    <div class="db-note" style="margin-top:-6px;">Barang yang belum ditandai selesai berarti masih di bengkel. Kalau ada yang mau diambil (dan/atau dibayar), tekan "Selesai" di bawah.</div>
+    <div class="db-note" style="margin-top:12px;">Barang yang belum ditandai selesai berarti masih di bengkel. Kalau ada yang mau diambil (dan/atau dibayar), tekan "Selesai" di bawah.</div>
     <div class="riwayat-table-wrap" style="max-height:none;">
       <table class="riwayat-table" id="itemTable">
         <thead><tr><th>Nama Barang</th><th>Keterangan</th><th></th></tr></thead>
@@ -726,12 +989,15 @@
         Selesai
       </button>
     </div>
+    </div><!-- /input-list-col -->
+
+   </div><!-- /input-layout -->
   </div>
 
   <!-- ============ VIEW: DATABASE (portal customer, auto-filter, tanpa pencarian manual) ============ -->
   <div id="view-database" style="display:none;">
 
-    <div class="db-note">Riwayat barang yang pernah Anda titipkan ke bengkel. Otomatis khusus akun Anda saja.</div>
+    <div class="db-note">Riwayat barang yang pernah Anda titipkan ke bengkel. Data ini hasil rekap dari database admin.</div>
 
     <div class="month-switch">
       <button type="button" class="month-arrow" id="dbPrevMonth" aria-label="Bulan sebelumnya">
@@ -744,7 +1010,7 @@
     </div>
 
     <div class="section-label">Ringkasan Saya</div>
-    <div class="recap-grid" style="grid-template-columns:repeat(2,1fr);">
+    <div class="recap-grid recap-grid--2">
       <div class="recap-card">
         <div class="recap-label">Total Transaksi</div>
         <div class="recap-value" id="dbRecapCount">0</div>
@@ -762,6 +1028,50 @@
     <div class="card empty-state" id="dbEmpty" style="display:none;">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg>
       <div>Belum ada data untuk akun ini</div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: PENGATURAN ============ -->
+  <div id="view-settings" style="display:none;">
+    <div class="settings-grid">
+
+      <div class="settings-col">
+        <div class="section-label">Tampilan</div>
+        <div class="card">
+          <p class="settings-desc">Pilih tema aplikasi dengan tombol panah. Pilihan otomatis tersimpan di perangkat ini.</p>
+          <div class="month-switch theme-switch" id="themeSwitch" role="group" aria-label="Pilih tema">
+            <button type="button" class="month-arrow" id="themePrev" aria-label="Tema sebelumnya">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="theme-current" id="themeCurrent" aria-live="polite" aria-atomic="true">
+              <span class="theme-icon" id="themeIcon" aria-hidden="true"></span>
+              <span class="theme-text">
+                <span class="theme-name" id="themeName">Default</span>
+                <span class="theme-hint" id="themeHint">Ikuti pengaturan perangkat</span>
+              </span>
+            </div>
+            <button type="button" class="month-arrow" id="themeNext" aria-label="Tema berikutnya">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="theme-dots" id="themeDots">
+            <button type="button" class="theme-dot" data-index="0" aria-label="Default"></button>
+            <button type="button" class="theme-dot" data-index="1" aria-label="Mode Terang"></button>
+            <button type="button" class="theme-dot" data-index="2" aria-label="Mode Gelap"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-col">
+        <div class="section-label">Akun</div>
+        <div class="card">
+          <button type="button" class="btn btn-danger btn-logout" id="btnLogout">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Keluar
+          </button>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -812,6 +1122,23 @@
     <div class="modal-footer">
       <button type="button" class="btn btn-ghost" id="btnSelesaiBatal">Batal</button>
       <button type="button" class="btn btn-go" id="btnSelesaiSimpan">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pop up konfirmasi keluar -->
+<div class="modal-overlay alert-overlay" id="logoutOverlay">
+  <div class="alert-box" role="alertdialog" aria-modal="true" aria-labelledby="logoutTitle" aria-describedby="logoutText">
+    <div class="alert-head">
+      <div class="alert-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <h2 class="alert-title" id="logoutTitle">Keluar dari akun?</h2>
+    </div>
+    <p class="alert-text" id="logoutText">Anda akan keluar dari akun ini dan kembali ke halaman login.</p>
+    <div class="alert-actions">
+      <button type="button" class="btn btn-ghost" id="btnLogoutCancel">Batal</button>
+      <button type="button" class="btn btn-danger" id="btnLogoutOk">OK</button>
     </div>
   </div>
 </div>
@@ -878,7 +1205,7 @@
       .maybeSingle();
 
     if(folderErr || !folder){
-      document.body.innerHTML = '<div style="padding:40px;text-align:center;color:#000;font-weight:800;font-size:18px;">Folder akun Anda belum tersedia. Hubungi admin.</div>';
+      document.body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink);font-weight:800;font-size:18px;">Folder akun Anda belum tersedia. Hubungi admin.</div>';
       return;
     }
     myFolderId = folder.id;
@@ -890,9 +1217,136 @@
     init();
   })();
 
-  document.getElementById('backBtn').addEventListener('click', async function(){
-    if(!confirm('Keluar dari akun ini?')) return;
-    await supabaseClient.auth.signOut();
+  /* ================= TEMA: Default / Mode Terang / Mode Gelap (disimpan di localStorage) ================= */
+  const THEME_KEY = 'bmtech-theme';
+  const THEMES = [
+    { id:'default', name:'Default',     hint:'Ikuti pengaturan perangkat',
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>' },
+    { id:'light',   name:'Mode Terang', hint:'Selalu tampil terang',
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>' },
+    { id:'dark',    name:'Mode Gelap',  hint:'Selalu tampil gelap',
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>' }
+  ];
+
+  const rootEl = document.documentElement;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const systemDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+
+  const themeCurrent = document.getElementById('themeCurrent');
+  const themeIconEl = document.getElementById('themeIcon');
+  const themeNameEl = document.getElementById('themeName');
+  const themeHintEl = document.getElementById('themeHint');
+  const themeDots = [...document.querySelectorAll('#themeDots .theme-dot')];
+
+  let themeIndex = 0;
+
+  function loadThemeIndex(){
+    try{
+      const saved = localStorage.getItem(THEME_KEY);
+      const i = THEMES.findIndex(t => t.id === saved);
+      return i >= 0 ? i : 0;
+    }catch(_){ return 0; }
+  }
+  function persistTheme(id){
+    try{ localStorage.setItem(THEME_KEY, id); }catch(_){}
+  }
+  function applyTheme(id){
+    const dark = id === 'dark' || (id === 'default' && !!systemDark && systemDark.matches);
+    rootEl.setAttribute('data-theme', dark ? 'dark' : 'light');
+    rootEl.setAttribute('data-theme-pref', id);
+    if(themeMeta) themeMeta.setAttribute('content', dark ? '#0f1011' : '#ffd600');
+  }
+  function renderThemeUI(){
+    const t = THEMES[themeIndex];
+    themeIconEl.innerHTML = t.icon;
+    themeNameEl.textContent = t.name;
+    themeHintEl.textContent = t.hint;
+    themeDots.forEach((d, i) => {
+      if(i === themeIndex) d.setAttribute('aria-current', 'true');
+      else d.removeAttribute('aria-current');
+    });
+  }
+  function setThemeIndex(i, dir){
+    themeIndex = (i + THEMES.length) % THEMES.length;
+    const id = THEMES[themeIndex].id;
+    applyTheme(id);
+    persistTheme(id);
+    renderThemeUI();
+    if(dir && themeCurrent.animate && !(reduceMotion && reduceMotion.matches)){
+      themeCurrent.animate(
+        [ { opacity:0, transform:'translateX(' + (dir > 0 ? 28 : -28) + 'px)' },
+          { opacity:1, transform:'translateX(0)' } ],
+        { duration:200, easing:'cubic-bezier(.32,.72,0,1)' }
+      );
+    }
+  }
+
+  document.getElementById('themePrev').addEventListener('click', () => setThemeIndex(themeIndex - 1, -1));
+  document.getElementById('themeNext').addEventListener('click', () => setThemeIndex(themeIndex + 1, 1));
+  themeDots.forEach(d => d.addEventListener('click', () => {
+    const i = parseInt(d.dataset.index, 10);
+    if(i !== themeIndex) setThemeIndex(i, i > themeIndex ? 1 : -1);
+  }));
+  document.getElementById('themeSwitch').addEventListener('keydown', e => {
+    if(e.key === 'ArrowLeft'){ e.preventDefault(); setThemeIndex(themeIndex - 1, -1); }
+    else if(e.key === 'ArrowRight'){ e.preventDefault(); setThemeIndex(themeIndex + 1, 1); }
+  });
+
+  // Kalau pilihannya "Default", ikuti perubahan tema perangkat secara langsung
+  if(systemDark){
+    const onSystemThemeChange = () => { if(THEMES[themeIndex].id === 'default') applyTheme('default'); };
+    if(systemDark.addEventListener) systemDark.addEventListener('change', onSystemThemeChange);
+    else if(systemDark.addListener) systemDark.addListener(onSystemThemeChange);
+  }
+  // Sinkron antar tab
+  window.addEventListener('storage', e => {
+    if(e.key !== THEME_KEY) return;
+    themeIndex = loadThemeIndex();
+    applyTheme(THEMES[themeIndex].id);
+    renderThemeUI();
+  });
+
+  themeIndex = loadThemeIndex();
+  applyTheme(THEMES[themeIndex].id);
+  renderThemeUI();
+
+  /* ================= KELUAR: pop up konfirmasi (Batal / OK) ================= */
+  const btnLogout = document.getElementById('btnLogout');
+  const logoutOverlay = document.getElementById('logoutOverlay');
+  const btnLogoutCancel = document.getElementById('btnLogoutCancel');
+  const btnLogoutOk = document.getElementById('btnLogoutOk');
+  let loggingOut = false;
+
+  function openLogoutAlert(){
+    logoutOverlay.classList.add('open');
+    requestAnimationFrame(() => btnLogoutCancel.focus());
+  }
+  function closeLogoutAlert(){
+    if(loggingOut) return;
+    logoutOverlay.classList.remove('open');
+    btnLogout.focus();
+  }
+
+  btnLogout.addEventListener('click', openLogoutAlert);
+  btnLogoutCancel.addEventListener('click', closeLogoutAlert);
+  logoutOverlay.addEventListener('click', e => { if(e.target === logoutOverlay) closeLogoutAlert(); });
+  // Keyboard: Esc menutup, Tab berputar di dalam pop up selama pop up terbuka
+  document.addEventListener('keydown', e => {
+    if(!logoutOverlay.classList.contains('open')) return;
+    if(e.key === 'Escape'){ e.preventDefault(); closeLogoutAlert(); return; }
+    if(e.key !== 'Tab') return;
+    const active = document.activeElement;
+    if(!logoutOverlay.contains(active)){ e.preventDefault(); btnLogoutCancel.focus(); }
+    else if(e.shiftKey && active === btnLogoutCancel){ e.preventDefault(); btnLogoutOk.focus(); }
+    else if(!e.shiftKey && active === btnLogoutOk){ e.preventDefault(); btnLogoutCancel.focus(); }
+  });
+  btnLogoutOk.addEventListener('click', async function(){
+    loggingOut = true;
+    btnLogoutOk.disabled = true;
+    btnLogoutCancel.disabled = true;
+    btnLogoutOk.textContent = 'Keluar...';
+    try{ await supabaseClient.auth.signOut(); }catch(_){}
     window.location.href = 'customer-login.html';
   });
 
@@ -916,18 +1370,33 @@
   /* ================= NAV / VIEW SWITCH ================= */
   const viewInput = document.getElementById('view-input');
   const viewDatabase = document.getElementById('view-database');
+  const viewSettings = document.getElementById('view-settings');
   const navInput = document.getElementById('navInput');
   const navDatabase = document.getElementById('navDatabase');
+  const settingsBtn = document.getElementById('settingsBtn');
+
+  let currentView = 'input';
+  let lastMainView = 'input';
 
   function setView(v){
+    currentView = v;
+    if(v !== 'settings') lastMainView = v;
     viewInput.style.display = v === 'input' ? '' : 'none';
     viewDatabase.style.display = v === 'database' ? '' : 'none';
+    viewSettings.style.display = v === 'settings' ? '' : 'none';
     navInput.classList.toggle('active', v === 'input');
     navDatabase.classList.toggle('active', v === 'database');
+    if(v === 'input') navInput.setAttribute('aria-current', 'page'); else navInput.removeAttribute('aria-current');
+    if(v === 'database') navDatabase.setAttribute('aria-current', 'page'); else navDatabase.removeAttribute('aria-current');
+    settingsBtn.classList.toggle('active', v === 'settings');
+    settingsBtn.setAttribute('aria-pressed', v === 'settings' ? 'true' : 'false');
+    if(v === 'settings') window.scrollTo(0, 0);
     if(v === 'database') loadAndRenderDatabase();
   }
   navInput.addEventListener('click', ()=> setView('input'));
   navDatabase.addEventListener('click', ()=> setView('database'));
+  // Tombol gear: buka pengaturan; tekan lagi untuk kembali ke halaman sebelumnya
+  settingsBtn.addEventListener('click', ()=> setView(currentView === 'settings' ? lastMainView : 'settings'));
 
   /* ================= INPUT DATA: tambah barang ================= */
   const inpNama = document.getElementById('inpNama');
@@ -969,8 +1438,8 @@
   }
 
   function shake(el){
-    el.style.background = '#ffc7c2';
-    el.style.boxShadow = '4px 4px 0 #ff4d4d';
+    el.style.background = 'var(--red-soft)';
+    el.style.boxShadow = '4px 4px 0 var(--red)';
     setTimeout(()=>{ el.style.background = ''; el.style.boxShadow = ''; }, 700);
   }
 
