@@ -575,6 +575,25 @@
   }
   .left-tag.zero{ background:var(--green-soft); }
 
+  .carry-toggle{
+    display:flex;
+    border:var(--bw-sm) solid var(--ink);
+    overflow:hidden;
+  }
+  .carry-toggle button{
+    flex:1;
+    padding:10px 8px;
+    border:none;
+    background:var(--paper);
+    color:var(--ink);
+    font-size:13px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .carry-toggle button:first-child{ border-right:var(--bw-sm) solid var(--ink); }
+  .carry-toggle button.active[data-choice="dibawa"]{ background:var(--green-soft); }
+  .carry-toggle button.active[data-choice="ditinggal"]{ background:var(--red-soft); }
+
   .modal-footer{
     display:flex;
     gap:14px;
@@ -646,19 +665,17 @@
 
     <div class="section-label">Tambah Barang</div>
     <div class="card">
-      <div class="field-row">
-        <div class="field">
-          <label for="inpNama">Nama Barang</label>
-          <input type="text" id="inpNama" placeholder="Contoh: Blok Mio" autocomplete="off">
-        </div>
-        <div class="field qty">
-          <label for="inpJumlah">Jumlah</label>
-          <input type="number" id="inpJumlah" placeholder="1" min="1" inputmode="numeric">
-        </div>
+      <div class="field">
+        <label for="inpNama">Nama Barang</label>
+        <input type="text" id="inpNama" placeholder="Contoh: Blok Mio, Piston (pisahkan koma kalau lebih dari satu)" autocomplete="off">
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label for="inpKeteranganAwal">Keterangan (mau diapain barangnya, opsional)</label>
+        <textarea id="inpKeteranganAwal" placeholder="Contoh: Ganti seal, cat ulang"></textarea>
       </div>
       <button type="button" class="btn btn-primary btn-add" id="btnAddItem">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        Tambah Barang
+        Tambahkan
       </button>
     </div>
 
@@ -745,13 +762,8 @@
       </div>
       <div class="field-error">Isi harga yang sudah dibayar. Boleh 0.</div>
 
-      <div class="modal-block-label">Barang yang Dibawa</div>
+      <div class="modal-block-label">Barang yang Dibawa / Ditinggal</div>
       <div id="carryList"></div>
-
-      <div class="modal-block-label" style="margin-top:20px;">Keterangan (opsional)</div>
-      <div class="field">
-        <textarea id="inpKeterangan" placeholder="Contoh: Piston 1 masih ditinggal, ambil besok"></textarea>
-      </div>
 
     </div>
     <div class="modal-footer">
@@ -846,7 +858,7 @@
   });
 
   /* ================= STATE (draft barang sebelum disimpan) ================= */
-  let draftItems = [];   // { id, nama, jumlah }
+  let draftItems = [];   // { id, nama, keterangan }
   let itemIdSeq = 1;
   let myTransactions = []; // hasil load dari Supabase (notes)
 
@@ -878,35 +890,43 @@
 
   /* ================= INPUT DATA: tambah barang ================= */
   const inpNama = document.getElementById('inpNama');
-  const inpJumlah = document.getElementById('inpJumlah');
+  const inpKeteranganAwal = document.getElementById('inpKeteranganAwal');
   const btnAddItem = document.getElementById('btnAddItem');
   const itemList = document.getElementById('itemList');
   const itemEmpty = document.getElementById('itemEmpty');
   const btnSudahDibayar = document.getElementById('btnSudahDibayar');
 
   let editingItemId = null;
+  const BTN_ADD_DEFAULT_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Tambahkan';
+  const BTN_ADD_EDIT_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Simpan Perubahan';
 
   btnAddItem.addEventListener('click', addOrUpdateItem);
-  inpJumlah.addEventListener('keydown', e=>{ if(e.key==='Enter') addOrUpdateItem(); });
-  inpNama.addEventListener('keydown', e=>{ if(e.key==='Enter') inpJumlah.focus(); });
+  inpNama.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); inpKeteranganAwal.focus(); } });
 
   function addOrUpdateItem(){
-    const nama = inpNama.value.trim();
-    const jumlah = parseInt(inpJumlah.value, 10);
+    const namaRaw = inpNama.value.trim();
+    const keterangan = inpKeteranganAwal.value.trim();
 
-    if(!nama){ shake(inpNama); inpNama.focus(); return; }
-    if(!jumlah || jumlah < 1){ shake(inpJumlah); inpJumlah.focus(); return; }
+    if(!namaRaw){ shake(inpNama); inpNama.focus(); return; }
 
     if(editingItemId){
+      // Edit satu barang: nama boleh diketik ulang koma juga, tapi cuma dipakai nama pertamanya
+      // biar 1 baris tetap 1 barang saat mode edit.
+      const namaEdit = namaRaw.split(',')[0].trim();
       const it = draftItems.find(i=>i.id===editingItemId);
-      if(it){ it.nama = nama; it.jumlah = jumlah; }
+      if(it){ it.nama = namaEdit; it.keterangan = keterangan; }
       editingItemId = null;
-      btnAddItem.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Tambah Barang';
+      btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML;
     } else {
-      draftItems.push({ id: itemIdSeq++, nama, jumlah });
+      // Nama barang dipisah koma = otomatis jadi beberapa barang sekaligus,
+      // semuanya berbagi keterangan yang sama (kalau diisi).
+      const namaList = namaRaw.split(',').map(s=>s.trim()).filter(Boolean);
+      namaList.forEach(nama => {
+        draftItems.push({ id: itemIdSeq++, nama, keterangan });
+      });
     }
 
-    inpNama.value = ''; inpJumlah.value = '';
+    inpNama.value = ''; inpKeteranganAwal.value = '';
     inpNama.focus();
     renderItemList();
   }
@@ -930,7 +950,7 @@
           <div class="item-dot"></div>
           <div class="item-info">
             <div class="item-name">${escapeHtml(it.nama)}</div>
-            <div class="item-qty">Jumlah: ${it.jumlah}</div>
+            ${it.keterangan ? `<div class="item-qty">${escapeHtml(it.keterangan)}</div>` : ''}
           </div>
           <div class="item-actions">
             <button type="button" class="icon-btn edit" data-id="${it.id}" data-act="edit" aria-label="Edit">
@@ -953,13 +973,13 @@
     const act = btn.dataset.act;
     if(act === 'del'){
       draftItems = draftItems.filter(i=>i.id!==id);
-      if(editingItemId===id){ editingItemId=null; inpNama.value=''; inpJumlah.value=''; btnAddItem.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Tambah Barang'; }
+      if(editingItemId===id){ editingItemId=null; inpNama.value=''; inpKeteranganAwal.value=''; btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML; }
       renderItemList();
     } else if(act === 'edit'){
       const it = draftItems.find(i=>i.id===id);
       if(!it) return;
       inpNama.value = it.nama;
-      inpJumlah.value = it.jumlah;
+      inpKeteranganAwal.value = it.keterangan || '';
       editingItemId = id;
       btnAddItem.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Simpan Perubahan';
       inpNama.focus();
@@ -975,11 +995,10 @@
   const inpHarga = document.getElementById('inpHarga');
   const rpWrap = document.getElementById('rpWrap');
   const carryList = document.getElementById('carryList');
-  const inpKeterangan = document.getElementById('inpKeterangan');
   const btnBatal = document.getElementById('btnBatal');
   const btnSimpan = document.getElementById('btnSimpan');
 
-  let carryState = []; // { nama, jumlahAwal, dibawa }
+  let carryState = []; // { nama, keterangan, dibawa: true/false }
   const modalTitle = document.querySelector('.modal-title');
 
   btnSudahDibayar.addEventListener('click', openModal);
@@ -990,9 +1009,8 @@
     if(draftItems.length === 0) return;
 
     modalTitle.textContent = 'Konfirmasi Transaksi — ' + myDisplayName;
-    carryState = draftItems.map(it => ({ nama: it.nama, jumlahAwal: it.jumlah, dibawa: it.jumlah }));
+    carryState = draftItems.map(it => ({ nama: it.nama, keterangan: it.keterangan || '', dibawa: true }));
     inpHarga.value = '';
-    inpKeterangan.value = '';
     renderCarryList();
     modalOverlay.classList.add('open');
   }
@@ -1003,21 +1021,15 @@
   function renderCarryList(){
     carryList.innerHTML = '';
     carryState.forEach((c, idx)=>{
-      const ditinggal = c.jumlahAwal - c.dibawa;
       const row = document.createElement('div');
       row.className = 'carry-item';
       row.innerHTML = `
         <div class="carry-top">
           <div class="carry-name">${escapeHtml(c.nama)}</div>
-          <div class="carry-total">Total: ${c.jumlahAwal}</div>
         </div>
-        <div class="carry-controls">
-          <div class="stepper">
-            <button type="button" data-idx="${idx}" data-dir="-1">−</button>
-            <div class="step-val">${c.dibawa}</div>
-            <button type="button" data-idx="${idx}" data-dir="1">+</button>
-          </div>
-          <div class="left-tag ${ditinggal===0?'zero':''}">Ditinggal: ${ditinggal}</div>
+        <div class="carry-toggle">
+          <button type="button" data-idx="${idx}" data-choice="dibawa" class="${c.dibawa ? 'active' : ''}">Dibawa</button>
+          <button type="button" data-idx="${idx}" data-choice="ditinggal" class="${!c.dibawa ? 'active' : ''}">Ditinggal</button>
         </div>`;
       carryList.appendChild(row);
     });
@@ -1027,11 +1039,7 @@
     const btn = e.target.closest('button[data-idx]');
     if(!btn) return;
     const idx = parseInt(btn.dataset.idx, 10);
-    const dir = parseInt(btn.dataset.dir, 10);
-    const c = carryState[idx];
-    let next = c.dibawa + dir;
-    next = Math.max(0, Math.min(c.jumlahAwal, next));
-    c.dibawa = next;
+    carryState[idx].dibawa = (btn.dataset.choice === 'dibawa');
     renderCarryList();
   });
 
@@ -1046,11 +1054,12 @@
     }
     const itemsResult = carryState.map(c => ({
       nama: c.nama,
-      jumlahAwal: c.jumlahAwal,
-      dibawa: c.dibawa,
-      ditinggal: c.jumlahAwal - c.dibawa
+      keterangan: c.keterangan,
+      dibawa: c.dibawa
     }));
-    const keterangan = inpKeterangan.value.trim();
+    // Keterangan digabung dari tiap barang (diisi saat tahap "Tambah Barang" di awal),
+    // bukan lagi ditanya ulang di modal ini. Dedup biar nggak dobel kalau sama semua.
+    const keterangan = [...new Set(itemsResult.map(it=>it.keterangan).filter(Boolean))].join('; ');
 
     btnSimpan.disabled = true;
     btnSimpan.textContent = 'Menyimpan...';
@@ -1061,9 +1070,9 @@
     const tglSlash = pad2(now.getDate()) + '/' + pad2(now.getMonth()+1) + '/' + String(now.getFullYear()).slice(-2) + ' • ' + DAY_NAMES_ID[now.getDay()];
     const jam = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
 
-    const barangDanJumlah = itemsResult.map(it=> `${it.nama} ×${it.jumlahAwal}`).join(', ');
-    const barangDibawa = itemsResult.filter(it=>it.dibawa>0).map(it=> `${it.nama} ×${it.dibawa}`).join(', ');
-    const barangDitinggal = itemsResult.filter(it=>it.ditinggal>0).map(it=> `${it.nama} ×${it.ditinggal}`).join(', ');
+    const barangDanJumlah = itemsResult.map(it=> it.nama).join(', ');
+    const barangDibawa = itemsResult.filter(it=>it.dibawa).map(it=> it.nama).join(', ');
+    const barangDitinggal = itemsResult.filter(it=>!it.dibawa).map(it=> it.nama).join(', ');
 
     // Skema content HARUS sama dengan yang dipakai seluruh aplikasi (table_templates
     // "TABEL BUKU BESAR"): { columns:[...], rows:[{cells:{...}}], hasTable:true, noteBody:'' }
