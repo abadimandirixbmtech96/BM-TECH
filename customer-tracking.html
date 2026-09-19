@@ -593,6 +593,16 @@
   .carry-toggle button:first-child{ border-right:var(--bw-sm) solid var(--ink); }
   .carry-toggle button.active[data-choice="dibawa"]{ background:var(--green-soft); }
   .carry-toggle button.active[data-choice="ditinggal"]{ background:var(--red-soft); }
+  .carry-toggle button.active[data-choice="bayar"]{ background:var(--green-soft); }
+  .carry-toggle button.active[data-choice="belum"]{ background:var(--yellow-soft); }
+
+  .pay-fields-row{
+    display:flex;
+    gap:10px;
+    margin-top:8px;
+  }
+  .pay-fields-row .field{ flex:1; margin:0; }
+  .pay-fields-row .field label{ font-size:11px; }
 
   .modal-footer{
     display:flex;
@@ -686,14 +696,6 @@
       <div class="empty-state" id="itemEmpty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
         <div>Belum ada barang ditambahkan</div>
-      </div>
-    </div>
-
-    <div class="section-label">Total Harga</div>
-    <div class="card">
-      <div class="rp-input-wrap" id="rpWrap">
-        <span class="rp-prefix">Rp</span>
-        <input type="number" id="inpHarga" placeholder="Boleh diisi belakangan" min="0" inputmode="numeric" aria-label="Total harga">
       </div>
     </div>
 
@@ -878,7 +880,6 @@
   const itemList = document.getElementById('itemList');
   const itemEmpty = document.getElementById('itemEmpty');
   const btnSimpanTransaksi = document.getElementById('btnSimpanTransaksi');
-  const inpHarga = document.getElementById('inpHarga');
 
   let editingBatchId = null;
   const BTN_ADD_DEFAULT_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Tambahkan';
@@ -903,22 +904,32 @@
         const oldStatus = b.status;
         b.names = names;
         b.keterangan = keterangan;
-        // Status dibawa/ditinggal per nama dipertahankan kalau namanya masih ada,
-        // barang baru (nama yang belum ada sebelumnya) defaultnya "ditinggal".
+        // Status per nama dipertahankan kalau namanya masih ada, barang baru
+        // (nama yang belum ada sebelumnya) defaultnya ditinggal & belum dibayar.
         b.status = {};
-        names.forEach(n => { b.status[n] = oldStatus.hasOwnProperty(n) ? oldStatus[n] : false; });
+        names.forEach(n => {
+          b.status[n] = oldStatus.hasOwnProperty(n) ? oldStatus[n] : newItemStatus();
+        });
       }
       editingBatchId = null;
       btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML;
     } else {
       const status = {};
-      names.forEach(n => { status[n] = false; }); // default: ditinggal (belum diambil)
+      names.forEach(n => { status[n] = newItemStatus(); });
       draftBatches.push({ id: itemIdSeq++, names, keterangan, status });
     }
 
     inpNama.value = ''; inpKeteranganAwal.value = '';
     inpNama.focus();
     renderBatchList();
+  }
+
+  function todayISO(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+  function newItemStatus(){
+    return { dibawa: false, dibayar: false, harga: '', tanggalBayar: todayISO() };
   }
 
   function shake(el){
@@ -936,15 +947,33 @@
       draftBatches.forEach(b=>{
         const row = document.createElement('div');
         row.className = 'item-row';
-        const toggleRows = b.names.map(n => `
-          <div class="carry-top" style="margin-top:8px;">
+        const toggleRows = b.names.map(n => {
+          const s = b.status[n];
+          return `
+          <div class="carry-top" style="margin-top:10px;">
             <div class="carry-name" style="font-size:13.5px;">${escapeHtml(n)}</div>
           </div>
-          <div class="carry-toggle" data-batch-id="${b.id}" data-name="${escapeHtml(n)}">
-            <button type="button" data-choice="dibawa" class="${b.status[n] ? 'active' : ''}">Dibawa</button>
-            <button type="button" data-choice="ditinggal" class="${!b.status[n] ? 'active' : ''}">Ditinggal</button>
+          <div class="carry-toggle" data-batch-id="${b.id}" data-name="${escapeHtml(n)}" data-kind="bawa">
+            <button type="button" data-choice="dibawa" class="${s.dibawa ? 'active' : ''}">Dibawa</button>
+            <button type="button" data-choice="ditinggal" class="${!s.dibawa ? 'active' : ''}">Ditinggal</button>
           </div>
-        `).join('');
+          <div class="carry-toggle" data-batch-id="${b.id}" data-name="${escapeHtml(n)}" data-kind="bayar" style="margin-top:6px;">
+            <button type="button" data-choice="bayar" class="${s.dibayar ? 'active' : ''}">Bayar</button>
+            <button type="button" data-choice="belum" class="${!s.dibayar ? 'active' : ''}">Belum Bayar</button>
+          </div>
+          ${s.dibayar ? `
+          <div class="pay-fields-row" data-batch-id="${b.id}" data-name="${escapeHtml(n)}">
+            <div class="field">
+              <label>Harga</label>
+              <input type="number" min="0" inputmode="numeric" class="pay-harga-input" placeholder="500000" value="${escapeHtml(s.harga)}">
+            </div>
+            <div class="field">
+              <label>Tanggal Bayar</label>
+              <input type="date" class="pay-tanggal-input" value="${escapeHtml(s.tanggalBayar)}">
+            </div>
+          </div>` : ''}
+        `;
+        }).join('');
         row.innerHTML = `
           <div class="item-dot"></div>
           <div class="item-info" style="width:100%;">
@@ -967,14 +996,22 @@
   }
 
   itemList.addEventListener('click', function(e){
-    // Toggle dibawa/ditinggal per barang di dalam batch
+    // Toggle dibawa/ditinggal ATAU bayar/belum per barang di dalam batch
     const toggleBtn = e.target.closest('.carry-toggle button');
     if(toggleBtn){
       const wrap = toggleBtn.closest('.carry-toggle');
       const batchId = parseInt(wrap.dataset.batchId, 10);
       const name = wrap.dataset.name;
+      const kind = wrap.dataset.kind;
       const b = draftBatches.find(x=>x.id===batchId);
-      if(b){ b.status[name] = (toggleBtn.dataset.choice === 'dibawa'); }
+      if(b){
+        const s = b.status[name];
+        if(kind === 'bawa'){
+          s.dibawa = (toggleBtn.dataset.choice === 'dibawa');
+        } else if(kind === 'bayar'){
+          s.dibayar = (toggleBtn.dataset.choice === 'bayar');
+        }
+      }
       renderBatchList();
       return;
     }
@@ -998,17 +1035,27 @@
     }
   });
 
+  itemList.addEventListener('input', function(e){
+    const wrap = e.target.closest('.pay-fields-row');
+    if(!wrap) return;
+    const batchId = parseInt(wrap.dataset.batchId, 10);
+    const name = wrap.dataset.name;
+    const b = draftBatches.find(x=>x.id===batchId);
+    if(!b) return;
+    const s = b.status[name];
+    if(e.target.classList.contains('pay-harga-input')) s.harga = e.target.value;
+    if(e.target.classList.contains('pay-tanggal-input')) s.tanggalBayar = e.target.value;
+    // Sengaja TIDAK renderBatchList() di sini biar fokus input tidak hilang tiap ketik.
+  });
+
   function escapeHtml(s){
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
   /* ================= SIMPAN TRANSAKSI (langsung, tanpa modal — status dibawa/ditinggal
-     sudah diatur inline di atas, harga boleh kosong dan diisi belakangan) ================= */
+     dan bayar/belum sudah diatur inline per barang di atas) ================= */
   btnSimpanTransaksi.addEventListener('click', async function(){
     if(draftBatches.length === 0) return;
-
-    const hargaVal = inpHarga.value.trim();
-    const harga = hargaVal ? Math.max(0, parseInt(hargaVal, 10) || 0) : 0;
 
     btnSimpanTransaksi.disabled = true;
     btnSimpanTransaksi.textContent = 'Menyimpan...';
@@ -1018,14 +1065,33 @@
     const pad2 = n => String(n).padStart(2,'0');
     const tglSlash = pad2(now.getDate()) + '/' + pad2(now.getMonth()+1) + '/' + String(now.getFullYear()).slice(-2) + ' • ' + DAY_NAMES_ID[now.getDay()];
     const jam = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
+    function tglSlashFromISO(iso){
+      if(!iso) return '';
+      const [y,m,d] = iso.split('-');
+      return d + '/' + m + '/' + y.slice(-2);
+    }
 
     const allNames = [];
     const dibawaNames = [];
     const ditinggalNames = [];
+    const dibayarNames = [];
+    const belumBayarNames = [];
+    const tanggalBayarSet = new Set();
+    let totalHarga = 0;
+
     draftBatches.forEach(b=>{
       b.names.forEach(n=>{
+        const s = b.status[n];
         allNames.push(n);
-        if(b.status[n]) dibawaNames.push(n); else ditinggalNames.push(n);
+        if(s.dibawa) dibawaNames.push(n); else ditinggalNames.push(n);
+        if(s.dibayar){
+          dibayarNames.push(n);
+          const h = parseInt(s.harga, 10);
+          if(!isNaN(h) && h > 0) totalHarga += h;
+          if(s.tanggalBayar) tanggalBayarSet.add(tglSlashFromISO(s.tanggalBayar));
+        } else {
+          belumBayarNames.push(n);
+        }
       });
     });
     const keterangan = [...new Set(draftBatches.map(b=>b.keterangan).filter(Boolean))].join('; ');
@@ -1033,11 +1099,13 @@
     const barangBarang = allNames.join(', ');
     const barangDibawa = dibawaNames.join(', ');
     const barangDitinggal = ditinggalNames.join(', ');
+    const barangSudahBayar = dibayarNames.join(', ');
+    const barangBelumBayar = belumBayarNames.join(', ');
+    const tanggalBayarStr = [...tanggalBayarSet].join(', ');
 
     // Skema content HARUS mengikuti pola table_templates ({columns, rows, hasTable, noteBody})
-    // biar note ini kebaca benar di note-detail viewer admin/index.html. Kolom sesuai
-    // yang diminta: No | Tanggal | Jam | Barang-barang | Barang Dibawa | Barang Ditinggal | Keterangan | Harga
-    // (tanpa P.Jawab/Customer — folder ini sudah pasti milik 1 customer, jadi redundan).
+    // biar note ini kebaca benar di note-detail viewer admin/index.html. Status bayar
+    // dipecah per barang (bukan 1 total ambigu) karena tidak semua barang tentu dibayar bareng.
     const columns = [
       { id:'no', type:'no', label:'No', placeholder:'No' },
       { id:'tanggal', type:'date', label:'Tanggal', placeholder:'Tanggal' },
@@ -1045,6 +1113,9 @@
       { id:'barang', type:'text', label:'Barang-barang', placeholder:'Kolom Baru' },
       { id:'dibawa', type:'text', label:'Barang yang Dibawa', placeholder:'Kolom Baru' },
       { id:'ditinggal', type:'text', label:'Barang yang Ditinggal', placeholder:'Kolom Baru' },
+      { id:'sudah_bayar', type:'text', label:'Sudah Dibayar', placeholder:'Kolom Baru' },
+      { id:'belum_bayar', type:'text', label:'Belum Dibayar', placeholder:'Kolom Baru' },
+      { id:'tanggal_bayar', type:'text', label:'Tanggal Bayar', placeholder:'Kolom Baru' },
       { id:'keterangan', type:'text', label:'Keterangan', placeholder:'Kolom Baru' },
       { id:'harga', type:'text', label:'Total Harga', placeholder:'Kolom Baru' }
     ];
@@ -1055,15 +1126,18 @@
       barang: barangBarang,
       dibawa: barangDibawa,
       ditinggal: barangDitinggal,
+      sudah_bayar: barangSudahBayar,
+      belum_bayar: barangBelumBayar,
+      tanggal_bayar: tanggalBayarStr,
       keterangan: keterangan,
-      harga: hargaVal ? harga.toLocaleString('id-ID') : ''
+      harga: totalHarga > 0 ? totalHarga.toLocaleString('id-ID') : ''
     }};
 
     const { error } = await supabaseClient.from('notes').insert({
       folder_id: myFolderId,
       title: tglSlash + ' ' + jam,
       preview: tglSlash + '\n' + jam,
-      amount: harga,
+      amount: totalHarga,
       tx_category: null,
       date_tag: jam,
       content: { columns, rows: [row], hasTable: true, noteBody: '' }
@@ -1078,7 +1152,6 @@
     }
 
     draftBatches = [];
-    inpHarga.value = '';
     renderBatchList();
     showToast('Transaksi disimpan');
     loadAndRenderDatabase();
@@ -1130,6 +1203,32 @@
     const col = columns.find(c => {
       const l = (c.label||'').toUpperCase();
       return l.includes('HARGA') || l.includes('NOMINAL') || l.includes('UANG');
+    });
+    return col ? col.id : null;
+  }
+  function findMainTanggalColId(columns){
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => {
+      const l = (c.label||'').toUpperCase();
+      return l.includes('TANGGAL') && !l.includes('BAYAR');
+    });
+    return col ? col.id : null;
+  }
+  function findSudahBayarColId(columns){
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => (c.label||'').toUpperCase().includes('SUDAH'));
+    return col ? col.id : null;
+  }
+  function findBelumBayarColId(columns){
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => (c.label||'').toUpperCase().includes('BELUM'));
+    return col ? col.id : null;
+  }
+  function findTanggalBayarColId(columns){
+    if(!Array.isArray(columns)) return null;
+    const col = columns.find(c => {
+      const l = (c.label||'').toUpperCase();
+      return l.includes('TANGGAL') && l.includes('BAYAR');
     });
     return col ? col.id : null;
   }
@@ -1192,12 +1291,15 @@
 
       const columns = content.columns;
       const colCustomer = findCustomerColId(columns);
-      const colTanggal = findColId(columns, 'TANGGAL');
+      const colTanggal = findMainTanggalColId(columns);
       const colJam = findColId(columns, 'JAM');
       const colPJ = findPJColId(columns);
       const colBarang = findBarangJumlahColId(columns);
       const colDibawa = findDibawaColId(columns);
       const colDitinggal = findColId(columns, 'DITINGGAL');
+      const colSudahBayar = findSudahBayarColId(columns);
+      const colBelumBayar = findBelumBayarColId(columns);
+      const colTanggalBayar = findTanggalBayarColId(columns);
       const colKeterangan = findColId(columns, 'KETERANGAN');
       const colHarga = findHargaColId(columns);
 
@@ -1227,6 +1329,9 @@
           barang: barangVal,
           dibawa: colDibawa ? (cells[colDibawa] || '') : '',
           ditinggal: colDitinggal ? (cells[colDitinggal] || '').trim() : '',
+          sudahBayar: colSudahBayar ? (cells[colSudahBayar] || '').trim() : '',
+          belumBayar: colBelumBayar ? (cells[colBelumBayar] || '').trim() : '',
+          tanggalBayar: colTanggalBayar ? (cells[colTanggalBayar] || '').trim() : '',
           keterangan: ketVal,
           hargaRaw: hargaRawVal,
           hargaNum: colHarga ? parseHargaCell(cells[colHarga]) : 0,
@@ -1259,7 +1364,7 @@
     }
     emptyEl.style.display = 'none';
 
-    const headerCols = ['Buku','Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Keterangan','Harga'];
+    const headerCols = ['Buku','Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Sudah Bayar','Belum Bayar','Tanggal Bayar','Keterangan','Harga'];
     const theadHtml = '<thead><tr>' + headerCols.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead>';
 
     const tbodyHtml = '<tbody>' + filteredEntries.map(e => {
@@ -1273,6 +1378,9 @@
         `<td>${escapeHtml(e.barang || '—')}</td>`,
         `<td>${escapeHtml(e.dibawa.trim() || '—')}</td>`,
         `<td>${escapeHtml(e.ditinggal || (e.dibawa || e.barang ? 'Tidak ada' : '—'))}</td>`,
+        `<td>${escapeHtml(e.sudahBayar || '—')}</td>`,
+        `<td>${escapeHtml(e.belumBayar || '—')}</td>`,
+        `<td class="cell-muted">${escapeHtml(e.tanggalBayar || '—')}</td>`,
         `<td>${escapeHtml(e.keterangan || '—')}</td>`,
         `<td class="cell-price">${e.hargaRaw ? formatRupiah(e.hargaNum) : '—'}</td>`
       ].join('');
