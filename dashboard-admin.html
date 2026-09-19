@@ -637,6 +637,22 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
   .folder-count { font-size: 13px; color: var(--text-secondary); font-weight: 600; }
+  .folder-section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 16px 8px;
+    margin-top: 6px;
+    border-top: 1px solid var(--card-border-dark);
+  }
+  .folder-section-divider span {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  body.theme-light .folder-section-divider { border-top-color: rgba(0,0,0,0.08); }
 
   .drawer-empty-category {
     display: flex;
@@ -2714,7 +2730,8 @@
         name: f.name,
         color: f.color || '#D9A536',
         count: countByFolder[f.id] || 0,
-        active: f.id === activeCategoryId
+        active: f.id === activeCategoryId,
+        ownerUsername: f.owner_username || null
       }));
 
     // Restore folder terakhir dari localStorage — CUMA di load pertama kali
@@ -2801,7 +2818,10 @@
       return;
     }
 
-    container.innerHTML = allRowHtml + categoriesData.map(cat => `
+    // Template 1 baris folder — dipakai sama persis untuk folder admin maupun folder customer,
+    // jadi tampilan & interaksinya (tap buka, long-press edit/delete) identik.
+    function folderItemHtml(cat) {
+      return `
       <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -2821,7 +2841,25 @@
           </div>
         ` : ''}
       </div>
-    `).join('');
+    `;
+    }
+
+    // Folder admin (owner_username kosong) dan folder customer (owner_username terisi,
+    // dibuat otomatis lewat menu "Tambah Customer") DIPISAH secara tampilan — customer
+    // selalu di bawah, dikasih pembatas + label, biar nggak ketuker. Isi datanya sendiri
+    // memang sudah terpisah total sejak awal (tiap folder = folder_id sendiri di database,
+    // notes customer TIDAK PERNAH digabung ke folder admin manapun).
+    const adminCats = categoriesData.filter(c => !c.ownerUsername);
+    const customerCats = categoriesData.filter(c => c.ownerUsername);
+
+    const customerSectionHtml = customerCats.length ? `
+      <div class="folder-section-divider">
+        <span>Akun Customer</span>
+      </div>
+      ${customerCats.map(folderItemHtml).join('')}
+    ` : '';
+
+    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml;
 
     wireAllFolderRow(container);
 
