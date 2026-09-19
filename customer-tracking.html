@@ -680,6 +680,7 @@
     </div>
 
     <div class="section-label">Daftar Barang</div>
+    <div class="db-note" style="margin-top:-6px;">Tandai tiap barang "Dibawa" kalau sudah diambil, atau biarkan "Ditinggal" kalau masih di bengkel. Status ini bisa diubah kapan saja, tidak harus nunggu bayar.</div>
     <div class="card" id="itemListCard">
       <div class="item-list" id="itemList"></div>
       <div class="empty-state" id="itemEmpty">
@@ -688,10 +689,18 @@
       </div>
     </div>
 
+    <div class="section-label">Total Harga</div>
+    <div class="card">
+      <div class="rp-input-wrap" id="rpWrap">
+        <span class="rp-prefix">Rp</span>
+        <input type="number" id="inpHarga" placeholder="Boleh diisi belakangan" min="0" inputmode="numeric" aria-label="Total harga">
+      </div>
+    </div>
+
     <div class="pay-bar">
-      <button type="button" class="btn btn-go" id="btnSudahDibayar" disabled>
+      <button type="button" class="btn btn-go" id="btnSimpanTransaksi" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-        Sudah Dibayar
+        Simpan Transaksi
       </button>
     </div>
   </div>
@@ -747,31 +756,6 @@
     Riwayat
   </button>
 </nav>
-
-<!-- Modal Konfirmasi -->
-<div class="modal-overlay" id="modalOverlay">
-  <div class="modal-sheet" id="modalSheet">
-    <div class="modal-handle"></div>
-    <div class="modal-title">Konfirmasi Transaksi</div>
-    <div class="modal-body">
-
-      <div class="modal-block-label">Harga yang Sudah Dibayar</div>
-      <div class="rp-input-wrap" id="rpWrap">
-        <span class="rp-prefix">Rp</span>
-        <input type="number" id="inpHarga" placeholder="500000" min="0" inputmode="numeric" aria-label="Harga yang sudah dibayar">
-      </div>
-      <div class="field-error">Isi harga yang sudah dibayar. Boleh 0.</div>
-
-      <div class="modal-block-label">Barang yang Dibawa / Ditinggal</div>
-      <div id="carryList"></div>
-
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-ghost" id="btnBatal">Batal</button>
-      <button type="button" class="btn btn-go" id="btnSimpan">Simpan Transaksi</button>
-    </div>
-  </div>
-</div>
 
 <!-- Toast -->
 <div class="toast" id="toast" role="status" aria-live="polite">
@@ -848,17 +832,16 @@
   })();
 
   document.getElementById('backBtn').addEventListener('click', async function(){
-    if(document.getElementById('modalOverlay').classList.contains('open')){
-      closeModal();
-      return;
-    }
     if(!confirm('Keluar dari akun ini?')) return;
     await supabaseClient.auth.signOut();
     window.location.href = 'customer-login.html';
   });
 
   /* ================= STATE (draft barang sebelum disimpan) ================= */
-  let draftItems = [];   // { id, nama, keterangan }
+  // draftBatches: satu "Tambahkan" = satu batch, isi beberapa barang sekaligus (kalau dipisah koma),
+  // berbagi 1 keterangan yang sama. Tiap barang di dalam batch punya status dibawa/ditinggal sendiri
+  // yang bisa diubah kapan saja, independen dari harga.
+  let draftBatches = [];   // { id, names: ['blok grand', ...], keterangan, status: { 'blok grand': false, ... } }
   let itemIdSeq = 1;
   let myTransactions = []; // hasil load dari Supabase (notes)
 
@@ -894,41 +877,48 @@
   const btnAddItem = document.getElementById('btnAddItem');
   const itemList = document.getElementById('itemList');
   const itemEmpty = document.getElementById('itemEmpty');
-  const btnSudahDibayar = document.getElementById('btnSudahDibayar');
+  const btnSimpanTransaksi = document.getElementById('btnSimpanTransaksi');
+  const inpHarga = document.getElementById('inpHarga');
 
-  let editingItemId = null;
+  let editingBatchId = null;
   const BTN_ADD_DEFAULT_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg> Tambahkan';
   const BTN_ADD_EDIT_HTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Simpan Perubahan';
 
-  btnAddItem.addEventListener('click', addOrUpdateItem);
+  btnAddItem.addEventListener('click', addOrUpdateBatch);
   inpNama.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); inpKeteranganAwal.focus(); } });
 
-  function addOrUpdateItem(){
+  function addOrUpdateBatch(){
     const namaRaw = inpNama.value.trim();
     const keterangan = inpKeteranganAwal.value.trim();
 
     if(!namaRaw){ shake(inpNama); inpNama.focus(); return; }
 
-    if(editingItemId){
-      // Edit satu barang: nama boleh diketik ulang koma juga, tapi cuma dipakai nama pertamanya
-      // biar 1 baris tetap 1 barang saat mode edit.
-      const namaEdit = namaRaw.split(',')[0].trim();
-      const it = draftItems.find(i=>i.id===editingItemId);
-      if(it){ it.nama = namaEdit; it.keterangan = keterangan; }
-      editingItemId = null;
+    // Koma = beberapa barang sekaligus, TETAP jadi satu batch/kartu (tidak dipecah jadi
+    // beberapa baris terpisah), berbagi 1 keterangan yang sama.
+    const names = namaRaw.split(',').map(s=>s.trim()).filter(Boolean);
+
+    if(editingBatchId){
+      const b = draftBatches.find(x=>x.id===editingBatchId);
+      if(b){
+        const oldStatus = b.status;
+        b.names = names;
+        b.keterangan = keterangan;
+        // Status dibawa/ditinggal per nama dipertahankan kalau namanya masih ada,
+        // barang baru (nama yang belum ada sebelumnya) defaultnya "ditinggal".
+        b.status = {};
+        names.forEach(n => { b.status[n] = oldStatus.hasOwnProperty(n) ? oldStatus[n] : false; });
+      }
+      editingBatchId = null;
       btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML;
     } else {
-      // Nama barang dipisah koma = otomatis jadi beberapa barang sekaligus,
-      // semuanya berbagi keterangan yang sama (kalau diisi).
-      const namaList = namaRaw.split(',').map(s=>s.trim()).filter(Boolean);
-      namaList.forEach(nama => {
-        draftItems.push({ id: itemIdSeq++, nama, keterangan });
-      });
+      const status = {};
+      names.forEach(n => { status[n] = false; }); // default: ditinggal (belum diambil)
+      draftBatches.push({ id: itemIdSeq++, names, keterangan, status });
     }
 
     inpNama.value = ''; inpKeteranganAwal.value = '';
     inpNama.focus();
-    renderItemList();
+    renderBatchList();
   }
 
   function shake(el){
@@ -937,51 +927,73 @@
     setTimeout(()=>{ el.style.background = ''; el.style.boxShadow = ''; }, 700);
   }
 
-  function renderItemList(){
+  function renderBatchList(){
     itemList.innerHTML = '';
-    if(draftItems.length === 0){
+    if(draftBatches.length === 0){
       itemEmpty.style.display = '';
     } else {
       itemEmpty.style.display = 'none';
-      draftItems.forEach(it=>{
+      draftBatches.forEach(b=>{
         const row = document.createElement('div');
         row.className = 'item-row';
+        const toggleRows = b.names.map(n => `
+          <div class="carry-top" style="margin-top:8px;">
+            <div class="carry-name" style="font-size:13.5px;">${escapeHtml(n)}</div>
+          </div>
+          <div class="carry-toggle" data-batch-id="${b.id}" data-name="${escapeHtml(n)}">
+            <button type="button" data-choice="dibawa" class="${b.status[n] ? 'active' : ''}">Dibawa</button>
+            <button type="button" data-choice="ditinggal" class="${!b.status[n] ? 'active' : ''}">Ditinggal</button>
+          </div>
+        `).join('');
         row.innerHTML = `
           <div class="item-dot"></div>
-          <div class="item-info">
-            <div class="item-name">${escapeHtml(it.nama)}</div>
-            ${it.keterangan ? `<div class="item-qty">${escapeHtml(it.keterangan)}</div>` : ''}
+          <div class="item-info" style="width:100%;">
+            <div class="item-name">${escapeHtml(b.names.join(', '))}</div>
+            ${b.keterangan ? `<div class="item-qty">${escapeHtml(b.keterangan)}</div>` : ''}
+            ${toggleRows}
           </div>
           <div class="item-actions">
-            <button type="button" class="icon-btn edit" data-id="${it.id}" data-act="edit" aria-label="Edit">
+            <button type="button" class="icon-btn edit" data-id="${b.id}" data-act="edit" aria-label="Edit">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             </button>
-            <button type="button" class="icon-btn danger" data-id="${it.id}" data-act="del" aria-label="Hapus">
+            <button type="button" class="icon-btn danger" data-id="${b.id}" data-act="del" aria-label="Hapus">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0l-1 14a2 2 0 01-2 2H7a2 2 0 01-2-2L4 6"/></svg>
             </button>
           </div>`;
         itemList.appendChild(row);
       });
     }
-    btnSudahDibayar.disabled = draftItems.length === 0;
+    btnSimpanTransaksi.disabled = draftBatches.length === 0;
   }
 
   itemList.addEventListener('click', function(e){
+    // Toggle dibawa/ditinggal per barang di dalam batch
+    const toggleBtn = e.target.closest('.carry-toggle button');
+    if(toggleBtn){
+      const wrap = toggleBtn.closest('.carry-toggle');
+      const batchId = parseInt(wrap.dataset.batchId, 10);
+      const name = wrap.dataset.name;
+      const b = draftBatches.find(x=>x.id===batchId);
+      if(b){ b.status[name] = (toggleBtn.dataset.choice === 'dibawa'); }
+      renderBatchList();
+      return;
+    }
+
     const btn = e.target.closest('.icon-btn');
     if(!btn) return;
     const id = parseInt(btn.dataset.id, 10);
     const act = btn.dataset.act;
     if(act === 'del'){
-      draftItems = draftItems.filter(i=>i.id!==id);
-      if(editingItemId===id){ editingItemId=null; inpNama.value=''; inpKeteranganAwal.value=''; btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML; }
-      renderItemList();
+      draftBatches = draftBatches.filter(x=>x.id!==id);
+      if(editingBatchId===id){ editingBatchId=null; inpNama.value=''; inpKeteranganAwal.value=''; btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML; }
+      renderBatchList();
     } else if(act === 'edit'){
-      const it = draftItems.find(i=>i.id===id);
-      if(!it) return;
-      inpNama.value = it.nama;
-      inpKeteranganAwal.value = it.keterangan || '';
-      editingItemId = id;
-      btnAddItem.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Simpan Perubahan';
+      const b = draftBatches.find(x=>x.id===id);
+      if(!b) return;
+      inpNama.value = b.names.join(', ');
+      inpKeteranganAwal.value = b.keterangan || '';
+      editingBatchId = id;
+      btnAddItem.innerHTML = BTN_ADD_EDIT_HTML;
       inpNama.focus();
     }
   });
@@ -990,79 +1002,16 @@
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  /* ================= MODAL KONFIRMASI ================= */
-  const modalOverlay = document.getElementById('modalOverlay');
-  const inpHarga = document.getElementById('inpHarga');
-  const rpWrap = document.getElementById('rpWrap');
-  const carryList = document.getElementById('carryList');
-  const btnBatal = document.getElementById('btnBatal');
-  const btnSimpan = document.getElementById('btnSimpan');
+  /* ================= SIMPAN TRANSAKSI (langsung, tanpa modal — status dibawa/ditinggal
+     sudah diatur inline di atas, harga boleh kosong dan diisi belakangan) ================= */
+  btnSimpanTransaksi.addEventListener('click', async function(){
+    if(draftBatches.length === 0) return;
 
-  let carryState = []; // { nama, keterangan, dibawa: true/false }
-  const modalTitle = document.querySelector('.modal-title');
+    const hargaVal = inpHarga.value.trim();
+    const harga = hargaVal ? Math.max(0, parseInt(hargaVal, 10) || 0) : 0;
 
-  btnSudahDibayar.addEventListener('click', openModal);
-  btnBatal.addEventListener('click', closeModal);
-  modalOverlay.addEventListener('click', function(e){ if(e.target === modalOverlay) closeModal(); });
-
-  function openModal(){
-    if(draftItems.length === 0) return;
-
-    modalTitle.textContent = 'Konfirmasi Transaksi — ' + myDisplayName;
-    carryState = draftItems.map(it => ({ nama: it.nama, keterangan: it.keterangan || '', dibawa: true }));
-    inpHarga.value = '';
-    renderCarryList();
-    modalOverlay.classList.add('open');
-  }
-  function closeModal(){
-    modalOverlay.classList.remove('open');
-  }
-
-  function renderCarryList(){
-    carryList.innerHTML = '';
-    carryState.forEach((c, idx)=>{
-      const row = document.createElement('div');
-      row.className = 'carry-item';
-      row.innerHTML = `
-        <div class="carry-top">
-          <div class="carry-name">${escapeHtml(c.nama)}</div>
-        </div>
-        <div class="carry-toggle">
-          <button type="button" data-idx="${idx}" data-choice="dibawa" class="${c.dibawa ? 'active' : ''}">Dibawa</button>
-          <button type="button" data-idx="${idx}" data-choice="ditinggal" class="${!c.dibawa ? 'active' : ''}">Ditinggal</button>
-        </div>`;
-      carryList.appendChild(row);
-    });
-  }
-
-  carryList.addEventListener('click', function(e){
-    const btn = e.target.closest('button[data-idx]');
-    if(!btn) return;
-    const idx = parseInt(btn.dataset.idx, 10);
-    carryState[idx].dibawa = (btn.dataset.choice === 'dibawa');
-    renderCarryList();
-  });
-
-  inpHarga.addEventListener('input', function(){ rpWrap.classList.remove('error'); });
-
-  btnSimpan.addEventListener('click', async function(){
-    const harga = parseInt(inpHarga.value, 10);
-    if(!inpHarga.value || isNaN(harga) || harga < 0){
-      rpWrap.classList.add('error');
-      inpHarga.focus();
-      return;
-    }
-    const itemsResult = carryState.map(c => ({
-      nama: c.nama,
-      keterangan: c.keterangan,
-      dibawa: c.dibawa
-    }));
-    // Keterangan digabung dari tiap barang (diisi saat tahap "Tambah Barang" di awal),
-    // bukan lagi ditanya ulang di modal ini. Dedup biar nggak dobel kalau sama semua.
-    const keterangan = [...new Set(itemsResult.map(it=>it.keterangan).filter(Boolean))].join('; ');
-
-    btnSimpan.disabled = true;
-    btnSimpan.textContent = 'Menyimpan...';
+    btnSimpanTransaksi.disabled = true;
+    btnSimpanTransaksi.textContent = 'Menyimpan...';
 
     const now = new Date();
     const DAY_NAMES_ID = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
@@ -1070,36 +1019,44 @@
     const tglSlash = pad2(now.getDate()) + '/' + pad2(now.getMonth()+1) + '/' + String(now.getFullYear()).slice(-2) + ' • ' + DAY_NAMES_ID[now.getDay()];
     const jam = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
 
-    const barangDanJumlah = itemsResult.map(it=> it.nama).join(', ');
-    const barangDibawa = itemsResult.filter(it=>it.dibawa).map(it=> it.nama).join(', ');
-    const barangDitinggal = itemsResult.filter(it=>!it.dibawa).map(it=> it.nama).join(', ');
+    const allNames = [];
+    const dibawaNames = [];
+    const ditinggalNames = [];
+    draftBatches.forEach(b=>{
+      b.names.forEach(n=>{
+        allNames.push(n);
+        if(b.status[n]) dibawaNames.push(n); else ditinggalNames.push(n);
+      });
+    });
+    const keterangan = [...new Set(draftBatches.map(b=>b.keterangan).filter(Boolean))].join('; ');
 
-    // Skema content HARUS sama dengan yang dipakai seluruh aplikasi (table_templates
-    // "TABEL BUKU BESAR"): { columns:[...], rows:[{cells:{...}}], hasTable:true, noteBody:'' }
-    // supaya note ini kebaca benar di note-detail viewer admin, bukan JSON bebas.
+    const barangBarang = allNames.join(', ');
+    const barangDibawa = dibawaNames.join(', ');
+    const barangDitinggal = ditinggalNames.join(', ');
+
+    // Skema content HARUS mengikuti pola table_templates ({columns, rows, hasTable, noteBody})
+    // biar note ini kebaca benar di note-detail viewer admin/index.html. Kolom sesuai
+    // yang diminta: No | Tanggal | Jam | Barang-barang | Barang Dibawa | Barang Ditinggal | Keterangan | Harga
+    // (tanpa P.Jawab/Customer — folder ini sudah pasti milik 1 customer, jadi redundan).
     const columns = [
       { id:'no', type:'no', label:'No', placeholder:'No' },
-      { id:'col_7vokwpy', type:'date', label:'TANGGAL ', placeholder:'Tanggal' },
-      { id:'col_gq28ofp', type:'time', label:'JAM', placeholder:'Jam' },
-      { id:'col_7y9vteq', type:'text', label:'P. JAWAB', placeholder:'Kolom Baru' },
-      { id:'col_r7c2uzw', type:'text', label:'CUSTOMER ', placeholder:'Kolom Baru' },
-      { id:'col_c0olgg1', type:'text', label:'BARANG DAN JUMLAH ', placeholder:'Kolom Baru' },
-      { id:'col_4vr40wf', type:'text', label:'BARANG YANG DIBAWA ', placeholder:'Kolom Baru' },
-      { id:'col_2jz56od', type:'text', label:'BARANG YANG DITINGGAL ', placeholder:'Kolom Baru' },
-      { id:'col_kp4e28q', type:'text', label:'KETERANGAN ', placeholder:'Kolom Baru' },
-      { id:'col_sxolep0', type:'text', label:'HARGA ', placeholder:'Kolom Baru' }
+      { id:'tanggal', type:'date', label:'Tanggal', placeholder:'Tanggal' },
+      { id:'jam', type:'time', label:'Jam', placeholder:'Jam' },
+      { id:'barang', type:'text', label:'Barang-barang', placeholder:'Kolom Baru' },
+      { id:'dibawa', type:'text', label:'Barang yang Dibawa', placeholder:'Kolom Baru' },
+      { id:'ditinggal', type:'text', label:'Barang yang Ditinggal', placeholder:'Kolom Baru' },
+      { id:'keterangan', type:'text', label:'Keterangan', placeholder:'Kolom Baru' },
+      { id:'harga', type:'text', label:'Total Harga', placeholder:'Kolom Baru' }
     ];
     const row = { cells: {
       no: '1',
-      col_7vokwpy: tglSlash,
-      col_gq28ofp: jam,
-      col_7y9vteq: '',
-      col_r7c2uzw: myDisplayName,
-      col_c0olgg1: barangDanJumlah,
-      col_4vr40wf: barangDibawa,
-      col_2jz56od: barangDitinggal,
-      col_kp4e28q: keterangan,
-      col_sxolep0: harga.toLocaleString('id-ID')
+      tanggal: tglSlash,
+      jam: jam,
+      barang: barangBarang,
+      dibawa: barangDibawa,
+      ditinggal: barangDitinggal,
+      keterangan: keterangan,
+      harga: hargaVal ? harga.toLocaleString('id-ID') : ''
     }};
 
     const { error } = await supabaseClient.from('notes').insert({
@@ -1112,17 +1069,17 @@
       content: { columns, rows: [row], hasTable: true, noteBody: '' }
     });
 
-    btnSimpan.disabled = false;
-    btnSimpan.textContent = 'Simpan Transaksi';
+    btnSimpanTransaksi.disabled = false;
+    btnSimpanTransaksi.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Simpan Transaksi';
 
     if(error){
       alert('Gagal menyimpan: ' + error.message);
       return;
     }
 
-    draftItems = [];
-    renderItemList();
-    closeModal();
+    draftBatches = [];
+    inpHarga.value = '';
+    renderBatchList();
     showToast('Transaksi disimpan');
     loadAndRenderDatabase();
   });
@@ -1338,7 +1295,7 @@
 
   /* ================= INIT ================= */
   function init(){
-    renderItemList();
+    renderBatchList();
     setView('input');
   }
 
