@@ -764,6 +764,16 @@
 
     <div class="db-note">Riwayat barang yang pernah Anda titipkan ke bengkel. Otomatis khusus akun Anda saja.</div>
 
+    <div class="month-switch glass">
+      <div class="month-arrow" id="dbPrevMonth" aria-label="Bulan sebelumnya">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </div>
+      <div class="month-label" id="dbMonthLabel">SEPTEMBER 2026</div>
+      <div class="month-arrow" id="dbNextMonth" aria-label="Bulan berikutnya">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+
     <div class="section-label">Ringkasan Saya</div>
     <div class="recap-grid" style="grid-template-columns:repeat(2,1fr);">
       <div class="recap-card glass">
@@ -1255,16 +1265,26 @@
     return digits ? parseInt(digits,10) : 0;
   }
 
+  let dbViewMonth = null;
+  let dbViewYear = null;
+
   async function loadAndRenderDatabase(){
     const tableEl = document.getElementById('dbRecordTable');
     const emptyEl = document.getElementById('dbEmpty');
     const emptyText = emptyEl.querySelector('div');
 
+    if(dbViewMonth === null){
+      const now = new Date();
+      dbViewMonth = now.getMonth();
+      dbViewYear = now.getFullYear();
+    }
+
     // RLS otomatis membatasi: folder sendiri + semua note publik/admin (owner_username null).
-    // Note customer lain TIDAK ikut terbawa sama sekali.
+    // Note customer lain TIDAK ikut terbawa sama sekali. Ambil juga nama foldernya (folders.name)
+    // biar kelihatan berasal dari "buku" mana (Buku Besar, Buku Hutang Piutang, dst).
     const { data, error } = await supabaseClient
       .from('notes')
-      .select('id, folder_id, content, created_at')
+      .select('id, folder_id, content, created_at, folders(name)')
       .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
@@ -1322,31 +1342,42 @@
           keterangan: ketVal,
           hargaRaw: hargaRawVal,
           hargaNum: colHarga ? parseHargaCell(cells[colHarga]) : 0,
+          folderName: isOwnFolder ? 'Input Saya' : ((note.folders && note.folders.name) || 'Admin'),
           createdAt: note.created_at
         });
       });
     });
 
+    // Filter sesuai bulan yang sedang dipilih
+    const MONTH_NAMES_UP = ["JANUARI","FEBRUARI","MARET","APRIL","MEI","JUNI","JULI","AGUSTUS","SEPTEMBER","OKTOBER","NOVEMBER","DESEMBER"];
+    document.getElementById('dbMonthLabel').textContent = MONTH_NAMES_UP[dbViewMonth] + ' ' + dbViewYear;
+
+    const filteredEntries = entries.filter(e => {
+      const d = new Date(e.createdAt);
+      return d.getMonth() === dbViewMonth && d.getFullYear() === dbViewYear;
+    });
+
     // Urutkan terbaru dulu
-    entries.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    filteredEntries.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-    document.getElementById('dbRecapCount').textContent = entries.length;
-    document.getElementById('dbRecapPaid').textContent = formatRupiah(entries.reduce((s,e)=> s + e.hargaNum, 0));
+    document.getElementById('dbRecapCount').textContent = filteredEntries.length;
+    document.getElementById('dbRecapPaid').textContent = formatRupiah(filteredEntries.reduce((s,e)=> s + e.hargaNum, 0));
 
-    if(entries.length === 0){
+    if(filteredEntries.length === 0){
       tableEl.innerHTML = '';
-      emptyText.textContent = 'Belum ada data untuk akun ini';
+      emptyText.textContent = 'Belum ada data bulan ini untuk akun ini';
       emptyEl.style.display = '';
       return;
     }
     emptyEl.style.display = 'none';
 
-    const headerCols = ['Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Keterangan','Harga'];
+    const headerCols = ['Buku','Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Keterangan','Harga'];
     const theadHtml = '<thead><tr>' + headerCols.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead>';
 
-    const tbodyHtml = '<tbody>' + entries.map(e => {
+    const tbodyHtml = '<tbody>' + filteredEntries.map(e => {
       const fallbackTgl = (!e.tanggal && !e.jam) ? formatTanggal(new Date(e.createdAt)) : '';
       const cellsHtml = [
+        `<td class="cell-muted">${escapeHtml(e.folderName)}</td>`,
         `<td class="cell-muted">${escapeHtml(e.tanggal.trim() || fallbackTgl || '—')}</td>`,
         `<td class="cell-muted">${escapeHtml(e.jam.trim() || '—')}</td>`,
         `<td>${escapeHtml(e.pj.trim() || '—')}</td>`,
@@ -1362,6 +1393,17 @@
 
     tableEl.innerHTML = theadHtml + tbodyHtml;
   }
+
+  document.getElementById('dbPrevMonth').addEventListener('click', () => {
+    dbViewMonth--;
+    if(dbViewMonth < 0){ dbViewMonth = 11; dbViewYear--; }
+    loadAndRenderDatabase();
+  });
+  document.getElementById('dbNextMonth').addEventListener('click', () => {
+    dbViewMonth++;
+    if(dbViewMonth > 11){ dbViewMonth = 0; dbViewYear++; }
+    loadAndRenderDatabase();
+  });
 
   /* ================= INIT ================= */
   function init(){
