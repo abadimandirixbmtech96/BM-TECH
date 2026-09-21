@@ -977,7 +977,8 @@
     <div class="card">
       <div class="field">
         <label for="inpNama">Nama Barang</label>
-        <input type="text" id="inpNama" placeholder="Contoh: Blok Mio, Piston (pisahkan koma kalau lebih dari satu)" autocomplete="off">
+        <div class="db-note" style="margin:2px 0 8px;font-size:12px;">Pisahkan pakai koma kalau lebih dari satu, misal: Blok Mio, Piston</div>
+        <input type="text" id="inpNama" placeholder="Contoh: Blok Mio, Piston" autocomplete="off">
       </div>
       <div class="field" style="margin-top:12px;">
         <label for="inpKeteranganAwal">Keterangan (mau diapain barangnya)</label>
@@ -1010,6 +1011,16 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
         Selesai
       </button>
+    </div>
+
+    <div class="section-label" style="margin-top:22px;">Riwayat Input Saya</div>
+    <div class="db-note" style="margin-top:-6px;">Transaksi yang sudah Anda simpan sendiri lewat halaman ini (tidak termasuk data lama admin — itu ada di tab Riwayat).</div>
+    <div class="riwayat-table-wrap">
+      <table class="riwayat-table" id="myOwnHistoryTable"></table>
+    </div>
+    <div class="card empty-state" id="myOwnHistoryEmpty" style="display:none;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.66 3.58 3 8 3s8-1.34 8-3V5"/><path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3"/></svg>
+      <div>Belum ada transaksi tersimpan</div>
     </div>
     </div><!-- /input-list-col -->
 
@@ -1405,7 +1416,7 @@
   navInput.addEventListener('click', ()=> setView('input'));
   navDatabase.addEventListener('click', ()=> setView('database'));
 
-  /* ================= LAYAR PENGATURAN (halaman terpisah; tombol Back HP ikut berfungsi) ================= */
+  /* ================= LAYAR PENGATURAN (halaman terpisah, ditutup lewat tombol panah) ================= */
   const settingsScreen = document.getElementById('view-settings');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsBack = document.getElementById('settingsBack');
@@ -1424,25 +1435,11 @@
     window.scrollTo(0, scrollBeforeSettings);
     settingsBtn.focus({ preventScroll:true });
   }
-  function openSettings(){
-    if(!settingsScreen.hidden) return;
-    showSettings();
-    try{ history.pushState({ settings:true }, '', '#pengaturan'); }catch(_){}
-  }
-  function closeSettings(){
-    if(settingsScreen.hidden) return;
-    if(history.state && history.state.settings){ history.back(); }
-    else { hideSettings(); }
-  }
+  function openSettings(){ if(settingsScreen.hidden) showSettings(); }
+  function closeSettings(){ if(!settingsScreen.hidden) hideSettings(); }
+  // Sengaja TIDAK memakai history/tombol Back HP: halaman ini sudah dashboard, Back HP tetap perilaku bawaan
   settingsBtn.addEventListener('click', openSettings);
   settingsBack.addEventListener('click', closeSettings);
-  window.addEventListener('popstate', () => {
-    const inSettings = !!(history.state && history.state.settings);
-    if(inSettings && settingsScreen.hidden) showSettings();
-    else if(!inSettings && !settingsScreen.hidden) hideSettings();
-  });
-  // Muat ulang saat masih di #pengaturan: mulai lagi dari dashboard
-  try{ if(history.state && history.state.settings) history.replaceState(null, '', location.pathname + location.search); }catch(_){}
 
   /* ================= INPUT DATA: tambah barang ================= */
   const inpNama = document.getElementById('inpNama');
@@ -1460,24 +1457,48 @@
   btnAddItem.addEventListener('click', addOrUpdateItem);
   inpNama.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); inpKeteranganAwal.focus(); } });
 
-  function addOrUpdateItem(){
+  // Barang yang belum "Selesai" disimpan permanen di tabel pending_items (bukan cuma
+  // memori browser), supaya kalau customer input hari ini lalu balik lagi besok,
+  // barang yang kemarin masih ada — dan bisa dikelompokkan per tanggal beneran.
+  async function loadPendingItems(){
+    const { data, error } = await supabaseClient
+      .from('pending_items')
+      .select('id, nama, keterangan, created_at')
+      .eq('folder_id', myFolderId)
+      .order('created_at', { ascending: true });
+    if(error){ console.error(error); return; }
+    draftItems = data || [];
+    renderItemTable();
+  }
+
+  async function addOrUpdateItem(){
     const namaRaw = inpNama.value.trim();
     const keterangan = inpKeteranganAwal.value.trim();
 
     if(!namaRaw){ shake(inpNama); inpNama.focus(); return; }
 
+    btnAddItem.disabled = true;
+
     if(editingItemId){
-      const it = draftItems.find(x=>x.id===editingItemId);
-      if(it){ it.nama = namaRaw.split(',')[0].trim(); it.keterangan = keterangan; }
+      const namaEdit = namaRaw.split(',')[0].trim();
+      const { error } = await supabaseClient
+        .from('pending_items')
+        .update({ nama: namaEdit, keterangan })
+        .eq('id', editingItemId);
+      if(!error){
+        const it = draftItems.find(x=>x.id===editingItemId);
+        if(it){ it.nama = namaEdit; it.keterangan = keterangan; }
+      }
       editingItemId = null;
       btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML;
     } else {
       const names = namaRaw.split(',').map(s=>s.trim()).filter(Boolean);
-      names.forEach(nama => {
-        draftItems.push({ id: itemIdSeq++, nama, keterangan });
-      });
+      const payload = names.map(nama => ({ folder_id: myFolderId, nama, keterangan }));
+      const { data, error } = await supabaseClient.from('pending_items').insert(payload).select();
+      if(!error && data){ draftItems.push(...data); }
     }
 
+    btnAddItem.disabled = false;
     inpNama.value = ''; inpKeteranganAwal.value = '';
     inpNama.focus();
     renderItemTable();
@@ -1489,15 +1510,38 @@
     setTimeout(()=>{ el.style.background = ''; el.style.boxShadow = ''; }, 700);
   }
 
+  function tglSlashFromDate(d){
+    const DAY_NAMES_ID = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
+    const pad2 = n => String(n).padStart(2,'0');
+    return pad2(d.getDate()) + '/' + pad2(d.getMonth()+1) + '/' + String(d.getFullYear()).slice(-2) + ' • ' + DAY_NAMES_ID[d.getDay()];
+  }
+
   function renderItemTable(){
     itemTableBody.innerHTML = '';
     if(draftItems.length === 0){
       itemTable.style.display = 'none';
       itemEmpty.style.display = '';
-    } else {
-      itemTable.style.display = '';
-      itemEmpty.style.display = 'none';
-      draftItems.forEach(it=>{
+      btnSelesai.disabled = true;
+      return;
+    }
+    itemTable.style.display = '';
+    itemEmpty.style.display = 'none';
+
+    // Kelompokkan per tanggal (dari created_at), tanggal PALING BARU tampil paling atas.
+    const groups = new Map(); // key: 'YYYY-MM-DD' -> { label, items: [] }
+    draftItems.forEach(it=>{
+      const d = new Date(it.created_at);
+      const key = d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+      if(!groups.has(key)) groups.set(key, { label: tglSlashFromDate(d), sortKey: d.setHours(0,0,0,0), items: [] });
+      groups.get(key).items.push(it);
+    });
+    const sortedGroups = [...groups.values()].sort((a,b)=> b.sortKey - a.sortKey);
+
+    sortedGroups.forEach(g=>{
+      const trHead = document.createElement('tr');
+      trHead.innerHTML = `<td colspan="3" style="background:var(--yellow-soft);font-weight:800;">${escapeHtml(g.label)}</td>`;
+      itemTableBody.appendChild(trHead);
+      g.items.forEach(it=>{
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${escapeHtml(it.nama)}</td>
@@ -1512,19 +1556,22 @@
           </td>`;
         itemTableBody.appendChild(tr);
       });
-    }
+    });
     btnSelesai.disabled = draftItems.length === 0;
   }
 
-  itemTableBody.addEventListener('click', function(e){
+  itemTableBody.addEventListener('click', async function(e){
     const btn = e.target.closest('.icon-btn');
     if(!btn) return;
-    const id = parseInt(btn.dataset.id, 10);
+    const id = btn.dataset.id;
     const act = btn.dataset.act;
     if(act === 'del'){
-      draftItems = draftItems.filter(x=>x.id!==id);
-      if(editingItemId===id){ editingItemId=null; inpNama.value=''; inpKeteranganAwal.value=''; btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML; }
-      renderItemTable();
+      const { error } = await supabaseClient.from('pending_items').delete().eq('id', id);
+      if(!error){
+        draftItems = draftItems.filter(x=>x.id!==id);
+        if(editingItemId===id){ editingItemId=null; inpNama.value=''; inpKeteranganAwal.value=''; btnAddItem.innerHTML = BTN_ADD_DEFAULT_HTML; }
+        renderItemTable();
+      }
     } else if(act === 'edit'){
       const it = draftItems.find(x=>x.id===id);
       if(!it) return;
@@ -1595,7 +1642,7 @@
   });
 
   btnSelesaiSimpan.addEventListener('click', async function(){
-    const checkedIds = [...ambilCheckList.querySelectorAll('input[type="checkbox"]:checked')].map(c => parseInt(c.dataset.id, 10));
+    const checkedIds = [...ambilCheckList.querySelectorAll('input[type="checkbox"]:checked')].map(c => c.dataset.id);
 
     if(bayarSekarang && (!inpHargaSelesai.value || parseInt(inpHargaSelesai.value,10) < 0)){
       shake(inpHargaSelesai);
@@ -1623,38 +1670,42 @@
     const dibawaNames = dibawaItems.map(it => it.nama);
     const ditinggalNames = ditinggalItems.map(it => it.nama);
 
-    const sudahBayarNames = bayarSekarang ? dibawaNames : [];
-    const belumBayarNames = bayarSekarang ? ditinggalNames : allNames;
     const harga = bayarSekarang ? Math.max(0, parseInt(inpHargaSelesai.value, 10) || 0) : 0;
     const tanggalBayarStr = bayarSekarang ? tglSlashFromISO(inpTanggalSelesai.value) : '';
 
-    const keterangan = [...new Set(draftItems.map(it=>it.keterangan).filter(Boolean))].join('; ');
+    // Info bayar digabung ke Keterangan & Harga (BUKAN kolom terpisah), supaya struktur
+    // note ini identik dengan "TABEL BUKU BESAR" yang sudah dipakai admin di seluruh app.
+    let keterangan = [...new Set(draftItems.map(it=>it.keterangan).filter(Boolean))].join('; ');
+    if(bayarSekarang && harga > 0){
+      const bayarNote = 'Dibayar ' + formatRupiah(harga) + ' pada ' + tanggalBayarStr + ' (' + dibawaNames.join(', ') + ')';
+      keterangan = keterangan ? keterangan + ' — ' + bayarNote : bayarNote;
+    }
 
+    // Skema & ID kolom PERSIS sama dengan template "TABEL BUKU BESAR" admin, biar note ini
+    // seragam dengan note buatan admin di seluruh aplikasi (note-detail viewer, dsb).
     const columns = [
       { id:'no', type:'no', label:'No', placeholder:'No' },
-      { id:'tanggal', type:'date', label:'Tanggal', placeholder:'Tanggal' },
-      { id:'jam', type:'time', label:'Jam', placeholder:'Jam' },
-      { id:'barang', type:'text', label:'Barang-barang', placeholder:'Kolom Baru' },
-      { id:'dibawa', type:'text', label:'Barang yang Dibawa', placeholder:'Kolom Baru' },
-      { id:'ditinggal', type:'text', label:'Barang yang Ditinggal', placeholder:'Kolom Baru' },
-      { id:'sudah_bayar', type:'text', label:'Sudah Dibayar', placeholder:'Kolom Baru' },
-      { id:'belum_bayar', type:'text', label:'Belum Dibayar', placeholder:'Kolom Baru' },
-      { id:'tanggal_bayar', type:'text', label:'Tanggal Bayar', placeholder:'Kolom Baru' },
-      { id:'keterangan', type:'text', label:'Keterangan', placeholder:'Kolom Baru' },
-      { id:'harga', type:'text', label:'Total Harga', placeholder:'Kolom Baru' }
+      { id:'col_7vokwpy', type:'date', label:'TANGGAL ', placeholder:'Tanggal' },
+      { id:'col_gq28ofp', type:'time', label:'JAM', placeholder:'Jam' },
+      { id:'col_7y9vteq', type:'text', label:'P. JAWAB', placeholder:'Kolom Baru' },
+      { id:'col_r7c2uzw', type:'text', label:'CUSTOMER ', placeholder:'Kolom Baru' },
+      { id:'col_c0olgg1', type:'text', label:'BARANG DAN JUMLAH ', placeholder:'Kolom Baru' },
+      { id:'col_4vr40wf', type:'text', label:'BARANG YANG DIBAWA ', placeholder:'Kolom Baru' },
+      { id:'col_2jz56od', type:'text', label:'BARANG YANG DITINGGAL ', placeholder:'Kolom Baru' },
+      { id:'col_kp4e28q', type:'text', label:'KETERANGAN ', placeholder:'Kolom Baru' },
+      { id:'col_sxolep0', type:'text', label:'HARGA ', placeholder:'Kolom Baru' }
     ];
     const row = { cells: {
       no: '1',
-      tanggal: tglSlash,
-      jam: jam,
-      barang: allNames.join(', '),
-      dibawa: dibawaNames.join(', '),
-      ditinggal: ditinggalNames.join(', '),
-      sudah_bayar: sudahBayarNames.join(', '),
-      belum_bayar: belumBayarNames.join(', '),
-      tanggal_bayar: tanggalBayarStr,
-      keterangan: keterangan,
-      harga: harga > 0 ? harga.toLocaleString('id-ID') : ''
+      col_7vokwpy: tglSlash,
+      col_gq28ofp: jam,
+      col_7y9vteq: '',
+      col_r7c2uzw: myDisplayName,
+      col_c0olgg1: allNames.join(', '),
+      col_4vr40wf: dibawaNames.join(', '),
+      col_2jz56od: ditinggalNames.join(', '),
+      col_kp4e28q: keterangan,
+      col_sxolep0: harga > 0 ? harga.toLocaleString('id-ID') : ''
     }};
 
     const { error } = await supabaseClient.from('notes').insert({
@@ -1675,11 +1726,17 @@
       return;
     }
 
+    // Barang yang diambil (dicentang) sudah selesai diproses — hapus permanen dari pending_items.
+    // Yang tidak dicentang tetap ada di pending_items, akan tetap muncul lain kali.
+    if(checkedIds.length){
+      await supabaseClient.from('pending_items').delete().in('id', checkedIds);
+    }
     draftItems = draftItems.filter(it => !checkedIds.includes(it.id));
     renderItemTable();
     selesaiOverlay.classList.remove('open');
     showToast('Transaksi disimpan');
     loadAndRenderDatabase();
+    loadMyOwnHistory();
   });
 
 
@@ -1830,22 +1887,24 @@
       const colHarga = findHargaColId(columns);
 
       const isOwnFolder = note.folder_id === myFolderId;
+      // Tab Riwayat ini KHUSUS data lama admin yang cocok nama — transaksi yang Anda input
+      // sendiri lewat app ini sudah ada di tabel "Riwayat Input Saya" pada tab Input, jadi
+      // tidak digabung/diduplikasi di sini.
+      if(isOwnFolder) return;
 
       content.rows.forEach(row => {
         const cells = row.cells || {};
 
-        if(!isOwnFolder){
-          // Note milik admin/folder lain: hanya ambil baris yang nama customer-nya persis cocok
-          if(!colCustomer) return;
-          const custVal = (cells[colCustomer] || '').trim().toLowerCase();
-          if(!custVal || custVal !== myNameLower) return;
-        }
+        // Hanya ambil baris yang nama customer-nya persis cocok
+        if(!colCustomer) return;
+        const custVal = (cells[colCustomer] || '').trim().toLowerCase();
+        if(!custVal || custVal !== myNameLower) return;
 
         // Baris kosong (belum diisi sama sekali) dilewati, biar tabel nggak penuh baris hampa
         const barangVal = colBarang ? (cells[colBarang] || '').trim() : '';
         const ketVal = colKeterangan ? (cells[colKeterangan] || '').trim() : '';
         const hargaRawVal = colHarga ? (cells[colHarga] || '').trim() : '';
-        if(isOwnFolder === false && !barangVal && !ketVal && !hargaRawVal) return;
+        if(!barangVal && !ketVal && !hargaRawVal) return;
 
         entries.push({
           tanggal: colTanggal ? (cells[colTanggal] || '') : '',
@@ -1855,13 +1914,10 @@
           barang: barangVal,
           dibawa: colDibawa ? (cells[colDibawa] || '') : '',
           ditinggal: colDitinggal ? (cells[colDitinggal] || '').trim() : '',
-          sudahBayar: colSudahBayar ? (cells[colSudahBayar] || '').trim() : '',
-          belumBayar: colBelumBayar ? (cells[colBelumBayar] || '').trim() : '',
-          tanggalBayar: colTanggalBayar ? (cells[colTanggalBayar] || '').trim() : '',
           keterangan: ketVal,
           hargaRaw: hargaRawVal,
           hargaNum: colHarga ? parseHargaCell(cells[colHarga]) : 0,
-          folderName: isOwnFolder ? 'Input Saya' : ((note.folders && note.folders.name) || 'Admin'),
+          folderName: (note.folders && note.folders.name) || 'Admin',
           createdAt: note.created_at
         });
       });
@@ -1890,7 +1946,7 @@
     }
     emptyEl.style.display = 'none';
 
-    const headerCols = ['Buku','Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Sudah Bayar','Belum Bayar','Tanggal Bayar','Keterangan','Harga'];
+    const headerCols = ['Buku','Tanggal','Jam','P. Jawab','Customer','Barang & Jumlah','Barang Dibawa','Barang Ditinggal','Keterangan','Harga'];
     const theadHtml = '<thead><tr>' + headerCols.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead>';
 
     const tbodyHtml = '<tbody>' + filteredEntries.map(e => {
@@ -1904,9 +1960,6 @@
         `<td>${escapeHtml(e.barang || '—')}</td>`,
         `<td>${escapeHtml(e.dibawa.trim() || '—')}</td>`,
         `<td>${escapeHtml(e.ditinggal || (e.dibawa || e.barang ? 'Tidak ada' : '—'))}</td>`,
-        `<td>${escapeHtml(e.sudahBayar || '—')}</td>`,
-        `<td>${escapeHtml(e.belumBayar || '—')}</td>`,
-        `<td class="cell-muted">${escapeHtml(e.tanggalBayar || '—')}</td>`,
         `<td>${escapeHtml(e.keterangan || '—')}</td>`,
         `<td class="cell-price">${e.hargaRaw ? formatRupiah(e.hargaNum) : '—'}</td>`
       ].join('');
@@ -1914,6 +1967,58 @@
     }).join('') + '</tbody>';
 
     tableEl.innerHTML = theadHtml + tbodyHtml;
+  }
+
+  /* ================= RIWAYAT INPUT SAYA (tab Input, transaksi milik sendiri saja, TIDAK
+     digabung dengan data admin di tab Riwayat) ================= */
+  async function loadMyOwnHistory(){
+    const tableEl = document.getElementById('myOwnHistoryTable');
+    const emptyEl = document.getElementById('myOwnHistoryEmpty');
+
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('id, content, created_at')
+      .eq('folder_id', myFolderId)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false });
+
+    if(error || !data || data.length === 0){
+      tableEl.innerHTML = '';
+      emptyEl.style.display = '';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    const headerCols = ['Tanggal','Jam','Barang & Jumlah','Dibawa','Ditinggal','Keterangan','Harga'];
+    const theadHtml = '<thead><tr>' + headerCols.map(h => `<th>${escapeHtml(h)}</th>`).join('') + '</tr></thead>';
+
+    const rowsHtml = data.map(note => {
+      const content = note.content || {};
+      if(!content.hasTable || !Array.isArray(content.columns) || !Array.isArray(content.rows) || !content.rows[0]) return '';
+      const columns = content.columns;
+      const cells = content.rows[0].cells || {};
+      const colTanggal = findMainTanggalColId(columns);
+      const colJam = findColId(columns, 'JAM');
+      const colBarang = findBarangJumlahColId(columns);
+      const colDibawa = findDibawaColId(columns);
+      const colDitinggal = findColId(columns, 'DITINGGAL');
+      const colKeterangan = findColId(columns, 'KETERANGAN');
+      const colHarga = findHargaColId(columns);
+      const hargaRawVal = colHarga ? (cells[colHarga] || '').trim() : '';
+
+      const cellsHtml = [
+        `<td class="cell-muted">${escapeHtml((colTanggal && cells[colTanggal]) || formatTanggal(new Date(note.created_at)))}</td>`,
+        `<td class="cell-muted">${escapeHtml((colJam && cells[colJam]) || '—')}</td>`,
+        `<td>${escapeHtml((colBarang && cells[colBarang]) || '—')}</td>`,
+        `<td>${escapeHtml((colDibawa && cells[colDibawa]) || '—')}</td>`,
+        `<td>${escapeHtml((colDitinggal && cells[colDitinggal]) || '—')}</td>`,
+        `<td>${escapeHtml((colKeterangan && cells[colKeterangan]) || '—')}</td>`,
+        `<td class="cell-price">${hargaRawVal ? formatRupiah(parseHargaCell(hargaRawVal)) : '—'}</td>`
+      ].join('');
+      return '<tr>' + cellsHtml + '</tr>';
+    }).join('');
+
+    tableEl.innerHTML = theadHtml + '<tbody>' + rowsHtml + '</tbody>';
   }
 
   document.getElementById('dbPrevMonth').addEventListener('click', () => {
@@ -1929,7 +2034,8 @@
 
   /* ================= INIT ================= */
   function init(){
-    renderItemTable();
+    loadPendingItems();
+    loadMyOwnHistory();
     setView('input');
   }
 
