@@ -468,6 +468,13 @@
   .riwayat-table tbody tr:nth-child(even){ background:var(--zebra); }
   .riwayat-table .cell-price{ font-weight:900; background:var(--yellow-soft); }
   .riwayat-table .cell-muted{ color:var(--text-2); }
+  .riwayat-table .cell-wrap{
+    white-space:normal;
+    max-width:260px;
+    overflow:visible;
+    text-overflow:clip;
+    word-break:break-word;
+  }
 
   /* ---------- Modal ---------- */
   .modal-overlay{
@@ -1834,6 +1841,18 @@
     const digits = String(v).replace(/[^0-9]/g,'');
     return digits ? parseInt(digits,10) : 0;
   }
+  // Kolom Harga kadang diisi admin dengan simbol (√, ✓, dll) bukan angka — artinya
+  // "sudah dibayar" tapi jumlah/tanggalnya dicatat di baris lain. Tampilkan simbolnya
+  // apa adanya, jangan dipaksa jadi Rp0.
+  function isNumericHargaText(raw){
+    return /^[0-9][0-9.,\s]*$/.test(String(raw).trim());
+  }
+  function renderHargaCell(rawVal){
+    const raw = (rawVal || '').trim();
+    if(!raw) return '—';
+    if(isNumericHargaText(raw)) return formatRupiah(parseHargaCell(raw));
+    return escapeHtml(raw); // simbol/teks non-angka, misal "√"
+  }
 
   let dbViewMonth = null;
   let dbViewYear = null;
@@ -1957,11 +1976,11 @@
         `<td class="cell-muted">${escapeHtml(e.jam.trim() || '—')}</td>`,
         `<td>${escapeHtml(e.pj.trim() || '—')}</td>`,
         `<td>${escapeHtml(e.customer.trim() || '—')}</td>`,
-        `<td>${escapeHtml(e.barang || '—')}</td>`,
+        `<td class="cell-wrap">${escapeHtml(e.barang || '—')}</td>`,
         `<td>${escapeHtml(e.dibawa.trim() || '—')}</td>`,
         `<td>${escapeHtml(e.ditinggal || (e.dibawa || e.barang ? 'Tidak ada' : '—'))}</td>`,
-        `<td>${escapeHtml(e.keterangan || '—')}</td>`,
-        `<td class="cell-price">${e.hargaRaw ? formatRupiah(e.hargaNum) : '—'}</td>`
+        `<td class="cell-wrap">${escapeHtml(e.keterangan || '—')}</td>`,
+        `<td class="cell-price">${renderHargaCell(e.hargaRaw)}</td>`
       ].join('');
       return '<tr>' + cellsHtml + '</tr>';
     }).join('') + '</tbody>';
@@ -2009,11 +2028,11 @@
       const cellsHtml = [
         `<td class="cell-muted">${escapeHtml((colTanggal && cells[colTanggal]) || formatTanggal(new Date(note.created_at)))}</td>`,
         `<td class="cell-muted">${escapeHtml((colJam && cells[colJam]) || '—')}</td>`,
-        `<td>${escapeHtml((colBarang && cells[colBarang]) || '—')}</td>`,
+        `<td class="cell-wrap">${escapeHtml((colBarang && cells[colBarang]) || '—')}</td>`,
         `<td>${escapeHtml((colDibawa && cells[colDibawa]) || '—')}</td>`,
         `<td>${escapeHtml((colDitinggal && cells[colDitinggal]) || '—')}</td>`,
-        `<td>${escapeHtml((colKeterangan && cells[colKeterangan]) || '—')}</td>`,
-        `<td class="cell-price">${hargaRawVal ? formatRupiah(parseHargaCell(hargaRawVal)) : '—'}</td>`
+        `<td class="cell-wrap">${escapeHtml((colKeterangan && cells[colKeterangan]) || '—')}</td>`,
+        `<td class="cell-price">${renderHargaCell(hargaRawVal)}</td>`
       ].join('');
       return '<tr>' + cellsHtml + '</tr>';
     }).join('');
