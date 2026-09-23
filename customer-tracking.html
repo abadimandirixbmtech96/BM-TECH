@@ -428,11 +428,27 @@
   .riwayat-table-wrap{
     overflow-x:auto;
     overflow-y:hidden;
-    touch-action:pan-x;
     -webkit-overflow-scrolling:touch;
     background:var(--paper);
     border:var(--bw) solid var(--ink);
     box-shadow:var(--shadow-lg);
+    /* scrollbar horizontal dibuat SELALU KELIHATAN (bukan cuma pas discroll) biar
+       kelihatan ada thumb yang bisa ditarik jari buat geser samping — tanpa
+       mengunci arah geser (scroll vertikal halaman tetap jalan normal). */
+    scrollbar-width:auto;
+    scrollbar-color:var(--ink) var(--paper);
+  }
+  .riwayat-table-wrap::-webkit-scrollbar{
+    height:12px;
+  }
+  .riwayat-table-wrap::-webkit-scrollbar-track{
+    background:var(--paper);
+    border-top:var(--bw-sm) solid var(--ink);
+  }
+  .riwayat-table-wrap::-webkit-scrollbar-thumb{
+    background:var(--yellow);
+    border:2px solid var(--ink);
+    border-radius:100px;
   }
   .riwayat-table-wrap:has(.riwayat-table:empty){ display:none; }
   .riwayat-table{
