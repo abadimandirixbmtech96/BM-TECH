@@ -2294,11 +2294,25 @@
 
   // Animasi keyboard kebuka butuh waktu — begitu visualViewport-nya selesai
   // resize, cek ulang posisi sel yang lagi fokus (kalau ada) biar tetap
-  // gak ketutupan.
+  // gak ketutupan. Handler yang sama dipakai buat 'resize' MAUPUN 'scroll':
+  // sebagian besar Android memicu 'resize' saat keyboard buka/tutup, tapi
+  // beberapa browser (terutama iOS Safari, dan beberapa WebView) cuma
+  // menggeser offsetTop lewat event 'scroll' tanpa 'resize' — kalau cuma
+  // dengar 'resize' saja, di perangkat itu sel yang lagi diketik tetap bisa
+  // ketutup keyboard tanpa ada koreksi sama sekali.
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', () => {
-      if (lastActiveCell && document.activeElement === lastActiveCell) ensureCellVisible(lastActiveCell);
-    });
+    const onViewportShift = () => {
+      if (lastActiveCell && document.activeElement === lastActiveCell) {
+        ensureCellVisible(lastActiveCell);
+      } else if (isOutOfBounds(scale)) {
+        // Gak ada sel yang lagi fokus, tapi batas pan berubah (keyboard
+        // baru nutup misalnya) dan posisi kanvas sekarang jadi di luar
+        // batas baru — settle balik biar gak nyangkut di posisi ilegal.
+        settleBack();
+      }
+    };
+    window.visualViewport.addEventListener('resize', onViewportShift);
+    window.visualViewport.addEventListener('scroll', onViewportShift);
   }
 
   // Capitalizes just the first character as soon as it's typed (e.g. "yanto" → "Yanto").
@@ -3367,13 +3381,36 @@
   // Real on-screen clearance needed above/below the canvas so content never
   // hides behind the floating toolbars — measured directly in the viewport,
   // so it stays correct at any zoom level instead of shrinking with scale.
+  // Satu sumber kebenaran untuk "batas bawah yang beneran kelihatan" —
+  // dipakai di getChrome() MAUPUN ensureCellVisible() supaya keduanya
+  // selalu sepakat. Sebelumnya getChrome()/panBounds() pakai window.innerHeight
+  // mentah (yang di banyak Android TIDAK mengecil saat keyboard muncul —
+  // keyboard cuma "menimpa" layar, bukan mengubah ukuran layout), sedangkan
+  // ensureCellVisible() sudah pakai visualViewport (yang MEMANG mengecil saat
+  // keyboard muncul). Akibat mismatch ini panBounds() sering menghitung
+  // konten "masih cukup" di layar penuh (minY=maxY, sumbu Y dikunci total)
+  // padahal separuh layar itu sudah ketutup keyboard — jadi begitu
+  // ensureCellVisible() mencoba menggeser sel ke atas keyboard, clampPan()
+  // langsung membatalkan pergeserannya dan sel malah nyangkut di posisi lama
+  // (kelihatan seperti "ke-lock ke atas" / hilang ketutup keyboard).
+  function getVisibleBottom(){
+    const vv = window.visualViewport;
+    return vv ? vv.height + vv.offsetTop : window.innerHeight;
+  }
+
   function getChrome(){
     const topBar = (topbarEdit && topbarEdit.style.display === 'flex') ? topbarEdit : topbarNormal;
     const topRect = topBar.getBoundingClientRect();
     const bottomRect = document.querySelector('.bottombar').getBoundingClientRect();
+    // Kalau keyboard kebuka dan menutupi posisi asli bottombar, pakai batas
+    // visualViewport (yang lebih kecil) sebagai acuan — bukan posisi asli
+    // bottombar yang sudah ketutup keyboard tapi koordinatnya tetap "kelihatan
+    // valid" secara layout. Math.min ini yang bikin panBounds() ikut sadar
+    // keyboard, sama seperti ensureCellVisible().
+    const visibleBottom = getVisibleBottom();
     return {
       top: Math.max(0, topRect.bottom + 12),
-      bottom: Math.max(0, window.innerHeight - bottomRect.top + 12)
+      bottom: Math.max(0, window.innerHeight - Math.min(bottomRect.top, visibleBottom) + 12)
     };
   }
 
@@ -3385,11 +3422,7 @@
     const vpRect = viewport.getBoundingClientRect();
     const chrome = getChrome();
     const bottomRect = document.querySelector('.bottombar').getBoundingClientRect();
-    const vv = window.visualViewport;
-    // Keyboard di HP ngecilin visualViewport (bukan window.innerHeight di
-    // banyak browser) — pakai itu kalau ada, biar batas bawah yang "beneran
-    // kelihatan" ikut naik pas keyboard kebuka.
-    const visibleBottom = vv ? vv.height + vv.offsetTop : window.innerHeight;
+    const visibleBottom = getVisibleBottom();
     const margin = 14;
     const safeTop = chrome.top + margin;
     const safeBottom = Math.min(bottomRect.top, visibleBottom) - margin;
