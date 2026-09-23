@@ -426,10 +426,10 @@
 
   /* ---------- Tabel Riwayat ---------- */
   .riwayat-table-wrap{
-    overflow:auto;
+    overflow-x:auto;
+    overflow-y:hidden;
+    touch-action:pan-x;
     -webkit-overflow-scrolling:touch;
-    max-height:70vh;
-    max-height:70dvh;
     background:var(--paper);
     border:var(--bw) solid var(--ink);
     box-shadow:var(--shadow-lg);
@@ -469,11 +469,10 @@
   .riwayat-table .cell-price{ font-weight:900; background:var(--yellow-soft); }
   .riwayat-table .cell-muted{ color:var(--text-2); }
   .riwayat-table .cell-wrap{
-    white-space:normal;
-    max-width:260px;
+    white-space:nowrap;
+    max-width:none;
     overflow:visible;
     text-overflow:clip;
-    word-break:break-word;
   }
 
   /* ---------- Modal ---------- */
@@ -947,6 +946,20 @@
     .modal-sheet{ max-height:94vh; max-height:94dvh; }
   }
 
+  @keyframes viewFadeIn{
+    from{ opacity:0; transform:translateY(8px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .view-anim{ animation:viewFadeIn .28s cubic-bezier(.32,.72,0,1); }
+
+  @keyframes rowFadeIn{
+    from{ opacity:0; transform:translateY(4px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .riwayat-table tbody tr, .ambil-check-row{
+    animation:rowFadeIn .22s ease both;
+  }
+
   @media (prefers-reduced-motion:reduce){
     *{ transition:none !important; animation:none !important; }
   }
@@ -1413,11 +1426,18 @@
   const navInput = document.getElementById('navInput');
   const navDatabase = document.getElementById('navDatabase');
 
+  function playViewAnim(el){
+    el.classList.remove('view-anim');
+    void el.offsetWidth; // paksa reflow biar animasi re-trigger tiap kali
+    el.classList.add('view-anim');
+  }
+
   function setView(v){
     viewInput.style.display = v === 'input' ? '' : 'none';
     viewDatabase.style.display = v === 'database' ? '' : 'none';
     navInput.classList.toggle('active', v === 'input');
     navDatabase.classList.toggle('active', v === 'database');
+    playViewAnim(v === 'input' ? viewInput : viewDatabase);
     if(v === 'database') loadAndRenderDatabase();
   }
   navInput.addEventListener('click', ()=> setView('input'));
