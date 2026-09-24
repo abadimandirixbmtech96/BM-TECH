@@ -72,6 +72,21 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
+  /* Scrollbar kanan untuk SELURUH HALAMAN (bukan tabel) — biar kelihatan jelas ada
+     thumb yang bisa ditarik buat scroll naik-turun, mirip scrollbar di code editor.
+     Catatan: sebagian browser mobile (Chrome Android) menggambar scrollbar halaman
+     pakai overlay bawaan OS dan tidak selalu bisa di-custom lewat CSS ini. */
+  html{
+    scrollbar-width:auto;
+    scrollbar-color:var(--yellow) var(--bg);
+  }
+  html::-webkit-scrollbar{ width:10px; }
+  html::-webkit-scrollbar-track{ background:var(--bg); }
+  html::-webkit-scrollbar-thumb{
+    background:var(--yellow);
+    border:2px solid var(--ink);
+    border-radius:100px;
+  }
   body{
     margin:0;
     font-family:'Archivo',system-ui,sans-serif;
@@ -432,23 +447,6 @@
     background:var(--paper);
     border:var(--bw) solid var(--ink);
     box-shadow:var(--shadow-lg);
-    /* scrollbar horizontal dibuat SELALU KELIHATAN (bukan cuma pas discroll) biar
-       kelihatan ada thumb yang bisa ditarik jari buat geser samping — tanpa
-       mengunci arah geser (scroll vertikal halaman tetap jalan normal). */
-    scrollbar-width:auto;
-    scrollbar-color:var(--ink) var(--paper);
-  }
-  .riwayat-table-wrap::-webkit-scrollbar{
-    height:12px;
-  }
-  .riwayat-table-wrap::-webkit-scrollbar-track{
-    background:var(--paper);
-    border-top:var(--bw-sm) solid var(--ink);
-  }
-  .riwayat-table-wrap::-webkit-scrollbar-thumb{
-    background:var(--yellow);
-    border:2px solid var(--ink);
-    border-radius:100px;
   }
   .riwayat-table-wrap:has(.riwayat-table:empty){ display:none; }
   .riwayat-table{
