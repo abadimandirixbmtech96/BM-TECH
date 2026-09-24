@@ -2,1026 +2,809 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#f4f6f8">
-<title>Dashboard Admin — Data Otomatis</title>
-
+<meta name="theme-color" id="themeColorMeta" content="#F6F1E7">
+<title>Dashboard Admin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{
-  --bg:#f4f6f8;
-  --surface:rgba(255,255,255,.72);
-  --surface-solid:#fff;
-  --surface-2:rgba(248,250,252,.88);
-  --text:#17191c;
-  --muted:#727981;
-  --line:rgba(23,25,28,.09);
-  --accent:#17191c;
-  --accent-soft:rgba(23,25,28,.07);
-  --danger:#d94b4b;
-  --success:#23855b;
-  --shadow:0 14px 45px rgba(25,32,40,.10);
-  --shadow-soft:0 7px 25px rgba(25,32,40,.07);
-  --radius:24px;
-  --safe-top:env(safe-area-inset-top,0px);
-  --safe-bottom:env(safe-area-inset-bottom,0px);
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;width:100%;height:100%;overflow:hidden}
-body{
-  font-family:Inter,system-ui,sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(circle at 15% 5%,rgba(255,255,255,.95),transparent 32%),
-    radial-gradient(circle at 95% 90%,rgba(220,228,236,.75),transparent 35%),
-    var(--bg);
-}
-button,input{font:inherit}
-button{cursor:pointer}
-button:active{transform:scale(.97)}
-.hidden{display:none!important}
+  :root {
+    --app-font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --paper: #F6F1E7;
+    --paper-alt: #FBF8F2;
+    --ink: #1C1B19;
+    --ink-soft: #6B6459;
+    --line: #E4DDCC;
+    --line-soft: #EDE7D8;
+    --glass-bg: rgba(255, 255, 255, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-shadow: 0 8px 32px rgba(80, 70, 50, 0.08);
+    --accent: #C9932F;
+    --accent-dark: #A67622;
+    --danger: #E2483D;
+    --success: #3DA85C;
+    --radius-pill: 999px;
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
 
-.app{
-  position:fixed;inset:0;
-  display:flex;flex-direction:column;
-}
+  body.surface-dark {
+    --paper: #15140F;
+    --paper-alt: #1B1A15;
+    --ink: #EDEAE2;
+    --ink-soft: #9B948A;
+    --line: #332F27;
+    --line-soft: #26241D;
+    --glass-bg: rgba(30, 28, 23, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  }
 
-.topbar{
-  position:relative;
-  z-index:20;
-  padding:calc(var(--safe-top) + 12px) 16px 8px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  pointer-events:none;
-}
-.glass{
-  background:var(--surface);
-  border:1px solid rgba(255,255,255,.8);
-  backdrop-filter:blur(24px) saturate(1.35);
-  -webkit-backdrop-filter:blur(24px) saturate(1.35);
-  box-shadow:var(--shadow-soft);
-}
-.icon-btn{
-  width:44px;height:44px;border:0;border-radius:50%;
-  display:grid;place-items:center;
-  background:transparent;color:var(--text);
-  pointer-events:auto;
-}
-.icon-btn svg{width:19px;height:19px}
-.status{
-  min-height:36px;padding:0 13px;border-radius:999px;
-  display:flex;align-items:center;gap:7px;
-  font-size:11px;font-weight:600;color:var(--muted);
-  opacity:0;transform:translateY(-4px);transition:.2s;
-  pointer-events:none;
-}
-.status.show{opacity:1;transform:none}
-.status .dot{width:7px;height:7px;border-radius:50%;background:#aaa}
-.status.success .dot{background:var(--success)}
-.status.error .dot{background:var(--danger)}
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; font-family: var(--app-font); }
+  body { background: var(--paper); color: var(--ink); overflow: hidden; overscroll-behavior: none; }
+  button, input, select { outline: none; border: none; font-family: inherit; }
+  
+  /* App Shell */
+  #app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+  .view-container { flex: 1; position: relative; overflow: hidden; }
+  .view { position: absolute; inset: 0; display: none; flex-direction: column; overflow-y: auto; padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 90px); }
+  .view.active { display: flex; animation: fadeView 0.25s ease forwards; }
+  
+  @keyframes fadeView {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-.main{
-  flex:1;overflow:auto;overscroll-behavior:contain;
-  padding:10px 16px calc(var(--safe-bottom) + 92px);
-}
-.container{width:min(100%,720px);margin:auto}
+  /* Typography */
+  h1 { font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+  h2 { font-size: 18px; font-weight: 600; color: var(--ink); margin-bottom: 12px; }
+  p.subtitle { font-size: 14px; color: var(--ink-soft); margin-bottom: 24px; }
 
-.hero{padding:10px 4px 18px}
-.eyebrow{
-  font-size:11px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);font-weight:700;margin-bottom:6px;
-}
-h1{
-  margin:0;font-size:30px;line-height:1.08;
-  letter-spacing:-.045em;font-weight:800;
-}
-.hero p{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.5}
+  /* Liquid Glass Cards */
+  .glass-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
 
-.summary-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);
-  gap:9px;margin-bottom:13px;
-}
-.summary-card{
-  min-width:0;padding:14px 13px;border-radius:19px;
-}
-.summary-label{font-size:10px;color:var(--muted);font-weight:600}
-.summary-value{
-  margin-top:7px;font-size:17px;font-weight:800;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.card{
-  border-radius:var(--radius);
-  padding:18px;
-  margin-bottom:13px;
-}
-.section-head{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:10px;margin-bottom:14px;
-}
-.section-title{font-size:15px;font-weight:800;letter-spacing:-.02em}
-.section-sub{font-size:11px;color:var(--muted);margin-top:3px}
+  /* Dashboard Stats */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .stat-box { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--glass-shadow); }
+  .stat-title { font-size: 13px; color: var(--ink-soft); font-weight: 500; margin-bottom: 4px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--ink); }
 
-.field{margin-bottom:12px}
-.field:last-child{margin-bottom:0}
-label{
-  display:block;font-size:11px;font-weight:700;
-  color:var(--muted);margin:0 0 7px 2px;
-}
-input{
-  width:100%;height:49px;border-radius:15px;
-  border:1px solid var(--line);
-  outline:0;background:rgba(255,255,255,.72);
-  color:var(--text);padding:0 14px;font-size:14px;
-  transition:.18s;
-}
-input:focus{
-  border-color:rgba(23,25,28,.24);
-  box-shadow:0 0 0 4px rgba(23,25,28,.05);
-}
-input::placeholder{color:#a2a8ae}
+  /* Menus */
+  .menu-list { display: flex; flex-direction: column; gap: 10px; }
+  .menu-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    padding: 16px; border-radius: var(--radius-lg); box-shadow: var(--glass-shadow);
+    text-decoration: none; color: var(--ink); font-weight: 600; font-size: 15px;
+    transition: transform 0.1s, background 0.1s;
+  }
+  .menu-item:active { transform: scale(0.98); background: var(--line-soft); }
+  .menu-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 12px; background: rgba(201,147,47,0.15); color: var(--accent-dark); margin-right: 12px; }
+  .menu-left { display: flex; align-items: center; }
 
-.form-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;
-}
-.price-wrap{position:relative}
-.price-prefix{
-  position:absolute;left:14px;top:50%;
-  transform:translateY(-50%);
-  color:var(--muted);font-size:13px;font-weight:700;
-  pointer-events:none;
-}
-.price-wrap input{padding-left:38px}
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: fixed; bottom: calc(var(--safe-bottom) + 16px); left: 20px; right: 20px;
+    display: flex; justify-content: space-around; padding: 12px;
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    border-radius: var(--radius-pill); box-shadow: var(--glass-shadow); z-index: 50;
+  }
+  .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: transparent; color: var(--ink-soft); font-size: 11px; font-weight: 600; transition: color 0.2s; }
+  .nav-btn svg { width: 22px; height: 22px; }
+  .nav-btn.active { color: var(--accent-dark); }
+  .nav-btn:active { transform: scale(0.92); }
 
-.primary{
-  width:100%;height:51px;border:0;border-radius:16px;
-  background:#17191c;color:#fff;font-weight:800;font-size:13px;
-  margin-top:14px;box-shadow:0 10px 24px rgba(23,25,28,.16);
-}
-.primary:disabled{opacity:.4;box-shadow:none}
+  /* Header Controls */
+  .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .back-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; color: var(--ink); box-shadow: var(--glass-shadow); }
+  .back-btn:active { transform: scale(0.9); }
 
-.toolbar{
-  display:flex;gap:8px;margin-bottom:10px;
-}
-.search{
-  flex:1;position:relative;
-}
-.search svg{
-  position:absolute;left:13px;top:50%;transform:translateY(-50%);
-  width:17px;color:#8c949c;pointer-events:none;
-}
-.search input{padding-left:39px}
-.select{
-  width:112px;height:49px;border-radius:15px;
-  border:1px solid var(--line);background:rgba(255,255,255,.72);
-  color:var(--text);padding:0 10px;font-size:11px;font-weight:700;
-  outline:0;
-}
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-bottom: 8px; }
+  .form-control {
+    width: 100%; padding: 14px 16px; font-size: 15px; color: var(--ink);
+    background: var(--paper-alt); border: 1px solid var(--line);
+    border-radius: var(--radius-md); transition: border 0.2s, box-shadow 0.2s;
+  }
+  .form-control:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201,147,47,0.15); }
+  .form-control:disabled, .form-control[readonly] { background: var(--line-soft); opacity: 0.8; }
+  
+  .btn-primary {
+    width: 100%; padding: 16px; background: var(--accent); color: #fff;
+    font-size: 16px; font-weight: 700; border-radius: var(--radius-md);
+    box-shadow: 0 8px 20px rgba(201,147,47,0.3); transition: transform 0.1s;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-danger { background: var(--danger); color: #fff; box-shadow: 0 8px 20px rgba(226,72,61,0.3); }
 
-.table-wrap{
-  overflow:auto;border-radius:19px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.46);
-  -webkit-overflow-scrolling:touch;
-}
-table{border-collapse:separate;border-spacing:0;min-width:700px;width:100%}
-th,td{
-  padding:12px 12px;text-align:left;
-  border-bottom:1px solid var(--line);
-  font-size:11px;white-space:nowrap;
-}
-th{
-  position:sticky;top:0;z-index:2;
-  background:rgba(246,248,250,.92);
-  color:var(--muted);font-size:9px;
-  text-transform:uppercase;letter-spacing:.07em;
-}
-tbody tr:last-child td{border-bottom:0}
-tbody tr{transition:.15s}
-tbody tr:active{background:rgba(23,25,28,.035)}
-.no{width:52px;color:var(--muted);font-weight:700}
-.date{color:var(--muted)}
-.price{font-weight:800}
-.row-action{
-  width:34px;height:34px;border:0;border-radius:10px;
-  background:var(--accent-soft);display:grid;place-items:center;
-}
-.row-action svg{width:15px;height:15px}
+  /* Table / List View */
+  .search-bar { position: relative; margin-bottom: 16px; }
+  .search-bar svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--ink-soft); width: 18px; }
+  .search-bar input { width: 100%; padding: 14px 14px 14px 40px; border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--glass-bg); font-size: 14px; }
+  
+  .data-table-wrapper { overflow-x: auto; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); box-shadow: var(--glass-shadow); padding: 1px; }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+  th { padding: 12px 16px; color: var(--ink-soft); font-weight: 600; border-bottom: 1px solid var(--line); white-space: nowrap; background: rgba(0,0,0,0.02); }
+  td { padding: 14px 16px; border-bottom: 1px solid var(--line); color: var(--ink); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.15s; cursor: pointer; }
+  tbody tr:active { background: var(--line-soft); }
 
-.empty{
-  padding:35px 18px;text-align:center;color:var(--muted);
-}
-.empty-icon{
-  width:48px;height:48px;border-radius:16px;
-  display:grid;place-items:center;margin:0 auto 11px;
-  background:var(--accent-soft);color:#646b72;
-}
-.empty-icon svg{width:22px}
-.empty b{display:block;color:var(--text);font-size:13px;margin-bottom:5px}
-.empty span{font-size:11px;line-height:1.5}
+  /* Modals */
+  .modal-scrim { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(4px); }
+  .modal-scrim.open { opacity: 1; pointer-events: auto; }
+  .modal {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%, -45%);
+    width: 90%; max-width: 400px; background: var(--paper); border: 1px solid var(--glass-border);
+    border-radius: 24px; padding: 24px; box-shadow: 0 24px 48px rgba(0,0,0,0.2);
+    z-index: 101; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
+  .modal.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%); }
+  .modal-title { text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .modal-preview { background: var(--paper-alt); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 14px; }
+  .preview-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .preview-row:last-child { margin-bottom: 0; }
+  .preview-label { color: var(--ink-soft); width: 100px; flex-shrink: 0; }
+  .preview-val { font-weight: 600; text-align: right; word-break: break-word; }
+  .modal-actions { display: flex; gap: 12px; }
+  .modal-actions button { flex: 1; padding: 14px; border-radius: 12px; font-weight: 600; font-size: 15px; }
+  .btn-cancel { background: var(--line-soft); color: var(--ink); }
 
-.bottom{
-  position:absolute;z-index:15;left:0;right:0;bottom:0;
-  padding:10px 16px calc(var(--safe-bottom) + 10px);
-  pointer-events:none;
-}
-.bottom-inner{
-  width:min(100%,720px);margin:auto;
-  padding:8px;border-radius:22px;
-  display:flex;gap:8px;pointer-events:auto;
-}
-.bottom-btn{
-  flex:1;height:45px;border:0;border-radius:16px;
-  background:transparent;color:var(--muted);
-  font-size:11px;font-weight:800;
-}
-.bottom-btn.active{background:rgba(255,255,255,.78);color:var(--text);box-shadow:0 4px 15px rgba(25,32,40,.06)}
+  /* Floating Action Button */
+  .fab {
+    position: fixed; bottom: calc(var(--safe-bottom) + 90px); right: 20px;
+    width: 56px; height: 56px; border-radius: 28px; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 24px rgba(201,147,47,0.4); z-index: 40; transition: transform 0.2s;
+  }
+  .fab:active { transform: scale(0.9); }
+  
+  /* Status Toast */
+  #saveStatusIndicator {
+    position: fixed; top: calc(var(--safe-top) + 16px); right: 50%; transform: translateX(50%);
+    z-index: 500; font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 20px;
+    background: rgba(30,30,30,0.85); color: #fff; backdrop-filter: blur(10px);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  }
 
-.scrim{
-  position:fixed;inset:0;z-index:50;
-  background:rgba(15,18,21,.28);
-  backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
-  opacity:0;pointer-events:none;transition:.2s;
-}
-.scrim.open{opacity:1;pointer-events:auto}
-.sheet{
-  position:fixed;z-index:60;left:50%;bottom:0;
-  width:min(100%,720px);
-  transform:translate(-50%,105%);
-  padding:10px 16px calc(var(--safe-bottom) + 16px);
-  transition:transform .25s cubic-bezier(.2,.8,.2,1);
-}
-.sheet.open{transform:translate(-50%,0)}
-.sheet-card{
-  padding:18px;border-radius:25px;
-}
-.sheet-handle{width:36px;height:4px;border-radius:999px;background:#c7ccd1;margin:0 auto 17px}
-.detail-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;
-}
-.detail{
-  padding:12px;border-radius:15px;background:rgba(0,0,0,.035);
-}
-.detail small{display:block;color:var(--muted);font-size:9px;font-weight:700;margin-bottom:5px}
-.detail strong{font-size:13px;line-height:1.35}
-.sheet-actions{display:flex;gap:8px;margin-top:13px}
-.sheet-actions button{
-  flex:1;height:46px;border:0;border-radius:14px;
-  background:var(--accent-soft);font-size:12px;font-weight:800;
-}
-.sheet-actions .danger{color:var(--danger)}
-.sheet-actions .dark{background:#17191c;color:#fff}
-
-.confirm{
-  position:fixed;z-index:70;left:50%;top:50%;
-  width:min(90vw,360px);
-  transform:translate(-50%,-47%) scale(.96);
-  opacity:0;pointer-events:none;transition:.2s;
-}
-.confirm.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
-.confirm-card{padding:20px;border-radius:24px}
-.confirm h2{margin:0 0 7px;font-size:18px}
-.confirm p{margin:0;color:var(--muted);font-size:12px;line-height:1.55}
-.confirm-actions{display:flex;gap:8px;margin-top:18px}
-.confirm-actions button{
-  flex:1;height:45px;border:0;border-radius:14px;
-  background:var(--accent-soft);font-size:12px;font-weight:800;
-}
-.confirm-actions .save{background:#17191c;color:#fff}
-
-.toast{
-  position:fixed;z-index:100;left:50%;bottom:calc(var(--safe-bottom) + 88px);
-  transform:translate(-50%,10px);
-  padding:9px 13px;border-radius:999px;
-  background:rgba(23,25,28,.88);color:#fff;
-  font-size:11px;font-weight:700;
-  opacity:0;pointer-events:none;transition:.2s;
-  max-width:88vw;text-align:center;
-}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-
-.loading{
-  display:flex;align-items:center;justify-content:center;
-  min-height:160px;color:var(--muted);font-size:12px;
-}
-.spinner{
-  width:18px;height:18px;border:2px solid rgba(0,0,0,.1);
-  border-top-color:#222;border-radius:50%;
-  animation:spin .7s linear infinite;margin-right:9px;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-@media(max-width:420px){
-  .summary-grid{gap:7px}
-  .summary-card{padding:12px 10px}
-  .summary-value{font-size:15px}
-  .form-grid{grid-template-columns:1fr}
-  .card{padding:15px}
-  h1{font-size:28px}
-}
+  /* Skeleton Loading */
+  .skeleton-box { height: 16px; border-radius: 8px; background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12), rgba(0,0,0,0.06)); background-size: 200% 100%; animation: pulse 1.2s infinite; margin-bottom: 12px; }
+  @keyframes pulse { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>
-</head>
 
-<body>
-<div class="app">
-
-  <header class="topbar">
-    <div class="glass" style="border-radius:999px;padding:4px">
-      <button class="icon-btn" id="backBtn" aria-label="Kembali">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="15 18 9 12 15 6"></polyline>
-        </svg>
-      </button>
-    </div>
-    <div class="glass status" id="saveStatus"><span class="dot"></span><span id="saveStatusText">Tersimpan</span></div>
-  </header>
-
-  <main class="main" id="main">
-    <div class="container">
-
-      <section class="hero">
-        <div class="eyebrow">Dashboard Admin</div>
-        <h1 id="pageTitle">Data Otomatis</h1>
-        <p>Masukkan data yang diperlukan. Nomor, tanggal, dan waktu dibuat otomatis oleh sistem.</p>
-      </section>
-
-      <section class="summary-grid">
-        <div class="glass summary-card">
-          <div class="summary-label">TOTAL DATA</div>
-          <div class="summary-value" id="sumRows">0</div>
-        </div>
-        <div class="glass summary-card">
-          <div class="summary-label">HARI INI</div>
-          <div class="summary-value" id="sumToday">0</div>
-        </div>
-        <div class="glass summary-card">
-          <div class="summary-label">TOTAL HARGA</div>
-          <div class="summary-value" id="sumPrice">Rp0</div>
-        </div>
-      </section>
-
-      <section class="glass card" id="inputCard">
-        <div class="section-head">
-          <div>
-            <div class="section-title">Tambah Data</div>
-            <div class="section-sub">Cukup isi empat bagian di bawah.</div>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="tableTitle">Judul Tabel</label>
-          <input id="tableTitle" type="text" maxlength="100" placeholder="Contoh: Data Pekerjaan September">
-        </div>
-
-        <div class="form-grid">
-          <div class="field">
-            <label for="pjInput">P. Jawab</label>
-            <input id="pjInput" type="text" maxlength="80" placeholder="Nama penanggung jawab">
-          </div>
-
-          <div class="field">
-            <label for="itemInput">Nama Barang</label>
-            <input id="itemInput" type="text" maxlength="150" placeholder="Contoh: Blok Mio">
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="priceInput">Harga</label>
-          <div class="price-wrap">
-            <span class="price-prefix">Rp</span>
-            <input id="priceInput" inputmode="numeric" type="text" maxlength="18" placeholder="0">
-          </div>
-        </div>
-
-        <button class="primary" id="addBtn" disabled>Tambahkan Data</button>
-      </section>
-
-      <section class="glass card">
-        <div class="section-head">
-          <div>
-            <div class="section-title">Data Tabel</div>
-            <div class="section-sub">Semua kolom otomatis diatur oleh sistem.</div>
-          </div>
-        </div>
-
-        <div class="toolbar">
-          <div class="search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path>
-            </svg>
-            <input id="searchInput" type="search" placeholder="Cari PJ atau barang...">
-          </div>
-          <select class="select" id="filterSelect">
-            <option value="all">Semua</option>
-            <option value="today">Hari ini</option>
-            <option value="month">Bulan ini</option>
-          </select>
-        </div>
-
-        <div class="table-wrap" id="tableWrap">
-          <div class="loading" id="tableLoading"><span class="spinner"></span>Memuat data...</div>
-          <table id="dataTable" class="hidden">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Tanggal</th>
-                <th>Waktu</th>
-                <th>PJ</th>
-                <th>Nama Barang</th>
-                <th>Harga</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-          <div class="empty hidden" id="emptyState">
-            <div class="empty-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                <rect x="4" y="4" width="16" height="16" rx="3"></rect>
-                <path d="M8 9h8M8 13h5"></path>
-              </svg>
-            </div>
-            <b id="emptyTitle">Belum ada data</b>
-            <span id="emptyText">Data yang kamu tambahkan akan langsung muncul di tabel ini.</span>
-          </div>
-        </div>
-      </section>
-
-    </div>
-  </main>
-
-  <div class="bottom">
-    <div class="bottom-inner glass">
-      <button class="bottom-btn active" id="bottomInput">Tambah Data</button>
-      <button class="bottom-btn" id="bottomTable">Lihat Tabel</button>
-    </div>
-  </div>
-</div>
-
-<div class="scrim" id="scrim"></div>
-
-<div class="sheet" id="detailSheet">
-  <div class="glass sheet-card">
-    <div class="sheet-handle"></div>
-    <div class="section-head">
-      <div>
-        <div class="section-title">Detail Data</div>
-        <div class="section-sub">Data otomatis seperti nomor, tanggal, dan waktu tidak dapat diubah.</div>
-      </div>
-    </div>
-    <div class="detail-grid">
-      <div class="detail"><small>NOMOR</small><strong id="dNo">—</strong></div>
-      <div class="detail"><small>TANGGAL</small><strong id="dDate">—</strong></div>
-      <div class="detail"><small>WAKTU</small><strong id="dTime">—</strong></div>
-      <div class="detail"><small>P. JAWAB</small><strong id="dPj">—</strong></div>
-      <div class="detail"><small>NAMA BARANG</small><strong id="dItem">—</strong></div>
-      <div class="detail"><small>HARGA</small><strong id="dPrice">—</strong></div>
-    </div>
-    <div class="sheet-actions">
-      <button id="closeDetail">Tutup</button>
-      <button id="editDetail" class="dark">Edit</button>
-      <button id="deleteDetail" class="danger">Hapus</button>
-    </div>
-  </div>
-</div>
-
-<div class="confirm" id="confirmBox">
-  <div class="glass confirm-card">
-    <h2 id="confirmTitle">Konfirmasi</h2>
-    <p id="confirmText"></p>
-    <div class="confirm-actions">
-      <button id="confirmCancel">Batal</button>
-      <button class="save" id="confirmOk">Simpan</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<!-- Supabase Client SDK -->
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 
-const params = new URLSearchParams(location.search);
-const currentNoteId = params.get('id');
-const targetFolderId = params.get('folder');
+<!-- Auth Guard -->
+<script>
+  (async function guardAdminAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { window.top.location.href = 'admin-login.html'; return; }
+    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+    if (error || !isAdmin) {
+      await supabaseClient.auth.signOut();
+      window.top.location.href = 'admin-login.html';
+    }
+  })();
+</script>
+</head>
+<body>
 
-let rows = [];
-let noteTitle = '';
-let selectedIndex = null;
-let confirmAction = null;
-let lastKnownUpdatedAt = null;
-let saveTimer = null;
-let isSaving = false;
-let isLoaded = false;
+<div id="saveStatusIndicator">Menyimpan...</div>
 
-const $ = id => document.getElementById(id);
+<div id="app">
+  
+  <!-- VIEW: HOME (DASHBOARD) -->
+  <div id="view-home" class="view active">
+    <h1>Dashboard<br><span style="font-weight:500; font-size:18px; color:var(--ink-soft);">Admin Panel</span></h1>
+    
+    <div class="glass-card" style="margin-top: 20px;">
+      <h2>Selamat Datang, Admin</h2>
+      <p style="font-size: 14px; color: var(--ink-soft);">Kelola data dengan mudah, efisien, dan otomatis.</p>
+    </div>
 
-const tableTitle = $('tableTitle');
-const pjInput = $('pjInput');
-const itemInput = $('itemInput');
-const priceInput = $('priceInput');
-const addBtn = $('addBtn');
-const tableBody = $('tableBody');
-const dataTable = $('dataTable');
-const tableLoading = $('tableLoading');
-const emptyState = $('emptyState');
-const searchInput = $('searchInput');
-const filterSelect = $('filterSelect');
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-title">Total Data</div>
+        <div class="stat-value" id="statTotal">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Hari Ini</div>
+        <div class="stat-value" id="statToday">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Bulan Ini</div>
+        <div class="stat-value" id="statMonth">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-title">Belum Selesai</div>
+        <div class="stat-value" id="statIncomplete">0</div>
+      </div>
+    </div>
 
-function escapeHTML(value){
-  return String(value ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
-  }[c]));
-}
+    <h2>Menu Utama</h2>
+    <div class="menu-list">
+      <a href="#" class="menu-item" onclick="navigate('view-add')">
+        <div class="menu-left">
+          <div class="menu-icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></div>
+          <div>Tambah Data<br><span style="font-size:12px; font-weight:400; color:var(--ink-soft);">Input data baru dengan cepat</span></div>
+        </div>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </a>
+      <a href="#" class="menu-item" onclick="navigate('view-table')">
+        <div class="menu-left">
+          <div class="menu-icon" style="background:rgba(61,168,92,0.15); color:var(--success);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
+          <div>Lihat Tabel<br><span style="font-size:12px; font-weight:400; color:var(--ink-soft);">Semua data tersimpan otomatis</span></div>
+        </div>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </a>
+      <a href="#" class="menu-item" onclick="navigate('view-settings')">
+        <div class="menu-left">
+          <div class="menu-icon" style="background:rgba(107,100,89,0.15); color:var(--ink-soft);"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></div>
+          <div>Pengaturan<br><span style="font-size:12px; font-weight:400; color:var(--ink-soft);">Tema, profil, sistem</span></div>
+        </div>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </a>
+    </div>
+  </div>
 
-function uid(){
-  return crypto.randomUUID ? crypto.randomUUID() :
-    Date.now().toString(36) + Math.random().toString(36).slice(2);
-}
+  <!-- VIEW: TAMBAH DATA -->
+  <div id="view-add" class="view">
+    <div class="page-header">
+      <button class="back-btn" onclick="navigate('view-home')"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <div>
+        <h2 style="margin:0;">Tambah Data</h2>
+        <span style="font-size:12px; color:var(--ink-soft);">Isi data sesuai kebutuhan</span>
+      </div>
+    </div>
+    
+    <div class="glass-card" style="background: rgba(201,147,47,0.1); border-color: rgba(201,147,47,0.2); display: flex; gap: 12px; align-items: center; padding: 12px 16px;">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="var(--accent-dark)" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+      <p style="font-size:12px; color:var(--ink-soft); margin:0;">Data otomatis tersimpan setelah mengisi form di bawah.</p>
+    </div>
 
-function todayKey(){
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
+    <form id="addForm">
+      <div class="form-group">
+        <label>Nomor</label>
+        <input type="text" class="form-control" id="addNo" readonly>
+      </div>
+      <div class="form-group">
+        <label>Tanggal</label>
+        <input type="text" class="form-control" id="addTanggal" readonly>
+      </div>
+      <div class="form-group">
+        <label>Waktu</label>
+        <input type="text" class="form-control" id="addWaktu" readonly>
+      </div>
+      <div class="form-group">
+        <label>PJ (Penanggung Jawab)</label>
+        <input type="text" class="form-control" id="addPj" placeholder="Ketik nama PJ" required>
+      </div>
+      <div class="form-group">
+        <label>Nama Barang / Kegiatan</label>
+        <input type="text" class="form-control" id="addBarang" placeholder="Contoh: perbaikan blok" required>
+      </div>
+      <div class="form-group">
+        <label>Harga</label>
+        <input type="tel" class="form-control" id="addHarga" placeholder="Rp 0" required oninput="formatHargaInput(this)">
+      </div>
+      <button type="button" class="btn-primary" onclick="prepareSimpan()" style="margin-top: 10px;">✓ Simpan Data</button>
+    </form>
+  </div>
 
-function formatDate(d){
-  return new Intl.DateTimeFormat('id-ID',{
-    day:'2-digit',month:'2-digit',year:'numeric'
-  }).format(d);
-}
+  <!-- VIEW: DATA TABEL -->
+  <div id="view-table" class="view">
+    <div class="page-header">
+      <button class="back-btn" onclick="navigate('view-home')"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <div>
+        <h2 style="margin:0;">Data Tabel</h2>
+        <span style="font-size:12px; color:var(--ink-soft);">Semua data tersimpan otomatis</span>
+      </div>
+    </div>
+    
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="searchInput" placeholder="Cari nama barang, PJ, atau tanggal..." onkeyup="filterTable()">
+    </div>
 
-function formatTime(d){
-  return new Intl.DateTimeFormat('id-ID',{
-    hour:'2-digit',minute:'2-digit',hour12:false
-  }).format(d);
-}
+    <div class="data-table-wrapper">
+      <table id="mainTable">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Tanggal</th>
+            <th>Waktu</th>
+            <th>PJ</th>
+            <th>Nama Barang</th>
+            <th>Harga</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Rows render here -->
+        </tbody>
+      </table>
+    </div>
+    
+    <button class="fab" onclick="navigate('view-add')">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+  </div>
 
-function formatPrice(n){
-  return 'Rp' + new Intl.NumberFormat('id-ID').format(Number(n)||0);
-}
+  <!-- VIEW: DETAIL & EDIT DATA -->
+  <div id="view-detail" class="view">
+    <div class="page-header">
+      <button class="back-btn" onclick="navigate('view-table')"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <div>
+        <h2 style="margin:0;">Detail Data</h2>
+        <span style="font-size:12px; color:var(--ink-soft);">Edit atau hapus data</span>
+      </div>
+    </div>
 
-function parsePrice(v){
-  return Number(String(v).replace(/\D/g,'')) || 0;
-}
+    <div class="glass-card">
+      <form id="editForm">
+        <input type="hidden" id="editRowIdx">
+        <div class="form-group">
+          <label>Nomor</label>
+          <input type="text" class="form-control" id="editNo" readonly>
+        </div>
+        <div class="form-group">
+          <label>Tanggal Pembuatan</label>
+          <input type="text" class="form-control" id="editTanggal" readonly>
+        </div>
+        <div class="form-group">
+          <label>Waktu Pembuatan</label>
+          <input type="text" class="form-control" id="editWaktu" readonly>
+        </div>
+        <div class="form-group">
+          <label>PJ</label>
+          <input type="text" class="form-control" id="editPj" required>
+        </div>
+        <div class="form-group">
+          <label>Nama Barang</label>
+          <input type="text" class="form-control" id="editBarang" required>
+        </div>
+        <div class="form-group">
+          <label>Harga</label>
+          <input type="tel" class="form-control" id="editHarga" required oninput="formatHargaInput(this)">
+        </div>
+      </form>
+    </div>
+    
+    <div style="display:flex; gap:12px; margin-top:8px;">
+      <button class="btn-primary btn-danger" onclick="hapusData()" style="flex:1;">Hapus</button>
+      <button class="btn-primary" onclick="simpanEdit()" style="flex:1;">Simpan Edit</button>
+    </div>
+  </div>
 
-function normalizeRow(r, index){
-  return {
-    id: r.id || uid(),
-    created_at: r.created_at || new Date().toISOString(),
-    pj: String(r.pj ?? r.cells?.pj ?? ''),
-    item: String(r.item ?? r.cells?.item ?? r.cells?.barang ?? r.cells?.nama_barang ?? ''),
-    price: Number(r.price ?? r.cells?.price ?? r.cells?.harga ?? 0) || 0
+  <!-- VIEW: PENGATURAN -->
+  <div id="view-settings" class="view">
+    <div class="page-header">
+      <button class="back-btn" onclick="navigate('view-home')"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+      <h2 style="margin:0;">Pengaturan</h2>
+    </div>
+
+    <div class="glass-card">
+      <h3>Tema Aplikasi</h3>
+      <p class="subtitle" style="margin-bottom:12px;">Pilih tampilan visual yang nyaman.</p>
+      
+      <div class="form-group">
+        <select class="form-control" id="themeSelect" onchange="changeTheme()">
+          <option value="light">Light Mode (Liquid Glass)</option>
+          <option value="dark">Dark Mode (Premium Dark)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="navigate('view-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+      Home
+    </button>
+    <button class="nav-btn" id="nav-table" onclick="navigate('view-table')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+      Tabel
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="navigate('view-settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      Settings
+    </button>
+  </nav>
+
+</div>
+
+<!-- KONFIRMASI MODAL -->
+<div class="modal-scrim" id="modalScrim"></div>
+<div class="modal" id="konfirmasiModal">
+  <div class="modal-title">Konfirmasi Data</div>
+  <p style="text-align:center; font-size:14px; color:var(--ink-soft); margin-bottom:16px;">Apakah Anda yakin ingin menyimpan data ini?</p>
+  
+  <div class="modal-preview">
+    <div class="preview-row"><div class="preview-label">Nomor</div><div class="preview-val" id="prevNo"></div></div>
+    <div class="preview-row"><div class="preview-label">Tanggal</div><div class="preview-val" id="prevTanggal"></div></div>
+    <div class="preview-row"><div class="preview-label">Waktu</div><div class="preview-val" id="prevWaktu"></div></div>
+    <div class="preview-row"><div class="preview-label">PJ</div><div class="preview-val" id="prevPj"></div></div>
+    <div class="preview-row"><div class="preview-label">Nama Barang</div><div class="preview-val" id="prevBarang"></div></div>
+    <div class="preview-row"><div class="preview-label">Harga</div><div class="preview-val" id="prevHarga"></div></div>
+  </div>
+
+  <div class="modal-actions">
+    <button class="btn-cancel" onclick="tutupModal()">Batal</button>
+    <button class="btn-primary" onclick="simpanDataBaru()">Simpan</button>
+  </div>
+</div>
+
+<script>
+  /* --- STATE MANAGEMENT --- */
+  let currentNoteId = new URLSearchParams(window.location.search).get('id');
+  let targetFolderId = new URLSearchParams(window.location.search).get('folder');
+  
+  // Data inti tetap menggunakan format Supabase eksisting (kompatibel penuh)
+  let tableData = {
+    columns: [],
+    rows: [],
+    title: 'Dashboard Data',
+    noteBody: '',
+    hasTable: true
   };
-}
+  
+  let lastKnownUpdatedAt = null;
+  let autosaveTimer = null;
 
-function legacyToRows(content){
-  if (!content || !Array.isArray(content.rows)) return [];
-  const cols = Array.isArray(content.columns) ? content.columns : [];
-  const findCol = names => {
-    const c = cols.find(x => names.includes(String(x.label||'').trim().toLowerCase()));
-    return c?.id || null;
-  };
-  const pj = findCol(['pj','p. jawab','penanggung jawab','penanggungjawab']);
-  const item = findCol(['nama barang','barang','item']);
-  const price = findCol(['harga','total harga','price']);
+  /* --- DEFINISI STRUKTUR STANDAR --- */
+  const STANDARD_COLS = [
+    { id: 'col_no', label: 'No', type: 'no' },
+    { id: 'col_tanggal', label: 'Tanggal', type: 'date' },
+    { id: 'col_waktu', label: 'Waktu', type: 'time' },
+    { id: 'col_pj', label: 'PJ', type: 'text' },
+    { id: 'col_nama_barang', label: 'Nama Barang', type: 'text' },
+    { id: 'col_harga', label: 'Harga', type: 'number' }
+  ];
 
-  return content.rows.map((r,i) => normalizeRow({
-    id:r.id || uid(),
-    created_at:r.created_at || r.createdAt,
-    pj:pj ? r.cells?.[pj] : '',
-    item:item ? r.cells?.[item] : '',
-    price:price ? r.cells?.[price] : 0
-  },i)).filter(r => r.pj || r.item || r.price);
-}
+  /* --- SISTEM NAVIGASI SPA --- */
+  function navigate(viewId) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    if (viewId === 'view-home') document.getElementById('nav-home').classList.add('active');
+    if (viewId === 'view-table') document.getElementById('nav-table').classList.add('active');
+    if (viewId === 'view-settings') document.getElementById('nav-settings').classList.add('active');
 
-function makeContent(){
-  return {
-    version: 2,
-    type: 'automatic_table',
-    columns: [
-      {id:'no',label:'Nomor',type:'auto'},
-      {id:'date',label:'Tanggal',type:'auto'},
-      {id:'time',label:'Waktu',type:'auto'},
-      {id:'pj',label:'PJ',type:'text'},
-      {id:'item',label:'Nama Barang',type:'text'},
-      {id:'price',label:'Harga',type:'number'}
-    ],
-    rows: rows.map((r,index)=>({
-      id:r.id,
-      created_at:r.created_at,
-      cells:{
-        no:String(index+1),
-        date:formatDate(new Date(r.created_at)),
-        time:formatTime(new Date(r.created_at)),
-        pj:r.pj,
-        item:r.item,
-        price:String(r.price)
-      }
-    })),
-    hasTable:true,
-    automatic:true
-  };
-}
-
-function getPreview(){
-  const last = rows[rows.length-1];
-  if(!last) return 'Belum ada data';
-  return `${last.item || 'Data'} • ${formatPrice(last.price)}`;
-}
-
-function validateForm(){
-  const ok = tableTitle.value.trim() && pjInput.value.trim() &&
-             itemInput.value.trim() && parsePrice(priceInput.value) > 0;
-  addBtn.disabled = !ok;
-}
-
-[tableTitle,pjInput,itemInput,priceInput].forEach(el => {
-  el.addEventListener('input', validateForm);
-});
-
-priceInput.addEventListener('input', () => {
-  const n = parsePrice(priceInput.value);
-  priceInput.value = n ? new Intl.NumberFormat('id-ID').format(n) : '';
-  validateForm();
-});
-
-function render(){
-  const q = searchInput.value.trim().toLowerCase();
-  const filter = filterSelect.value;
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${now.getMonth()}`;
-
-  const filtered = rows.filter(r => {
-    const d = new Date(r.created_at);
-    const text = `${r.pj} ${r.item}`.toLowerCase();
-    if(q && !text.includes(q)) return false;
-    if(filter === 'today' && r.created_at.slice(0,10) !== todayKey()) return false;
-    if(filter === 'month' && `${d.getFullYear()}-${d.getMonth()}` !== currentMonth) return false;
-    return true;
-  });
-
-  $('sumRows').textContent = rows.length;
-  $('sumToday').textContent = rows.filter(r => r.created_at.slice(0,10) === todayKey()).length;
-  $('sumPrice').textContent = formatPrice(rows.reduce((s,r)=>s+r.price,0));
-
-  if(!isLoaded) return;
-
-  tableLoading.classList.add('hidden');
-
-  if(!filtered.length){
-    dataTable.classList.add('hidden');
-    emptyState.classList.remove('hidden');
-    $('emptyTitle').textContent = rows.length ? 'Data tidak ditemukan' : 'Belum ada data';
-    $('emptyText').textContent = rows.length
-      ? 'Coba ubah kata pencarian atau filter.'
-      : 'Data yang kamu tambahkan akan langsung muncul di tabel ini.';
-    return;
+    if (viewId === 'view-add') siapkanFormTambah();
+    if (viewId === 'view-table') renderTabel();
   }
 
-  emptyState.classList.add('hidden');
-  dataTable.classList.remove('hidden');
-
-  tableBody.innerHTML = filtered.map(r => {
-    const originalIndex = rows.indexOf(r);
-    const no = originalIndex + 1;
-    const d = new Date(r.created_at);
-    return `<tr>
-      <td class="no">${String(no).padStart(3,'0')}</td>
-      <td class="date">${escapeHTML(formatDate(d))}</td>
-      <td class="date">${escapeHTML(formatTime(d))}</td>
-      <td>${escapeHTML(r.pj)}</td>
-      <td>${escapeHTML(r.item)}</td>
-      <td class="price">${escapeHTML(formatPrice(r.price))}</td>
-      <td>
-        <button class="row-action" data-index="${originalIndex}" aria-label="Detail">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="9"></circle>
-            <path d="M12 10v6"></path><path d="M12 7h.01"></path>
-          </svg>
-        </button>
-      </td>
-    </tr>`;
-  }).join('');
-}
-
-function showToast(text){
-  const el = $('toast');
-  el.textContent = text;
-  el.classList.add('show');
-  clearTimeout(showToast.timer);
-  showToast.timer = setTimeout(()=>el.classList.remove('show'),1800);
-}
-
-function showStatus(text, type=''){
-  const el = $('saveStatus');
-  $('saveStatusText').textContent = text;
-  el.className = 'glass status show ' + type;
-  clearTimeout(showStatus.timer);
-  showStatus.timer = setTimeout(()=>el.classList.remove('show'),1700);
-}
-
-function openConfirm(title,text,action,button='Simpan'){
-  $('confirmTitle').textContent = title;
-  $('confirmText').textContent = text;
-  $('confirmOk').textContent = button;
-  confirmAction = action;
-  $('scrim').classList.add('open');
-  $('confirmBox').classList.add('open');
-}
-
-function closeConfirm(){
-  $('scrim').classList.remove('open');
-  $('confirmBox').classList.remove('open');
-  confirmAction = null;
-}
-
-async function saveToDatabase(){
-  if(!isLoaded || isSaving) return false;
-  isSaving = true;
-  showStatus('Menyimpan...');
-
-  const payload = {
-    title: noteTitle || 'Data Otomatis',
-    preview: getPreview(),
-    date_tag: formatTime(new Date()),
-    content: makeContent()
-  };
-
-  try{
-    let result;
-    if(currentNoteId){
-      let q = supabaseClient.from('notes').update(payload).eq('id',currentNoteId);
-      if(lastKnownUpdatedAt) q = q.eq('updated_at',lastKnownUpdatedAt);
-      result = await q.select().single();
-
-      if(result.error && result.error.code === 'PGRST116'){
-        const forced = await supabaseClient.from('notes').update(payload)
-          .eq('id',currentNoteId).select().single();
-        result = forced;
-      }
-    }else{
-      result = await supabaseClient.from('notes')
-        .insert({...payload,folder_id:targetFolderId})
-        .select().single();
+  /* --- LOAD DATA EXISTING DARI SUPABASE --- */
+  async function loadData() {
+    if (!currentNoteId) {
+      standarisasiStruktur();
+      navigate('view-home');
+      return;
     }
 
-    if(result.error) throw result.error;
-
-    lastKnownUpdatedAt = result.data.updated_at || null;
-    showStatus('Tersimpan','success');
-    return true;
-  }catch(err){
-    console.error(err);
-    showStatus('Gagal tersimpan','error');
-    try{
-      localStorage.setItem('autoTableDraft',JSON.stringify({noteTitle,rows}));
-    }catch(e){}
-    return false;
-  }finally{
-    isSaving = false;
-  }
-}
-
-function scheduleSave(){
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(saveToDatabase,500);
-}
-
-function clearForm(){
-  pjInput.value='';
-  itemInput.value='';
-  priceInput.value='';
-  validateForm();
-  pjInput.focus();
-}
-
-function addRow(){
-  const title = tableTitle.value.trim();
-  const pj = pjInput.value.trim();
-  const item = itemInput.value.trim();
-  const price = parsePrice(priceInput.value);
-
-  if(!title || !pj || !item || !price) return;
-
-  noteTitle = title;
-  const row = {
-    id:uid(),
-    created_at:new Date().toISOString(),
-    pj,item,price
-  };
-
-  openConfirm(
-    'Tambahkan data?',
-    `${pj} • ${item} • ${formatPrice(price)}`,
-    async ()=>{
-      rows.push(row);
-      render();
-      clearForm();
-      showToast('Data ditambahkan');
-      await saveToDatabase();
-    },
-    'Tambahkan'
-  );
-}
-
-function openDetail(index){
-  const r = rows[index];
-  if(!r) return;
-  selectedIndex=index;
-  const d = new Date(r.created_at);
-  $('dNo').textContent=String(index+1).padStart(3,'0');
-  $('dDate').textContent=formatDate(d);
-  $('dTime').textContent=formatTime(d);
-  $('dPj').textContent=r.pj;
-  $('dItem').textContent=r.item;
-  $('dPrice').textContent=formatPrice(r.price);
-  $('detailSheet').classList.add('open');
-  $('scrim').classList.add('open');
-}
-
-function closeDetail(){
-  $('detailSheet').classList.remove('open');
-  if(!$('confirmBox').classList.contains('open')) $('scrim').classList.remove('open');
-  selectedIndex=null;
-}
-
-function editSelected(){
-  const r = rows[selectedIndex];
-  if(!r) return;
-
-  const newPj = prompt('P. Jawab',r.pj);
-  if(newPj===null) return;
-  const newItem = prompt('Nama Barang',r.item);
-  if(newItem===null) return;
-  const newPrice = prompt('Harga',String(r.price));
-  if(newPrice===null) return;
-
-  const price=parsePrice(newPrice);
-  if(!newPj.trim() || !newItem.trim() || !price){
-    alert('Data edit belum lengkap.');
-    return;
-  }
-
-  r.pj=newPj.trim();
-  r.item=newItem.trim();
-  r.price=price;
-
-  closeDetail();
-  render();
-  showToast('Data diperbarui');
-  scheduleSave();
-}
-
-function deleteSelected(){
-  const r=rows[selectedIndex];
-  if(!r) return;
-
-  openConfirm(
-    'Hapus data?',
-    `Data "${r.item}" akan dihapus dari tabel.`,
-    async ()=>{
-      rows.splice(selectedIndex,1);
-      closeDetail();
-      render();
-      showToast('Data dihapus');
-      await saveToDatabase();
-    },
-    'Hapus'
-  );
-}
-
-async function loadData(){
-  try{
-    if(currentNoteId){
-      const {data,error}=await supabaseClient.from('notes')
-        .select('*').eq('id',currentNoteId).single();
-      if(error) throw error;
-
-      noteTitle=data.title || 'Data Otomatis';
-      tableTitle.value=noteTitle;
-      lastKnownUpdatedAt=data.updated_at || null;
-
-      const content=data.content || {};
-      if(content.version===2 && content.type==='automatic_table'){
-        rows=(content.rows||[]).map(normalizeRow);
-      }else{
-        rows=legacyToRows(content);
-      }
-    }else{
-      noteTitle='';
-      rows=[];
-      const draft=localStorage.getItem('autoTableDraft');
-      if(draft){
-        try{
-          const d=JSON.parse(draft);
-          if(d.noteTitle) {noteTitle=d.noteTitle;tableTitle.value=noteTitle}
-          if(Array.isArray(d.rows)) rows=d.rows.map(normalizeRow);
-        }catch(e){}
+    if (!navigator.onLine) {
+      tampilkanStatus('Memuat data offline...', false);
+      const draft = localStorage.getItem('bm_dash_' + currentNoteId);
+      if (draft) {
+        tableData = JSON.parse(draft);
+        standarisasiStruktur();
+        renderDashboard();
+        return;
       }
     }
-  }catch(err){
-    console.error(err);
-    const draft=localStorage.getItem('autoTableDraft');
-    if(draft){
-      try{
-        const d=JSON.parse(draft);
-        noteTitle=d.noteTitle||'';
-        rows=(d.rows||[]).map(normalizeRow);
-        tableTitle.value=noteTitle;
-        showToast('Memakai data cadangan di HP');
-      }catch(e){
-        alert('Data gagal dimuat: '+err.message);
+
+    try {
+      const { data, error } = await supabaseClient.from('notes').select('*').eq('id', currentNoteId).single();
+      if (error) throw error;
+
+      lastKnownUpdatedAt = data.updated_at;
+      if (data.content && data.content.rows) {
+        tableData.rows = data.content.rows;
+        tableData.columns = data.content.columns || [];
       }
-    }else{
-      alert('Data gagal dimuat: '+err.message);
+      tableData.title = data.title || 'Dashboard Data';
+      
+      standarisasiStruktur();
+      renderDashboard();
+      tampilkanStatus('Data dimuat', false);
+      
+    } catch (e) {
+      console.error(e);
+      tampilkanStatus('Gagal memuat data', true);
     }
   }
 
-  isLoaded=true;
-  tableLoading.classList.add('hidden');
-  validateForm();
-  render();
-}
-
-$('addBtn').addEventListener('click',addRow);
-$('searchInput').addEventListener('input',render);
-$('filterSelect').addEventListener('change',render);
-
-tableBody.addEventListener('click',e=>{
-  const btn=e.target.closest('[data-index]');
-  if(btn) openDetail(Number(btn.dataset.index));
-});
-
-$('closeDetail').addEventListener('click',closeDetail);
-$('editDetail').addEventListener('click',editSelected);
-$('deleteDetail').addEventListener('click',deleteSelected);
-
-$('confirmCancel').addEventListener('click',closeConfirm);
-$('confirmOk').addEventListener('click',async()=>{
-  const fn=confirmAction;
-  closeConfirm();
-  if(fn) await fn();
-});
-$('scrim').addEventListener('click',()=>{
-  if($('confirmBox').classList.contains('open')) closeConfirm();
-  else closeDetail();
-});
-
-$('bottomInput').addEventListener('click',()=>{
-  $('inputCard').scrollIntoView({behavior:'smooth',block:'start'});
-  $('bottomInput').classList.add('active');
-  $('bottomTable').classList.remove('active');
-});
-
-$('bottomTable').addEventListener('click',()=>{
-  $('tableWrap').scrollIntoView({behavior:'smooth',block:'center'});
-  $('bottomTable').classList.add('active');
-  $('bottomInput').classList.remove('active');
-});
-
-$('backBtn').addEventListener('click',()=>{
-  if(window.parent && window.parent!==window){
-    window.parent.postMessage('close-editor','*');
-  }else if(history.length>1){
-    history.back();
-  }
-});
-
-window.addEventListener('beforeunload',()=>{
-  if(noteTitle || rows.length){
-    try{
-      localStorage.setItem('autoTableDraft',JSON.stringify({noteTitle,rows}));
-    }catch(e){}
-  }
-});
-
-(async function guardAdminAccess(){
-  const {data:{session}}=await supabaseClient.auth.getSession();
-  if(!session){
-    window.top.location.href='admin-login.html';
-    return;
+  /* --- ADAPTASI & MIGRASI STRUKTUR LAMA -> BARU --- */
+  function standarisasiStruktur() {
+    // Paksa struktur kolom agar sesuai sistem baru tanpa menghapus data
+    tableData.columns = STANDARD_COLS;
+    tableData.hasTable = true;
+    
+    // Auto-renumber baris lama
+    tableData.rows.forEach((row, index) => {
+      if(!row.cells) row.cells = {};
+      row.cells['col_no'] = String(index + 1).padStart(3, '0');
+    });
+    
+    // Backup lokal agar aman
+    localStorage.setItem('bm_dash_' + currentNoteId, JSON.stringify(tableData));
   }
 
-  const {data:isAdmin,error}=await supabaseClient.rpc('is_admin');
-  if(error){
-    console.error('Gagal cek admin:',error.message);
-  }else if(!isAdmin){
-    await supabaseClient.auth.signOut();
-    window.top.location.href='admin-login.html';
-    return;
+  /* --- FORMATTING & HELPERS --- */
+  function formatRupiah(angkaStr) {
+    let angka = angkaStr.replace(/[^,\d]/g, '').toString();
+    if (!angka) return '';
+    return 'Rp ' + parseInt(angka, 10).toLocaleString('id-ID');
   }
 
+  function formatHargaInput(input) {
+    let val = input.value.replace(/[^,\d]/g, '');
+    input.value = val ? formatRupiah(val) : '';
+  }
+
+  function getNilaiAngka(rupiahStr) {
+    return rupiahStr.replace(/[^,\d]/g, '');
+  }
+
+  function getTanggalSekarang() {
+    const d = new Date();
+    return String(d.getDate()).padStart(2, '0') + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + d.getFullYear();
+  }
+
+  function getWaktuSekarang() {
+    const d = new Date();
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+
+  /* --- DASHBOARD STATS --- */
+  function renderDashboard() {
+    const total = tableData.rows.length;
+    const todayStr = getTanggalSekarang();
+    const monthStr = '-' + todayStr.split('-')[1] + '-' + todayStr.split('-')[2];
+
+    let countToday = 0;
+    let countMonth = 0;
+    let countIncomplete = 0;
+
+    tableData.rows.forEach(r => {
+      const tgl = r.cells['col_tanggal'] || '';
+      if (tgl === todayStr) countToday++;
+      if (tgl.endsWith(monthStr)) countMonth++;
+      
+      const pj = r.cells['col_pj'];
+      const brg = r.cells['col_nama_barang'];
+      const hrg = r.cells['col_harga'];
+      if (!pj || !brg || !hrg || hrg === '0') countIncomplete++;
+    });
+
+    document.getElementById('statTotal').innerText = total;
+    document.getElementById('statToday').innerText = countToday;
+    document.getElementById('statMonth').innerText = countMonth;
+    document.getElementById('statIncomplete').innerText = countIncomplete;
+  }
+
+  /* --- TAMBAH DATA LOGIC --- */
+  function siapkanFormTambah() {
+    document.getElementById('addForm').reset();
+    document.getElementById('addNo').value = String(tableData.rows.length + 1).padStart(3, '0');
+    document.getElementById('addTanggal').value = getTanggalSekarang();
+    document.getElementById('addWaktu').value = getWaktuSekarang();
+  }
+
+  function prepareSimpan() {
+    const pj = document.getElementById('addPj').value.trim();
+    const brg = document.getElementById('addBarang').value.trim();
+    const harga = document.getElementById('addHarga').value.trim();
+
+    if (!pj || !brg || !harga) {
+      alert("Harap lengkapi PJ, Nama Barang, dan Harga.");
+      return;
+    }
+
+    document.getElementById('prevNo').innerText = document.getElementById('addNo').value;
+    document.getElementById('prevTanggal').innerText = document.getElementById('addTanggal').value;
+    document.getElementById('prevWaktu').innerText = document.getElementById('addWaktu').value;
+    document.getElementById('prevPj').innerText = pj;
+    document.getElementById('prevBarang').innerText = brg;
+    document.getElementById('prevHarga').innerText = harga;
+
+    document.getElementById('modalScrim').classList.add('open');
+    document.getElementById('konfirmasiModal').classList.add('open');
+  }
+
+  function tutupModal() {
+    document.getElementById('modalScrim').classList.remove('open');
+    document.getElementById('konfirmasiModal').classList.remove('open');
+  }
+
+  function simpanDataBaru() {
+    const sel = {
+      'col_no': document.getElementById('prevNo').innerText,
+      'col_tanggal': document.getElementById('prevTanggal').innerText,
+      'col_waktu': document.getElementById('prevWaktu').innerText,
+      'col_pj': document.getElementById('prevPj').innerText,
+      'col_nama_barang': document.getElementById('prevBarang').innerText,
+      'col_harga': getNilaiAngka(document.getElementById('prevHarga').innerText)
+    };
+
+    tableData.rows.push({ cells: sel });
+    
+    tutupModal();
+    renderDashboard();
+    triggerAutosave();
+    navigate('view-table');
+  }
+
+  /* --- RENDER & FILTER TABEL --- */
+  function renderTabel() {
+    const tbody = document.getElementById('tableBody');
+    const filterText = document.getElementById('searchInput').value.toLowerCase();
+    
+    tbody.innerHTML = '';
+    
+    tableData.rows.forEach((row, index) => {
+      const c = row.cells;
+      const textCombo = `${c['col_nama_barang']} ${c['col_pj']} ${c['col_tanggal']}`.toLowerCase();
+      
+      if (filterText && !textCombo.includes(filterText)) return;
+
+      const tr = document.createElement('tr');
+      tr.onclick = () => bukaDetail(index);
+      
+      const formatHrg = formatRupiah(c['col_harga'] || '0');
+      
+      tr.innerHTML = `
+        <td>${c['col_no'] || ''}</td>
+        <td>${c['col_tanggal'] || ''}</td>
+        <td>${c['col_waktu'] || ''}</td>
+        <td>${c['col_pj'] || ''}</td>
+        <td>${c['col_nama_barang'] || ''}</td>
+        <td style="font-weight:600;">${formatHrg}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function filterTable() {
+    renderTabel();
+  }
+
+  /* --- DETAIL & EDIT DATA --- */
+  function bukaDetail(idx) {
+    const c = tableData.rows[idx].cells;
+    document.getElementById('editRowIdx').value = idx;
+    document.getElementById('editNo').value = c['col_no'];
+    document.getElementById('editTanggal').value = c['col_tanggal'];
+    document.getElementById('editWaktu').value = c['col_waktu'];
+    document.getElementById('editPj').value = c['col_pj'];
+    document.getElementById('editBarang').value = c['col_nama_barang'];
+    document.getElementById('editHarga').value = formatRupiah(c['col_harga'] || '0');
+    
+    navigate('view-detail');
+  }
+
+  function simpanEdit() {
+    const idx = parseInt(document.getElementById('editRowIdx').value, 10);
+    const pj = document.getElementById('editPj').value.trim();
+    const brg = document.getElementById('editBarang').value.trim();
+    const hrg = getNilaiAngka(document.getElementById('editHarga').value);
+
+    if (!pj || !brg || !hrg) { alert("Data tidak boleh kosong"); return; }
+
+    tableData.rows[idx].cells['col_pj'] = pj;
+    tableData.rows[idx].cells['col_nama_barang'] = brg;
+    tableData.rows[idx].cells['col_harga'] = hrg;
+
+    triggerAutosave();
+    navigate('view-table');
+  }
+
+  function hapusData() {
+    const idx = parseInt(document.getElementById('editRowIdx').value, 10);
+    if(confirm('Yakin ingin menghapus data baris ini?')) {
+      tableData.rows.splice(idx, 1);
+      // Re-number
+      tableData.rows.forEach((r, i) => r.cells['col_no'] = String(i+1).padStart(3, '0'));
+      triggerAutosave();
+      renderDashboard();
+      navigate('view-table');
+    }
+  }
+
+  /* --- AUTOSAVE ENGINE KE SUPABASE --- */
+  function triggerAutosave() {
+    localStorage.setItem('bm_dash_' + currentNoteId, JSON.stringify(tableData));
+    clearTimeout(autosaveTimer);
+    if (!navigator.onLine) {
+      tampilkanStatus('Tersimpan di HP (offline)', false);
+      return;
+    }
+    tampilkanStatus('Menyimpan...', false);
+    autosaveTimer = setTimeout(saveToDatabase, 1500);
+  }
+
+  async function saveToDatabase() {
+    const payload = {
+      title: tableData.title,
+      content: tableData
+    };
+
+    try {
+      let res;
+      if (currentNoteId) {
+        let query = supabaseClient.from('notes').update(payload).eq('id', currentNoteId);
+        if (lastKnownUpdatedAt) query = query.eq('updated_at', lastKnownUpdatedAt);
+        res = await query.select().single();
+        
+        if (res.error && (/0 rows/i.test(res.error.message))) {
+           alert('Konflik! Data telah diubah dari perangkat lain.');
+           return;
+        }
+      } else {
+        res = await supabaseClient.from('notes').insert({ ...payload, folder_id: targetFolderId }).select().single();
+      }
+
+      if (res.error) throw res.error;
+
+      currentNoteId = res.data.id;
+      lastKnownUpdatedAt = res.data.updated_at;
+      tampilkanStatus('Tersimpan', false);
+      window.parent.postMessage('note-autosaved', '*');
+      
+    } catch (e) {
+      console.error(e);
+      tampilkanStatus('Gagal menyimpan', true);
+    }
+  }
+
+  /* --- STATUS UI --- */
+  function tampilkanStatus(pesan, error) {
+    const st = document.getElementById('saveStatusIndicator');
+    st.innerText = pesan;
+    st.style.background = error ? 'rgba(226,72,61,0.9)' : 'rgba(30,30,30,0.85)';
+    st.style.opacity = '1';
+    
+    setTimeout(() => { st.style.opacity = '0'; }, 2500);
+  }
+
+  /* --- SETTINGS --- */
+  function changeTheme() {
+    const val = document.getElementById('themeSelect').value;
+    if (val === 'dark') {
+      document.body.classList.add('surface-dark');
+      document.getElementById('themeColorMeta').setAttribute('content', '#15140F');
+    } else {
+      document.body.classList.remove('surface-dark');
+      document.getElementById('themeColorMeta').setAttribute('content', '#F6F1E7');
+    }
+  }
+
+  // Init
   loadData();
-})();
+
 </script>
 </body>
 </html>
