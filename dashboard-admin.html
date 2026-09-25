@@ -1348,6 +1348,19 @@
   }
   .note-pin-badge svg { width: 12px; height: 12px; color: var(--accent-yellow); }
 
+  /* --- Divider pengelompokan notes: Pekan 1/2/3.../Disematkan/Bulan Lalu/dst.
+     Wajib grid-column:1/-1 biar melebar penuh walau notes-container-nya grid 2 kolom --- */
+  .note-section-divider {
+    grid-column: 1 / -1;
+    padding: 14px 2px 4px 2px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .note-section-divider:first-child { padding-top: 0; }
+
   /* --- Bottom bar mode seleksi (Pin / Pindah Folder / Hapus) --- */
   .selection-bottom-bar {
     display: none;
@@ -3033,6 +3046,33 @@
 
   // Label pengelompokan dinamis berdasarkan umur note TERTUA yang lagi
   // ditampilkan — bukan teks mati "Previous 7 Days".
+  const INDO_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+  // Kelompokkan tanggal note jadi: "Pekan N" kalau masih bulan ini (minggu dihitung
+  // mulai hari SABTU, bukan Senin — sesuai kebiasaan bengkel ini), "Bulan Lalu" kalau
+  // bulan kemarin persis, atau "Nama Bulan Tahun" kalau lebih lama dari itu.
+  function getNoteSectionKey(dateObj, now) {
+    const sameMonth = dateObj.getFullYear() === now.getFullYear() && dateObj.getMonth() === now.getMonth();
+
+    if (sameMonth) {
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const daysBackToSaturday = (firstOfMonth.getDay() + 1) % 7; // 0=Minggu...6=Sabtu di getDay()
+      const week1Start = new Date(firstOfMonth);
+      week1Start.setDate(week1Start.getDate() - daysBackToSaturday);
+      week1Start.setHours(0, 0, 0, 0);
+
+      const diffDays = Math.floor((dateObj - week1Start) / (1000 * 60 * 60 * 24));
+      const weekNum = Math.floor(diffDays / 7) + 1;
+      return { key: `pekan-${weekNum}`, label: `Pekan ${weekNum}` };
+    }
+
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const isLastMonth = dateObj.getFullYear() === prevMonthDate.getFullYear() && dateObj.getMonth() === prevMonthDate.getMonth();
+    if (isLastMonth) return { key: 'bulan-lalu', label: 'Bulan Lalu' };
+
+    return { key: `bulan-${dateObj.getFullYear()}-${dateObj.getMonth()}`, label: `${INDO_MONTHS[dateObj.getMonth()]} ${dateObj.getFullYear()}` };
+  }
+
   function computeSubtitleLabel(notes) {
     if (!notes || notes.length === 0) return '';
     const now = new Date();
@@ -3096,23 +3136,54 @@
       subtitleEl.textContent = computeSubtitleLabel(notesData);
     }
     container.style.display = 'grid';
-    container.innerHTML = notesData.map((note, idx) => `
-      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
-        ${note.pinned ? `
-          <div class="note-pin-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 0 0-5 5c0 1.86.9 3.4 2.19 4.42L7 16h4v6h2v-6h4l-2.19-4.58A5.99 5.99 0 0 0 17 7a5 5 0 0 0-5-5z"/></svg>
+
+    function noteCardHtml(note, idx) {
+      return `
+        <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+          ${note.pinned ? `
+            <div class="note-pin-badge">
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 0 0-5 5c0 1.86.9 3.4 2.19 4.42L7 16h4v6h2v-6h4l-2.19-4.58A5.99 5.99 0 0 0 17 7a5 5 0 0 0-5-5z"/></svg>
+            </div>
+          ` : ''}
+          <div class="note-content-layer">
+            <h2 class="note-title">${note.title || 'Untitled'}</h2>
+            <p class="note-desc">${note.preview || ''}</p>
           </div>
-        ` : ''}
-        <div class="note-content-layer">
-          <h2 class="note-title">${note.title || 'Untitled'}</h2>
-          <p class="note-desc">${note.preview || ''}</p>
+          <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
+          <div class="note-checkbox">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
         </div>
-        <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
-        <div class="note-checkbox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }
+
+    // Kelompokkan notes: yang di-pin dulu (nggak ikut pengelompokan tanggal),
+    // baru sisanya dikelompokin per Pekan (minggu ini, hitung mulai SABTU —
+    // bukan Senin, sesuai kebiasaan bengkel ini) atau per bulan kalau udah lewat.
+    const now = new Date();
+    const pinnedNotes = notesData.filter(n => n.pinned);
+    const unpinnedNotes = notesData.filter(n => !n.pinned);
+
+    let html = '';
+    let lastSectionKey = null;
+
+    if (pinnedNotes.length > 0) {
+      html += `<div class="note-section-divider"><span>Disematkan</span></div>`;
+      html += pinnedNotes.map((note, idx) => noteCardHtml(note, idx)).join('');
+      lastSectionKey = '__pinned__';
+    }
+
+    unpinnedNotes.forEach((note, idx) => {
+      const d = new Date(note.created_at);
+      const section = isNaN(d) ? { key: 'lainnya', label: 'Lainnya' } : getNoteSectionKey(d, now);
+      if (section.key !== lastSectionKey) {
+        html += `<div class="note-section-divider"><span>${escapeHtml(section.label)}</span></div>`;
+        lastSectionKey = section.key;
+      }
+      html += noteCardHtml(note, idx);
+    });
+
+    container.innerHTML = html;
 
     // Tap biasa = buka note. Kalau lagi mode seleksi, tap = toggle checkbox.
     // Tekan & tahan (long-press) di note manapun = masuk mode seleksi.
@@ -3190,51 +3261,6 @@
   });
 
   // =====================================================================
-  // --- KOMPATIBILITAS FORMAT BARU (editor-data-administrator.html versi
-  // "Dashboard Admin"): note.content = { schema:'admin-data-v1',
-  // records:[{id, pj, barang, harga, created_at}], legacy }. Semua fitur di
-  // bawah ini (Tasks, Search isi tabel, Export PDF/Gambar, Analisa) masih
-  // dibangun di atas bentuk LAMA {columns, rows} — jadi setiap kali baca
-  // note.content, panggil dulu normalizeNoteContent() supaya kedua format
-  // (tabel manual lama & data-entry baru) sama-sama kebaca, tanpa menulis
-  // ulang fitur-fitur itu satu-satu.
-  // =====================================================================
-  function normalizeNoteContent(content) {
-    if (!content || content.schema !== 'admin-data-v1') return content;
-    const records = Array.isArray(content.records) ? content.records : [];
-    const columns = [
-      { id: 'no', label: 'No', type: 'no' },
-      { id: 'tanggal', label: 'Tanggal', type: 'date' },
-      { id: 'jam', label: 'Jam', type: 'time' },
-      { id: 'pj', label: 'PJ', type: 'text' },
-      { id: 'barang', label: 'Barang', type: 'text' },
-      { id: 'barangKeluar', label: 'Barang Keluar', type: 'text' },
-      { id: 'stokBarang', label: 'Stok Barang', type: 'text' },
-      { id: 'keterangan', label: 'Keterangan', type: 'text' },
-      { id: 'harga', label: 'Harga', type: 'text' }
-    ];
-    const p2 = n => String(n).padStart(2, '0');
-    const sorted = [...records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    const rows = sorted.map((r, i) => {
-      const d = new Date(r.created_at);
-      return {
-        cells: {
-          no: String(i + 1).padStart(3, '0'),
-          tanggal: p2(d.getDate()) + '-' + p2(d.getMonth() + 1) + '-' + d.getFullYear(),
-          jam: p2(d.getHours()) + ':' + p2(d.getMinutes()),
-          pj: r.pj || '',
-          barang: r.barang || '',
-          barangKeluar: r.barangKeluar || '',
-          stokBarang: r.stokBarang || '',
-          keterangan: r.keterangan || '',
-          harga: r.harga ? String(r.harga) : ''
-        }
-      };
-    });
-    return { columns, rows };
-  }
-
-  // =====================================================================
   // --- FITUR TASKS: deteksi baris data yang belum lengkap di semua tabel ---
   // Struktur asli dari editor-data-administrator.html:
   //   note.content = { columns: [{id, label, type}], rows: [{cells: {[colId]: value}}] }
@@ -3243,10 +3269,6 @@
   // Kolom yang WAJIB diisi tiap baris (di luar ini: No/Tanggal/Jam/Gambar TIDAK dicek):
   // =====================================================================
   const TASK_REQUIRED_FIELDS = ['PJ', 'Customer', 'Barang', 'Barang Keluar', 'Stok Barang', 'Keterangan', 'Harga'];
-  // Tabel dari editor versi baru cuma punya PJ/Barang/Harga secara konsep —
-  // pakai checklist yang lebih sempit ini, biar nggak "salah tuduh" nagih
-  // Customer/Stok/Keterangan yang memang tidak pernah ada di tabel itu.
-  const TASK_REQUIRED_FIELDS_NEW_SCHEMA = ['PJ', 'Barang', 'Barang Keluar', 'Stok Barang', 'Keterangan', 'Harga'];
 
   function normalizeKey(str) {
     return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -3270,15 +3292,12 @@
   function computeTasks() {
     const tasks = [];
     allNotesData.forEach(note => {
-      const content = normalizeNoteContent(note.content);
+      const content = note.content;
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
 
-      const requiredFields = (note.content && note.content.schema === 'admin-data-v1')
-        ? TASK_REQUIRED_FIELDS_NEW_SCHEMA
-        : TASK_REQUIRED_FIELDS;
       const columns = content.columns;
       content.rows.forEach((row, rowIndex) => {
-        const missing = requiredFields.filter(f => isEmptyValue(getRowValueByLabel(columns, row, f)));
+        const missing = TASK_REQUIRED_FIELDS.filter(f => isEmptyValue(getRowValueByLabel(columns, row, f)));
         if (missing.length > 0) {
           tasks.push({
             noteId: note.id,
@@ -3859,8 +3878,7 @@
   }
 
   // Cari kata kunci di dalam ISI TABEL sungguhan (content.rows), sama kayak search publik
-  function findMatchInContent(rawContent, q) {
-    const content = normalizeNoteContent(rawContent);
+  function findMatchInContent(content, q) {
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return null;
     for (const row of content.rows) {
       for (const col of content.columns) {
@@ -4194,7 +4212,7 @@
     document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
 
     const tableEl = document.getElementById('noteDetailTable');
-    const content = normalizeNoteContent(note.content);
+    const content = note.content;
 
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
@@ -4345,7 +4363,7 @@
 
   document.getElementById('btnShareExportPdf').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const content = normalizeNoteContent(currentDetailNote.content);
+    const content = currentDetailNote.content;
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
@@ -4423,7 +4441,7 @@
 
   // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
   function buildExportTableEl(note) {
-    const content = normalizeNoteContent(note.content);
+    const content = note.content;
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed; left:-99999px; top:0; background:#ffffff; padding:24px; width:max-content;';
@@ -4488,7 +4506,7 @@
 
   document.getElementById('btnShareExportImage').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const content = normalizeNoteContent(currentDetailNote.content);
+    const content = currentDetailNote.content;
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
@@ -4714,7 +4732,7 @@
   function extractTransactions() {
     const txs = [];
     allNotesData.forEach(note => {
-      const content = normalizeNoteContent(note.content);
+      const content = note.content;
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
 
       const columns = content.columns;
