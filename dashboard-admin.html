@@ -3208,6 +3208,9 @@
       { id: 'jam', label: 'Jam', type: 'time' },
       { id: 'pj', label: 'PJ', type: 'text' },
       { id: 'barang', label: 'Barang', type: 'text' },
+      { id: 'barangKeluar', label: 'Barang Keluar', type: 'text' },
+      { id: 'stokBarang', label: 'Stok Barang', type: 'text' },
+      { id: 'keterangan', label: 'Keterangan', type: 'text' },
       { id: 'harga', label: 'Harga', type: 'text' }
     ];
     const p2 = n => String(n).padStart(2, '0');
@@ -3221,6 +3224,9 @@
           jam: p2(d.getHours()) + ':' + p2(d.getMinutes()),
           pj: r.pj || '',
           barang: r.barang || '',
+          barangKeluar: r.barangKeluar || '',
+          stokBarang: r.stokBarang || '',
+          keterangan: r.keterangan || '',
           harga: r.harga ? String(r.harga) : ''
         }
       };
@@ -3240,7 +3246,7 @@
   // Tabel dari editor versi baru cuma punya PJ/Barang/Harga secara konsep —
   // pakai checklist yang lebih sempit ini, biar nggak "salah tuduh" nagih
   // Customer/Stok/Keterangan yang memang tidak pernah ada di tabel itu.
-  const TASK_REQUIRED_FIELDS_NEW_SCHEMA = ['PJ', 'Barang', 'Harga'];
+  const TASK_REQUIRED_FIELDS_NEW_SCHEMA = ['PJ', 'Barang', 'Barang Keluar', 'Stok Barang', 'Keterangan', 'Harga'];
 
   function normalizeKey(str) {
     return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
