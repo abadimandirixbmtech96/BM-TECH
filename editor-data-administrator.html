@@ -416,7 +416,7 @@
       </div>
 
       <div class="field">
-        <label>Customer</label>
+        <label>Customer <span class="opt-tag">(opsional)</span></label>
         <input type="text" id="inputCustomer" list="customerSuggestions" placeholder="Nama customer" autocomplete="off">
         <datalist id="customerSuggestions"></datalist>
       </div>
@@ -489,7 +489,7 @@
           <input type="text" id="detKeluarEdit" style="display:none;">
         </div>
         <div class="detail-row">
-          <label>Barang Ditinggal</label>
+          <label>Stok Barang</label>
           <div class="val" id="detStokView">—</div>
           <input type="text" id="detStokEdit" style="display:none;">
         </div>
@@ -1000,11 +1000,11 @@
   document.getElementById('btnHomeBack').addEventListener('click', () => {
     // Editor ini biasanya berjalan sebagai iframe di dalam dashboard-admin.html
     // (lihat pola window.parent.postMessage('note-autosaved', ...) di atas).
-    // Jadi "kembali" berarti minta parent menutup editor ini dan menampilkan
-    // kembali daftar folder/notes, bukan navigasi penuh di dalam iframe.
+    // 'close-editor' adalah nama pesan yang sudah didengarkan oleh
+    // dashboard-admin.html untuk menutup modal editor & refresh daftar note.
     try {
       if (window.parent && window.parent !== window) {
-        window.parent.postMessage('note-close', '*');
+        window.parent.postMessage('close-editor', '*');
         return;
       }
     } catch (e) { /* cross-origin atau tidak ada parent — lanjut ke fallback */ }
