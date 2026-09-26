@@ -3496,10 +3496,69 @@
     return s === '' || s === '-' || s === '--' || s === '--------';
   }
 
+  // =====================================================================
+  // NORMALISASI SKEMA BARU (admin-data-v1) dari editor-data-administrator.html
+  // Editor sekarang menyimpan content = { schema:'admin-data-v1', records:[...] }
+  // alih-alih format tabel bebas { columns, rows } yang lama dipakai di
+  // seluruh dashboard ini (Tasks, Search, Detail Preview, Export PDF/Gambar,
+  // Analytics). Supaya semua kode itu TIDAK perlu diubah satu-satu, kita
+  // selalu konversi lewat getNoteTable() dulu — note lama (columns/rows)
+  // maupun note baru (records) sama-sama keluar dalam bentuk {columns, rows}.
+  // Label kolom di bawah SENGAJA disamakan persis dengan TASK_REQUIRED_FIELDS
+  // & seluruh pemanggilan getRowValueByLabel yang sudah ada (PJ, Customer,
+  // Barang, Barang Keluar, Stok Barang, Keterangan, Harga, Tanggal, Jam).
+  // =====================================================================
+  const NEW_SCHEMA_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'pj', label: 'PJ' },
+    { id: 'customer', label: 'Customer' },
+    { id: 'barang', label: 'Barang' },
+    { id: 'barangKeluar', label: 'Barang Keluar' },
+    { id: 'stokBarang', label: 'Stok Barang' },
+    { id: 'keterangan', label: 'Keterangan' },
+    { id: 'harga', label: 'Harga' }
+  ];
+
+  function getNoteTable(note) {
+    const content = note && note.content;
+    if (!content) return null;
+
+    if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const sorted = [...content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const d = r.created_at ? new Date(r.created_at) : null;
+        const tanggal = d ? `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}` : '';
+        const jam = d ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '';
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal, jam,
+            pj: r.pj || '',
+            customer: r.customer || '',
+            barang: r.barang || '',
+            barangKeluar: r.barangKeluar || '',
+            stokBarang: r.stokBarang || '',
+            keterangan: r.keterangan || '',
+            harga: r.harga ? String(r.harga) : ''
+          }
+        };
+      });
+      return { columns: NEW_SCHEMA_COLUMNS, rows };
+    }
+
+    // Note lama (format tabel bebas) — dipakai apa adanya, tidak diarsipkan ulang.
+    if (Array.isArray(content.columns) && Array.isArray(content.rows)) return content;
+
+    return null;
+  }
+
   function computeTasks() {
     const tasks = [];
     allNotesData.forEach(note => {
-      const content = note.content;
+      const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
 
       const columns = content.columns;
@@ -3508,6 +3567,7 @@
         if (missing.length > 0) {
           tasks.push({
             noteId: note.id,
+
             folderId: note.folder_id,
             folderName: note.folder || 'Uncategorized',
             noteTitle: note.title || 'Untitled',
@@ -4177,7 +4237,7 @@
       .filter(n => !searchFolderFilter || n.folder_id === searchFolderFilter)
       .map(n => {
         const titleMatch = (n.title || '').toLowerCase().includes(q);
-        const cellMatch = findMatchInContent(n.content, q);
+        const cellMatch = findMatchInContent(getNoteTable(n), q);
         if (!titleMatch && !cellMatch) return null;
         return { note: n, cellMatch };
       })
@@ -4419,7 +4479,7 @@
     document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
 
     const tableEl = document.getElementById('noteDetailTable');
-    const content = note.content;
+    const content = getNoteTable(note);
 
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
@@ -4570,7 +4630,7 @@
 
   document.getElementById('btnShareExportPdf').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const content = currentDetailNote.content;
+    const content = getNoteTable(currentDetailNote);
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
@@ -4648,7 +4708,7 @@
 
   // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
   function buildExportTableEl(note) {
-    const content = note.content;
+    const content = getNoteTable(note);
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed; left:-99999px; top:0; background:#ffffff; padding:24px; width:max-content;';
@@ -4713,7 +4773,7 @@
 
   document.getElementById('btnShareExportImage').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const content = currentDetailNote.content;
+    const content = getNoteTable(currentDetailNote);
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
@@ -4939,7 +4999,7 @@
   function extractTransactions() {
     const txs = [];
     allNotesData.forEach(note => {
-      const content = note.content;
+      const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
 
       const columns = content.columns;
