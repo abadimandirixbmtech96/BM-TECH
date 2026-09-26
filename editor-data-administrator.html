@@ -865,7 +865,7 @@
 
     currentNoteId = result.data.id;
     lastKnownUpdatedAt = result.data.updated_at;
-    window.parent.postMessage('note-autosaved', '*');
+    window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
     return true;
   }
 
@@ -881,7 +881,7 @@
       const forced = await supabaseClient.from('notes').update(myPayload).eq('id', currentNoteId).select().single();
       if (forced.error) { showSaveStatus('Gagal tersimpan', true); return false; }
       lastKnownUpdatedAt = forced.data.updated_at;
-      window.parent.postMessage('note-autosaved', '*');
+      window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
       return true;
     }
 
