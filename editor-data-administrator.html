@@ -142,6 +142,22 @@
   .menu-card .chev{ margin-left:auto; color:var(--ink-soft); flex-shrink:0; }
   .menu-card .chev svg{ width:16px; height:16px; }
 
+  .recent-row{
+    display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px;
+    border-radius:14px; background:var(--paper-alt); border:1px solid var(--line-soft); cursor:pointer;
+  }
+  .recent-row .r-no{
+    width:30px; height:30px; border-radius:10px; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;
+  }
+  body.surface-dark .recent-row .r-no{ color:var(--accent); }
+  .recent-row .r-mid{ flex:1; min-width:0; }
+  .recent-row .r-mid b{ display:block; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .recent-row .r-mid span{ font-size:11.5px; color:var(--ink-soft); font-weight:500; }
+  .recent-row .r-right{ text-align:right; flex-shrink:0; font-size:13px; font-weight:800; color:var(--accent-ink); }
+  body.surface-dark .recent-row .r-right{ color:var(--accent); }
+  .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
+
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
@@ -203,62 +219,6 @@
   .btn-row{ display:flex; gap:10px; }
   .btn-row > *{ flex:1; }
 
-  /* ---------- Data Tabel (preview baca-saja, gaya lama) ---------- */
-  .search-row{ display:flex; gap:8px; margin-top:14px; }
-  .search-box{
-    flex:1; display:flex; align-items:center; gap:8px; padding:0 14px; border-radius:14px;
-    background:var(--paper-alt); border:1.5px solid var(--line); height:46px;
-  }
-  .search-box svg{ width:17px; height:17px; color:var(--ink-soft); flex-shrink:0; }
-  .search-box input{ border:none; background:transparent; outline:none; width:100%; font-size:14.5px; font-weight:600; color:var(--ink); }
-  .filter-btn{
-    width:46px; height:46px; border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line);
-    display:flex; align-items:center; justify-content:center; color:var(--ink); cursor:pointer; flex-shrink:0; position:relative;
-  }
-  .filter-btn svg{ width:18px; height:18px; }
-  .filter-btn.has-filter::after{ content:''; position:absolute; top:8px; right:8px; width:7px; height:7px; border-radius:50%; background:var(--accent); }
-
-  .chip-row{ display:flex; gap:8px; margin-top:12px; overflow-x:auto; padding-bottom:2px; }
-  .chip-row::-webkit-scrollbar{ display:none; }
-  .chip{
-    flex-shrink:0; padding:8px 15px; border-radius:var(--radius-pill); font-size:13px; font-weight:700;
-    background:var(--paper-alt); border:1.5px solid var(--line); color:var(--ink-soft); cursor:pointer; white-space:nowrap;
-  }
-  .chip.active{ background:var(--accent); border-color:var(--accent); color:#fff; }
-
-  .table-scroll-wrap{
-    margin-top:16px; border-radius:16px; border:1px solid var(--line-soft); overflow:hidden;
-  }
-  .table-scroll-inner{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .preview-table{ border-collapse:collapse; width:100%; min-width:920px; font-size:12.5px; }
-  .preview-table thead th{
-    position:sticky; top:0; background:var(--accent); color:var(--accent-ink); text-align:left;
-    padding:11px 12px; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.03em;
-    white-space:nowrap; border-right:1px solid rgba(0,0,0,0.08);
-  }
-  .preview-table tbody td{
-    padding:10px 12px; border-top:1px solid var(--line-soft); white-space:nowrap; color:var(--ink);
-    max-width:220px; overflow:hidden; text-overflow:ellipsis;
-  }
-  .preview-table tbody tr{ background:var(--paper-alt); cursor:pointer; }
-  .preview-table tbody tr:nth-child(even){ background:var(--paper); }
-  .preview-table tbody tr:active{ background:var(--accent-soft); }
-  .preview-table td.col-harga{ font-weight:800; color:var(--accent-ink); }
-  body.surface-dark .preview-table td.col-harga{ color:var(--accent); }
-  .preview-table td.col-no{ font-weight:800; color:var(--ink-soft); }
-
-  .empty-state{ text-align:center; padding:60px 24px; color:var(--ink-soft); }
-  .empty-state svg{ width:52px; height:52px; opacity:0.4; margin-bottom:12px; }
-  .empty-state p{ font-size:13.5px; font-weight:600; margin:0; line-height:1.5; }
-
-  .fab{
-    position:fixed; right:calc(var(--safe-right) + 18px); bottom:calc(var(--safe-bottom) + 92px); z-index:55;
-    display:flex; align-items:center; gap:8px; padding:14px 20px; border-radius:var(--radius-pill);
-    background:var(--accent); color:#fff; border:none; font-size:14.5px; font-weight:750; cursor:pointer;
-    box-shadow:0 10px 24px rgba(180,130,30,0.35);
-  }
-  .fab svg{ width:18px; height:18px; }
-
   /* ---------- Detail ---------- */
   .detail-card{
     border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
@@ -317,13 +277,8 @@
   .preview-row span:last-child{ font-weight:750; text-align:right; }
   .preview-row span.empty-val{ color:var(--ink-soft); font-weight:600; font-style:italic; }
 
-  .sheet-handle{ width:40px; height:4px; border-radius:2px; background:var(--line); margin:0 auto 16px auto; }
-  .sheet-title{ font-size:17px; font-weight:800; margin:0 0 16px 0; }
 
   /* ---------- Loading / toast ---------- */
-  .skeleton-wrap{ display:flex; flex-direction:column; gap:10px; padding-top:20px; }
-  .skel-line{ height:16px; border-radius:8px; background:linear-gradient(90deg, var(--skeleton-a), var(--skeleton-b), var(--skeleton-a)); background-size:200% 100%; animation:skelPulse 1.1s ease-in-out infinite; }
-  @keyframes skelPulse{ 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
 
   #saveStatusIndicator{
     position:fixed; top:calc(var(--safe-top) + 10px); right:14px; z-index:500;
@@ -414,17 +369,15 @@
         <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
 
-      <div class="menu-card tap" id="menuTabel">
-        <div class="menu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg></div>
-        <div class="menu-text"><b>Lihat Tabel</b><span>Melihat seluruh data</span></div>
-        <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-
       <div class="menu-card tap" id="menuSettings">
         <div class="menu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></div>
         <div class="menu-text"><b>Pengaturan</b><span>Tema aplikasi</span></div>
         <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
+
+      <div class="section-label">Data Terbaru</div>
+      <div id="recentList"></div>
+      <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk "Tambah Data" untuk mulai.</p>
     </div>
   </section>
 
@@ -492,52 +445,6 @@
         Simpan Data
       </button>
     </div>
-  </section>
-
-  <!-- ============ DATA TABEL (preview baca-saja) ============ -->
-  <section class="view" id="view-table">
-    <div class="topbar">
-      <div class="topbar-titles"><h2>Data Tabel</h2><span id="tableSubtitle">Semua data tersimpan otomatis</span></div>
-      <button class="topbar-action" id="btnTableEdit">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        Edit
-      </button>
-    </div>
-    <div class="scroll px">
-      <div class="search-row">
-        <div class="search-box">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-          <input type="text" id="searchInput" placeholder="Cari nama barang, PJ, atau tanggal...">
-        </div>
-        <button class="filter-btn" id="btnOpenFilter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
-      </div>
-
-      <div class="chip-row" id="quickChipRow">
-        <div class="chip active" data-chip="semua">Semua</div>
-        <div class="chip" data-chip="hari">Hari Ini</div>
-        <div class="chip" data-chip="bulan">Bulan Ini</div>
-        <div class="chip" data-chip="tahun">Tahun Ini</div>
-      </div>
-
-      <div class="table-scroll-wrap" id="tableScrollWrap">
-        <div class="table-scroll-inner">
-          <table class="preview-table">
-            <thead>
-              <tr>
-                <th>No</th><th>Tanggal</th><th>Jam</th><th>PJ</th><th>Barang dan Jumlah</th>
-                <th>Barang Keluar</th><th>Stok Barang</th><th>Keterangan</th><th>Harga</th>
-              </tr>
-            </thead>
-            <tbody id="recordTableBody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="empty-state" id="emptyState" style="display:none;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>
-        <p>Belum ada data yang cocok.<br>Coba ubah kata kunci atau filter.</p>
-      </div>
-    </div>
-    <button class="fab" id="btnFabTambah"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Tambah Data</button>
   </section>
 
   <!-- ============ DETAIL DATA ============ -->
@@ -622,7 +529,6 @@
   <!-- ============ BOTTOM NAV ============ -->
   <div class="bottom-nav" id="bottomNav">
     <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
-    <button class="nav-item" data-nav="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg><span>Tabel</span></button>
     <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg><span>Settings</span></button>
   </div>
 
@@ -663,32 +569,6 @@
     </div>
   </div>
 
-  <!-- ============ SHEET: FILTER ============ -->
-  <div class="overlay" id="overlayFilter">
-    <div class="modal-card">
-      <div class="sheet-handle"></div>
-      <h3 class="sheet-title">Filter Data</h3>
-
-      <div class="field">
-        <label>Dari Tanggal</label>
-        <input type="date" id="filterFrom">
-      </div>
-      <div class="field">
-        <label>Sampai Tanggal</label>
-        <input type="date" id="filterTo">
-      </div>
-      <div class="field">
-        <label>PJ</label>
-        <select id="filterPJSelect"><option value="">Semua PJ</option></select>
-      </div>
-
-      <div class="btn-row">
-        <button class="btn-secondary" id="btnFilterReset">Reset</button>
-        <button class="btn-primary" id="btnFilterTerapkan">Terapkan</button>
-      </div>
-    </div>
-  </div>
-
   <div id="saveStatusIndicator"></div>
   <div id="migrationToast"></div>
 </div>
@@ -713,12 +593,6 @@
   let currentView = 'home';
   let editingRecordId = null;
   let deletingRecordId = null;
-
-  let quickFilter = 'semua';
-  let searchQuery = '';
-  let rangeFrom = null;
-  let rangeTo = null;
-  let pjFilter = '';
 
   // =====================================================================
   // HELPERS
@@ -840,14 +714,8 @@
     } catch (e) {}
   }
 
-  function showSkeleton(){
-    document.getElementById('recordTableBody').innerHTML =
-      '<tr><td colspan="9"><div class="skeleton-wrap"><div class="skel-line" style="width:90%"></div><div class="skel-line" style="width:70%"></div><div class="skel-line" style="width:85%"></div></div></td></tr>';
-  }
-
   async function loadExistingNote(){
     if (!currentNoteId) { renderAll(); return; }
-    showSkeleton();
 
     if (!navigator.onLine) {
       const raw = (() => { try { return localStorage.getItem(getLocalDraftKey()); } catch (e) { return null; } })();
@@ -897,31 +765,34 @@
       legacyBackup = null;
     }
 
-    const recovered = (() => {
-      let draft = null;
-      try {
-        const raw = localStorage.getItem(getLocalDraftKey());
-        if (raw) draft = JSON.parse(raw);
-      } catch (e) { return null; }
-      if (!draft) return null;
-      const same = JSON.stringify(draft.records) === JSON.stringify(records) && draft.title === noteTitle;
-      if (same) { clearLocalDraft(); return null; }
-      const menitLalu = Math.max(1, Math.round((Date.now() - draft.savedAt) / 60000));
-      const pulihkan = confirm(
-        `Ditemukan perubahan yang belum sempat tersimpan ke server (dari ${menitLalu} menit lalu, kemungkinan koneksi sempat putus). Pulihkan perubahan itu sekarang?`
-      );
-      if (pulihkan) return draft;
-      clearLocalDraft();
-      return null;
-    })();
-    if (recovered) {
-      noteTitle = recovered.title || noteTitle;
-      records = recovered.records || records;
-      legacyBackup = recovered.legacyBackup || legacyBackup;
+    // Gabungkan draft lokal (kalau ada) secara AMAN: data server adalah
+    // sumber kebenaran. Draft cuma boleh MENAMBAHKAN baris yang memang
+    // belum ada di server (dikenali lewat id) — supaya kalaupun ada draft
+    // basi tersangkut di HP (misal dari sesi yang gagal tersambung ke
+    // server), draft itu TIDAK PERNAH bisa menghapus atau menimpa data
+    // yang sudah benar-benar tersimpan di server.
+    let addedFromDraft = 0;
+    try {
+      const raw = localStorage.getItem(getLocalDraftKey());
+      if (raw) {
+        const draft = JSON.parse(raw);
+        const knownIds = new Set(records.map(r => r.id));
+        (draft.records || []).forEach(r => {
+          if (r && r.id && !knownIds.has(r.id)) {
+            records.push(r);
+            knownIds.add(r.id);
+            addedFromDraft++;
+          }
+        });
+      }
+    } catch (e) { /* draft rusak/tidak terbaca — abaikan, jangan sampai gagal load */ }
+    clearLocalDraft();
+    if (addedFromDraft > 0) {
+      showMigrationToast(`${addedFromDraft} data dari HP (belum sempat tersimpan sebelumnya) berhasil digabungkan kembali.`);
     }
 
     renderAll();
-    if (needsMigrationSave || recovered) scheduleAutosave();
+    if (needsMigrationSave || addedFromDraft > 0) scheduleAutosave();
   }
 
   // =====================================================================
@@ -1010,33 +881,49 @@
     hasUnsyncedChanges = true;
     clearTimeout(autosaveTimer);
 
-    if (!navigator.onLine) { showSaveStatus('Tersimpan di HP (offline)', false, true); return; }
-
-    showSaveStatus('Menyimpan...');
+    // Jadwalkan dulu SEBELUM update tampilan status — supaya kalaupun ada
+    // bug kecil di bagian tampilan (mis. elemen indikator hilang), proses
+    // penyimpanan ke server TETAP jalan dan tidak pernah ikut gagal.
+    if (!navigator.onLine) {
+      try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) { console.error(e); }
+      return;
+    }
     autosaveTimer = setTimeout(runAutosave, 900);
+    try { showSaveStatus('Menyimpan...'); } catch (e) { console.error(e); }
   }
 
   async function runAutosave(){
-    if (!navigator.onLine) { showSaveStatus('Tersimpan di HP (offline)', false, true); return; }
+    if (!navigator.onLine) { try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) {} return; }
     if (autosaveInFlight) { autosavePending = true; return; }
     autosaveInFlight = true;
 
-    const success = await saveNoteToDatabase(true);
+    let success = false;
+    try {
+      // Inti penyimpanan ke Supabase. Apapun yang terjadi di luar blok ini
+      // (indikator UI, dsb) TIDAK BOLEH mengganggu hasil dari baris ini.
+      success = await saveNoteToDatabase(true);
 
-    if (success) {
-      autosaveRetryCount = 0;
-      hasUnsyncedChanges = false;
-      clearLocalDraft();
-      showSaveStatus('Tersimpan', false);
-    } else {
-      autosaveRetryCount++;
-      const delay = Math.min(30000, 3000 * autosaveRetryCount);
-      showSaveStatus(`Gagal tersimpan — mencoba lagi (${autosaveRetryCount})...`, true, true);
-      clearTimeout(autosaveTimer);
-      autosaveTimer = setTimeout(runAutosave, delay);
+      if (success) {
+        autosaveRetryCount = 0;
+        hasUnsyncedChanges = false;
+        clearLocalDraft();
+      } else {
+        autosaveRetryCount++;
+        const delay = Math.min(30000, 3000 * autosaveRetryCount);
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(runAutosave, delay);
+      }
+    } finally {
+      // autosaveInFlight WAJIB direset apapun yang terjadi di atas — kalau
+      // tidak, semua penyimpanan berikutnya akan macet permanen.
+      autosaveInFlight = false;
     }
 
-    autosaveInFlight = false;
+    try {
+      if (success) showSaveStatus('Tersimpan', false);
+      else showSaveStatus(`Gagal tersimpan — mencoba lagi (${autosaveRetryCount})...`, true, true);
+    } catch (e) { console.error(e); }
+
     if (autosavePending) { autosavePending = false; if (success) scheduleAutosave(); }
   }
 
@@ -1089,20 +976,16 @@
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
     document.getElementById('view-' + name).querySelector('.scroll').scrollTop = 0;
     if (name === 'add') prepareAddForm();
-    if (name === 'table') renderRecordTable();
     if (name === 'settings') renderSettings();
     if (name === 'home') renderHome();
   }
 
   document.getElementById('menuTambah').addEventListener('click', () => goView('add'));
-  document.getElementById('menuTabel').addEventListener('click', () => goView('table'));
   document.getElementById('menuSettings').addEventListener('click', () => goView('settings'));
-  document.getElementById('btnFabTambah').addEventListener('click', () => goView('add'));
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
-  document.getElementById('btnDetailBack').addEventListener('click', () => goView('table'));
-  document.getElementById('btnDetailClose').addEventListener('click', () => goView('table'));
-  document.getElementById('btnTableEdit').addEventListener('click', () => goView('home'));
+  document.getElementById('btnDetailBack').addEventListener('click', () => goView('home'));
+  document.getElementById('btnDetailClose').addEventListener('click', () => goView('home'));
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => goView(btn.dataset.nav));
   });
@@ -1117,6 +1000,42 @@
     document.getElementById('statMonth').textContent = records.filter(r => isSameMonth(r.created_at, now)).length;
     document.getElementById('statIncomplete').textContent = records.filter(isRecordIncomplete).length;
     document.getElementById('homeGreetName').textContent = noteTitle && noteTitle.trim() ? noteTitle : 'Admin';
+    renderRecentList();
+  }
+
+  function renderRecentList(){
+    const all = sortedRecords();
+    const noMap = new Map(all.map((r, i) => [r.id, i + 1]));
+    const recent = all.slice(-6).reverse();
+    const listEl = document.getElementById('recentList');
+    const emptyEl = document.getElementById('recentEmptyHint');
+
+    if (recent.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    listEl.innerHTML = recent.map(r => {
+      const rightHtml = r.harga
+        ? `<div class="r-right">${rupiah(r.harga)}</div>`
+        : `<div class="r-right pending">Belum lengkap</div>`;
+      return `
+        <div class="recent-row tap" data-id="${r.id}">
+          <div class="r-no">${pad3(noMap.get(r.id))}</div>
+          <div class="r-mid">
+            <b>${escapeHtml(r.barang) || '(tanpa nama)'}</b>
+            <span>${escapeHtml(r.pj) || '—'} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
+          </div>
+          ${rightHtml}
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.recent-row').forEach(el => {
+      el.addEventListener('click', () => openDetail(el.dataset.id));
+    });
   }
 
   // =====================================================================
@@ -1185,109 +1104,8 @@
     pendingNewRecord = null;
     closeOverlay('overlayConfirm');
     scheduleAutosave();
-    goView('table');
+    goView('home');
   });
-
-  // =====================================================================
-  // DATA TABEL — search, quick chip, filter sheet, preview table
-  // =====================================================================
-  document.getElementById('searchInput').addEventListener('input', (e) => {
-    searchQuery = e.target.value.trim().toLowerCase();
-    renderRecordTable();
-  });
-  document.getElementById('quickChipRow').addEventListener('click', (e) => {
-    const chip = e.target.closest('.chip');
-    if (!chip) return;
-    quickFilter = chip.dataset.chip;
-    document.querySelectorAll('#quickChipRow .chip').forEach(c => c.classList.toggle('active', c === chip));
-    renderRecordTable();
-  });
-  document.getElementById('btnOpenFilter').addEventListener('click', () => {
-    const names = [...new Set(records.map(r => r.pj).filter(Boolean))].sort();
-    const sel = document.getElementById('filterPJSelect');
-    sel.innerHTML = '<option value="">Semua PJ</option>' + names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
-    sel.value = pjFilter;
-    document.getElementById('filterFrom').value = rangeFrom || '';
-    document.getElementById('filterTo').value = rangeTo || '';
-    openOverlay('overlayFilter');
-  });
-  document.getElementById('btnFilterReset').addEventListener('click', () => {
-    rangeFrom = null; rangeTo = null; pjFilter = '';
-    document.getElementById('filterFrom').value = '';
-    document.getElementById('filterTo').value = '';
-    document.getElementById('filterPJSelect').value = '';
-    closeOverlay('overlayFilter');
-    updateFilterBadge();
-    renderRecordTable();
-  });
-  document.getElementById('btnFilterTerapkan').addEventListener('click', () => {
-    rangeFrom = document.getElementById('filterFrom').value || null;
-    rangeTo = document.getElementById('filterTo').value || null;
-    pjFilter = document.getElementById('filterPJSelect').value || '';
-    closeOverlay('overlayFilter');
-    updateFilterBadge();
-    renderRecordTable();
-  });
-  function updateFilterBadge(){
-    document.getElementById('btnOpenFilter').classList.toggle('has-filter', !!(rangeFrom || rangeTo || pjFilter));
-  }
-
-  function filteredRecords(){
-    const now = new Date();
-    let list = sortedRecords();
-    if (quickFilter === 'hari') list = list.filter(r => isSameDay(r.created_at, now));
-    else if (quickFilter === 'bulan') list = list.filter(r => isSameMonth(r.created_at, now));
-    else if (quickFilter === 'tahun') list = list.filter(r => isSameYear(r.created_at, now));
-    if (rangeFrom) list = list.filter(r => r.created_at.slice(0, 10) >= rangeFrom);
-    if (rangeTo) list = list.filter(r => r.created_at.slice(0, 10) <= rangeTo);
-    if (pjFilter) list = list.filter(r => r.pj === pjFilter);
-    if (searchQuery) {
-      list = list.filter(r =>
-        (r.barang || '').toLowerCase().includes(searchQuery) ||
-        (r.pj || '').toLowerCase().includes(searchQuery) ||
-        fmtTanggalFromISO(r.created_at).includes(searchQuery)
-      );
-    }
-    return list;
-  }
-
-  function renderRecordTable(){
-    const all = sortedRecords();
-    const noMap = new Map(all.map((r, i) => [r.id, i + 1]));
-    const list = filteredRecords();
-
-    document.getElementById('tableSubtitle').textContent = `${all.length} data tersimpan otomatis`;
-    const body = document.getElementById('recordTableBody');
-    const emptyEl = document.getElementById('emptyState');
-    const wrapEl = document.getElementById('tableScrollWrap');
-
-    if (list.length === 0) {
-      body.innerHTML = '';
-      emptyEl.style.display = 'block';
-      wrapEl.style.display = 'none';
-      return;
-    }
-    emptyEl.style.display = 'none';
-    wrapEl.style.display = 'block';
-
-    body.innerHTML = list.slice().reverse().map(r => `
-      <tr data-id="${r.id}">
-        <td class="col-no">${pad3(noMap.get(r.id))}</td>
-        <td>${fmtTanggalFromISO(r.created_at)}</td>
-        <td>${fmtWaktuFromISO(r.created_at)}</td>
-        <td>${escapeHtml(r.pj) || '—'}</td>
-        <td>${escapeHtml(r.barang) || '—'}</td>
-        <td>${escapeHtml(r.barangKeluar) || '—'}</td>
-        <td>${escapeHtml(r.stokBarang) || '—'}</td>
-        <td>${escapeHtml(r.keterangan) || '—'}</td>
-        <td class="col-harga">${r.harga ? rupiah(r.harga) : '—'}</td>
-      </tr>
-    `).join('');
-
-    body.querySelectorAll('tr').forEach(tr => {
-      tr.addEventListener('click', () => openDetail(tr.dataset.id));
-    });
-  }
 
   // =====================================================================
   // DETAIL / EDIT / HAPUS
@@ -1394,7 +1212,7 @@
     deletingRecordId = null;
     closeOverlay('overlayDelete');
     scheduleAutosave();
-    goView('table');
+    goView('home');
   });
 
   // =====================================================================
@@ -1444,7 +1262,6 @@
   // =====================================================================
   function renderAll(){
     renderHome();
-    renderRecordTable();
     if (currentView === 'settings') renderSettings();
   }
 
