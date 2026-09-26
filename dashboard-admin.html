@@ -2716,6 +2716,15 @@
         row: deepLinkParams.get('row'),
         focus: deepLinkParams.get('focus')
       });
+    } else {
+      // Tidak ada deep-link eksplisit — cek apakah sebelumnya ada editor yang
+      // masih terbuka (tersimpan di localStorage) saat halaman ini di-refresh
+      // (F5) di tengah ngisi data. Kalau ada, buka lagi otomatis alih-alih
+      // diam-diam kembali ke daftar dashboard.
+      const resumeState = readOpenEditorState();
+      if (resumeState) {
+        openEditor(resumeState.noteId, { folder: resumeState.folderId });
+      }
     }
   })();
 </script>
@@ -4423,6 +4432,26 @@
   const editorModal = document.getElementById('editorModal');
   const editorFrame = document.getElementById('editorFrame');
 
+  // Key localStorage buat menyimpan editor mana yang sedang terbuka, supaya
+  // kalau halaman ini di-refresh (F5) di tengah ngisi data, editor otomatis
+  // kebuka lagi ke note yang sama alih-alih kembali ke daftar dashboard.
+  const OPEN_EDITOR_STORAGE_KEY = 'bmtech_open_editor';
+
+  function saveOpenEditorState(noteId, folderId) {
+    try {
+      localStorage.setItem(OPEN_EDITOR_STORAGE_KEY, JSON.stringify({ noteId: noteId || null, folderId: folderId || null }));
+    } catch (e) { /* localStorage penuh/diblokir — abaikan, bukan fatal */ }
+  }
+  function clearOpenEditorState() {
+    try { localStorage.removeItem(OPEN_EDITOR_STORAGE_KEY); } catch (e) {}
+  }
+  function readOpenEditorState() {
+    try {
+      const raw = localStorage.getItem(OPEN_EDITOR_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+
   function openEditor(noteId = null, extra = {}) {
     const params = new URLSearchParams();
     if (noteId) params.set('id', noteId);
@@ -4440,6 +4469,8 @@
     if (extra.focus) params.set('focus', extra.focus);
     params.set('_t', Date.now()); // cache-buster: paksa iframe selalu reload fresh, tidak reuse instance/JS lama
 
+    saveOpenEditorState(noteId, folderId);
+
     // Kosongkan dulu ke about:blank sebelum set src baru — memastikan browser
     // benar-benar membuang state/session editor sebelumnya, bukan diam-diam
     // memakai ulang dokumen iframe yang sama kalau kebetulan URL-nya identik.
@@ -4453,15 +4484,23 @@
 
   window.addEventListener('message', (e) => {
     if (e.data === 'close-editor') {
+      clearOpenEditorState();
       editorModal.classList.remove('open');
       loadCategories(); // refresh jumlah note per folder + isi tabel aktif saat editor ditutup
     }
-    if (e.data === 'note-autosaved') {
+    if (e.data === 'note-autosaved' || (e.data && e.data.type === 'note-autosaved')) {
       // Autosave real-time dari editor — cukup refresh data di background,
       // JANGAN menutup modal editor (user masih lagi ngetik).
+      // Kalau ini note BARU (baru saja dapat id pertama kalinya dari
+      // Supabase), simpan id-nya ke localStorage juga — supaya kalau
+      // halaman di-refresh persis setelah ini, editor kebuka lagi ke note
+      // yang sama, bukan mulai dari form kosong lagi.
+      if (e.data && e.data.noteId) saveOpenEditorState(e.data.noteId, e.data.folder);
       loadCategories();
     }
   });
+
+
 
   // =====================================================================
   // --- NOTE DETAIL (PREVIEW): klik kartu note sekarang buka preview
