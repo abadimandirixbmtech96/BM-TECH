@@ -342,8 +342,11 @@
 
   <!-- ============ HOME ============ -->
   <section class="view active" id="view-home">
+    <div class="topbar" style="justify-content:flex-end;">
+      <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    </div>
     <div class="scroll px">
-      <div class="home-title" style="padding-top:calc(var(--safe-top) + 18px);">
+      <div class="home-title">
         <h1>Dashboard</h1>
         <p>Admin Panel</p>
       </div>
@@ -413,6 +416,12 @@
       </div>
 
       <div class="field">
+        <label>Customer <span class="opt-tag">(opsional)</span></label>
+        <input type="text" id="inputCustomer" list="customerSuggestions" placeholder="Nama customer" autocomplete="off">
+        <datalist id="customerSuggestions"></datalist>
+      </div>
+
+      <div class="field">
         <label>Barang dan Jumlah</label>
         <input type="text" id="inputBarang" placeholder="Contoh: Blok kph, askruk blade 3pcs" autocomplete="off">
       </div>
@@ -463,6 +472,11 @@
           <label>PJ</label>
           <div class="val" id="detPJview">—</div>
           <input type="text" id="detPJedit" style="display:none;" list="pjSuggestions">
+        </div>
+        <div class="detail-row">
+          <label>Customer</label>
+          <div class="val" id="detCustomerView">—</div>
+          <input type="text" id="detCustomerEdit" style="display:none;" list="customerSuggestions">
         </div>
         <div class="detail-row">
           <label>Barang dan Jumlah</label>
@@ -543,6 +557,7 @@
         <div class="preview-row"><span>Tanggal</span><span id="cfTanggal">—</span></div>
         <div class="preview-row"><span>Waktu</span><span id="cfWaktu">—</span></div>
         <div class="preview-row"><span>PJ</span><span id="cfPJ">—</span></div>
+        <div class="preview-row"><span>Customer</span><span id="cfCustomer">—</span></div>
         <div class="preview-row"><span>Barang dan Jumlah</span><span id="cfBarang">—</span></div>
         <div class="preview-row"><span>Barang Keluar</span><span id="cfKeluar">—</span></div>
         <div class="preview-row"><span>Stok Barang</span><span id="cfStok">—</span></div>
@@ -586,7 +601,7 @@
   let existingNoteLoadFailed = false;
 
   let noteTitle = '';
-  // record: { id, pj, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO) }
+  // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO) }
   let records = [];
   let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
 
@@ -629,7 +644,7 @@
     return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
   function isRecordIncomplete(r){
-    return !r.barangKeluar || !r.stokBarang || !r.keterangan || !r.harga;
+    return !r.customer || !r.barangKeluar || !r.stokBarang || !r.keterangan || !r.harga;
   }
 
   // =====================================================================
@@ -639,6 +654,7 @@
   function classifyLegacyColumn(label){
     const l = (label || '').toLowerCase();
     if (l.includes('pj') || l.includes('penanggung') || l.includes('p. jawab') || l.includes('p.jawab')) return 'pj';
+    if (l.includes('customer') || l.includes('pelanggan') || l.includes('konsumen')) return 'customer';
     if (l.includes('keluar')) return 'barangKeluar';
     if (l.includes('stok') || l.includes('ditinggal')) return 'stokBarang';
     if (l.includes('keterangan') || l.includes('catatan')) return 'keterangan';
@@ -668,18 +684,19 @@
           const get = (key) => (map[key] ? (cells[map[key]] || '').toString().trim() : '');
           const barang = get('barang');
           const pj = get('pj');
+          const customer = get('customer');
           const barangKeluar = get('barangKeluar');
           const stokBarang = get('stokBarang');
           const keterangan = get('keterangan');
           const hargaRaw = get('harga');
           const harga = Number(digitsOnly(hargaRaw)) || 0;
-          if (!barang && !pj && !harga && !barangKeluar && !stokBarang && !keterangan) return;
+          if (!barang && !pj && !customer && !harga && !barangKeluar && !stokBarang && !keterangan) return;
 
           const fallback = new Date(noteCreatedAt || Date.now());
           fallback.setSeconds(fallback.getSeconds() + i); // urutan stabil antar baris lama
           migrated.push({
             id: uid(),
-            pj, barang, barangKeluar, stokBarang, keterangan, harga,
+            pj, customer, barang, barangKeluar, stokBarang, keterangan, harga,
             created_at: fallback.toISOString()
           });
         });
@@ -980,6 +997,25 @@
     if (name === 'home') renderHome();
   }
 
+  document.getElementById('btnHomeBack').addEventListener('click', () => {
+    // Editor ini biasanya berjalan sebagai iframe di dalam dashboard-admin.html
+    // (lihat pola window.parent.postMessage('note-autosaved', ...) di atas).
+    // Jadi "kembali" berarti minta parent menutup editor ini dan menampilkan
+    // kembali daftar folder/notes, bukan navigasi penuh di dalam iframe.
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage('note-close', '*');
+        return;
+      }
+    } catch (e) { /* cross-origin atau tidak ada parent — lanjut ke fallback */ }
+
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = 'dashboard-admin.html';
+    }
+  });
+
   document.getElementById('menuTambah').addEventListener('click', () => goView('add'));
   document.getElementById('menuSettings').addEventListener('click', () => goView('settings'));
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
@@ -1026,7 +1062,7 @@
           <div class="r-no">${pad3(noMap.get(r.id))}</div>
           <div class="r-mid">
             <b>${escapeHtml(r.barang) || '(tanpa nama)'}</b>
-            <span>${escapeHtml(r.pj) || '—'} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
+            <span>${escapeHtml(r.pj) || '—'}${r.customer ? ' · ' + escapeHtml(r.customer) : ''} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
           </div>
           ${rightHtml}
         </div>
@@ -1047,12 +1083,14 @@
     document.getElementById('addPreviewTanggal').textContent = fmtTanggal(now);
     document.getElementById('addPreviewWaktu').textContent = fmtWaktu(now);
     document.getElementById('inputPJ').value = '';
+    document.getElementById('inputCustomer').value = '';
     document.getElementById('inputBarang').value = '';
     document.getElementById('inputBarangKeluar').value = '';
     document.getElementById('inputStokBarang').value = '';
     document.getElementById('inputKeterangan').value = '';
     document.getElementById('inputHarga').value = '';
     refreshPJSuggestions();
+    refreshCustomerSuggestions();
   }
 
   function refreshPJSuggestions(){
@@ -1061,10 +1099,17 @@
     dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
   }
 
+  function refreshCustomerSuggestions(){
+    const names = [...new Set(records.map(r => r.customer).filter(Boolean))].sort();
+    const dl = document.getElementById('customerSuggestions');
+    dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+  }
+
   document.getElementById('inputHarga').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
 
   document.getElementById('btnBukaKonfirmasi').addEventListener('click', () => {
     const pj = document.getElementById('inputPJ').value.trim();
+    const customer = document.getElementById('inputCustomer').value.trim();
     const barang = document.getElementById('inputBarang').value.trim();
     const barangKeluar = document.getElementById('inputBarangKeluar').value.trim();
     const stokBarang = document.getElementById('inputStokBarang').value.trim();
@@ -1079,13 +1124,14 @@
     document.getElementById('cfTanggal').textContent = fmtTanggal(now);
     document.getElementById('cfWaktu').textContent = fmtWaktu(now);
     document.getElementById('cfPJ').textContent = pj;
+    setPreviewOptional('cfCustomer', customer);
     document.getElementById('cfBarang').textContent = barang;
     setPreviewOptional('cfKeluar', barangKeluar);
     setPreviewOptional('cfStok', stokBarang);
     setPreviewOptional('cfKet', keterangan);
     setPreviewOptional('cfHarga', harga ? rupiah(harga) : '');
 
-    pendingNewRecord = { pj, barang, barangKeluar, stokBarang, keterangan, harga };
+    pendingNewRecord = { pj, customer, barang, barangKeluar, stokBarang, keterangan, harga };
     openOverlay('overlayConfirm');
   });
 
@@ -1128,6 +1174,7 @@
     document.getElementById('detTanggal').textContent = fmtTanggalFromISO(r.created_at);
     document.getElementById('detWaktu').textContent = fmtWaktuFromISO(r.created_at);
     setDetailView('detPJview', r.pj);
+    setDetailView('detCustomerView', r.customer);
     setDetailView('detBarangView', r.barang);
     setDetailView('detKeluarView', r.barangKeluar);
     setDetailView('detStokView', r.stokBarang);
@@ -1140,12 +1187,14 @@
 
   function exitEditMode(){
     document.getElementById('detPJview').style.display = '';
+    document.getElementById('detCustomerView').style.display = '';
     document.getElementById('detBarangView').style.display = '';
     document.getElementById('detKeluarView').style.display = '';
     document.getElementById('detStokView').style.display = '';
     document.getElementById('detKetView').style.display = '';
     document.getElementById('detHargaView').style.display = '';
     document.getElementById('detPJedit').style.display = 'none';
+    document.getElementById('detCustomerEdit').style.display = 'none';
     document.getElementById('detBarangEdit').style.display = 'none';
     document.getElementById('detKeluarEdit').style.display = 'none';
     document.getElementById('detStokEdit').style.display = 'none';
@@ -1159,19 +1208,23 @@
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
     refreshPJSuggestions();
+    refreshCustomerSuggestions();
     document.getElementById('detPJview').style.display = 'none';
+    document.getElementById('detCustomerView').style.display = 'none';
     document.getElementById('detBarangView').style.display = 'none';
     document.getElementById('detKeluarView').style.display = 'none';
     document.getElementById('detStokView').style.display = 'none';
     document.getElementById('detKetView').style.display = 'none';
     document.getElementById('detHargaView').style.display = 'none';
     document.getElementById('detPJedit').style.display = 'block';
+    document.getElementById('detCustomerEdit').style.display = 'block';
     document.getElementById('detBarangEdit').style.display = 'block';
     document.getElementById('detKeluarEdit').style.display = 'block';
     document.getElementById('detStokEdit').style.display = 'block';
     document.getElementById('detKetEdit').style.display = 'block';
     document.getElementById('detHargaEditWrap').style.display = 'flex';
     document.getElementById('detPJedit').value = r.pj || '';
+    document.getElementById('detCustomerEdit').value = r.customer || '';
     document.getElementById('detBarangEdit').value = r.barang || '';
     document.getElementById('detKeluarEdit').value = r.barangKeluar || '';
     document.getElementById('detStokEdit').value = r.stokBarang || '';
@@ -1187,6 +1240,7 @@
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
     const pj = document.getElementById('detPJedit').value.trim();
+    const customer = document.getElementById('detCustomerEdit').value.trim();
     const barang = document.getElementById('detBarangEdit').value.trim();
     const barangKeluar = document.getElementById('detKeluarEdit').value.trim();
     const stokBarang = document.getElementById('detStokEdit').value.trim();
@@ -1196,7 +1250,7 @@
     if (!pj) { alert('PJ wajib diisi.'); return; }
 
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
-    r.pj = pj; r.barang = barang; r.barangKeluar = barangKeluar;
+    r.pj = pj; r.customer = customer; r.barang = barang; r.barangKeluar = barangKeluar;
     r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga;
     scheduleAutosave();
     openDetail(editingRecordId);
