@@ -654,6 +654,37 @@
   }
   body.theme-light .folder-section-divider { border-top-color: rgba(0,0,0,0.08); }
 
+  /* --- Folder Year/Month Dropdown Accordion --- */
+  .folder-year-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 14px; animation: folderAccIn 0.16s ease; }
+  .folder-month-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 4px 14px; animation: folderAccIn 0.16s ease; }
+  @keyframes folderAccIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .folder-year-item, .folder-month-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #C9C6BE;
+    cursor: pointer;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+    transition: background 0.15s ease;
+  }
+  .folder-year-item:active, .folder-month-item:active { background: rgba(255, 255, 255, 0.06); }
+  .folder-year-item.open { color: #EDEAE2; border-left-color: #F0A529; }
+  .folder-month-item { border-left-color: rgba(240, 165, 41, 0.35); }
+  .folder-year-item svg { width: 15px; height: 15px; color: var(--text-secondary); transition: transform 0.18s ease; }
+  .folder-year-item.open svg { transform: rotate(180deg); color: #F0A529; }
+  .folder-year-loading, .folder-year-empty {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  body.theme-light .folder-year-item, body.theme-light .folder-month-item { color: #4A4A4A; }
+  body.theme-light .folder-year-item.open { color: #1A1A1A; }
+
   .drawer-empty-category {
     display: flex;
     flex-direction: column;
@@ -1347,19 +1378,6 @@
     transform: rotate(-40deg);
   }
   .note-pin-badge svg { width: 12px; height: 12px; color: var(--accent-yellow); }
-
-  /* --- Divider pengelompokan notes: Pekan 1/2/3.../Disematkan/Bulan Lalu/dst.
-     Wajib grid-column:1/-1 biar melebar penuh walau notes-container-nya grid 2 kolom --- */
-  .note-section-divider {
-    grid-column: 1 / -1;
-    padding: 14px 2px 4px 2px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-  }
-  .note-section-divider:first-child { padding-top: 0; }
 
   /* --- Bottom bar mode seleksi (Pin / Pindah Folder / Hapus) --- */
   .selection-bottom-bar {
@@ -2698,6 +2716,12 @@
   let notesLoadFailed = false;
   const LAST_FOLDER_KEY = 'bm-admin-last-folder'; // simpen folder terakhir dibuka, biar kebuka lagi pas reload
 
+  // --- Folder Year/Month Dropdown ---
+  const MONTH_NAMES_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  let expandedFolderId = null;       // id folder yang lagi kebuka dropdown tahunnya di drawer
+  let expandedYear = null;           // tahun yang lagi kebuka dropdown bulannya
+  let folderYearMonthData = {};      // cache per folder: { [catId]: { years: [2027,2026], monthsByYear: { 2026: [{num,label}] } } }
+
   // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
   // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
   document.addEventListener('click', (e) => {
@@ -2854,6 +2878,7 @@
           </div>
         ` : ''}
       </div>
+      ${expandedFolderId === cat.id ? renderFolderYearAccordion(cat.id) : ''}
     `;
     }
 
@@ -2886,14 +2911,14 @@
         if (e.target.closest('.folder-menu-popup')) return; // biar nggak ke-handle dua kali sama listener popup
         if (longPressed) { longPressed = false; return; }
         if (deleteModeCatId && deleteModeCatId !== item.dataset.catId) {
-          // Lagi ada folder LAIN yang nampilin popup — tutup itu, lalu tetap buka folder yang ditap
+          // Lagi ada folder LAIN yang nampilin popup — tutup itu, lalu tetap buka dropdown folder yang ditap
           deleteModeCatId = null;
           renderCategories();
-          selectCategory(item.dataset.catId);
+          toggleFolderAccordion(item.dataset.catId);
           return;
         }
         if (deleteModeCatId === item.dataset.catId) { deleteModeCatId = null; renderCategories(); return; }
-        selectCategory(item.dataset.catId);
+        toggleFolderAccordion(item.dataset.catId);
       });
 
       item.addEventListener('touchstart', () => {
@@ -2920,6 +2945,159 @@
         }
       });
     });
+
+    // Dropdown tahun → klik tahun buka/tutup daftar bulan di tahun itu
+    container.querySelectorAll('.folder-year-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleYearAccordion(el.dataset.catId, Number(el.dataset.year));
+      });
+    });
+
+    // Dropdown bulan → klik bulan = tutup drawer, tampilkan tabel terfilter tahun+bulan itu
+    container.querySelectorAll('.folder-month-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectFolderMonth(el.dataset.catId, Number(el.dataset.year), Number(el.dataset.month));
+      });
+    });
+  }
+
+  // Render dropdown tahun (dan bulan, kalau tahunnya lagi kebuka) untuk 1 folder
+  function renderFolderYearAccordion(catId) {
+    const meta = folderYearMonthData[catId];
+
+    if (!meta) {
+      return `<div class="folder-year-list"><div class="folder-year-loading">Memuat tahun...</div></div>`;
+    }
+    if (!meta.years.length) {
+      return `<div class="folder-year-list"><div class="folder-year-empty">Belum ada data bertanggal</div></div>`;
+    }
+
+    return `<div class="folder-year-list">` + meta.years.map(year => {
+      const isYearOpen = expandedYear === year;
+      const monthsHtml = isYearOpen ? `
+        <div class="folder-month-list">
+          ${meta.monthsByYear[year].map(m => `
+            <div class="folder-month-item" data-cat-id="${catId}" data-year="${year}" data-month="${m.num}">
+              <span>${m.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '';
+
+      return `
+        <div class="folder-year-item ${isYearOpen ? 'open' : ''}" data-cat-id="${catId}" data-year="${year}">
+          <span>${year}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        ${monthsHtml}
+      `;
+    }).join('') + `</div>`;
+  }
+
+  // Klik folder: buka/tutup dropdown tahun. Kalau data tahun folder ini belum pernah
+  // diambil, fetch dulu ke Supabase (cukup kolom created_at, biar ringan).
+  async function toggleFolderAccordion(catId) {
+    if (expandedFolderId === catId) {
+      expandedFolderId = null;
+      expandedYear = null;
+      renderCategories();
+      return;
+    }
+
+    expandedFolderId = catId;
+    expandedYear = null;
+    renderCategories(); // langsung kasih lihat state "Memuat tahun..."
+
+    if (!folderYearMonthData[catId]) {
+      await loadFolderYearMonths(catId);
+      // User bisa aja udah pindah ke folder lain sebelum fetch ini selesai
+      if (expandedFolderId === catId) renderCategories();
+    }
+  }
+
+  // Ambil semua created_at dari notes di folder ini, kelompokkan jadi tahun → daftar bulan
+  async function loadFolderYearMonths(catId) {
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('created_at')
+      .eq('folder_id', catId);
+
+    if (error) {
+      console.error('Gagal memuat tahun/bulan folder:', error.message);
+      folderYearMonthData[catId] = { years: [], monthsByYear: {} };
+      return;
+    }
+
+    const map = {}; // { tahun: Set(bulan) }
+    (data || []).forEach(row => {
+      const d = new Date(row.created_at);
+      if (isNaN(d)) return;
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      if (!map[y]) map[y] = new Set();
+      map[y].add(m);
+    });
+
+    const years = Object.keys(map).map(Number).sort((a, b) => b - a); // terbaru dulu
+    const monthsByYear = {};
+    years.forEach(y => {
+      monthsByYear[y] = Array.from(map[y]).sort((a, b) => b - a).map(num => ({ num, label: MONTH_NAMES_ID[num - 1] }));
+    });
+
+    folderYearMonthData[catId] = { years, monthsByYear };
+  }
+
+  // Klik tahun: buka/tutup daftar bulan di tahun itu (tahun lain otomatis ketutup)
+  function toggleYearAccordion(catId, year) {
+    expandedYear = (expandedYear === year) ? null : year;
+    renderCategories();
+  }
+
+  // Klik bulan: tutup drawer, tampilkan tabel folder ini yang terfilter tahun+bulan itu
+  function selectFolderMonth(catId, year, month) {
+    const selected = categoriesData.find(c => c.id === catId);
+    if (!selected) return;
+
+    categoriesData.forEach(c => c.active = (c.id === catId));
+    expandedFolderId = null;
+    expandedYear = null;
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+
+    document.getElementById('currentCategoryTitle').innerText = `${selected.name} - ${MONTH_NAMES_ID[month - 1]} ${year}`;
+    renderCategories();
+    loadNotesForCategoryFiltered(catId, year, month);
+    localStorage.setItem(LAST_FOLDER_KEY, catId);
+  }
+
+  // Sama seperti loadNotesForCategory, tapi hasilnya difilter cuma yang created_at-nya
+  // jatuh di tahun+bulan yang dipilih dari dropdown folder
+  async function loadNotesForCategoryFiltered(catId, year, month) {
+    activeCategoryId = catId;
+
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .eq('folder_id', catId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal memuat notes:', error.message);
+      notesData = [];
+      notesLoadFailed = true;
+    } else {
+      notesLoadFailed = false;
+      notesData = (data || [])
+        .filter(n => {
+          const d = new Date(n.created_at);
+          return !isNaN(d) && d.getFullYear() === year && (d.getMonth() + 1) === month;
+        })
+        .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    }
+
+    renderNotes();
   }
 
   // Row 'All' di drawer: klik = tampilkan semua notes lintas folder
@@ -3046,33 +3224,6 @@
 
   // Label pengelompokan dinamis berdasarkan umur note TERTUA yang lagi
   // ditampilkan — bukan teks mati "Previous 7 Days".
-  const INDO_MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-
-  // Kelompokkan tanggal note jadi: "Pekan N" kalau masih bulan ini (minggu dihitung
-  // mulai hari SABTU, bukan Senin — sesuai kebiasaan bengkel ini), "Bulan Lalu" kalau
-  // bulan kemarin persis, atau "Nama Bulan Tahun" kalau lebih lama dari itu.
-  function getNoteSectionKey(dateObj, now) {
-    const sameMonth = dateObj.getFullYear() === now.getFullYear() && dateObj.getMonth() === now.getMonth();
-
-    if (sameMonth) {
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const daysBackToSaturday = (firstOfMonth.getDay() + 1) % 7; // 0=Minggu...6=Sabtu di getDay()
-      const week1Start = new Date(firstOfMonth);
-      week1Start.setDate(week1Start.getDate() - daysBackToSaturday);
-      week1Start.setHours(0, 0, 0, 0);
-
-      const diffDays = Math.floor((dateObj - week1Start) / (1000 * 60 * 60 * 24));
-      const weekNum = Math.floor(diffDays / 7) + 1;
-      return { key: `pekan-${weekNum}`, label: `Pekan ${weekNum}` };
-    }
-
-    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const isLastMonth = dateObj.getFullYear() === prevMonthDate.getFullYear() && dateObj.getMonth() === prevMonthDate.getMonth();
-    if (isLastMonth) return { key: 'bulan-lalu', label: 'Bulan Lalu' };
-
-    return { key: `bulan-${dateObj.getFullYear()}-${dateObj.getMonth()}`, label: `${INDO_MONTHS[dateObj.getMonth()]} ${dateObj.getFullYear()}` };
-  }
-
   function computeSubtitleLabel(notes) {
     if (!notes || notes.length === 0) return '';
     const now = new Date();
@@ -3136,54 +3287,23 @@
       subtitleEl.textContent = computeSubtitleLabel(notesData);
     }
     container.style.display = 'grid';
-
-    function noteCardHtml(note, idx) {
-      return `
-        <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
-          ${note.pinned ? `
-            <div class="note-pin-badge">
-              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 0 0-5 5c0 1.86.9 3.4 2.19 4.42L7 16h4v6h2v-6h4l-2.19-4.58A5.99 5.99 0 0 0 17 7a5 5 0 0 0-5-5z"/></svg>
-            </div>
-          ` : ''}
-          <div class="note-content-layer">
-            <h2 class="note-title">${note.title || 'Untitled'}</h2>
-            <p class="note-desc">${note.preview || ''}</p>
+    container.innerHTML = notesData.map((note, idx) => `
+      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+        ${note.pinned ? `
+          <div class="note-pin-badge">
+            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 0 0-5 5c0 1.86.9 3.4 2.19 4.42L7 16h4v6h2v-6h4l-2.19-4.58A5.99 5.99 0 0 0 17 7a5 5 0 0 0-5-5z"/></svg>
           </div>
-          <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
-          <div class="note-checkbox">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
+        ` : ''}
+        <div class="note-content-layer">
+          <h2 class="note-title">${note.title || 'Untitled'}</h2>
+          <p class="note-desc">${note.preview || ''}</p>
         </div>
-      `;
-    }
-
-    // Kelompokkan notes: yang di-pin dulu (nggak ikut pengelompokan tanggal),
-    // baru sisanya dikelompokin per Pekan (minggu ini, hitung mulai SABTU —
-    // bukan Senin, sesuai kebiasaan bengkel ini) atau per bulan kalau udah lewat.
-    const now = new Date();
-    const pinnedNotes = notesData.filter(n => n.pinned);
-    const unpinnedNotes = notesData.filter(n => !n.pinned);
-
-    let html = '';
-    let lastSectionKey = null;
-
-    if (pinnedNotes.length > 0) {
-      html += `<div class="note-section-divider"><span>Disematkan</span></div>`;
-      html += pinnedNotes.map((note, idx) => noteCardHtml(note, idx)).join('');
-      lastSectionKey = '__pinned__';
-    }
-
-    unpinnedNotes.forEach((note, idx) => {
-      const d = new Date(note.created_at);
-      const section = isNaN(d) ? { key: 'lainnya', label: 'Lainnya' } : getNoteSectionKey(d, now);
-      if (section.key !== lastSectionKey) {
-        html += `<div class="note-section-divider"><span>${escapeHtml(section.label)}</span></div>`;
-        lastSectionKey = section.key;
-      }
-      html += noteCardHtml(note, idx);
-    });
-
-    container.innerHTML = html;
+        <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
+        <div class="note-checkbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </div>
+    `).join('');
 
     // Tap biasa = buka note. Kalau lagi mode seleksi, tap = toggle checkbox.
     // Tekan & tahan (long-press) di note manapun = masuk mode seleksi.
