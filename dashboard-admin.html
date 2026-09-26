@@ -354,6 +354,20 @@
     animation: cardAppear 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
+  /* --- Pekan (Thu-Wed) group header, dipakai pas notes lagi difilter per bulan --- */
+  .week-group-header {
+    grid-column: 1 / -1;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 4px 2px 2px;
+    margin-top: 4px;
+  }
+  .week-group-header:first-child { margin-top: 0; }
+
+
   .notes-container.view-card .note-card:active,
   .notes-container.view-grid .note-card:active {
     transform: scale(0.95);
@@ -2721,6 +2735,8 @@
   let expandedFolderId = null;       // id folder yang lagi kebuka dropdown tahunnya di drawer
   let expandedYear = null;           // tahun yang lagi kebuka dropdown bulannya
   let folderYearMonthData = {};      // cache per folder: { [catId]: { years: [2027,2026], monthsByYear: { 2026: [{num,label}] } } }
+  let activeFilterYear = null;       // tahun yang lagi aktif difilter di notesList (null = tidak difilter)
+  let activeFilterMonth = null;      // bulan yang lagi aktif difilter di notesList (null = tidak difilter)
 
   // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
   // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
@@ -2796,6 +2812,8 @@
   // Ambil semua notes milik satu folder kategori
   async function loadNotesForCategory(catId) {
     activeCategoryId = catId;
+    activeFilterYear = null;
+    activeFilterMonth = null;
 
     const { data, error } = await supabaseClient
       .from('notes')
@@ -3076,6 +3094,8 @@
   // jatuh di tahun+bulan yang dipilih dari dropdown folder
   async function loadNotesForCategoryFiltered(catId, year, month) {
     activeCategoryId = catId;
+    activeFilterYear = year;
+    activeFilterMonth = month;
 
     const { data, error } = await supabaseClient
       .from('notes')
@@ -3115,6 +3135,8 @@
   // Ambil SEMUA notes lintas folder (buat tampilan 'All')
   async function loadAllNotesInDashboard() {
     activeCategoryId = '__all__';
+    activeFilterYear = null;
+    activeFilterMonth = null;
     document.getElementById('currentCategoryTitle').innerText = 'ALL';
 
     const { data, error } = await supabaseClient
@@ -3164,6 +3186,8 @@
 
     if (activeCategoryId === catId) {
       activeCategoryId = null;
+      activeFilterYear = null;
+      activeFilterMonth = null;
       document.getElementById('currentCategoryTitle').innerText = 'PILIH KATEGORI';
       notesData = [];
       renderNotes();
@@ -3220,6 +3244,38 @@
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     return `${dd}/${mm}/${d.getFullYear()}`;
+  }
+
+  // Cari tanggal Kamis yang mengawali "pekan" (Kamis→Rabu) dari sebuah tanggal.
+  // Contoh: Senin 21/09 ada di pekan yang dimulai Kamis 17/09.
+  function getWeekAnchorThursday(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay(); // 0=Minggu ... 4=Kamis ... 6=Sabtu
+    const diffFromThursday = (day - 4 + 7) % 7; // berapa hari sejak Kamis terakhir
+    d.setDate(d.getDate() - diffFromThursday);
+    return d;
+  }
+
+  // Kelompokkan notes (yang sudah difilter 1 bulan) jadi array pekan berurutan:
+  // [{ label: 'Pekan 1', anchor: Date, notes: [...] }, ...], diurutkan dari pekan
+  // TERLAMA ke TERBARU dulu supaya penomoran "Pekan 1, 2, 3..." kronologis.
+  function groupNotesByWeek(notes) {
+    const buckets = {}; // key: timestamp anchor Kamis -> { anchor, notes: [] }
+    notes.forEach(n => {
+      const d = new Date(n.created_at);
+      if (isNaN(d)) return;
+      const anchor = getWeekAnchorThursday(d);
+      const key = anchor.getTime();
+      if (!buckets[key]) buckets[key] = { anchor, notes: [] };
+      buckets[key].notes.push(n);
+    });
+
+    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b)); // terlama dulu
+    return sortedKeys.map((key, idx) => ({
+      label: `Pekan ${idx + 1}`,
+      anchor: buckets[key].anchor,
+      notes: buckets[key].notes
+    }));
   }
 
   // Label pengelompokan dinamis berdasarkan umur note TERTUA yang lagi
@@ -3282,12 +3338,10 @@
       return;
     }
 
-    if (subtitleEl) {
-      subtitleEl.style.display = 'block';
-      subtitleEl.textContent = computeSubtitleLabel(notesData);
-    }
-    container.style.display = 'grid';
-    container.innerHTML = notesData.map((note, idx) => `
+  // Markup 1 kartu note — dipisah jadi fungsi sendiri biar bisa dipakai ulang
+  // baik di tampilan flat maupun tampilan yang dikelompokkan per pekan.
+  function noteCardHtml(note, idx) {
+    return `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
         ${note.pinned ? `
           <div class="note-pin-badge">
@@ -3303,7 +3357,28 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
       </div>
-    `).join('');
+    `;
+  }
+
+  if (subtitleEl) subtitleEl.style.display = 'none'; // dipakai lagi di bawah kalau bukan mode pekan
+
+  if (activeFilterYear && activeFilterMonth) {
+    // Mode filter bulan aktif: subtitle "Bulan Ini" diganti header per-pekan (Kamis→Rabu)
+    const weeks = groupNotesByWeek(notesData);
+    let idxCounter = 0;
+    container.style.display = 'grid';
+    container.innerHTML = weeks.map(week => {
+      const cardsHtml = week.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
+      return `<div class="week-group-header">${week.label}</div>${cardsHtml}`;
+    }).join('');
+  } else {
+    if (subtitleEl) {
+      subtitleEl.style.display = 'block';
+      subtitleEl.textContent = computeSubtitleLabel(notesData);
+    }
+    container.style.display = 'grid';
+    container.innerHTML = notesData.map((note, idx) => noteCardHtml(note, idx)).join('');
+  }
 
     // Tap biasa = buka note. Kalau lagi mode seleksi, tap = toggle checkbox.
     // Tekan & tahan (long-press) di note manapun = masuk mode seleksi.
