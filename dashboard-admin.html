@@ -2810,10 +2810,20 @@
   }
 
   // Ambil semua notes milik satu folder kategori
+  // Tombol pensil (buat tabel/note baru) cuma masuk akal kalau lagi di DALAM
+  // 1 folder tertentu — di folder "All" (gabungan semua folder) disembunyikan,
+  // karena note baru butuh folder_id yang jelas mau masuk ke folder mana.
+  function updateComposeButtonVisibility() {
+    const btn = document.getElementById('btnComposePencil');
+    if (!btn) return;
+    btn.style.display = (activeCategoryId === '__all__') ? 'none' : '';
+  }
+
   async function loadNotesForCategory(catId) {
     activeCategoryId = catId;
     activeFilterYear = null;
     activeFilterMonth = null;
+    updateComposeButtonVisibility();
 
     const { data, error } = await supabaseClient
       .from('notes')
@@ -3096,6 +3106,7 @@
     activeCategoryId = catId;
     activeFilterYear = year;
     activeFilterMonth = month;
+    updateComposeButtonVisibility();
 
     const { data, error } = await supabaseClient
       .from('notes')
@@ -3137,6 +3148,7 @@
     activeCategoryId = '__all__';
     activeFilterYear = null;
     activeFilterMonth = null;
+    updateComposeButtonVisibility();
     document.getElementById('currentCategoryTitle').innerText = 'ALL';
 
     const { data, error } = await supabaseClient
@@ -3258,7 +3270,7 @@
 
   // Kelompokkan notes (yang sudah difilter 1 bulan) jadi array pekan berurutan:
   // [{ label: 'Pekan 1', anchor: Date, notes: [...] }, ...], diurutkan dari pekan
-  // TERLAMA ke TERBARU dulu supaya penomoran "Pekan 1, 2, 3..." kronologis.
+  // TERBARU ke TERLAMA — data paling baru selalu jadi "Pekan 1".
   function groupNotesByWeek(notes) {
     const buckets = {}; // key: timestamp anchor Kamis -> { anchor, notes: [] }
     notes.forEach(n => {
@@ -3270,7 +3282,7 @@
       buckets[key].notes.push(n);
     });
 
-    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b)); // terlama dulu
+    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(b) - Number(a)); // terbaru dulu = Pekan 1
     return sortedKeys.map((key, idx) => ({
       label: `Pekan ${idx + 1}`,
       anchor: buckets[key].anchor,
