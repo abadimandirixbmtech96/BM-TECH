@@ -3340,7 +3340,8 @@
 
   // Kelompokkan notes (yang sudah difilter 1 bulan) jadi array pekan berurutan:
   // [{ label: 'Pekan 1', anchor: Date, notes: [...] }, ...], diurutkan dari pekan
-  // TERBARU ke TERLAMA — data paling baru selalu jadi "Pekan 1".
+  // TERLAMA ke TERBARU (kayak kalender biasa) — minggu paling awal di bulan itu
+  // selalu jadi "Pekan 1", minggu paling baru dapet nomor pekan paling besar.
   function groupNotesByWeek(notes) {
     const buckets = {}; // key: timestamp anchor Kamis -> { anchor, notes: [] }
     notes.forEach(n => {
@@ -3352,7 +3353,7 @@
       buckets[key].notes.push(n);
     });
 
-    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(b) - Number(a)); // terbaru dulu = Pekan 1
+    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b)); // paling awal dulu = Pekan 1
     return sortedKeys.map((key, idx) => ({
       label: `Pekan ${idx + 1}`,
       anchor: buckets[key].anchor,
