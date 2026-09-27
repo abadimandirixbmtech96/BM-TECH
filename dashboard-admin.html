@@ -3669,7 +3669,7 @@
             barangKeluar: r.barangKeluar || '',
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
-            harga: r.harga ? String(r.harga) : ''
+            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : ''
           }
         };
       });
