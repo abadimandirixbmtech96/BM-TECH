@@ -114,7 +114,9 @@
   /* ---------- Home ---------- */
   .greet-card{
     margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
-    background:linear-gradient(135deg, var(--accent) 0%, #b17b1f 100%);
+    background:
+      linear-gradient(135deg, rgba(196,143,31,0.55) 0%, rgba(90,62,15,0.68) 100%),
+      url('background-admin.jpg') center/cover no-repeat, var(--accent);
     color:#fff; box-shadow:0 10px 26px rgba(180,130,30,0.28);
   }
   .greet-card p{ margin:0 0 4px 0; font-size:13px; opacity:0.85; font-weight:600; }
@@ -133,6 +135,7 @@
   }
   .stat-card .stat-label{ font-size:12px; color:var(--ink-soft); font-weight:600; }
   .stat-card .stat-value{ font-size:24px; font-weight:800; margin-top:4px; letter-spacing:-0.01em; }
+  .stat-card .stat-value.money{ font-size:18px; }
   .section-label{ margin:22px 0 10px 0; font-size:13px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em; }
   .menu-card{
     display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:10px;
@@ -418,7 +421,7 @@
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Total Data</div><div class="stat-value" id="statTotal">0</div></div>
         <div class="stat-card"><div class="stat-label">Hari Ini</div><div class="stat-value" id="statToday">0</div></div>
-        <div class="stat-card"><div class="stat-label">Bulan Ini</div><div class="stat-value" id="statMonth">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Harga Hari Ini</div><div class="stat-value money" id="statHargaToday">Rp 0</div></div>
         <div class="stat-card"><div class="stat-label">Belum Lengkap</div><div class="stat-value" id="statIncomplete">0</div></div>
       </div>
 
@@ -1113,7 +1116,8 @@
     const now = new Date();
     document.getElementById('statTotal').textContent = records.length;
     document.getElementById('statToday').textContent = records.filter(r => isSameDay(r.created_at, now)).length;
-    document.getElementById('statMonth').textContent = records.filter(r => isSameMonth(r.created_at, now)).length;
+    const totalHargaHariIni = records.filter(r => isSameDay(r.created_at, now)).reduce((sum, r) => sum + (Number(r.harga) || 0), 0);
+    document.getElementById('statHargaToday').textContent = totalHargaHariIni ? rupiah(totalHargaHariIni) : 'Rp 0';
     document.getElementById('statIncomplete').textContent = records.filter(isRecordIncomplete).length;
     document.getElementById('homeGreetName').textContent = noteTitle && noteTitle.trim() ? noteTitle : 'Admin';
     renderRecentList();
