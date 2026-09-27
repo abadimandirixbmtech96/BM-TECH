@@ -3446,11 +3446,15 @@
   if (subtitleEl) subtitleEl.style.display = 'none'; // dipakai lagi di bawah kalau bukan mode pekan
 
   if (activeFilterYear && activeFilterMonth) {
-    // Mode filter bulan aktif: subtitle "Bulan Ini" diganti header per-pekan (Kamis→Rabu)
+    // Mode filter bulan aktif: subtitle "Bulan Ini" diganti header per-pekan (Kamis→Rabu).
+    // Nomor pekan tetap urut kalender (Pekan 1 = minggu paling awal), TAPI posisi
+    // tampilannya dibalik: pekan paling baru di ATAS, biar pas dibuka data terbaru
+    // langsung kelihatan duluan seperti tampilan biasa (bukan malah discroll ke bawah).
     const weeks = groupNotesByWeek(notesData);
+    const displayWeeks = [...weeks].reverse();
     let idxCounter = 0;
     container.style.display = 'grid';
-    container.innerHTML = weeks.map(week => {
+    container.innerHTML = displayWeeks.map(week => {
       const cardsHtml = week.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
       return `<div class="week-group-header">${week.label}</div>${cardsHtml}`;
     }).join('');
