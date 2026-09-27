@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" id="themeColorMeta" content="#F6F1E7">
-<title>Dashboard Admin</title>
+<title>Data Editor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
@@ -812,7 +812,7 @@
       // judul berisi tanggal, hari, dan jam saat ini, meniru kebiasaan
       // aplikasi versi sebelumnya. Tetap bisa diganti manual lewat Pengaturan.
       if (!noteTitle) noteTitle = generateAutoTitle(new Date());
-      renderAll();
+      renderHome();
       return;
     }
 
@@ -823,7 +823,7 @@
         noteTitle = draft.title || '';
         records = draft.records || [];
         legacyBackup = draft.legacyBackup || null;
-        renderAll();
+        renderHome();
         showSaveStatus('Tersimpan di HP (offline)', false, true);
       } else {
         existingNoteLoadFailed = true;
@@ -890,7 +890,7 @@
       showMigrationToast(`${addedFromDraft} data dari HP (belum sempat tersimpan sebelumnya) berhasil digabungkan kembali.`);
     }
 
-    renderAll();
+    renderHome();
     if (needsMigrationSave || addedFromDraft > 0) scheduleAutosave();
   }
 
