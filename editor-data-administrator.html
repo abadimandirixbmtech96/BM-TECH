@@ -1096,8 +1096,8 @@
         <div class="recent-row tap" data-id="${r.id}">
           <div class="r-no">${pad3(noMap.get(r.id))}</div>
           <div class="r-mid">
-            <b>${escapeHtml(r.barang) || '(tanpa nama)'}</b>
-            <span>${escapeHtml(r.pj) || '—'}${r.customer ? ' · ' + escapeHtml(r.customer) : ''} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
+            <b>${escapeHtml(r.customer) || '(tanpa customer)'}</b>
+            <span>${escapeHtml(r.pj) || '—'} · ${escapeHtml(r.barang) || '—'}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
           </div>
           ${rightHtml}
         </div>
@@ -1155,6 +1155,28 @@
 
   setupSuggestDropdown(document.getElementById('inputPJ'), document.getElementById('pjSuggestList'), getPJNames);
   setupSuggestDropdown(document.getElementById('detPJedit'), document.getElementById('detPJSuggestList'), getPJNames);
+
+  // Huruf pertama otomatis kapital di semua field teks (keyboard user tidak
+  // auto-kapital). Cuma huruf PERTAMA yang diubah, sisanya dibiarkan apa
+  // adanya persis seperti yang diketik.
+  function autoCapitalizeFirst(el){
+    el.addEventListener('input', () => {
+      const v = el.value;
+      if (v.length > 0 && v[0] !== v[0].toUpperCase()) {
+        const start = el.selectionStart, end = el.selectionEnd;
+        el.value = v[0].toUpperCase() + v.slice(1);
+        try { el.setSelectionRange(start, end); } catch (e) {}
+      }
+    });
+  }
+  [
+    'inputPJ', 'inputCustomer', 'inputBarang', 'inputBarangKeluar', 'inputStokBarang', 'inputKeterangan',
+    'detPJedit', 'detCustomerEdit', 'detBarangEdit', 'detKeluarEdit', 'detStokEdit', 'detKetEdit',
+    'inputJudulTabel'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) autoCapitalizeFirst(el);
+  });
 
   document.getElementById('inputHarga').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
 
