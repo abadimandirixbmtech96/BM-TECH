@@ -266,20 +266,13 @@
   .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
 
-  /* ---------- Status Pembayaran ---------- */
-  .paid-card{
-    border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
-    padding:15px 16px; margin-top:14px;
+  /* ---------- Status Pembayaran (baris biasa, menyatu dengan detail-card) ---------- */
+  .paid-status-val{
+    display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:28px;
+    padding:0 12px; border-radius:20px; font-size:15px; font-weight:800; cursor:pointer;
+    background:var(--paper); border:1.5px solid var(--line); color:var(--ink-soft);
   }
-  .paid-card.is-paid{ border-color:#3fa66a; background:rgba(63,166,106,0.10); }
-  .paid-toggle{ display:flex; align-items:center; gap:11px; font-size:15px; font-weight:750; color:var(--ink); cursor:pointer; }
-  .paid-toggle input[type="checkbox"]{ width:21px; height:21px; accent-color:#3fa66a; cursor:pointer; flex-shrink:0; }
-  .paid-date-row{ margin-top:12px; padding-top:12px; border-top:1px solid var(--line-soft); }
-  .paid-date-row label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em; }
-  .paid-date-row input[type="date"]{
-    width:100%; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line);
-    background:var(--paper); font-size:14.5px; font-weight:700; outline:none; color:var(--ink);
-  }
+  .paid-status-val.is-paid{ background:rgba(63,166,106,0.14); border-color:#3fa66a; color:#2f9e5c; }
   .paid-tag{ font-size:10.5px; font-weight:750; color:#3fa66a; margin-top:3px; }
 
   /* ---------- Settings ---------- */
@@ -537,14 +530,11 @@
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="numeric"></div>
         </div>
-      </div>
-
-      <div class="paid-card" id="paidCard">
-        <label class="paid-toggle">
-          <input type="checkbox" id="chkPaid">
-          <span>Sudah Dibayar</span>
-        </label>
-        <div class="paid-date-row" id="paidDateRow" style="display:none;">
+        <div class="detail-row">
+          <label>Status Bayar</label>
+          <div class="paid-status-val" id="detPaidStatus">-</div>
+        </div>
+        <div class="detail-row" id="paidDateRow" style="display:none;">
           <label>Tanggal Dibayar</label>
           <input type="date" id="inputPaidDate">
         </div>
@@ -1285,8 +1275,9 @@
     setDetailView('detKetView', r.keterangan);
     setDetailView('detHargaView', r.harga ? rupiah(r.harga) : '');
 
-    document.getElementById('chkPaid').checked = !!r.paid;
-    document.getElementById('paidCard').classList.toggle('is-paid', !!r.paid);
+    const detPaidEl = document.getElementById('detPaidStatus');
+    detPaidEl.textContent = r.paid ? '✓' : '-';
+    detPaidEl.classList.toggle('is-paid', !!r.paid);
     document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
     document.getElementById('inputPaidDate').value = r.paidAt || todayDateStr();
 
@@ -1364,13 +1355,15 @@
   });
 
   // Status Pembayaran — aksi cepat, langsung tersimpan tanpa perlu masuk mode Edit.
-  document.getElementById('chkPaid').addEventListener('change', (e) => {
+  document.getElementById('detPaidStatus').addEventListener('click', () => {
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
-    r.paid = e.target.checked;
+    r.paid = !r.paid;
     if (r.paid && !r.paidAt) r.paidAt = todayDateStr(); // default: dibayar hari ini, bisa diganti di bawah
     if (!r.paid) r.paidAt = null;
-    document.getElementById('paidCard').classList.toggle('is-paid', r.paid);
+    const detPaidEl = document.getElementById('detPaidStatus');
+    detPaidEl.textContent = r.paid ? '✓' : '-';
+    detPaidEl.classList.toggle('is-paid', r.paid);
     document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
     document.getElementById('inputPaidDate').value = r.paidAt || todayDateStr();
     scheduleAutosave();
