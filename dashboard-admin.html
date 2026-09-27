@@ -696,6 +696,24 @@
     color: var(--text-secondary);
     font-style: italic;
   }
+  .folder-year-empty-wrap { padding: 2px 14px 6px; }
+  .folder-empty-create-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--accent-yellow);
+    color: #1A1200;
+    font-size: 12.5px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px var(--accent-yellow-glow);
+  }
+  .folder-empty-create-btn:active { transform: scale(0.96); }
+  .folder-empty-create-btn svg { width: 14px; height: 14px; }
   body.theme-light .folder-year-item, body.theme-light .folder-month-item { color: #4A4A4A; }
   body.theme-light .folder-year-item.open { color: #1A1A1A; }
 
@@ -2998,6 +3016,34 @@
         selectFolderMonth(el.dataset.catId, Number(el.dataset.year), Number(el.dataset.month));
       });
     });
+
+    // Folder kosong (belum ada data bertanggal) → tombol "Buat Data"
+    container.querySelectorAll('.folder-empty-create-btn').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        startNewNoteInFolder(el.dataset.catId);
+      });
+    });
+  }
+
+  // Buka editor catatan baru langsung di folder tertentu (dipakai dari tombol
+  // "Buat Data" pas folder itu masih kosong) — set folder aktif dulu supaya
+  // konsisten sama alur compose pensil biasa, lalu tutup drawer.
+  function startNewNoteInFolder(catId) {
+    const cat = categoriesData.find(c => c.id === catId);
+    if (!cat) return;
+    categoriesData.forEach(c => c.active = (c.id === catId));
+    activeCategoryId = catId;
+    activeFilterYear = null;
+    activeFilterMonth = null;
+    expandedFolderId = null;
+    expandedYear = null;
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    updateComposeButtonVisibility();
+    document.getElementById('currentCategoryTitle').innerText = cat.name;
+    localStorage.setItem(LAST_FOLDER_KEY, catId);
+    openEditor(null, { folder: catId });
   }
 
   // Render dropdown tahun (dan bulan, kalau tahunnya lagi kebuka) untuk 1 folder
@@ -3008,7 +3054,15 @@
       return `<div class="folder-year-list"><div class="folder-year-loading">Memuat tahun...</div></div>`;
     }
     if (!meta.years.length) {
-      return `<div class="folder-year-list"><div class="folder-year-empty">Belum ada data bertanggal</div></div>`;
+      return `<div class="folder-year-list">
+        <div class="folder-year-empty-wrap">
+          <div class="folder-year-empty">Belum ada data bertanggal</div>
+          <button class="folder-empty-create-btn" data-cat-id="${catId}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Buat Data
+          </button>
+        </div>
+      </div>`;
     }
 
     return `<div class="folder-year-list">` + meta.years.map(year => {
@@ -3054,11 +3108,12 @@
     }
   }
 
-  // Ambil semua created_at dari notes di folder ini, kelompokkan jadi tahun → daftar bulan
+  // Ambil notes di folder ini, kelompokkan jadi tahun → daftar bulan berdasarkan
+  // TANGGAL EFEKTIF-nya (judul/isi tabel, bukan cuma created_at — lihat getNoteEffectiveDate)
   async function loadFolderYearMonths(catId) {
     const { data, error } = await supabaseClient
       .from('notes')
-      .select('created_at')
+      .select('id, title, content, created_at')
       .eq('folder_id', catId);
 
     if (error) {
@@ -3069,8 +3124,8 @@
 
     const map = {}; // { tahun: Set(bulan) }
     (data || []).forEach(row => {
-      const d = new Date(row.created_at);
-      if (isNaN(d)) return;
+      const d = getNoteEffectiveDate(row);
+      if (!d || isNaN(d)) return;
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
       if (!map[y]) map[y] = new Set();
@@ -3109,8 +3164,10 @@
     localStorage.setItem(LAST_FOLDER_KEY, catId);
   }
 
-  // Sama seperti loadNotesForCategory, tapi hasilnya difilter cuma yang created_at-nya
-  // jatuh di tahun+bulan yang dipilih dari dropdown folder
+  // Sama seperti loadNotesForCategory, tapi hasilnya difilter cuma yang tanggal
+  // EFEKTIF-nya (getNoteEffectiveDate — judul/isi tabel, bukan created_at mentah)
+  // jatuh di tahun+bulan yang dipilih dari dropdown folder, lalu diurutkan
+  // dari yang paling baru berdasarkan tanggal efektif itu juga.
   async function loadNotesForCategoryFiltered(catId, year, month) {
     activeCategoryId = catId;
     activeFilterYear = year;
@@ -3131,10 +3188,14 @@
       notesLoadFailed = false;
       notesData = (data || [])
         .filter(n => {
-          const d = new Date(n.created_at);
-          return !isNaN(d) && d.getFullYear() === year && (d.getMonth() + 1) === month;
+          const d = getNoteEffectiveDate(n);
+          return d && !isNaN(d) && d.getFullYear() === year && (d.getMonth() + 1) === month;
         })
-        .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+        .sort((a, b) => {
+          const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+          if (pinDiff !== 0) return pinDiff;
+          return getNoteEffectiveDate(b) - getNoteEffectiveDate(a); // terbaru dulu
+        });
     }
 
     renderNotes();
@@ -3283,8 +3344,8 @@
   function groupNotesByWeek(notes) {
     const buckets = {}; // key: timestamp anchor Kamis -> { anchor, notes: [] }
     notes.forEach(n => {
-      const d = new Date(n.created_at);
-      if (isNaN(d)) return;
+      const d = getNoteEffectiveDate(n);
+      if (!d || isNaN(d)) return;
       const anchor = getWeekAnchorThursday(d);
       const key = anchor.getTime();
       if (!buckets[key]) buckets[key] = { anchor, notes: [] };
@@ -3562,6 +3623,37 @@
     if (Array.isArray(content.columns) && Array.isArray(content.rows)) return content;
 
     return null;
+  }
+
+  // Tanggal "asli" sebuah note buat dikelompokkan/diurutkan (bukan created_at
+  // baris DB-nya, karena note bisa aja BARU diinput hari ini padahal isinya
+  // catatan transaksi tanggal lain). Prioritas:
+  //   1) Tanggal yang ketulis di judul note, misal "24/09/2026 . KAMIS"
+  //   2) Kolom "Tanggal" di baris tabel isinya (kalau ada)
+  //   3) created_at note itu sendiri (fallback terakhir)
+  function getNoteEffectiveDate(note) {
+    if (note && note.title) {
+      const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
+      if (m) {
+        let [, d, mo, y] = m;
+        if (y.length === 2) y = '20' + y;
+        const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
+        if (!isNaN(dt)) return dt;
+      }
+    }
+
+    const table = getNoteTable(note);
+    if (table && Array.isArray(table.rows) && table.rows.length) {
+      for (let i = table.rows.length - 1; i >= 0; i--) {
+        const val = getRowValueByLabel(table.columns, table.rows[i], 'Tanggal');
+        if (!isEmptyValue(val)) {
+          const dt = parseRowDate(val, null);
+          if (dt && !isNaN(dt)) return dt;
+        }
+      }
+    }
+
+    return note && note.created_at ? new Date(note.created_at) : null;
   }
 
   function computeTasks() {
