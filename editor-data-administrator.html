@@ -107,6 +107,7 @@
   .view.active{ display:flex; }
 
   /* ---------- Home ---------- */
+  .topbar .home-title{ flex:1; min-width:0; }
   .home-title h1{ margin:0 0 2px 0; font-size:26px; font-weight:800; letter-spacing:-0.02em; }
   .home-title p{ margin:0; font-size:13px; color:var(--ink-soft); font-weight:500; }
   .greet-card{
@@ -193,6 +194,23 @@
   .field .price-input-wrap{ position:relative; }
   .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
   .field .price-input-wrap input{ padding-left:38px; }
+
+  /* ---------- Saran nama PJ (dropdown kustom, bukan datalist native) ---------- */
+  .suggest-wrap{ position:relative; }
+  .suggest-list{
+    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
+    max-height:190px; overflow-y:auto; border-radius:14px; border:1.5px solid var(--line);
+    background:var(--paper-alt); box-shadow:0 12px 28px rgba(30,25,15,0.18);
+    -webkit-overflow-scrolling:touch;
+  }
+  .suggest-list.open{ display:block; }
+  .suggest-item{
+    padding:11px 14px; font-size:14.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .suggest-item:last-child{ border-bottom:none; }
+  .suggest-item:active{ background:var(--accent-soft); }
+  .detail-row .suggest-list{ border-radius:11px; }
   .hint-card{
     display:flex; gap:10px; align-items:flex-start; padding:13px 14px; border-radius:14px;
     background:var(--accent-soft); color:var(--accent-ink); font-size:12.5px; font-weight:600; line-height:1.4; margin-bottom:18px;
@@ -342,15 +360,14 @@
 
   <!-- ============ HOME ============ -->
   <section class="view active" id="view-home">
-    <div class="topbar" style="justify-content:flex-end;">
-      <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-    </div>
-    <div class="scroll px">
+    <div class="topbar">
       <div class="home-title">
         <h1>Dashboard</h1>
         <p>Admin Panel</p>
       </div>
-
+      <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    </div>
+    <div class="scroll px">
       <div class="greet-card">
         <p>Selamat datang,</p>
         <h3 id="homeGreetName">Admin</h3>
@@ -411,14 +428,15 @@
 
       <div class="field">
         <label>PJ (Penanggung Jawab)</label>
-        <input type="text" id="inputPJ" list="pjSuggestions" placeholder="Pilih atau ketik nama PJ" autocomplete="off">
-        <datalist id="pjSuggestions"></datalist>
+        <div class="suggest-wrap">
+          <input type="text" id="inputPJ" placeholder="Pilih atau ketik nama PJ" autocomplete="off">
+          <div class="suggest-list" id="pjSuggestList"></div>
+        </div>
       </div>
 
       <div class="field">
         <label>Customer <span class="opt-tag">(opsional)</span></label>
-        <input type="text" id="inputCustomer" list="customerSuggestions" placeholder="Nama customer" autocomplete="off">
-        <datalist id="customerSuggestions"></datalist>
+        <input type="text" id="inputCustomer" placeholder="Nama customer" autocomplete="off">
       </div>
 
       <div class="field">
@@ -471,12 +489,15 @@
         <div class="detail-row">
           <label>PJ</label>
           <div class="val" id="detPJview">—</div>
-          <input type="text" id="detPJedit" style="display:none;" list="pjSuggestions">
+          <div class="suggest-wrap">
+            <input type="text" id="detPJedit" style="display:none;">
+            <div class="suggest-list" id="detPJSuggestList"></div>
+          </div>
         </div>
         <div class="detail-row">
           <label>Customer</label>
           <div class="val" id="detCustomerView">—</div>
-          <input type="text" id="detCustomerEdit" style="display:none;" list="customerSuggestions">
+          <input type="text" id="detCustomerEdit" style="display:none;">
         </div>
         <div class="detail-row">
           <label>Barang dan Jumlah</label>
@@ -1089,21 +1110,37 @@
     document.getElementById('inputStokBarang').value = '';
     document.getElementById('inputKeterangan').value = '';
     document.getElementById('inputHarga').value = '';
-    refreshPJSuggestions();
-    refreshCustomerSuggestions();
   }
 
-  function refreshPJSuggestions(){
-    const names = [...new Set(records.map(r => r.pj).filter(Boolean))].sort();
-    const dl = document.getElementById('pjSuggestions');
-    dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+  // Saran nama PJ: dropdown kustom yang rapi (bukan <datalist> native — di
+  // sebagian WebView/Android datalist bisa error dan bikin tampilan penuh
+  // layar). Customer sengaja TIDAK diberi saran, cukup input teks biasa.
+  function getPJNames(){
+    return [...new Set(records.map(r => r.pj).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   }
 
-  function refreshCustomerSuggestions(){
-    const names = [...new Set(records.map(r => r.customer).filter(Boolean))].sort();
-    const dl = document.getElementById('customerSuggestions');
-    dl.innerHTML = names.map(n => `<option value="${escapeHtml(n)}"></option>`).join('');
+  function setupSuggestDropdown(inputEl, listEl, getNames){
+    function renderList(){
+      const q = inputEl.value.trim().toLowerCase();
+      const names = getNames().filter(n => !q || n.toLowerCase().includes(q));
+      if (!names.length) { listEl.classList.remove('open'); listEl.innerHTML = ''; return; }
+      listEl.innerHTML = names.map(n => `<div class="suggest-item">${escapeHtml(n)}</div>`).join('');
+      listEl.classList.add('open');
+    }
+    inputEl.addEventListener('focus', renderList);
+    inputEl.addEventListener('input', renderList);
+    inputEl.addEventListener('blur', () => { listEl.classList.remove('open'); });
+    listEl.addEventListener('mousedown', (e) => {
+      const item = e.target.closest('.suggest-item');
+      if (!item) return;
+      e.preventDefault(); // supaya blur pada input tidak lebih dulu menutup dropdown ini
+      inputEl.value = item.textContent;
+      listEl.classList.remove('open');
+    });
   }
+
+  setupSuggestDropdown(document.getElementById('inputPJ'), document.getElementById('pjSuggestList'), getPJNames);
+  setupSuggestDropdown(document.getElementById('detPJedit'), document.getElementById('detPJSuggestList'), getPJNames);
 
   document.getElementById('inputHarga').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
 
@@ -1207,8 +1244,6 @@
   document.getElementById('btnDetailEdit').addEventListener('click', () => {
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
-    refreshPJSuggestions();
-    refreshCustomerSuggestions();
     document.getElementById('detPJview').style.display = 'none';
     document.getElementById('detCustomerView').style.display = 'none';
     document.getElementById('detBarangView').style.display = 'none';
