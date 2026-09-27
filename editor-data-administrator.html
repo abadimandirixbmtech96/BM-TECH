@@ -174,6 +174,19 @@
   .nav-item span{ font-size:11px; font-weight:600; }
   .nav-item.active{ color:var(--accent); }
 
+  /* ---------- Tombol ADD DATA mengambang di tengah nav (gaya QRIS) ---------- */
+  .nav-item-add{ gap:2px; }
+  .nav-add-fab{
+    width:52px; height:52px; border-radius:50%; margin-top:-30px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--accent); color:#fff; border:5px solid var(--paper);
+    box-shadow:0 8px 18px rgba(180,130,30,0.4);
+  }
+  body.surface-dark .nav-add-fab{ border-color:var(--paper); }
+  .nav-add-fab svg{ width:24px; height:24px; }
+  .nav-item-add span{ font-size:9.5px; font-weight:750; letter-spacing:0.04em; color:var(--ink-soft); }
+  .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{ background:var(--accent-ink); }
+
   /* ---------- Form ---------- */
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
@@ -383,12 +396,6 @@
 
       <div class="section-label">Menu Utama</div>
 
-      <div class="menu-card tap" id="menuTambah">
-        <div class="menu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
-        <div class="menu-text"><b>Tambah Data</b><span>Input data baru dengan cepat</span></div>
-        <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      </div>
-
       <div class="menu-card tap" id="menuSettings">
         <div class="menu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></div>
         <div class="menu-text"><b>Pengaturan</b><span>Tema aplikasi</span></div>
@@ -397,7 +404,7 @@
 
       <div class="section-label">Daftar Data Tersedia</div>
       <div id="recentList"></div>
-      <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk "Tambah Data" untuk mulai.</p>
+      <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk tombol "+" di bawah untuk mulai.</p>
     </div>
   </section>
 
@@ -564,6 +571,10 @@
   <!-- ============ BOTTOM NAV ============ -->
   <div class="bottom-nav" id="bottomNav">
     <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
+    <button class="nav-item nav-item-add" data-nav="add">
+      <span class="nav-add-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+      <span>ADD DATA</span>
+    </button>
     <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg><span>Settings</span></button>
   </div>
 
@@ -1051,7 +1062,6 @@
     }
   });
 
-  document.getElementById('menuTambah').addEventListener('click', () => goView('add'));
   document.getElementById('menuSettings').addEventListener('click', () => goView('settings'));
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
