@@ -174,17 +174,15 @@
   .nav-item span{ font-size:11px; font-weight:600; }
   .nav-item.active{ color:var(--accent); }
 
-  /* ---------- Tombol ADD DATA mengambang di tengah nav (gaya QRIS) ---------- */
-  .nav-item-add{ gap:2px; }
+  /* ---------- Tombol ADD DATA di tengah nav (menyatu, tidak melayang) ---------- */
+  .nav-item-add{ gap:3px; }
   .nav-add-fab{
-    width:52px; height:52px; border-radius:50%; margin-top:-30px;
+    width:38px; height:38px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    background:var(--accent); color:#fff; border:5px solid var(--paper);
-    box-shadow:0 8px 18px rgba(180,130,30,0.4);
+    background:var(--accent); color:#fff;
   }
-  body.surface-dark .nav-add-fab{ border-color:var(--paper); }
-  .nav-add-fab svg{ width:24px; height:24px; }
-  .nav-item-add span{ font-size:9.5px; font-weight:750; letter-spacing:0.04em; color:var(--ink-soft); }
+  .nav-add-fab svg{ width:19px; height:19px; }
+  .nav-item-add span{ font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft); }
   .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{ background:var(--accent-ink); }
 
   /* ---------- Form ---------- */
@@ -267,6 +265,22 @@
   .detail-row textarea{ font-weight:500; min-height:64px; resize:vertical; }
   .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+
+  /* ---------- Status Pembayaran ---------- */
+  .paid-card{
+    border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
+    padding:15px 16px; margin-top:14px;
+  }
+  .paid-card.is-paid{ border-color:#3fa66a; background:rgba(63,166,106,0.10); }
+  .paid-toggle{ display:flex; align-items:center; gap:11px; font-size:15px; font-weight:750; color:var(--ink); cursor:pointer; }
+  .paid-toggle input[type="checkbox"]{ width:21px; height:21px; accent-color:#3fa66a; cursor:pointer; flex-shrink:0; }
+  .paid-date-row{ margin-top:12px; padding-top:12px; border-top:1px solid var(--line-soft); }
+  .paid-date-row label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.03em; }
+  .paid-date-row input[type="date"]{
+    width:100%; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line);
+    background:var(--paper); font-size:14.5px; font-weight:700; outline:none; color:var(--ink);
+  }
+  .paid-tag{ font-size:10.5px; font-weight:750; color:#3fa66a; margin-top:3px; }
 
   /* ---------- Settings ---------- */
   .theme-opt{
@@ -392,14 +406,6 @@
         <div class="stat-card"><div class="stat-label">Hari Ini</div><div class="stat-value" id="statToday">0</div></div>
         <div class="stat-card"><div class="stat-label">Bulan Ini</div><div class="stat-value" id="statMonth">0</div></div>
         <div class="stat-card"><div class="stat-label">Belum Lengkap</div><div class="stat-value" id="statIncomplete">0</div></div>
-      </div>
-
-      <div class="section-label">Menu Utama</div>
-
-      <div class="menu-card tap" id="menuSettings">
-        <div class="menu-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg></div>
-        <div class="menu-text"><b>Pengaturan</b><span>Tema aplikasi</span></div>
-        <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
 
       <div class="section-label">Daftar Data Tersedia</div>
@@ -533,6 +539,17 @@
         </div>
       </div>
 
+      <div class="paid-card" id="paidCard">
+        <label class="paid-toggle">
+          <input type="checkbox" id="chkPaid">
+          <span>Sudah Dibayar</span>
+        </label>
+        <div class="paid-date-row" id="paidDateRow" style="display:none;">
+          <label>Tanggal Dibayar</label>
+          <input type="date" id="inputPaidDate">
+        </div>
+      </div>
+
       <div class="detail-actions" id="detailActionsView">
         <div class="btn-row">
           <button class="btn-secondary" id="btnDetailEdit">Edit</button>
@@ -633,7 +650,7 @@
   let existingNoteLoadFailed = false;
 
   let noteTitle = '';
-  // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO) }
+  // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO), paid(bool), paidAt(ISO tanggal saja / null) }
   let records = [];
   let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
 
@@ -653,6 +670,11 @@
   function fmtWaktuFromISO(iso){ return fmtWaktu(new Date(iso)); }
 
   const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  // Format "YYYY-MM-DD" — dipakai sebagai value default <input type="date">
+  function todayDateStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  }
   // Judul otomatis untuk tabel/note BARU, meniru gaya lama: "27/09/26 · Minggu 14:23"
   function generateAutoTitle(d){
     const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
@@ -1062,7 +1084,6 @@
     }
   });
 
-  document.getElementById('menuSettings').addEventListener('click', () => goView('settings'));
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnDetailBack').addEventListener('click', () => goView('home'));
@@ -1100,7 +1121,7 @@
 
     listEl.innerHTML = recent.map(r => {
       const rightHtml = r.harga
-        ? `<div class="r-right">${rupiah(r.harga)}</div>`
+        ? `<div class="r-right">${rupiah(r.harga)}${r.paid ? '<div class="paid-tag">✓ Lunas</div>' : ''}</div>`
         : `<div class="r-right pending">Belum lengkap</div>`;
       return `
         <div class="recent-row tap" data-id="${r.id}">
@@ -1264,6 +1285,11 @@
     setDetailView('detKetView', r.keterangan);
     setDetailView('detHargaView', r.harga ? rupiah(r.harga) : '');
 
+    document.getElementById('chkPaid').checked = !!r.paid;
+    document.getElementById('paidCard').classList.toggle('is-paid', !!r.paid);
+    document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
+    document.getElementById('inputPaidDate').value = r.paidAt || todayDateStr();
+
     exitEditMode();
     goView('detail');
   }
@@ -1335,6 +1361,27 @@
     r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga;
     scheduleAutosave();
     openDetail(editingRecordId);
+  });
+
+  // Status Pembayaran — aksi cepat, langsung tersimpan tanpa perlu masuk mode Edit.
+  document.getElementById('chkPaid').addEventListener('change', (e) => {
+    const r = records.find(x => x.id === editingRecordId);
+    if (!r) return;
+    r.paid = e.target.checked;
+    if (r.paid && !r.paidAt) r.paidAt = todayDateStr(); // default: dibayar hari ini, bisa diganti di bawah
+    if (!r.paid) r.paidAt = null;
+    document.getElementById('paidCard').classList.toggle('is-paid', r.paid);
+    document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
+    document.getElementById('inputPaidDate').value = r.paidAt || todayDateStr();
+    scheduleAutosave();
+    renderRecentList();
+  });
+
+  document.getElementById('inputPaidDate').addEventListener('change', (e) => {
+    const r = records.find(x => x.id === editingRecordId);
+    if (!r) return;
+    r.paidAt = e.target.value || todayDateStr();
+    scheduleAutosave();
   });
 
   document.getElementById('btnDetailDelete').addEventListener('click', () => {
