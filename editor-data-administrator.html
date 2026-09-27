@@ -266,15 +266,6 @@
   .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
 
-  /* ---------- Status Pembayaran (baris biasa, menyatu dengan detail-card) ---------- */
-  .paid-status-val{
-    display:inline-flex; align-items:center; justify-content:center; min-width:34px; height:28px;
-    padding:0 12px; border-radius:20px; font-size:15px; font-weight:800; cursor:pointer;
-    background:var(--paper); border:1.5px solid var(--line); color:var(--ink-soft);
-  }
-  .paid-status-val.is-paid{ background:rgba(63,166,106,0.14); border-color:#3fa66a; color:#2f9e5c; }
-  .paid-tag{ font-size:10.5px; font-weight:750; color:#3fa66a; margin-top:3px; }
-
   /* ---------- Settings ---------- */
   .theme-opt{
     display:flex; align-items:center; justify-content:space-between; padding:14px 16px; margin-bottom:10px;
@@ -530,14 +521,6 @@
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="numeric"></div>
         </div>
-        <div class="detail-row">
-          <label>Status Bayar</label>
-          <div class="paid-status-val" id="detPaidStatus">-</div>
-        </div>
-        <div class="detail-row" id="paidDateRow" style="display:none;">
-          <label>Tanggal Dibayar</label>
-          <input type="text" id="inputPaidDate" placeholder="Contoh: 27-09-2026">
-        </div>
       </div>
 
       <div class="detail-actions" id="detailActionsView">
@@ -640,7 +623,7 @@
   let existingNoteLoadFailed = false;
 
   let noteTitle = '';
-  // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO), paid(bool), paidAt(ISO tanggal saja / null) }
+  // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO) }
   let records = [];
   let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
 
@@ -1106,7 +1089,7 @@
 
     listEl.innerHTML = recent.map(r => {
       const rightHtml = r.harga
-        ? `<div class="r-right">${rupiah(r.harga)}${r.paid ? '<div class="paid-tag">✓ Lunas</div>' : ''}</div>`
+        ? `<div class="r-right">${rupiah(r.harga)}</div>`
         : `<div class="r-right pending">Belum lengkap</div>`;
       return `
         <div class="recent-row tap" data-id="${r.id}">
@@ -1270,11 +1253,6 @@
     setDetailView('detKetView', r.keterangan);
     setDetailView('detHargaView', r.harga ? rupiah(r.harga) : '');
 
-    const detPaidEl = document.getElementById('detPaidStatus');
-    detPaidEl.textContent = r.paid ? '✓' : '-';
-    detPaidEl.classList.toggle('is-paid', !!r.paid);
-    document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
-    document.getElementById('inputPaidDate').value = r.paidAt || fmtTanggal(new Date());
     exitEditMode();
     goView('detail');
   }
@@ -1346,29 +1324,6 @@
     r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga;
     scheduleAutosave();
     openDetail(editingRecordId);
-  });
-
-  // Status Pembayaran — aksi cepat, langsung tersimpan tanpa perlu masuk mode Edit.
-  document.getElementById('detPaidStatus').addEventListener('click', () => {
-    const r = records.find(x => x.id === editingRecordId);
-    if (!r) return;
-    r.paid = !r.paid;
-    if (r.paid && !r.paidAt) r.paidAt = fmtTanggal(new Date()); // default: dibayar hari ini, bisa diketik ulang manual di bawah
-    if (!r.paid) r.paidAt = null;
-    const detPaidEl = document.getElementById('detPaidStatus');
-    detPaidEl.textContent = r.paid ? '✓' : '-';
-    detPaidEl.classList.toggle('is-paid', r.paid);
-    document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
-    document.getElementById('inputPaidDate').value = r.paidAt || fmtTanggal(new Date());
-    scheduleAutosave();
-    renderRecentList();
-  });
-
-  document.getElementById('inputPaidDate').addEventListener('change', (e) => {
-    const r = records.find(x => x.id === editingRecordId);
-    if (!r) return;
-    r.paidAt = e.target.value.trim() || fmtTanggal(new Date());
-    scheduleAutosave();
   });
 
   document.getElementById('btnDetailDelete').addEventListener('click', () => {
