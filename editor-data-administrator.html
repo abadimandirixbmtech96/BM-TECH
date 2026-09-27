@@ -38,6 +38,11 @@
     --safe-right:env(safe-area-inset-right,0px);
     --skeleton-a:rgba(0,0,0,0.06);
     --skeleton-b:rgba(0,0,0,0.12);
+
+    /* ---- Tombol ADD DATA di bottom nav — ubah 3 angka ini saja untuk resize ---- */
+    --fab-size:44px;     /* diameter lingkaran tombol */
+    --fab-lift:14px;     /* seberapa tinggi tombol menonjol keluar navbar */
+    --fab-icon-size:18px;/* ukuran ikon "+" di dalamnya */
   }
 
   body.surface-dark{
@@ -197,19 +202,19 @@
   /* ---------- Tombol ADD DATA di tengah nav: flat, menonjol keluar cekungan ---------- */
   .nav-item-add{ gap:6px; justify-content:flex-end; }
   .nav-add-fab{
-    width:60px; height:60px; border-radius:50%;
+    width:var(--fab-size); height:var(--fab-size); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     background:var(--accent); color:#fff;
-    transform:translateY(-20px);
+    transform:translateY(calc(-1 * var(--fab-lift)));
     transition:transform .15s ease, background .15s ease;
   }
-  .nav-add-fab svg{ width:24px; height:24px; }
+  .nav-add-fab svg{ width:var(--fab-icon-size); height:var(--fab-icon-size); }
   .nav-item-add span{
     font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft);
-    margin-top:-14px; /* naikkan label supaya tetap rapat di bawah lingkaran yang terangkat */
+    margin-top:calc(-1 * var(--fab-lift) + 4px); /* label tetap rapat di bawah lingkaran meski ukurannya berubah */
   }
   .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{
-    background:var(--accent-ink); transform:translateY(-20px) scale(0.94);
+    background:var(--accent-ink); transform:translateY(calc(-1 * var(--fab-lift))) scale(0.94);
   }
 
 
@@ -587,7 +592,7 @@
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <clipPath id="navNotchClip" clipPathUnits="objectBoundingBox">
-        <path d="M0,0 L0.37,0
+        <path id="navNotchPath" d="M0,0 L0.37,0
                  C0.415,0 0.435,0.02 0.45,0.09
                  C0.465,0.17 0.48,0.28 0.5,0.28
                  C0.52,0.28 0.535,0.17 0.55,0.09
@@ -1425,10 +1430,52 @@
   // =====================================================================
   // RENDER SEMUA & INIT
   // =====================================================================
-  function renderAll(){
-    renderHome();
-    if (currentView === 'settings') renderSettings();
+  // =====================================================================
+  // BOTTOM NAV NOTCH — bentuk cekungan mengikuti ukuran tombol ADD DATA
+  // Cukup ubah --fab-size / --fab-lift di :root (bagian atas CSS), lebar &
+  // kedalaman cekungan di bawah ini otomatis menyesuaikan, tidak perlu
+  // hitung ulang path SVG manual.
+  // =====================================================================
+  function updateNavNotch(){
+    var surface = document.querySelector('.bottom-nav-surface');
+    var pathEl  = document.getElementById('navNotchPath');
+    if (!surface || !pathEl) return;
+
+    var fabSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fab-size')) || 44;
+    var navWidth  = surface.offsetWidth  || 360;
+    var barHeight = surface.offsetHeight || 64;
+    if (!navWidth || !barHeight) return;
+
+    var notchTopWidth = fabSize + 16;                          // ruang 8px kiri-kanan tombol
+    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5); // kedalaman proporsional, dibatasi tinggi bar
+
+    var cx = navWidth / 2;
+    var x1 = cx - notchTopWidth / 2;
+    var w  = cx - x1;
+
+    function pt(tFrac, yFrac){
+      return { x:(x1 + tFrac * w) / navWidth, y:(yFrac * notchDepth) / barHeight };
+    }
+    var cxFrac = cx / navWidth;
+    function mirror(p){ return { x:2 * cxFrac - p.x, y:p.y }; }
+
+    var C1 = pt(0.346, 0), C2 = pt(0.5, 0.071), E1 = pt(0.615, 0.321);
+    var C3 = pt(0.731, 0.607), C4 = pt(0.846, 1.0);
+    var C3m = mirror(C3), C4m = mirror(C4), E1m = mirror(E1), C2m = mirror(C2), C1m = mirror(C1);
+    var x1Frac = x1 / navWidth, x2Frac = mirror({x:x1Frac,y:0}).x, peakY = notchDepth / barHeight;
+
+    var d = 'M0,0 L' + x1Frac + ',0'
+      + ' C' + C1.x + ',' + C1.y + ' ' + C2.x + ',' + C2.y + ' ' + E1.x + ',' + E1.y
+      + ' C' + C3.x + ',' + C3.y + ' ' + C4.x + ',' + C4.y + ' ' + cxFrac + ',' + peakY
+      + ' C' + C4m.x + ',' + C4m.y + ' ' + C3m.x + ',' + C3m.y + ' ' + E1m.x + ',' + E1m.y
+      + ' C' + C2m.x + ',' + C2m.y + ' ' + C1m.x + ',' + C1m.y + ' ' + x2Frac + ',0'
+      + ' L1,0 L1,1 L0,1 Z';
+
+    pathEl.setAttribute('d', d);
   }
+  window.addEventListener('resize', updateNavNotch);
+  window.addEventListener('load', updateNavNotch);
+  updateNavNotch();
 
   loadExistingNote();
 </script>
