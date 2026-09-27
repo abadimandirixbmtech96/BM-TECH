@@ -395,7 +395,7 @@
         <div class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       </div>
 
-      <div class="section-label">Data Terbaru</div>
+      <div class="section-label">Daftar Data Tersedia</div>
       <div id="recentList"></div>
       <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk "Tambah Data" untuk mulai.</p>
     </div>
@@ -640,6 +640,13 @@
   function fmtWaktu(d){ return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
   function fmtTanggalFromISO(iso){ return fmtTanggal(new Date(iso)); }
   function fmtWaktuFromISO(iso){ return fmtWaktu(new Date(iso)); }
+
+  const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  // Judul otomatis untuk tabel/note BARU, meniru gaya lama: "27/09/26 · Minggu 14:23"
+  function generateAutoTitle(d){
+    const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
+    return `${tgl} · ${NAMA_HARI[d.getDay()]} ${fmtWaktu(d)}`;
+  }
   function rupiah(n){ return n ? ('Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID')) : ''; }
   function digitsOnly(str){ return (str || '').replace(/[^\d]/g, ''); }
   function formatHargaLive(str){
@@ -753,7 +760,14 @@
   }
 
   async function loadExistingNote(){
-    if (!currentNoteId) { renderAll(); return; }
+    if (!currentNoteId) {
+      // Note/tabel BARU (bukan buka data yang sudah ada) — otomatis kasih
+      // judul berisi tanggal, hari, dan jam saat ini, meniru kebiasaan
+      // aplikasi versi sebelumnya. Tetap bisa diganti manual lewat Pengaturan.
+      if (!noteTitle) noteTitle = generateAutoTitle(new Date());
+      renderAll();
+      return;
+    }
 
     if (!navigator.onLine) {
       const raw = (() => { try { return localStorage.getItem(getLocalDraftKey()); } catch (e) { return null; } })();
@@ -1063,7 +1077,7 @@
   function renderRecentList(){
     const all = sortedRecords();
     const noMap = new Map(all.map((r, i) => [r.id, i + 1]));
-    const recent = all.slice(-6).reverse();
+    const recent = all.slice().reverse(); // tampilkan SEMUA data (terbaru di atas), bukan cuma beberapa terakhir
     const listEl = document.getElementById('recentList');
     const emptyEl = document.getElementById('recentEmptyHint');
 
