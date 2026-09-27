@@ -2007,12 +2007,14 @@
     }
   }
 
-  // Ambil semua notes dari semua folder, lalu tempel nama foldernya
+  // Ambil semua notes dari semua folder, lalu tempel nama foldernya.
+  // Sengaja TANPA filter deleted_at: dashboard admin & editor menghapus note
+  // secara permanen (.delete()), nggak pernah soft-delete, jadi filter itu cuma
+  // bikin data dari editor lain ikut tersembunyi di viewer padahal muncul di admin.
   async function loadNotes() {
     const { data, error } = await supabaseClient
       .from('notes')
       .select('*')
-      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (error) {
