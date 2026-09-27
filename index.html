@@ -120,7 +120,13 @@
      di mode gelap biar kesannya "pill ngambang" yang lebih tegas — makanya
      butuh override manual sendiri di sini, ganti var() aja nggak cukup. */
   body.light-theme .search-pill {
-    background: rgba(255, 255, 255, 0.85) !important;
+    background: rgba(255, 255, 255, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07) !important;
+  }
+
+  body.light-theme .header {
+    background: linear-gradient(180deg, rgba(245, 245, 247, 0.78) 0%, rgba(245, 245, 247, 0.2) 75%, rgba(245, 245, 247, 0) 100%) !important;
   }
 
   body {
@@ -161,6 +167,9 @@
     align-items: center;
     justify-content: space-between;
     z-index: 20;
+    background: linear-gradient(180deg, rgba(18, 17, 20, 0.65) 0%, rgba(18, 17, 20, 0.15) 75%, rgba(18, 17, 20, 0) 100%);
+    backdrop-filter: blur(20px) saturate(1.3);
+    -webkit-backdrop-filter: blur(20px) saturate(1.3);
   }
 
   .header-btn {
@@ -479,9 +488,9 @@
   .search-pill {
     flex: 1;
     height: 52px;
-    background: rgba(26, 25, 28, 0.88);
-    backdrop-filter: blur(24px) saturate(1.4);
-    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    background: rgba(26, 25, 28, 0.55);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
     border: 1px solid var(--glass-pill-border);
     border-radius: var(--radius-pill);
     display: flex;
@@ -489,7 +498,7 @@
     padding: 0 18px;
     gap: 12px;
     color: var(--text-secondary);
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
     cursor: pointer;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
@@ -602,6 +611,48 @@
     margin: 14px 6px 12px 6px;
     flex-shrink: 0;
   }
+
+  /* --- Folder Year/Month Dropdown Accordion (disinkron dari dashboard-admin.html) --- */
+  .folder-year-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 14px; animation: folderAccIn 0.16s ease; }
+  .folder-month-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 4px 14px; animation: folderAccIn 0.16s ease; }
+  @keyframes folderAccIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .folder-year-item, .folder-month-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-left: 2px solid var(--glass-pill-border);
+    transition: background 0.15s ease;
+  }
+  .folder-year-item:active, .folder-month-item:active { background: var(--overlay-2); }
+  .folder-year-item.open { color: var(--text-primary); border-left-color: var(--accent-yellow, #D9A536); }
+  .folder-month-item { border-left-color: rgba(217, 165, 54, 0.35); }
+  .folder-year-item svg { width: 15px; height: 15px; color: var(--text-secondary); transition: transform 0.18s ease; }
+  .folder-year-item.open svg { transform: rotate(180deg); color: var(--accent-yellow, #D9A536); }
+  .folder-year-loading, .folder-year-empty {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+
+  /* --- Header "Pekan N" / "Bulan Tahun" di grid notes (disinkron dari dashboard-admin.html) --- */
+  .week-group-header {
+    grid-column: 1 / -1;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    padding: 4px 2px 2px;
+    margin-top: 4px;
+  }
+  .week-group-header:first-child { margin-top: 0; }
 
   .switch-app-btn {
     display: flex;
@@ -1592,7 +1643,7 @@
   <main class="content-scroll">
     <div id="notesSection">
       <h1 class="page-title" id="pageTitleMain">ALL</h1>
-      <p class="section-label" id="periodLabelMain"></p>
+      <p class="section-label" id="periodLabelMain">Previous 7 Days</p>
 
       <!-- Supabase Data Feed Container -->
       <div class="notes-container view-grid" id="notesList"></div>
@@ -1933,6 +1984,11 @@
   let categoriesData = [];   // daftar folder dari Supabase (dipakai drawer)
   let notesData = [];        // SELURUH notes dari semua folder (dipakai Analisa & search global)
   let activeFolderId = null; // null = tampilkan semua folder di list utama ("ALL")
+  let activeFilterYear = null;   // tahun yang lagi difilter (null = belum pilih bulan spesifik)
+  let activeFilterMonth = null;  // bulan yang lagi difilter
+  let expandedFolderId = null;   // folder yang lagi kebuka dropdown tahunnya di drawer
+  let expandedYear = null;       // tahun yang lagi kebuka dropdown bulannya
+  const MONTH_NAMES_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
   // Ambil semua folder kategori dari Supabase
   async function loadFolders() {
@@ -1985,6 +2041,88 @@
     return activeFolderId ? notesData.filter(n => n.folder_id === activeFolderId) : notesData;
   }
 
+  // Tanggal "asli" sebuah note buat dikelompokkan/diurutkan — prioritas tanggal
+  // yang ketulis di judul note (mis. "24/09/2026 . KAMIS"), baru fallback ke
+  // created_at kalau judulnya nggak mengandung pola tanggal (disinkron dari
+  // dashboard-admin.html, versi ringkas karena di sini nggak perlu baca isi tabel).
+  function getNoteEffectiveDate(note) {
+    if (note && note.title) {
+      const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
+      if (m) {
+        let [, d, mo, y] = m;
+        if (y.length === 2) y = '20' + y;
+        const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
+        if (!isNaN(dt)) return dt;
+      }
+    }
+    return note && note.created_at ? new Date(note.created_at) : null;
+  }
+
+  // Cari tanggal Kamis yang mengawali "pekan" (Kamis→Rabu) dari sebuah tanggal.
+  function getWeekAnchorThursday(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const day = d.getDay();
+    const diffFromThursday = (day - 4 + 7) % 7;
+    d.setDate(d.getDate() - diffFromThursday);
+    return d;
+  }
+
+  // Kelompokkan notes (sudah difilter 1 bulan) jadi array pekan, Pekan 1 = minggu
+  // paling awal di bulan itu (kayak kalender biasa).
+  function groupNotesByWeek(notes) {
+    const buckets = {};
+    notes.forEach(n => {
+      const d = getNoteEffectiveDate(n);
+      if (!d || isNaN(d)) return;
+      const anchor = getWeekAnchorThursday(d);
+      const key = anchor.getTime();
+      if (!buckets[key]) buckets[key] = { anchor, notes: [] };
+      buckets[key].notes.push(n);
+    });
+    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b));
+    return sortedKeys.map((key, idx) => ({ label: `Pekan ${idx + 1}`, notes: buckets[key].notes }));
+  }
+
+  // Kelompokkan notes per Bulan+Tahun (dipakai di folder "All" — campuran banyak
+  // folder, header "September 2026" dst, terbaru di atas).
+  function groupNotesByMonth(notes) {
+    const buckets = {};
+    notes.forEach(n => {
+      const d = getNoteEffectiveDate(n);
+      if (!d || isNaN(d)) return;
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const key = `${y}-${String(m).padStart(2, '0')}`;
+      if (!buckets[key]) buckets[key] = { year: y, month: m, notes: [] };
+      buckets[key].notes.push(n);
+    });
+    const sortedKeys = Object.keys(buckets).sort((a, b) => b.localeCompare(a));
+    return sortedKeys.map(key => {
+      const b = buckets[key];
+      return { label: `${MONTH_NAMES_ID[b.month - 1]} ${b.year}`, notes: b.notes };
+    });
+  }
+
+  // Ambil daftar tahun→bulan yang tersedia di 1 folder (client-side, notesData
+  // sudah lengkap di memori, jadi nggak perlu fetch lagi ke Supabase).
+  function getFolderYearMonths(catId) {
+    const map = {};
+    notesData.filter(n => n.folder_id === catId).forEach(n => {
+      const d = getNoteEffectiveDate(n);
+      if (!d || isNaN(d)) return;
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      if (!map[y]) map[y] = new Set();
+      map[y].add(m);
+    });
+    const years = Object.keys(map).map(Number).sort((a, b) => b - a);
+    const monthsByYear = {};
+    years.forEach(y => {
+      monthsByYear[y] = Array.from(map[y]).sort((a, b) => b - a).map(num => ({ num, label: MONTH_NAMES_ID[num - 1] }));
+    });
+    return { years, monthsByYear };
+  }
+
   // Render daftar folder dinamis di drawer (item "All" + tiap folder dari Supabase)
   function renderFolderDrawer() {
     const list = document.getElementById('drawerFolderList');
@@ -2013,6 +2151,7 @@
         </div>
         <span class="folder-count">${countByFolder[cat.id] || 0} &rsaquo;</span>
       </div>
+      ${expandedFolderId === cat.id ? renderFolderYearAccordion(cat.id) : ''}
     `).join('');
 
     const emptyNote = categoriesData.length === 0
@@ -2033,15 +2172,93 @@
     list.querySelectorAll('.folder-item').forEach(item => {
       item.addEventListener('click', () => {
         const fid = item.dataset.folderId;
-        activeFolderId = fid || null;
+        if (!fid) {
+          // "All" — langsung tampilkan (dikelompokkan per bulan), nggak ada accordion
+          activeFolderId = null;
+          activeFilterYear = null;
+          activeFilterMonth = null;
+          expandedFolderId = null;
+          expandedYear = null;
+          document.getElementById('pageTitleMain').textContent = 'ALL';
+          drawer.classList.remove('open');
+          drawerOverlay.classList.remove('open');
+          renderFolderDrawer();
+          renderNotes();
+          return;
+        }
+        // Folder spesifik — toggle dropdown tahun (bukan langsung filter)
+        expandedFolderId = (expandedFolderId === fid) ? null : fid;
+        expandedYear = null;
+        renderFolderDrawer();
+      });
+    });
+
+    list.querySelectorAll('.folder-year-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        expandedYear = (expandedYear === Number(el.dataset.year)) ? null : Number(el.dataset.year);
+        renderFolderDrawer();
+      });
+    });
+
+    list.querySelectorAll('.folder-month-item').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const fid = el.dataset.folderId;
+        const year = Number(el.dataset.year);
+        const month = Number(el.dataset.month);
         const cat = categoriesData.find(c => c.id === fid);
-        document.getElementById('pageTitleMain').textContent = cat ? cat.name.toUpperCase() : 'ALL';
+        activeFolderId = fid;
+        activeFilterYear = year;
+        activeFilterMonth = month;
+        expandedFolderId = null;
+        expandedYear = null;
+        document.getElementById('pageTitleMain').textContent = `${cat ? cat.name.toUpperCase() : ''} - ${MONTH_NAMES_ID[month - 1].toUpperCase()} ${year}`;
         drawer.classList.remove('open');
         drawerOverlay.classList.remove('open');
         renderFolderDrawer();
         renderNotes();
       });
     });
+  }
+
+  // Dropdown tahun→bulan untuk 1 folder di drawer (disinkron dari dashboard-admin.html)
+  function renderFolderYearAccordion(catId) {
+    const meta = getFolderYearMonths(catId);
+    if (!meta.years.length) {
+      return `<div class="folder-year-list"><div class="folder-year-empty">Belum ada data bertanggal</div></div>`;
+    }
+    return `<div class="folder-year-list">` + meta.years.map(year => {
+      const isYearOpen = expandedYear === year;
+      const monthsHtml = isYearOpen ? `
+        <div class="folder-month-list">
+          ${meta.monthsByYear[year].map(m => `
+            <div class="folder-month-item" data-folder-id="${catId}" data-year="${year}" data-month="${m.num}">
+              <span>${m.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '';
+      return `
+        <div class="folder-year-item ${isYearOpen ? 'open' : ''}" data-year="${year}">
+          <span>${year}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        ${monthsHtml}
+      `;
+    }).join('') + `</div>`;
+  }
+
+  function noteCardHtml(note, idx) {
+    return `
+      <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
+        <div class="note-content-layer">
+          <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
+          <p class="note-desc">${escapeHtml(note.preview || '')}</p>
+        </div>
+        <span class="note-date-tag">${escapeHtml(note.date_tag || 'Recent')}</span>
+      </div>
+    `;
   }
 
   function renderNotes() {
@@ -2073,17 +2290,38 @@
     }
 
     pageTitleEl.style.display = 'block';
-    periodLabelEl.style.display = 'block';
     container.style.display = 'grid';
-    container.innerHTML = visibleNotes.map((note, idx) => `
-      <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
-        <div class="note-content-layer">
-          <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
-          <p class="note-desc">${escapeHtml(note.preview || '')}</p>
-        </div>
-        <span class="note-date-tag">${escapeHtml(note.date_tag || 'Recent')}</span>
-      </div>
-    `).join('');
+
+    if (activeFolderId && activeFilterYear && activeFilterMonth) {
+      // Folder spesifik + bulan dipilih dari dropdown — dikelompokkan per Pekan
+      // (Kamis→Rabu), nomor pekan urut kalender tapi pekan TERBARU tampil di atas.
+      periodLabelEl.style.display = 'none';
+      const filtered = visibleNotes.filter(n => {
+        const d = getNoteEffectiveDate(n);
+        return d && !isNaN(d) && d.getFullYear() === activeFilterYear && (d.getMonth() + 1) === activeFilterMonth;
+      }).sort((a, b) => getNoteEffectiveDate(b) - getNoteEffectiveDate(a));
+      const weeks = groupNotesByWeek(filtered);
+      const displayWeeks = [...weeks].reverse();
+      let idxCounter = 0;
+      container.innerHTML = displayWeeks.map(week => {
+        const cardsHtml = week.notes.map(n => noteCardHtml(n, idxCounter++)).join('');
+        return `<div class="week-group-header">${week.label}</div>${cardsHtml}`;
+      }).join('');
+    } else if (!activeFolderId) {
+      // "All" — campuran banyak folder, dikelompokkan per Bulan+Tahun, terbaru di atas.
+      periodLabelEl.style.display = 'none';
+      const sorted = [...visibleNotes].sort((a, b) => getNoteEffectiveDate(b) - getNoteEffectiveDate(a));
+      const months = groupNotesByMonth(sorted);
+      let idxCounter = 0;
+      container.innerHTML = months.map(group => {
+        const cardsHtml = group.notes.map(n => noteCardHtml(n, idxCounter++)).join('');
+        return `<div class="week-group-header">${group.label}</div>${cardsHtml}`;
+      }).join('');
+    } else {
+      // Fallback (nggak seharusnya kejadian lewat alur drawer normal)
+      periodLabelEl.style.display = 'block';
+      container.innerHTML = visibleNotes.map((note, idx) => noteCardHtml(note, idx)).join('');
+    }
 
     container.querySelectorAll('.note-card').forEach(card => {
       card.addEventListener('click', () => openNoteDetail(card.dataset.id));
