@@ -88,6 +88,15 @@
     background: rgba(255, 255, 255, 0.85) !important;
   }
 
+  /* Search bar utama & tombol pensil: dibikin lebih "glassmorphism" (kaca buram,
+     bukan solid) + hilangin shadow item hitam pekat di bawahnya. */
+  body.theme-light .search-pill,
+  body.theme-light .btn-compose-pencil {
+    background: rgba(255, 255, 255, 0.35) !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07) !important;
+  }
+
   body.theme-light .chip {
     background: rgba(0, 0, 0, 0.06) !important;
     color: #000000 !important;
@@ -497,16 +506,16 @@
     height: 52px;
     min-width: 52px;
     border-radius: 50%;
-    background: rgba(26, 25, 28, 0.88);
-    backdrop-filter: blur(24px) saturate(1.4);
-    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    background: rgba(26, 25, 28, 0.55);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
     border: 1px solid var(--glass-pill-border);
     color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
@@ -516,9 +525,9 @@
   .search-pill {
     flex: 1;
     height: 52px;
-    background: rgba(26, 25, 28, 0.88);
-    backdrop-filter: blur(24px) saturate(1.4);
-    -webkit-backdrop-filter: blur(24px) saturate(1.4);
+    background: rgba(26, 25, 28, 0.55);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
     border: 1px solid var(--glass-pill-border);
     border-radius: var(--radius-pill);
     display: flex;
@@ -526,7 +535,7 @@
     padding: 0 18px;
     gap: 12px;
     color: var(--text-secondary);
-    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
     cursor: pointer;
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
@@ -1522,7 +1531,7 @@
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: rgba(255, 255, 255, 0.92);
     transition: background 0.15s ease;
   }
   .nas-folder-row:last-child { border-bottom: none; }
@@ -3232,7 +3241,11 @@
       notesLoadFailed = true;
     } else {
       notesLoadFailed = false;
-      notesData = (data || []).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+      notesData = (data || []).sort((a, b) => {
+        const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+        if (pinDiff !== 0) return pinDiff;
+        return getNoteEffectiveDate(b) - getNoteEffectiveDate(a); // terbaru dulu
+      });
     }
 
     renderCategories();
@@ -3361,6 +3374,28 @@
     }));
   }
 
+  // Kelompokkan notes jadi per Bulan+Tahun (dipakai di folder "All", karena di
+  // situ notes-nya campuran dari banyak folder — pekan kurang relevan, cukup
+  // header "September 2026" dst). Urut dari bulan TERBARU ke TERLAMA (dari atas).
+  function groupNotesByMonth(notes) {
+    const buckets = {}; // key: 'YYYY-MM' -> { year, month, notes: [] }
+    notes.forEach(n => {
+      const d = getNoteEffectiveDate(n);
+      if (!d || isNaN(d)) return;
+      const y = d.getFullYear();
+      const m = d.getMonth() + 1;
+      const key = `${y}-${String(m).padStart(2, '0')}`;
+      if (!buckets[key]) buckets[key] = { year: y, month: m, notes: [] };
+      buckets[key].notes.push(n);
+    });
+
+    const sortedKeys = Object.keys(buckets).sort((a, b) => b.localeCompare(a)); // terbaru dulu
+    return sortedKeys.map(key => {
+      const b = buckets[key];
+      return { label: `${MONTH_NAMES_ID[b.month - 1]} ${b.year}`, notes: b.notes };
+    });
+  }
+
   // Label pengelompokan dinamis berdasarkan umur note TERTUA yang lagi
   // ditampilkan — bukan teks mati "Previous 7 Days".
   function computeSubtitleLabel(notes) {
@@ -3445,7 +3480,17 @@
 
   if (subtitleEl) subtitleEl.style.display = 'none'; // dipakai lagi di bawah kalau bukan mode pekan
 
-  if (activeFilterYear && activeFilterMonth) {
+  if (activeCategoryId === '__all__') {
+    // Folder "All": campuran banyak folder, jadi dikelompokkan per Bulan+Tahun
+    // aja (bukan per-pekan) — header "September 2026" dst, terbaru di atas.
+    const months = groupNotesByMonth(notesData);
+    let idxCounter = 0;
+    container.style.display = 'grid';
+    container.innerHTML = months.map(group => {
+      const cardsHtml = group.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
+      return `<div class="week-group-header">${group.label}</div>${cardsHtml}`;
+    }).join('');
+  } else if (activeFilterYear && activeFilterMonth) {
     // Mode filter bulan aktif: subtitle "Bulan Ini" diganti header per-pekan (Kamis→Rabu).
     // Nomor pekan tetap urut kalender (Pekan 1 = minggu paling awal), TAPI posisi
     // tampilannya dibalik: pekan paling baru di ATAS, biar pas dibuka data terbaru
