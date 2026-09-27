@@ -107,9 +107,6 @@
   .view.active{ display:flex; }
 
   /* ---------- Home ---------- */
-  .topbar .home-title{ flex:1; min-width:0; }
-  .home-title h1{ margin:0 0 2px 0; font-size:26px; font-weight:800; letter-spacing:-0.02em; }
-  .home-title p{ margin:0; font-size:13px; color:var(--ink-soft); font-weight:500; }
   .greet-card{
     margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
     background:linear-gradient(135deg, var(--accent) 0%, #b17b1f 100%);
@@ -121,8 +118,13 @@
   .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
   .stat-card{
     padding:14px 16px; border-radius:var(--radius-md);
-    background:var(--glass-bg); border:1px solid var(--glass-border);
-    backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);
+    background:rgba(255,255,255,0.28); border:1px solid rgba(255,255,255,0.45);
+    backdrop-filter:blur(24px) saturate(1.6); -webkit-backdrop-filter:blur(24px) saturate(1.6);
+    box-shadow:0 6px 18px rgba(80,70,50,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  body.surface-dark .stat-card{
+    background:rgba(30,28,23,0.32); border-color:rgba(255,255,255,0.08);
+    box-shadow:0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
   }
   .stat-card .stat-label{ font-size:12px; color:var(--ink-soft); font-weight:600; }
   .stat-card .stat-value{ font-size:24px; font-weight:800; margin-top:4px; letter-spacing:-0.01em; }
@@ -162,11 +164,29 @@
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
-    display:flex; padding:8px calc(var(--safe-left) + 10px) calc(var(--safe-bottom) + 8px) calc(var(--safe-right) + 10px);
-    background:var(--glass-bg); border-top:1px solid var(--glass-border);
+    display:flex; flex-direction:column;
+  }
+  /* Layer background nav dengan cekungan (notch) di tengah, tinggi tetap 64px */
+  .bottom-nav-surface{
+    position:relative; height:64px;
+    display:flex; align-items:center;
+    padding:0 calc(var(--safe-left) + 10px) 0 calc(var(--safe-right) + 10px);
+  }
+  .bottom-nav-bg{
+    position:absolute; inset:0; z-index:0;
+    background:var(--glass-bg);
+    backdrop-filter:blur(24px) saturate(1.4); -webkit-backdrop-filter:blur(24px) saturate(1.4);
+    clip-path:url(#navNotchClip);
+    box-shadow:0 -2px 14px rgba(30,25,15,0.06);
+  }
+  /* Strip pengisi safe-area bawah (mis. home-indicator iPhone), rata & tanpa cekungan */
+  .bottom-nav-safe{
+    height:var(--safe-bottom);
+    background:var(--glass-bg);
     backdrop-filter:blur(24px) saturate(1.4); -webkit-backdrop-filter:blur(24px) saturate(1.4);
   }
   .nav-item{
+    position:relative; z-index:1;
     flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0;
     border:none; background:none; color:var(--ink-soft); cursor:pointer;
   }
@@ -174,16 +194,25 @@
   .nav-item span{ font-size:11px; font-weight:600; }
   .nav-item.active{ color:var(--accent); }
 
-  /* ---------- Tombol ADD DATA di tengah nav (menyatu, tidak melayang) ---------- */
-  .nav-item-add{ gap:3px; }
+  /* ---------- Tombol ADD DATA di tengah nav: flat, menonjol keluar cekungan ---------- */
+  .nav-item-add{ gap:6px; justify-content:flex-end; }
   .nav-add-fab{
-    width:38px; height:38px; border-radius:50%;
+    width:60px; height:60px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     background:var(--accent); color:#fff;
+    transform:translateY(-20px);
+    transition:transform .15s ease, background .15s ease;
   }
-  .nav-add-fab svg{ width:19px; height:19px; }
-  .nav-item-add span{ font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft); }
-  .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{ background:var(--accent-ink); }
+  .nav-add-fab svg{ width:24px; height:24px; }
+  .nav-item-add span{
+    font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft);
+    margin-top:-14px; /* naikkan label supaya tetap rapat di bawah lingkaran yang terangkat */
+  }
+  .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{
+    background:var(--accent-ink); transform:translateY(-20px) scale(0.94);
+  }
+
+
 
   /* ---------- Form ---------- */
   .field{ margin-bottom:16px; }
@@ -372,10 +401,6 @@
   <!-- ============ HOME ============ -->
   <section class="view active" id="view-home">
     <div class="topbar">
-      <div class="home-title">
-        <h1>Dashboard</h1>
-        <p>Admin Panel</p>
-      </div>
       <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     </div>
     <div class="scroll px">
@@ -559,13 +584,29 @@
   </section>
 
   <!-- ============ BOTTOM NAV ============ -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <clipPath id="navNotchClip" clipPathUnits="objectBoundingBox">
+        <path d="M0,0 L0.37,0
+                 C0.415,0 0.435,0.02 0.45,0.09
+                 C0.465,0.17 0.48,0.28 0.5,0.28
+                 C0.52,0.28 0.535,0.17 0.55,0.09
+                 C0.565,0.02 0.585,0 0.63,0
+                 L1,0 L1,1 L0,1 Z"/>
+      </clipPath>
+    </defs>
+  </svg>
   <div class="bottom-nav" id="bottomNav">
-    <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
-    <button class="nav-item nav-item-add" data-nav="add">
-      <span class="nav-add-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
-      <span>ADD DATA</span>
-    </button>
-    <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg><span>Settings</span></button>
+    <div class="bottom-nav-surface">
+      <div class="bottom-nav-bg"></div>
+      <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
+      <button class="nav-item nav-item-add" data-nav="add">
+        <span class="nav-add-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>ADD DATA</span>
+      </button>
+      <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg><span>Settings</span></button>
+    </div>
+    <div class="bottom-nav-safe"></div>
   </div>
 
   <!-- ============ MODAL: KONFIRMASI ============ -->
