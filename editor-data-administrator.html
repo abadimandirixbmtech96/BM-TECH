@@ -536,7 +536,7 @@
         </div>
         <div class="detail-row" id="paidDateRow" style="display:none;">
           <label>Tanggal Dibayar</label>
-          <input type="date" id="inputPaidDate">
+          <input type="text" id="inputPaidDate" placeholder="Contoh: 27-09-2026">
         </div>
       </div>
 
@@ -660,11 +660,6 @@
   function fmtWaktuFromISO(iso){ return fmtWaktu(new Date(iso)); }
 
   const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  // Format "YYYY-MM-DD" — dipakai sebagai value default <input type="date">
-  function todayDateStr(){
-    const d = new Date();
-    return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
-  }
   // Judul otomatis untuk tabel/note BARU, meniru gaya lama: "27/09/26 · Minggu 14:23"
   function generateAutoTitle(d){
     const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
@@ -1279,8 +1274,7 @@
     detPaidEl.textContent = r.paid ? '✓' : '-';
     detPaidEl.classList.toggle('is-paid', !!r.paid);
     document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
-    document.getElementById('inputPaidDate').value = r.paidAt || todayDateStr();
-
+    document.getElementById('inputPaidDate').value = r.paidAt || fmtTanggal(new Date());
     exitEditMode();
     goView('detail');
   }
@@ -1359,13 +1353,13 @@
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
     r.paid = !r.paid;
-    if (r.paid && !r.paidAt) r.paidAt = todayDateStr(); // default: dibayar hari ini, bisa diganti di bawah
+    if (r.paid && !r.paidAt) r.paidAt = fmtTanggal(new Date()); // default: dibayar hari ini, bisa diketik ulang manual di bawah
     if (!r.paid) r.paidAt = null;
     const detPaidEl = document.getElementById('detPaidStatus');
     detPaidEl.textContent = r.paid ? '✓' : '-';
     detPaidEl.classList.toggle('is-paid', r.paid);
     document.getElementById('paidDateRow').style.display = r.paid ? 'block' : 'none';
-    document.getElementById('inputPaidDate').value = r.paidAt || todayDateStr();
+    document.getElementById('inputPaidDate').value = r.paidAt || fmtTanggal(new Date());
     scheduleAutosave();
     renderRecentList();
   });
@@ -1373,7 +1367,7 @@
   document.getElementById('inputPaidDate').addEventListener('change', (e) => {
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
-    r.paidAt = e.target.value || todayDateStr();
+    r.paidAt = e.target.value.trim() || fmtTanggal(new Date());
     scheduleAutosave();
   });
 
