@@ -459,14 +459,14 @@
       <div class="field">
         <label>Nama Barang</label>
         <div class="suggest-wrap">
-          <input type="text" id="inputNama" placeholder="Contoh: Gula pasir" autocomplete="off">
+          <input type="text" id="inputNama" placeholder="Contoh: Piston KWB" autocomplete="off">
           <div class="suggest-list" id="namaSuggestList"></div>
         </div>
       </div>
 
       <div class="field">
         <label>Jumlah</label>
-        <input type="text" id="inputJumlah" placeholder="Contoh: 2 kg / 5 pcs / 1 dus" autocomplete="off">
+        <input type="text" id="inputJumlah" placeholder="Contoh: 1/5/10" autocomplete="off">
       </div>
 
       <div class="field">
@@ -795,11 +795,6 @@
     }
 
     // Pengaman: note ini data BUKU BESAR -> alihkan ke editor buku besar, jangan ditimpa.
-    if (note.content && note.content.schema !== SCHEMA_VERSION && (note.content.schema || note.content.columns || note.content.rows)) {
-      existingNoteLoadFailed = true;
-      window.location.replace('editor-data-administrator.html' + window.location.search);
-      return;
-    }
 
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
@@ -811,7 +806,8 @@
       legacyBackup = note.content.legacy || null;
     } else {
       records = [];
-      legacyBackup = null;
+      // Note lama berskema lain: simpan utuh sebagai cadangan (tidak hilang saat disimpan)
+      legacyBackup = (note.content && (note.content.schema || note.content.columns || note.content.rows)) ? note.content : null;
     }
 
     // Gabungkan draft lokal (kalau ada) secara AMAN: data server adalah
