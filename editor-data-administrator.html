@@ -493,7 +493,7 @@
         <label>Harga <span class="opt-tag">(opsional — bisa menyusul)</span></label>
         <div class="price-input-wrap">
           <span class="price-prefix">Rp</span>
-          <input type="text" id="inputHarga" inputmode="numeric" placeholder="0">
+          <input type="text" id="inputHarga" inputmode="text" autocomplete="off" placeholder="0">
         </div>
       </div>
 
@@ -552,7 +552,7 @@
         <div class="detail-row">
           <label>Harga</label>
           <div class="val" id="detHargaView">—</div>
-          <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="numeric"></div>
+          <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
         </div>
       </div>
 
@@ -697,12 +697,31 @@
     const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
     return `${tgl} · ${NAMA_HARI[d.getDay()]} ${fmtWaktu(d)}`;
   }
-  function rupiah(n){ return n ? ('Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID')) : ''; }
+  // Harga boleh angka murni (disimpan number, tampil "Rp 1.500") ATAU teks bebas dengan simbol apa pun
+  // (mis. "500rb + ongkir", "$20", "1.5jt-2jt") — teks bebas disimpan & ditampilkan apa adanya.
+  function rupiah(n){
+    if (typeof n === 'string') return n.trim();
+    return n ? ('Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID')) : '';
+  }
   function digitsOnly(str){ return (str || '').replace(/[^\d]/g, ''); }
+  // Cuma angka/titik/spasi -> otomatis diberi pemisah ribuan. Ada huruf/simbol -> dibiarkan apa adanya.
   function formatHargaLive(str){
-    const d = digitsOnly(str);
+    const v = str || '';
+    if (!/^[\d.\s]*$/.test(v)) return v;
+    const d = digitsOnly(v);
     if (!d) return '';
     return Number(d).toLocaleString('id-ID');
+  }
+  // Angka murni -> number (kompatibel data lama). Ada simbol/huruf -> string apa adanya.
+  function parseHarga(str){
+    const v = (str || '').trim();
+    if (!v) return 0;
+    if (/^[\d.\s]+$/.test(v)) return Number(digitsOnly(v)) || 0;
+    return v;
+  }
+  function hargaToInput(h){
+    if (!h) return '';
+    return typeof h === 'string' ? h : Number(h).toLocaleString('id-ID');
   }
   function sortedRecords(){
     return [...records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -767,7 +786,7 @@
           const stokBarang = get('stokBarang');
           const keterangan = get('keterangan');
           const hargaRaw = get('harga');
-          const harga = Number(digitsOnly(hargaRaw)) || 0;
+          const harga = parseHarga(hargaRaw);
           if (!barang && !pj && !customer && !harga && !barangKeluar && !stokBarang && !keterangan) return;
 
           const fallback = new Date(noteCreatedAt || Date.now());
@@ -1139,7 +1158,7 @@
 
     listEl.innerHTML = recent.map(r => {
       const rightHtml = r.harga
-        ? `<div class="r-right">${rupiah(r.harga)}</div>`
+        ? `<div class="r-right">${escapeHtml(rupiah(r.harga))}</div>`
         : `<div class="r-right pending">Belum lengkap</div>`;
       return `
         <div class="recent-row tap" data-id="${r.id}">
@@ -1182,6 +1201,34 @@
     return [...new Set(records.map(r => r.pj).filter(Boolean))].sort((a, b) => a.localeCompare(b));
   }
 
+  // Urutan field untuk tombol Enter/Next (form Tambah Data & form Edit Detail)
+  const FIELD_ORDER = [
+    ['inputPJ','inputCustomer','inputBarang','inputBarangKeluar','inputStokBarang','inputKeterangan','inputHarga'],
+    ['detPJedit','detCustomerEdit','detBarangEdit','detKeluarEdit','detStokEdit','detKetEdit','detHargaEdit']
+  ];
+  function focusNextField(el){
+    const order = FIELD_ORDER.find(o => o.includes(el.id));
+    if (!order) return;
+    for (let i = order.indexOf(el.id) + 1; i < order.length; i++){
+      const n = document.getElementById(order[i]);
+      if (n && n.offsetParent !== null) { n.focus(); return; }
+    }
+    el.blur(); // field terakhir -> tutup keyboard
+  }
+  // Enter di <input> pindah ke field berikutnya (textarea dibiarkan: Enter = baris baru)
+  FIELD_ORDER.flat().forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.tagName !== 'INPUT') return;
+    el.setAttribute('enterkeyhint', 'next');
+    el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      const list = el.parentElement && el.parentElement.querySelector('.suggest-list');
+      if (list) list.classList.remove('open');
+      focusNextField(el);
+    });
+  });
+
   function setupSuggestDropdown(inputEl, listEl, getNames){
     function renderList(){
       const q = inputEl.value.trim().toLowerCase();
@@ -1199,6 +1246,9 @@
       e.preventDefault(); // supaya blur pada input tidak lebih dulu menutup dropdown ini
       inputEl.value = item.textContent;
       listEl.classList.remove('open');
+      // Setelah pilih nama, pindah fokus ke field berikutnya supaya keyboard Android tersambung ulang
+      // (mengubah value input yang sedang fokus lewat script bikin Enter/Next "nyangkut").
+      setTimeout(() => focusNextField(inputEl), 0);
     });
   }
 
@@ -1236,7 +1286,7 @@
     const barangKeluar = document.getElementById('inputBarangKeluar').value.trim();
     const stokBarang = document.getElementById('inputStokBarang').value.trim();
     const keterangan = document.getElementById('inputKeterangan').value.trim();
-    const harga = Number(digitsOnly(document.getElementById('inputHarga').value));
+    const harga = parseHarga(document.getElementById('inputHarga').value);
 
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); document.getElementById('inputBarang').focus(); return; }
     if (!pj) { alert('PJ (Penanggung Jawab) wajib diisi.'); document.getElementById('inputPJ').focus(); return; }
@@ -1349,7 +1399,7 @@
     document.getElementById('detKeluarEdit').value = r.barangKeluar || '';
     document.getElementById('detStokEdit').value = r.stokBarang || '';
     document.getElementById('detKetEdit').value = r.keterangan || '';
-    document.getElementById('detHargaEdit').value = r.harga ? Number(r.harga).toLocaleString('id-ID') : '';
+    document.getElementById('detHargaEdit').value = hargaToInput(r.harga);
     document.getElementById('detailActionsView').style.display = 'none';
     document.getElementById('detailActionsEdit').style.display = 'flex';
   });
@@ -1365,7 +1415,7 @@
     const barangKeluar = document.getElementById('detKeluarEdit').value.trim();
     const stokBarang = document.getElementById('detStokEdit').value.trim();
     const keterangan = document.getElementById('detKetEdit').value.trim();
-    const harga = Number(digitsOnly(document.getElementById('detHargaEdit').value));
+    const harga = parseHarga(document.getElementById('detHargaEdit').value);
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); return; }
     if (!pj) { alert('PJ wajib diisi.'); return; }
 
