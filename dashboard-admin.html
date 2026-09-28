@@ -3682,6 +3682,60 @@
     return null;
   }
 
+  // =====================================================================
+  // BUKU WARUNG — data terpisah dari buku besar
+  // Note warung disimpan dengan schema 'warung-data-v1' (field harga-nya
+  // bernama 'nominal', BUKAN 'harga'). getNoteTable() SENGAJA mengembalikan
+  // null untuk schema ini, jadi Tasks, Search, dan Analisa buku besar tidak
+  // pernah menyentuh data warung. Preview & export memakai getDisplayTable().
+  // =====================================================================
+  const WARUNG_SCHEMA = 'warung-data-v1';
+  const WARUNG_EDITOR_FILE = 'editor-data-warung.html';
+  const LEDGER_EDITOR_FILE = 'editor-data-administrator.html';
+
+  function isWarungNote(note) {
+    return !!(note && note.content && note.content.schema === WARUNG_SCHEMA);
+  }
+  // Folder dianggap folder warung kalau namanya mengandung kata "warung".
+  function isWarungFolderId(folderId) {
+    const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
+    return !!(cat && /warung/i.test(cat.name || ''));
+  }
+
+  const WARUNG_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'nama', label: 'Nama Barang' },
+    { id: 'jumlah', label: 'Jumlah' },
+    { id: 'keterangan', label: 'Keterangan' },
+    { id: 'nominal', label: 'Harga' }
+  ];
+
+  // Khusus tampilan (preview detail + export PDF/Gambar). Data buku besar tetap lewat getNoteTable().
+  function getDisplayTable(note) {
+    if (isWarungNote(note) && Array.isArray(note.content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const sorted = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const dt = r.created_at ? new Date(r.created_at) : null;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal: dt ? `${pad2(dt.getDate())}-${pad2(dt.getMonth() + 1)}-${dt.getFullYear()}` : '',
+            jam: dt ? `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}` : '',
+            nama: r.nama || '',
+            jumlah: r.jumlah || '',
+            keterangan: r.keterangan || '',
+            nominal: typeof r.nominal === 'string' ? r.nominal : (r.nominal ? Math.round(r.nominal).toLocaleString('id-ID') : '')
+          }
+        };
+      });
+      return { columns: WARUNG_COLUMNS, rows };
+    }
+    return getNoteTable(note);
+  }
+
   // Tanggal "asli" sebuah note buat dikelompokkan/diurutkan (bukan created_at
   // baris DB-nya, karena note bisa aja BARU diinput hari ini padahal isinya
   // catatan transaksi tanggal lain). Prioritas:
@@ -4614,6 +4668,12 @@
       folderId = activeCategoryId;
     }
     if (folderId) params.set('folder', folderId);
+
+    // Pilih editor: note warung / folder warung -> editor warung, selain itu buku besar.
+    // (Kalau salah pilih, kedua editor otomatis mengalihkan diri — data tidak akan tertimpa.)
+    const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
+    const editorFile = (isWarungNote(noteObj) || isWarungFolderId(folderId)) ? WARUNG_EDITOR_FILE : LEDGER_EDITOR_FILE;
+
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);
     params.set('_t', Date.now()); // cache-buster: paksa iframe selalu reload fresh, tidak reuse instance/JS lama
@@ -4625,7 +4685,7 @@
     // memakai ulang dokumen iframe yang sama kalau kebetulan URL-nya identik.
     editorFrame.src = 'about:blank';
     requestAnimationFrame(() => {
-      editorFrame.src = 'editor-data-administrator.html?' + params.toString();
+      editorFrame.src = editorFile + '?' + params.toString();
     });
 
     editorModal.classList.add('open');
@@ -4667,7 +4727,7 @@
     document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
 
     const tableEl = document.getElementById('noteDetailTable');
-    const content = getNoteTable(note);
+    const content = getDisplayTable(note);
 
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
@@ -4818,7 +4878,7 @@
 
   document.getElementById('btnShareExportPdf').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const content = getNoteTable(currentDetailNote);
+    const content = getDisplayTable(currentDetailNote);
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
@@ -4896,7 +4956,7 @@
 
   // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
   function buildExportTableEl(note) {
-    const content = getNoteTable(note);
+    const content = getDisplayTable(note);
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed; left:-99999px; top:0; background:#ffffff; padding:24px; width:max-content;';
@@ -4961,7 +5021,7 @@
 
   document.getElementById('btnShareExportImage').addEventListener('click', async () => {
     if (!currentDetailNote) return;
-    const content = getNoteTable(currentDetailNote);
+    const content = getDisplayTable(currentDetailNote);
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
       return;
@@ -5034,7 +5094,8 @@
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
 
-    allNotesData = (data || []).map(n => ({
+    // Note warung TIDAK ikut Analisa/Tasks/Search buku besar
+    allNotesData = (data || []).filter(n => !isWarungNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
