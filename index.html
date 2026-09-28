@@ -2007,6 +2007,51 @@
     }
   }
 
+  // Editor baru nyimpen isi tabel sebagai content.records (schema 'admin-data-v1'),
+  // sedangkan seluruh fitur viewer ini (detail, search, analisa, PDF, gambar)
+  // bacanya format lama { columns, rows }. Jadi dinormalisasi sekali di sini
+  // (sama persis dengan getNoteTable di dashboard-admin.html) — data asli di
+  // database nggak diubah sama sekali.
+  const NEW_SCHEMA_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'pj', label: 'PJ' },
+    { id: 'customer', label: 'Customer' },
+    { id: 'barang', label: 'Barang' },
+    { id: 'barangKeluar', label: 'Barang Keluar' },
+    { id: 'stokBarang', label: 'Stok Barang' },
+    { id: 'keterangan', label: 'Keterangan' },
+    { id: 'harga', label: 'Harga' }
+  ];
+
+  function normalizeNoteContent(content) {
+    if (!content) return content;
+    if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const sorted = [...content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const d = r.created_at ? new Date(r.created_at) : null;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal: d ? `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}` : '',
+            jam: d ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '',
+            pj: r.pj || '',
+            customer: r.customer || '',
+            barang: r.barang || '',
+            barangKeluar: r.barangKeluar || '',
+            stokBarang: r.stokBarang || '',
+            keterangan: r.keterangan || '',
+            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : ''
+          }
+        };
+      });
+      return { columns: NEW_SCHEMA_COLUMNS, rows };
+    }
+    return content; // format lama: dipakai apa adanya
+  }
+
   // Ambil semua notes dari semua folder, lalu tempel nama foldernya.
   // Sengaja TANPA filter deleted_at: dashboard admin & editor menghapus note
   // secara permanen (.delete()), nggak pernah soft-delete, jadi filter itu cuma
@@ -2025,7 +2070,8 @@
       categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
       notesData = (data || []).map(n => ({
         ...n,
-        folder: folderNameById[n.folder_id] || 'Uncategorized'
+        folder: folderNameById[n.folder_id] || 'Uncategorized',
+        content: normalizeNoteContent(n.content)
       }));
     }
   }
