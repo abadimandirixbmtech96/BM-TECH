@@ -3690,7 +3690,7 @@
   // pernah menyentuh data warung. Preview & export memakai getDisplayTable().
   // =====================================================================
   const WARUNG_SCHEMA = 'warung-data-v1';
-  const WARUNG_EDITOR_FILE = 'editor-data-warung.html';
+  const WARUNG_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-warung.html';
   const LEDGER_EDITOR_FILE = 'editor-data-administrator.html';
 
   function isWarungNote(note) {
@@ -4672,7 +4672,7 @@
     // Pilih editor: note warung / folder warung -> editor warung, selain itu buku besar.
     // (Kalau salah pilih, kedua editor otomatis mengalihkan diri — data tidak akan tertimpa.)
     const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
-    const editorFile = (isWarungNote(noteObj) || isWarungFolderId(folderId)) ? WARUNG_EDITOR_FILE : LEDGER_EDITOR_FILE;
+    const editorFile = (isWarungFolderId(folderId) || isWarungNote(noteObj)) ? WARUNG_EDITOR_FILE : LEDGER_EDITOR_FILE;
 
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);
