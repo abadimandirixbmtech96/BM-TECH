@@ -887,6 +887,14 @@
       return;
     }
 
+    // Pengaman: note ini ternyata data WARUNG -> alihkan ke editor warung,
+    // jangan pernah diedit/ditimpa dengan format buku besar.
+    if (note.content && note.content.schema === 'warung-data-v1') {
+      existingNoteLoadFailed = true; // blok autosave selama pengalihan
+      window.location.replace('editor-data-warung.html' + window.location.search);
+      return;
+    }
+
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
     noteTitle = note.title || '';
