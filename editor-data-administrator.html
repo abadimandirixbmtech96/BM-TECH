@@ -584,6 +584,9 @@
         <input type="text" id="inputJudulTabel" placeholder="Contoh: Data Pembelian Barang September">
       </div>
 
+      <div class="section-label">Pemeliharaan Data</div>
+      <button class="btn-secondary" id="btnDedupe">Bersihkan Data Duplikat</button>
+
       <div class="section-label">Tema Tampilan</div>
       <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
@@ -723,6 +726,21 @@
     if (!h) return '';
     return typeof h === 'string' ? h : Number(h).toLocaleString('id-ID');
   }
+  // Tanda pengenal isi data: dua data dengan isi & waktu buat persis sama dianggap duplikat.
+  function recordSignature(r){
+    return [r.created_at, r.pj, r.customer, r.barang, r.barangKeluar, r.stokBarang, r.keterangan, r.harga]
+      .map(v => (v == null ? '' : String(v).trim())).join('\u0001');
+  }
+  function dedupeRecords(list){
+    const seen = new Set(), kept = [];
+    let removed = 0;
+    list.forEach(r => {
+      const sig = recordSignature(r);
+      if (seen.has(sig)) { removed++; return; }
+      seen.add(sig); kept.push(r);
+    });
+    return { kept, removed };
+  }
   function sortedRecords(){
     return [...records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   }
@@ -792,7 +810,9 @@
           const fallback = new Date(noteCreatedAt || Date.now());
           fallback.setSeconds(fallback.getSeconds() + i); // urutan stabil antar baris lama
           migrated.push({
-            id: uid(),
+            // id HARUS stabil (bukan acak): kalau migrasi terulang karena simpan ke server sempat gagal,
+            // baris yang sama tetap dapat id yang sama sehingga tidak terduplikasi saat digabung draft HP.
+            id: 'mig_' + (row.id != null ? row.id : i),
             pj, customer, barang, barangKeluar, stokBarang, keterangan, harga,
             created_at: fallback.toISOString()
           });
@@ -898,12 +918,13 @@
       if (raw) {
         const draft = JSON.parse(raw);
         const knownIds = new Set(records.map(r => r.id));
+        const knownSigs = new Set(records.map(recordSignature));
         (draft.records || []).forEach(r => {
-          if (r && r.id && !knownIds.has(r.id)) {
-            records.push(r);
-            knownIds.add(r.id);
-            addedFromDraft++;
-          }
+          if (!r || !r.id) return;
+          if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return; // sudah ada (id atau isinya sama)
+          records.push(r);
+          knownIds.add(r.id); knownSigs.add(recordSignature(r));
+          addedFromDraft++;
         });
       }
     } catch (e) { /* draft rusak/tidak terbaca — abaikan, jangan sampai gagal load */ }
@@ -913,6 +934,10 @@
     }
 
     renderHome();
+    const dupInfo = dedupeRecords(records);
+    if (dupInfo.removed > 0 && !addedFromDraft) {
+      showMigrationToast(`Terdeteksi ${dupInfo.removed} data duplikat. Buka Pengaturan → Bersihkan Data Duplikat.`);
+    }
     if (needsMigrationSave || addedFromDraft > 0) scheduleAutosave();
   }
 
@@ -1444,8 +1469,20 @@
   // =====================================================================
   function renderSettings(){
     document.getElementById('inputJudulTabel').value = noteTitle || '';
+    const dup = dedupeRecords(records).removed;
+    document.getElementById('btnDedupe').textContent = dup ? `Bersihkan Data Duplikat (${dup})` : 'Bersihkan Data Duplikat';
     applyThemeUI();
   }
+  document.getElementById('btnDedupe').addEventListener('click', () => {
+    const { kept, removed } = dedupeRecords(records);
+    if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
+    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nHapus duplikatnya dan sisakan 1 dari tiap pasang?`)) return;
+    records = kept;
+    scheduleAutosave();
+    renderHome();
+    renderSettings();
+    showMigrationToast(`${removed} data duplikat berhasil dihapus.`);
+  });
   document.getElementById('inputJudulTabel').addEventListener('change', (e) => {
     noteTitle = e.target.value.trim();
     scheduleAutosave();
