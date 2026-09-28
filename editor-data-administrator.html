@@ -421,7 +421,7 @@
       <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Total Data</div><div class="stat-value" id="statTotal">0</div></div>
         <div class="stat-card"><div class="stat-label">Hari Ini</div><div class="stat-value" id="statToday">0</div></div>
-        <div class="stat-card"><div class="stat-label">Total Harga Hari Ini</div><div class="stat-value money" id="statHargaToday">Rp 0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Harga</div><div class="stat-value money" id="statHargaTotal">Rp 0</div></div>
         <div class="stat-card"><div class="stat-label">Belum Lengkap</div><div class="stat-value" id="statIncomplete">0</div></div>
       </div>
 
@@ -1160,8 +1160,9 @@
     const now = new Date();
     document.getElementById('statTotal').textContent = records.length;
     document.getElementById('statToday').textContent = records.filter(r => isSameDay(r.created_at, now)).length;
-    const totalHargaHariIni = records.filter(r => isSameDay(r.created_at, now)).reduce((sum, r) => sum + (Number(r.harga) || 0), 0);
-    document.getElementById('statHargaToday').textContent = totalHargaHariIni ? rupiah(totalHargaHariIni) : 'Rp 0';
+    // Total harga SEMUA data (bukan cuma hari ini). Harga berupa teks bebas tidak ikut dijumlahkan.
+    const totalHarga = records.reduce((sum, r) => sum + (Number(r.harga) || 0), 0);
+    document.getElementById('statHargaTotal').textContent = totalHarga ? rupiah(totalHarga) : 'Rp 0';
     document.getElementById('statIncomplete').textContent = records.filter(isRecordIncomplete).length;
     document.getElementById('homeGreetName').textContent = noteTitle && noteTitle.trim() ? noteTitle : 'Admin';
     renderRecentList();
