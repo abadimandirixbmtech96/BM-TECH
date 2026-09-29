@@ -1,13 +1,13 @@
 {
-  "name": "BM-TECH",
-  "short_name": "BM-TECH",
+  "name": "BM-TECH Kalkulator",
+  "short_name": "Kalkulator",
   "description": "Sistem catatan & administrasi BM-TECH",
-  "start_url": "/index.html",
+  "start_url": "/calculator.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#000000",
-  "theme_color": "#F0A529",
+  "background_color": "#F2F2F7",
+  "theme_color": "#0A84FF",
   "icons": [
     {
       "src": "/icons/icon-192.png",

@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v1';
+const CACHE_NAME = 'bmtech-shell-v2'; // dinaikkan: app-shell iOS (manifest per-role, ikon, SW register) berubah
 
 const APP_SHELL = [
   '/',
@@ -12,10 +12,21 @@ const APP_SHELL = [
   '/dashboard-admin.html',
   '/admin-login.html',
   '/editor-data-administrator.html',
+  '/editor-data-warung.html',
+  '/customer-login.html',
+  '/customer-tracking.html',
   '/calculator.html',
   '/manifest.json',
+  '/manifest-admin.json',
+  '/manifest-customer.json',
+  '/manifest-calculator.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png',
+  '/icons/apple-touch-icon-152.png',
+  '/icons/apple-touch-icon-167.png',
+  '/icons/favicon-32.png',
+  '/icons/favicon-16.png',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js'
 ];
 
