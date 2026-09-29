@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest-admin.json">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<meta name="apple-mobile-web-app-title" content="Buku Kasbon">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" id="themeColorMeta" content="#F6F1E7">
+<title>Buku Kasbon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  *{ font-family:var(--app-font); }
+
+  :root{
+    --paper:#F6F1E7;
+    --paper-alt:#FBF8F2;
+    --ink:#1C1B19;
+    --ink-soft:#6B6459;
+    --line:#E4DDCC;
+    --line-soft:#EDE7D8;
+    --glass-bg:rgba(255,255,255,0.6);
+    --glass-border:rgba(255,255,255,0.7);
+    --glass-shadow:0 8px 32px rgba(80,70,50,0.14);
+    --accent:#C9932F;
+    --accent-ink:#5A430F;
+    --accent-soft:rgba(201,147,47,0.14);
+    --danger:#C24444;
+    --danger-soft:rgba(194,68,68,0.12);
+    --radius-pill:999px;
+    --radius-lg:22px;
+    --radius-md:16px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --safe-left:env(safe-area-inset-left,0px);
+    --safe-right:env(safe-area-inset-right,0px);
+    --skeleton-a:rgba(0,0,0,0.06);
+    --skeleton-b:rgba(0,0,0,0.12);
+
+    /* ---- Tombol ADD DATA di bottom nav — ubah 3 angka ini saja untuk resize ---- */
+    --fab-size:44px;     /* diameter lingkaran tombol */
+    --fab-lift:14px;     /* seberapa tinggi tombol menonjol keluar navbar */
+    --fab-icon-size:18px;/* ukuran ikon "+" di dalamnya */
+  }
+
+  body.surface-dark{
+    --paper:#15140F;
+    --paper-alt:#1B1A15;
+    --ink:#EDEAE2;
+    --ink-soft:#9B948A;
+    --line:#332F27;
+    --line-soft:#26241D;
+    --glass-bg:rgba(30,28,23,0.6);
+    --glass-border:rgba(255,255,255,0.09);
+    --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
+    --accent-soft:rgba(201,147,47,0.18);
+    --danger-soft:rgba(194,68,68,0.18);
+    --skeleton-a:rgba(255,255,255,0.06);
+    --skeleton-b:rgba(255,255,255,0.13);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
+  button{ font:inherit; }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    overscroll-behavior:none;
+    transition:background .2s ease, color .2s ease;
+  }
+  input,select,textarea{ font:inherit; color:inherit; }
+  button, .tap{ transition:transform .1s ease, background .1s ease, opacity .1s ease; }
+  button:active, .tap:active{ transform:scale(0.96); }
+
+  .app{ position:fixed; inset:0; display:flex; flex-direction:column; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; gap:10px;
+    padding:calc(var(--safe-top) + 12px) calc(var(--safe-left) + 16px) 12px calc(var(--safe-left) + 16px);
+    flex-shrink:0;
+  }
+  .icon-btn{
+    width:40px; height:40px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border:none; background:var(--glass-bg); border:1px solid var(--glass-border);
+    backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);
+    border-radius:50%; color:var(--ink); cursor:pointer;
+  }
+  .icon-btn svg{ width:18px; height:18px; }
+  .topbar-titles{ display:flex; flex-direction:column; min-width:0; flex:1; }
+  .topbar-titles h2{ margin:0; font-size:17px; font-weight:750; letter-spacing:-0.01em; }
+  .topbar-titles span{ font-size:12.5px; color:var(--ink-soft); font-weight:500; }
+  .topbar-action{
+    flex-shrink:0; padding:9px 16px; border-radius:var(--radius-pill); border:1.5px solid var(--line);
+    background:var(--paper-alt); color:var(--ink); font-size:13.5px; font-weight:750; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .topbar-action svg{ width:15px; height:15px; }
+
+  /* ---------- Scroll area ---------- */
+  .scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(96px + var(--safe-bottom)); }
+  .scroll.no-nav{ padding-bottom:calc(28px + var(--safe-bottom)); }
+  .px{ padding-left:calc(var(--safe-left) + 18px); padding-right:calc(var(--safe-right) + 18px); }
+
+  /* ---------- Views ---------- */
+  .view{ display:none; flex-direction:column; height:100%; }
+  .view.active{ display:flex; }
+
+  /* ---------- Home ---------- */
+  .greet-card{
+    margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
+    background:
+      linear-gradient(135deg, rgba(196,143,31,0.55) 0%, rgba(90,62,15,0.68) 100%),
+      url('background-admin.jpg') center/cover no-repeat, var(--accent);
+    color:#fff; box-shadow:0 10px 26px rgba(180,130,30,0.28);
+  }
+  .greet-card p{ margin:0 0 4px 0; font-size:13px; opacity:0.85; font-weight:600; }
+  .greet-card h3{ margin:0 0 4px 0; font-size:20px; font-weight:800; }
+  .greet-card span{ font-size:12.5px; opacity:0.8; }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+  .stat-card{
+    padding:14px 16px; border-radius:var(--radius-md);
+    background:rgba(255,255,255,0.28); border:1px solid rgba(255,255,255,0.45);
+    backdrop-filter:blur(24px) saturate(1.6); -webkit-backdrop-filter:blur(24px) saturate(1.6);
+    box-shadow:0 6px 18px rgba(80,70,50,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  body.surface-dark .stat-card{
+    background:rgba(30,28,23,0.32); border-color:rgba(255,255,255,0.08);
+    box-shadow:0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .stat-card .stat-label{ font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .stat-card .stat-value{ font-size:24px; font-weight:800; margin-top:4px; letter-spacing:-0.01em; }
+  .stat-card .stat-value.money{ font-size:18px; }
+  .section-label{ margin:22px 0 10px 0; font-size:13px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em; }
+  .menu-card{
+    display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:10px;
+    border-radius:var(--radius-md); background:var(--paper-alt); border:1px solid var(--line-soft);
+    cursor:pointer;
+  }
+  .menu-card .menu-ico{
+    width:42px; height:42px; border-radius:13px; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  body.surface-dark .menu-card .menu-ico{ color:var(--accent); }
+  .menu-card .menu-ico svg{ width:20px; height:20px; }
+  .menu-card .menu-text b{ display:block; font-size:15px; font-weight:700; }
+  .menu-card .menu-text span{ font-size:12.5px; color:var(--ink-soft); }
+  .menu-card .chev{ margin-left:auto; color:var(--ink-soft); flex-shrink:0; }
+  .menu-card .chev svg{ width:16px; height:16px; }
+
+  .recent-row{
+    display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px;
+    border-radius:14px; background:var(--paper-alt); border:1px solid var(--line-soft); cursor:pointer;
+  }
+  .recent-row .r-no{
+    width:30px; height:30px; border-radius:10px; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;
+  }
+  body.surface-dark .recent-row .r-no{ color:var(--accent); }
+  .recent-row .r-mid{ flex:1; min-width:0; }
+  .recent-row .r-mid b{ display:block; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .recent-row .r-mid span{ font-size:11.5px; color:var(--ink-soft); font-weight:500; }
+  .recent-row .r-right{ text-align:right; flex-shrink:0; font-size:13px; font-weight:800; color:var(--accent-ink); }
+  body.surface-dark .recent-row .r-right{ color:var(--accent); }
+  .recent-row .r-right.lunas{ color:#3E9B5F; }
+  .recent-row .r-right .r-sub{ font-size:10.5px; font-weight:600; color:var(--ink-soft); margin-top:1px; }
+  .detail-row .auto-tag-inline{ font-size:10px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:1px 7px; border-radius:var(--radius-pill); margin-left:6px; }
+  body.surface-dark .detail-row .auto-tag-inline{ color:var(--accent); }
+  .field .readonly-box.warn span:first-child, .detail-row .val.warn{ color:#C24444; }
+  .detail-row .val.ok, .field .readonly-box.ok span:first-child{ color:#3E9B5F; }
+  .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    display:flex; flex-direction:column;
+  }
+  /* Layer background nav dengan cekungan (notch) di tengah, tinggi tetap 64px */
+  .bottom-nav-surface{
+    position:relative; height:64px;
+    display:flex; align-items:center;
+    padding:0 calc(var(--safe-left) + 10px) 0 calc(var(--safe-right) + 10px);
+  }
+  .bottom-nav-bg{
+    position:absolute; inset:0; z-index:0;
+    background:var(--glass-bg);
+    backdrop-filter:blur(24px) saturate(1.4); -webkit-backdrop-filter:blur(24px) saturate(1.4);
+    clip-path:url(#navNotchClip);
+    box-shadow:0 -2px 14px rgba(30,25,15,0.06);
+  }
+  /* Strip pengisi safe-area bawah (mis. home-indicator iPhone), rata & tanpa cekungan */
+  .bottom-nav-safe{
+    height:var(--safe-bottom);
+    background:var(--glass-bg);
+    backdrop-filter:blur(24px) saturate(1.4); -webkit-backdrop-filter:blur(24px) saturate(1.4);
+  }
+  .nav-item{
+    position:relative; z-index:1;
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0;
+    border:none; background:none; color:var(--ink-soft); cursor:pointer;
+  }
+  .nav-item svg{ width:21px; height:21px; }
+  .nav-item span{ font-size:11px; font-weight:600; }
+  .nav-item.active{ color:var(--accent); }
+
+  /* ---------- Tombol ADD DATA di tengah nav: flat, menonjol keluar cekungan ---------- */
+  .nav-item-add{ gap:6px; justify-content:flex-end; }
+  .nav-add-fab{
+    width:var(--fab-size); height:var(--fab-size); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--accent); color:#fff;
+    transform:translateY(calc(-1 * var(--fab-lift)));
+    transition:transform .15s ease, background .15s ease;
+  }
+  .nav-add-fab svg{ width:var(--fab-icon-size); height:var(--fab-icon-size); }
+  .nav-item-add span{
+    font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft);
+    margin-top:calc(-1 * var(--fab-lift) + 4px); /* label tetap rapat di bawah lingkaran meski ukurannya berubah */
+  }
+  .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{
+    background:var(--accent-ink); transform:translateY(calc(-1 * var(--fab-lift))) scale(0.94);
+  }
+
+
+
+  /* ---------- Form ---------- */
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
+  .field label .opt-tag{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-soft); opacity:0.75; }
+  .field .readonly-box{
+    padding:13px 14px; border-radius:14px; background:var(--line-soft); color:var(--ink-soft);
+    font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:space-between;
+  }
+  .field .readonly-box .auto-tag{ font-size:10.5px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:2px 8px; border-radius:var(--radius-pill); }
+  body.surface-dark .field .readonly-box .auto-tag{ color:var(--accent); }
+  .field input, .field select, .field textarea{
+    width:100%; padding:13px 14px; border-radius:14px; border:1.5px solid var(--line);
+    background:var(--paper-alt); color:var(--ink); font-size:15px; font-weight:600; outline:none;
+    resize:vertical;
+  }
+  .field textarea{ min-height:70px; font-weight:500; }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--accent); }
+  .field .price-input-wrap{ position:relative; }
+  .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
+  .field .price-input-wrap input{ padding-left:38px; }
+
+  /* ---------- Saran nama PJ (dropdown kustom, bukan datalist native) ---------- */
+  .suggest-wrap{ position:relative; }
+  .suggest-list{
+    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
+    max-height:190px; overflow-y:auto; border-radius:14px; border:1.5px solid var(--line);
+    background:var(--paper-alt); box-shadow:0 12px 28px rgba(30,25,15,0.18);
+    -webkit-overflow-scrolling:touch;
+  }
+  .suggest-list.open{ display:block; }
+  .suggest-item{
+    padding:11px 14px; font-size:14.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .suggest-item:last-child{ border-bottom:none; }
+  .suggest-item:active{ background:var(--accent-soft); }
+  .detail-row .suggest-list{ border-radius:11px; }
+  .hint-card{
+    display:flex; gap:10px; align-items:flex-start; padding:13px 14px; border-radius:14px;
+    background:var(--accent-soft); color:var(--accent-ink); font-size:12.5px; font-weight:600; line-height:1.4; margin-bottom:18px;
+  }
+  body.surface-dark .hint-card{ color:var(--ink); }
+  .hint-card svg{ width:18px; height:18px; flex-shrink:0; margin-top:1px; }
+
+  .btn-primary{
+    width:100%; padding:15px; border:none; border-radius:16px; background:var(--accent); color:#fff;
+    font-size:15.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow:0 8px 20px rgba(180,130,30,0.28);
+  }
+  .btn-primary svg{ width:18px; height:18px; }
+  .btn-primary:disabled{ opacity:0.55; box-shadow:none; }
+  .btn-secondary{
+    width:100%; padding:15px; border:1.5px solid var(--line); border-radius:16px; background:transparent; color:var(--ink);
+    font-size:15.5px; font-weight:700; cursor:pointer;
+  }
+  .btn-danger-outline{
+    padding:13px; border:1.5px solid var(--danger); border-radius:14px; background:var(--danger-soft); color:var(--danger);
+    font-size:14.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-danger-outline svg{ width:16px; height:16px; }
+  .trash-item{ margin-bottom:14px; }
+  .trash-actions{ display:flex; gap:10px; margin-top:8px; }
+  .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
+  .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
+
+  /* ---------- Puzzle konfirmasi hapus ---------- */
+  .pz-wrap{
+    position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
+    background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  .pz-wrap canvas{ display:block; }
+  #pzPiece{
+    position:absolute; left:0; top:0; will-change:transform;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.4)); pointer-events:none;
+  }
+  .pz-refresh{
+    position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.5); background:rgba(0,0,0,0.28); color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  .pz-refresh svg{ width:15px; height:15px; }
+  .pz-wrap.fail{ animation:pzShake .4s ease; }
+  @keyframes pzShake{
+    0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-8px); } 40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-5px); } 80%{ transform:translateX(5px); }
+  }
+  .pz-track{
+    position:relative; height:46px; border-radius:23px; border:1.5px solid var(--line);
+    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:none;
+  }
+  .pz-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-soft); }
+  .pz-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:650; color:var(--ink-soft); pointer-events:none; padding-left:30px;
+  }
+  .pz-handle{
+    position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
+    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
+  }
+  .pz-handle svg{ width:18px; height:18px; }
+  .pz-handle:active{ transform:none; }
+  .pz-anim .pz-handle, .pz-anim #pzPiece, .pz-anim .pz-fill{ transition:transform .22s ease, width .22s ease; }
+  .pz-track.ok{ border-color:#3E9B5F; }
+  .pz-track.ok .pz-fill{ background:rgba(62,155,95,0.22); }
+  .pz-track.ok .pz-handle{ background:#3E9B5F; }
+  .pz-track.ok .pz-label{ color:#3E9B5F; }
+  .btn-row{ display:flex; gap:10px; }
+  .btn-row > *{ flex:1; }
+
+  /* ---------- Detail ---------- */
+  .detail-card{
+    border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
+    padding:6px 16px; margin-top:6px;
+  }
+  .detail-row{ padding:13px 0; border-bottom:1px solid var(--line-soft); }
+  .detail-row:last-child{ border-bottom:none; }
+  .detail-row label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.03em; }
+  .detail-row .val{ font-size:15px; font-weight:700; white-space:pre-wrap; }
+  .detail-row .val.empty{ color:var(--ink-soft); font-weight:600; font-style:italic; }
+  .detail-row input, .detail-row textarea{
+    width:100%; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line);
+    background:var(--paper); font-size:15px; font-weight:700; outline:none; color:var(--ink);
+  }
+  .detail-row textarea{ font-weight:500; min-height:64px; resize:vertical; }
+  .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
+  .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+
+  /* ---------- Settings ---------- */
+  .theme-opt{
+    display:flex; align-items:center; justify-content:space-between; padding:14px 16px; margin-bottom:10px;
+    border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line-soft); cursor:pointer;
+  }
+  .theme-opt.active{ border-color:var(--accent); background:var(--accent-soft); }
+  .theme-opt b{ font-size:14.5px; font-weight:700; }
+  .theme-opt .dot{ width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
+  .theme-opt.active .dot{ border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 3px var(--paper-alt); }
+
+  /* ---------- Modal / sheet ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
+    display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  .overlay.center{ align-items:center; padding:0 20px; }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    width:100%; max-width:420px; background:var(--paper); border-radius:24px 24px 0 0;
+    padding:22px 20px calc(var(--safe-bottom) + 20px) 20px; transform:translateY(24px); transition:transform .2s ease;
+    max-height:85vh; overflow-y:auto;
+  }
+  .overlay.center .modal-card{ border-radius:22px; padding:24px 20px calc(var(--safe-bottom) + 20px) 20px; }
+  .overlay.show .modal-card{ transform:translateY(0); }
+  .modal-icon{
+    width:54px; height:54px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto;
+  }
+  body.surface-dark .modal-icon{ color:var(--accent); }
+  .modal-icon svg{ width:26px; height:26px; }
+  .modal-icon.danger{ background:var(--danger-soft); color:var(--danger); }
+  .modal-card h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; text-align:center; }
+  .modal-card p.desc{ margin:0 0 16px 0; font-size:13.5px; color:var(--ink-soft); text-align:center; line-height:1.5; }
+  .preview-box{ background:var(--paper-alt); border-radius:16px; padding:4px 14px; margin-bottom:18px; }
+  .preview-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
+  .preview-row:last-child{ border-bottom:none; }
+  .preview-row span:first-child{ color:var(--ink-soft); font-weight:600; flex-shrink:0; }
+  .preview-row span:last-child{ font-weight:750; text-align:right; }
+  .preview-row span.empty-val{ color:var(--ink-soft); font-weight:600; font-style:italic; }
+
+
+  /* ---------- Loading / toast ---------- */
+
+  #saveStatusIndicator{
+    position:fixed; top:calc(var(--safe-top) + 10px); right:14px; z-index:500;
+    font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:var(--radius-pill);
+    background:rgba(0,0,0,0.6); color:#fff; opacity:0; transition:opacity .25s ease; pointer-events:none;
+  }
+  #migrationToast{
+    position:fixed; left:16px; right:16px; bottom:calc(var(--safe-bottom) + 18px); z-index:300;
+    background:var(--ink); color:var(--paper); padding:13px 16px; border-radius:16px; font-size:12.5px; font-weight:600;
+    line-height:1.5; opacity:0; transform:translateY(10px); transition:opacity .25s ease, transform .25s ease; pointer-events:none;
+  }
+  #migrationToast.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
+</style>
+
+<!-- Supabase Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
+      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
+      storage: window.localStorage,
+      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
+    }
+  });
+</script>
+
+<!-- Auth Guard -->
+<script>
+  (async function guardAdminAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.top.location.href = 'admin-login.html';
+      return;
+    }
+
+    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+
+    if (error) {
+      console.error('Gagal cek status admin (jaringan?):', error.message);
+      return;
+    }
+
+    if (!isAdmin) {
+      await supabaseClient.auth.signOut();
+      window.top.location.href = 'admin-login.html';
+    }
+  })();
+</script>
+
+<script>
+  window.addEventListener('error', function (e) {
+    console.error('Unhandled error:', e.error || e.message);
+    alert('Terjadi error tak terduga: ' + (e.message || 'unknown error'));
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    console.error('Unhandled promise rejection:', e.reason);
+    alert('Terjadi error tak terduga (async): ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
+  });
+</script>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ HOME ============ -->
+  <section class="view active" id="view-home">
+    <div class="topbar">
+      <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+    </div>
+    <div class="scroll px">
+      <div class="greet-card">
+        <p>Selamat datang,</p>
+        <h3 id="homeGreetName">Admin</h3>
+        <span>Catat kasbon pelanggan dengan mudah dan cepat.</span>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Data</div><div class="stat-value" id="statTotal">0</div></div>
+        <div class="stat-card"><div class="stat-label">Hari Ini</div><div class="stat-value" id="statToday">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total Sisa Tagihan</div><div class="stat-value money" id="statHargaTotal">Rp 0</div></div>
+        <div class="stat-card"><div class="stat-label">Belum Lunas</div><div class="stat-value" id="statIncomplete">0</div></div>
+      </div>
+
+      <div class="section-label">Daftar Data Tersedia</div>
+      <div id="recentList"></div>
+      <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk tombol "+" di bawah untuk mulai.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAMBAH DATA ============ -->
+  <section class="view" id="view-add">
+    <div class="topbar">
+      <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Tambah Data</h2><span>Isi data sesuai kebutuhan</span></div>
+    </div>
+    <div class="scroll no-nav px">
+      <div class="hint-card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>Nama dan Total Tagihan wajib diisi. Dibayar dan Keterangan boleh menyusul lewat Edit. Sisa Tagihan dihitung otomatis. Data di halaman ini terpisah total dari buku besar dan buku warung.</span>
+      </div>
+
+      <div class="field">
+        <label>Nomor</label>
+        <div class="readonly-box"><span id="addPreviewNo">001</span><span class="auto-tag">Auto</span></div>
+      </div>
+      <div class="field">
+        <label>Tanggal</label>
+        <div class="readonly-box"><span id="addPreviewTanggal">—</span><span class="auto-tag">Auto</span></div>
+      </div>
+      <div class="field">
+        <label>Waktu</label>
+        <div class="readonly-box"><span id="addPreviewWaktu">—</span><span class="auto-tag">Auto</span></div>
+      </div>
+
+      <div class="field">
+        <label>Nama</label>
+        <div class="suggest-wrap">
+          <input type="text" id="inputNama" placeholder="Contoh: Pak Budi" autocomplete="off">
+          <div class="suggest-list" id="namaSuggestList"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Total Tagihan</label>
+        <div class="price-input-wrap">
+          <span class="price-prefix">Rp</span>
+          <input type="text" id="inputTotal" inputmode="numeric" autocomplete="off" placeholder="0">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Dibayar <span class="opt-tag">(opsional — bisa menyusul)</span></label>
+        <div class="price-input-wrap">
+          <span class="price-prefix">Rp</span>
+          <input type="text" id="inputDibayar" inputmode="numeric" autocomplete="off" placeholder="0">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Sisa Tagihan</label>
+        <div class="readonly-box"><span id="addPreviewSisa">Rp 0</span><span class="auto-tag">Auto</span></div>
+      </div>
+
+      <div class="field">
+        <label>Keterangan <span class="opt-tag">(opsional)</span></label>
+        <textarea id="inputKeterangan" placeholder="Catatan tambahan"></textarea>
+      </div>
+
+      <button class="btn-primary" id="btnBukaKonfirmasi">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6"/></svg>
+        Simpan Data
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ DETAIL DATA ============ -->
+  <section class="view" id="view-detail">
+    <div class="topbar">
+      <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Detail Data</h2><span id="detailSubtitle">&nbsp;</span></div>
+    </div>
+    <div class="scroll no-nav px">
+      <div class="detail-card">
+        <div class="detail-row"><label>Nomor</label><div class="val" id="detNo">001</div></div>
+        <div class="detail-row"><label>Tanggal</label><div class="val" id="detTanggal">—</div></div>
+        <div class="detail-row"><label>Waktu</label><div class="val" id="detWaktu">—</div></div>
+
+        <div class="detail-row">
+          <label>Nama</label>
+          <div class="val" id="detNamaView">—</div>
+          <div class="suggest-wrap">
+            <input type="text" id="detNamaEdit" style="display:none;">
+            <div class="suggest-list" id="detNamaSuggestList"></div>
+          </div>
+        </div>
+        <div class="detail-row">
+          <label>Total Tagihan</label>
+          <div class="val" id="detTotalView">—</div>
+          <div class="price-input-wrap" id="detTotalEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detTotalEdit" inputmode="numeric" autocomplete="off"></div>
+        </div>
+        <div class="detail-row">
+          <label>Dibayar</label>
+          <div class="val" id="detDibayarView">—</div>
+          <div class="price-input-wrap" id="detDibayarEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detDibayarEdit" inputmode="numeric" autocomplete="off"></div>
+        </div>
+        <div class="detail-row">
+          <label>Sisa Tagihan <span class="auto-tag-inline">Auto</span></label>
+          <div class="val" id="detSisaView">—</div>
+        </div>
+        <div class="detail-row">
+          <label>Keterangan</label>
+          <div class="val" id="detKetView">—</div>
+          <textarea id="detKetEdit" style="display:none;"></textarea>
+        </div>
+      </div>
+
+      <div class="detail-actions" id="detailActionsView">
+        <div class="btn-row">
+          <button class="btn-secondary" id="btnDetailEdit">Edit</button>
+          <button class="btn-danger-outline" id="btnDetailDelete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Hapus</button>
+        </div>
+        <button class="btn-secondary" id="btnDetailClose">Tutup</button>
+      </div>
+      <div class="detail-actions" id="detailActionsEdit" style="display:none;">
+        <div class="btn-row">
+          <button class="btn-secondary" id="btnDetailCancelEdit">Batal</button>
+          <button class="btn-primary" id="btnDetailSaveEdit">Simpan Perubahan</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="view" id="view-settings">
+    <div class="topbar">
+      <button class="icon-btn" id="btnSettingsBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Pengaturan</h2><span>Tema, judul tabel, dan lainnya</span></div>
+    </div>
+    <div class="scroll no-nav px">
+      <div class="section-label" style="margin-top:6px;">Judul Tabel</div>
+      <div class="field">
+        <input type="text" id="inputJudulTabel" placeholder="Contoh: Buku Kasbon September">
+      </div>
+
+      <div class="section-label">Pemeliharaan Data</div>
+      <button class="btn-secondary" id="btnDedupe">Bersihkan Data Duplikat</button>
+      <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
+
+      <div class="section-label">Tema Tampilan</div>
+      <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ SAMPAH ============ -->
+  <section class="view" id="view-trash">
+    <div class="topbar">
+      <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Sampah</h2><span id="trashSub">Data yang dihapus muncul di sini</span></div>
+    </div>
+    <div class="scroll no-nav px">
+      <div id="trashList" style="margin-top:6px;"></div>
+      <div id="trashEmptyHint" style="display:none; text-align:center; padding:40px 10px; color:var(--ink-soft); font-size:14px;">Sampah kosong</div>
+      <button class="btn-danger-outline" id="btnEmptyTrash" style="display:none; width:100%; margin-top:14px;">Kosongkan Sampah</button>
+    </div>
+  </section>
+
+  <!-- ============ BOTTOM NAV ============ -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <clipPath id="navNotchClip" clipPathUnits="objectBoundingBox">
+        <path id="navNotchPath" d="M0,0 L0.37,0
+                 C0.415,0 0.435,0.02 0.45,0.09
+                 C0.465,0.17 0.48,0.28 0.5,0.28
+                 C0.52,0.28 0.535,0.17 0.55,0.09
+                 C0.565,0.02 0.585,0 0.63,0
+                 L1,0 L1,1 L0,1 Z"/>
+      </clipPath>
+    </defs>
+  </svg>
+  <div class="bottom-nav" id="bottomNav">
+    <div class="bottom-nav-surface">
+      <div class="bottom-nav-bg"></div>
+      <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
+      <button class="nav-item nav-item-add" data-nav="add">
+        <span class="nav-add-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        <span>ADD DATA</span>
+      </button>
+      <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg><span>Settings</span></button>
+    </div>
+    <div class="bottom-nav-safe"></div>
+  </div>
+
+  <!-- ============ MODAL: KONFIRMASI ============ -->
+  <div class="overlay center" id="overlayConfirm">
+    <div class="modal-card">
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
+      <h3>Konfirmasi Data</h3>
+      <p class="desc">Apakah Anda yakin ingin menyimpan data ini?</p>
+      <div class="preview-box">
+        <div class="preview-row"><span>Nomor</span><span id="cfNo">001</span></div>
+        <div class="preview-row"><span>Tanggal</span><span id="cfTanggal">—</span></div>
+        <div class="preview-row"><span>Waktu</span><span id="cfWaktu">—</span></div>
+        <div class="preview-row"><span>Nama</span><span id="cfNama">—</span></div>
+        <div class="preview-row"><span>Total Tagihan</span><span id="cfTotal">—</span></div>
+        <div class="preview-row"><span>Dibayar</span><span id="cfDibayar">—</span></div>
+        <div class="preview-row"><span>Sisa Tagihan</span><span id="cfSisa">—</span></div>
+        <div class="preview-row"><span>Keterangan</span><span id="cfKet">—</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btnConfirmBatal">Batal</button>
+        <button class="btn-primary" id="btnConfirmSimpan">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODAL: HAPUS ============ -->
+  <div class="overlay center" id="overlayDelete">
+    <div class="modal-card">
+      <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+      <h3 id="deleteTitle">Hapus Data?</h3>
+      <p class="desc" id="deleteDesc">Data akan dipindahkan ke Sampah.</p>
+      <div class="pz-wrap" id="pzWrap">
+        <canvas id="pzCanvas"></canvas>
+        <canvas id="pzPiece"></canvas>
+        <button type="button" class="pz-refresh" id="pzRefresh" aria-label="Ganti puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg></button>
+      </div>
+      <div class="pz-track" id="pzTrack">
+        <div class="pz-fill" id="pzFill"></div>
+        <div class="pz-label" id="pzLabel">Geser untuk mencocokkan</div>
+        <button type="button" class="pz-handle" id="pzHandle" aria-label="Geser potongan puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn-secondary" id="btnDeleteBatal">Batal</button>
+        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin" disabled>Ya, Hapus</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="saveStatusIndicator"></div>
+  <div id="migrationToast"></div>
+</div>
+
+<script>
+  // =====================================================================
+  // KONSTAN & STATE
+  // =====================================================================
+  const SCHEMA_VERSION = 'kasbon-data-v1'; // BEDA dari buku besar ('admin-data-v1') & warung ('warung-data-v1') — sengaja, supaya tidak tercampur
+
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentNoteId = urlParams.get('id') || null;
+  const targetFolderId = urlParams.get('folder') || null;
+  let lastKnownUpdatedAt = null;
+  let existingNoteLoadFailed = false;
+
+  let noteTitle = '';
+  // record: { id, nama, total(number), dibayar(number), keterangan, created_at(ISO) }  — sisa tagihan dihitung otomatis: total - dibayar
+  let records = [];
+  // sampah: record yang dihapus, disimpan 30 hari sebelum hilang permanen. { ...record, deleted_at(ISO) }
+  let trash = [];
+  const TRASH_DAYS = 30;
+  let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
+
+  let currentView = 'home';
+  let editingRecordId = null;
+  let deletingRecordId = null;
+
+  // =====================================================================
+  // HELPERS
+  // =====================================================================
+  function uid(){ return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
+  function pad2(n){ return String(n).padStart(2, '0'); }
+  function pad3(n){ return String(n).padStart(3, '0'); }
+  function fmtTanggal(d){ return pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear(); }
+  function fmtWaktu(d){ return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+  function fmtTanggalFromISO(iso){ return fmtTanggal(new Date(iso)); }
+  function fmtWaktuFromISO(iso){ return fmtWaktu(new Date(iso)); }
+
+  const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  // Judul otomatis untuk tabel/note BARU, meniru gaya lama: "27/09/26 · Minggu 14:23"
+  function generateAutoTitle(d){
+    const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
+    return `${tgl} · ${NAMA_HARI[d.getDay()]} ${fmtWaktu(d)}`;
+  }
+  // ---------- UANG KASBON (angka murni, supaya sisa tagihan bisa dihitung) ----------
+  function toNum(v){ return Number(v) || 0; }
+  function rp(n){ return 'Rp ' + Math.round(toNum(n)).toLocaleString('id-ID'); }
+  function parseUang(str){ return Number(digitsOnly(str).slice(0, 12)) || 0; }
+  function formatUangLive(str){
+    const d = digitsOnly(str).slice(0, 12);
+    return d ? Number(d).toLocaleString('id-ID') : '';
+  }
+  function uangToInput(n){ return toNum(n) ? Number(n).toLocaleString('id-ID') : ''; }
+  function sisaOf(r){ return Math.max(0, toNum(r.total) - toNum(r.dibayar)); }
+  function isLunas(r){ return toNum(r.total) > 0 && sisaOf(r) === 0; }
+  // ---------- SAMPAH (soft delete) ----------
+  // Hapus data = pindah ke `trash` dulu. Baru hilang permanen setelah TRASH_DAYS hari
+  // atau kalau user memilih "Hapus Permanen" / "Kosongkan Sampah".
+  function trashDaysLeft(item){
+    const d = new Date(item.deleted_at).getTime();
+    if (isNaN(d)) return TRASH_DAYS;
+    return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
+  }
+  function purgeExpiredTrash(){
+    const before = trash.length;
+    trash = trash.filter(t => {
+      const d = new Date(t.deleted_at).getTime();
+      return isNaN(d) || (Date.now() - d) < TRASH_DAYS * 86400000; // deleted_at rusak = jangan dibuang
+    });
+    return before - trash.length;
+  }
+  function moveToTrash(list){
+    const stamp = new Date().toISOString();
+    list.forEach(r => trash.push({ ...r, deleted_at: stamp }));
+  }
+  // Tanda pengenal isi data: dua data dengan isi & waktu buat persis sama dianggap duplikat.
+  function recordSignature(r){
+    return [r.created_at, r.nama, r.total, r.dibayar, r.keterangan]
+      .map(v => (v == null ? '' : String(v).trim())).join('\u0001');
+  }
+  function dedupeRecords(list){
+    const seen = new Set(), kept = [];
+    let removed = 0;
+    list.forEach(r => {
+      const sig = recordSignature(r);
+      if (seen.has(sig)) { removed++; return; }
+      seen.add(sig); kept.push(r);
+    });
+    return { kept, removed };
+  }
+  function sortedRecords(){
+    return [...records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }
+  function isSameDay(iso, ref){
+    const a = new Date(iso), b = ref;
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
+  function isSameMonth(iso, ref){
+    const a = new Date(iso);
+    return a.getFullYear() === ref.getFullYear() && a.getMonth() === ref.getMonth();
+  }
+  function isSameYear(iso, ref){
+    return new Date(iso).getFullYear() === ref.getFullYear();
+  }
+  function escapeHtml(s){
+    return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+  }
+  // "Belum lunas" = masih ada sisa tagihan
+  function isRecordIncomplete(r){
+    return sisaOf(r) > 0;
+  }
+
+  // =====================================================================
+  // LOAD NOTE DARI SUPABASE
+  // =====================================================================
+  function getLocalDraftKey(){
+    if (currentNoteId) return 'kasbondash_draft_' + currentNoteId;
+    let tempKey = sessionStorage.getItem('kasbondash_temp_draft_key');
+    if (!tempKey) {
+      tempKey = 'kasbondash_draft_new_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      sessionStorage.setItem('kasbondash_temp_draft_key', tempKey);
+    }
+    return tempKey;
+  }
+  function saveLocalDraft(){
+    try {
+      localStorage.setItem(getLocalDraftKey(), JSON.stringify({
+        title: noteTitle, records, trash, legacyBackup, savedAt: Date.now()
+      }));
+    } catch (e) {}
+  }
+  function clearLocalDraft(){
+    try {
+      localStorage.removeItem(getLocalDraftKey());
+      sessionStorage.removeItem('kasbondash_temp_draft_key');
+    } catch (e) {}
+  }
+
+  async function loadExistingNote(){
+    if (!currentNoteId) {
+      // Note/tabel BARU (bukan buka data yang sudah ada) — otomatis kasih
+      // judul berisi tanggal, hari, dan jam saat ini, meniru kebiasaan
+      // aplikasi versi sebelumnya. Tetap bisa diganti manual lewat Pengaturan.
+      if (!noteTitle) noteTitle = generateAutoTitle(new Date());
+      renderHome();
+      return;
+    }
+
+    if (!navigator.onLine) {
+      const raw = (() => { try { return localStorage.getItem(getLocalDraftKey()); } catch (e) { return null; } })();
+      if (raw) {
+        const draft = JSON.parse(raw);
+        noteTitle = draft.title || '';
+        records = draft.records || [];
+        trash = Array.isArray(draft.trash) ? draft.trash : [];
+        legacyBackup = draft.legacyBackup || null;
+        renderHome();
+        showSaveStatus('Tersimpan di HP (offline)', false, true);
+      } else {
+        existingNoteLoadFailed = true;
+        showSaveStatus('Offline — tidak bisa memuat data ini', true, true);
+      }
+      return;
+    }
+
+    const { data: note, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .eq('id', currentNoteId)
+      .single();
+
+    if (error || !note) {
+      console.error('Gagal memuat data:', error && error.message);
+      existingNoteLoadFailed = true;
+      showSaveStatus('Gagal memuat data — coba buka ulang', true, true);
+      return;
+    }
+
+    // Pengaman: note ini data BUKU BESAR -> alihkan ke editor buku besar, jangan ditimpa.
+
+    // Pengaman: note ini ternyata milik editor lain -> alihkan, jangan pernah ditimpa format kasbon.
+    if (note.content && note.content.schema && note.content.schema !== SCHEMA_VERSION) {
+      const otherEditor = note.content.schema === 'warung-data-v1' ? 'editor-data-warung.html'
+                        : note.content.schema === 'admin-data-v1' ? 'editor-data-administrator.html' : null;
+      if (otherEditor) {
+        existingNoteLoadFailed = true; // blok autosave selama pengalihan
+        window.location.replace(otherEditor + window.location.search);
+        return;
+      }
+    }
+
+    existingNoteLoadFailed = false;
+    lastKnownUpdatedAt = note.updated_at;
+    noteTitle = note.title || '';
+
+    let needsMigrationSave = false;
+    if (note.content && note.content.schema === SCHEMA_VERSION) {
+      records = Array.isArray(note.content.records) ? note.content.records : [];
+      trash = Array.isArray(note.content.trash) ? note.content.trash : [];
+      legacyBackup = note.content.legacy || null;
+    } else {
+      records = [];
+      trash = [];
+      // Note lama berskema lain: simpan utuh sebagai cadangan (tidak hilang saat disimpan)
+      legacyBackup = (note.content && (note.content.schema || note.content.columns || note.content.rows)) ? note.content : null;
+    }
+
+    // Gabungkan draft lokal (kalau ada) secara AMAN: data server adalah
+    // sumber kebenaran. Draft cuma boleh MENAMBAHKAN baris yang memang
+    // belum ada di server (dikenali lewat id) — supaya kalaupun ada draft
+    // basi tersangkut di HP (misal dari sesi yang gagal tersambung ke
+    // server), draft itu TIDAK PERNAH bisa menghapus atau menimpa data
+    // yang sudah benar-benar tersimpan di server.
+    let addedFromDraft = 0;
+    try {
+      const raw = localStorage.getItem(getLocalDraftKey());
+      if (raw) {
+        const draft = JSON.parse(raw);
+        const knownIds = new Set([...records, ...trash].map(r => r.id));
+        const knownSigs = new Set([...records, ...trash].map(recordSignature));
+        (draft.records || []).forEach(r => {
+          if (!r || !r.id) return;
+          if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return; // sudah ada (id atau isinya sama)
+          records.push(r);
+          knownIds.add(r.id); knownSigs.add(recordSignature(r));
+          addedFromDraft++;
+        });
+      }
+    } catch (e) { /* draft rusak/tidak terbaca — abaikan, jangan sampai gagal load */ }
+    clearLocalDraft();
+    if (addedFromDraft > 0) {
+      showMigrationToast(`${addedFromDraft} data dari HP (belum sempat tersimpan sebelumnya) berhasil digabungkan kembali.`);
+    }
+
+    renderHome();
+    const dupInfo = dedupeRecords(records);
+    if (dupInfo.removed > 0 && !addedFromDraft) {
+      showMigrationToast(`Terdeteksi ${dupInfo.removed} data duplikat. Buka Pengaturan → Bersihkan Data Duplikat.`);
+    }
+    const purgedCount = purgeExpiredTrash();
+    if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
+  }
+
+  // =====================================================================
+  // SIMPAN KE SUPABASE (autosave debounce + offline draft + konflik)
+  // =====================================================================
+  let autosaveTimer = null;
+  let autosaveInFlight = false;
+  let autosavePending = false;
+  let autosaveRetryCount = 0;
+  let hasUnsyncedChanges = false;
+
+  function buildPreviewText(){
+    const last = sortedRecords().slice(-1)[0];
+    if (!last) return '';
+    return (last.nama || '') + '\nSisa ' + rp(sisaOf(last));
+  }
+  function buildDateTag(){
+    const d = new Date();
+    let h = d.getHours();
+    const m = pad2(d.getMinutes());
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12; if (h === 0) h = 12;
+    return pad2(h) + ':' + m + ' ' + ampm;
+  }
+
+  async function saveNoteToDatabase(silent){
+    const payload = {
+      title: (noteTitle || '').trim() || 'Untitled',
+      preview: buildPreviewText(),
+      date_tag: buildDateTag(),
+      content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
+    };
+
+    let result;
+    if (currentNoteId) {
+      let query = supabaseClient.from('notes').update(payload).eq('id', currentNoteId);
+      if (lastKnownUpdatedAt) query = query.eq('updated_at', lastKnownUpdatedAt);
+      result = await query.select().single();
+
+      if (result.error && (result.error.code === 'PGRST116' || /0 rows|no rows/i.test(result.error.message || ''))) {
+        return await handleSaveConflict(payload);
+      }
+    } else {
+      result = await supabaseClient.from('notes').insert({ ...payload, folder_id: targetFolderId }).select().single();
+    }
+
+    if (result.error) {
+      console.error('[autosave] gagal:', result.error.message);
+      if (!silent) alert('Gagal menyimpan ke database: ' + result.error.message);
+      showSaveStatus('Gagal tersimpan', true);
+      return false;
+    }
+
+    currentNoteId = result.data.id;
+    lastKnownUpdatedAt = result.data.updated_at;
+    window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
+    return true;
+  }
+
+  async function handleSaveConflict(myPayload){
+    const timpaVersiSaya = confirm(
+      'Data ini sudah diubah di tempat lain sejak kamu buka (mungkin device/admin lain). ' +
+      'Perubahanmu tetap aman tersimpan di HP ini.\n\n' +
+      'Pilih OK untuk TIMPA dengan versi kamu (perubahan di tempat lain akan hilang), ' +
+      'atau Batal untuk MUAT ULANG versi terbaru (perubahanmu di sesi ini akan dibuang).'
+    );
+
+    if (timpaVersiSaya) {
+      const forced = await supabaseClient.from('notes').update(myPayload).eq('id', currentNoteId).select().single();
+      if (forced.error) { showSaveStatus('Gagal tersimpan', true); return false; }
+      lastKnownUpdatedAt = forced.data.updated_at;
+      window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
+      return true;
+    }
+
+    clearLocalDraft();
+    hasUnsyncedChanges = false;
+    showSaveStatus('Memuat versi terbaru...', false, true);
+    await loadExistingNote();
+    return false;
+  }
+
+  function scheduleAutosave(){
+    if (existingNoteLoadFailed) return;
+    saveLocalDraft();
+    hasUnsyncedChanges = true;
+    clearTimeout(autosaveTimer);
+
+    // Jadwalkan dulu SEBELUM update tampilan status — supaya kalaupun ada
+    // bug kecil di bagian tampilan (mis. elemen indikator hilang), proses
+    // penyimpanan ke server TETAP jalan dan tidak pernah ikut gagal.
+    if (!navigator.onLine) {
+      try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) { console.error(e); }
+      return;
+    }
+    autosaveTimer = setTimeout(runAutosave, 900);
+    try { showSaveStatus('Menyimpan...'); } catch (e) { console.error(e); }
+  }
+
+  async function runAutosave(){
+    if (!navigator.onLine) { try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) {} return; }
+    if (autosaveInFlight) { autosavePending = true; return; }
+    autosaveInFlight = true;
+
+    let success = false;
+    try {
+      // Inti penyimpanan ke Supabase. Apapun yang terjadi di luar blok ini
+      // (indikator UI, dsb) TIDAK BOLEH mengganggu hasil dari baris ini.
+      success = await saveNoteToDatabase(true);
+
+      if (success) {
+        autosaveRetryCount = 0;
+        hasUnsyncedChanges = false;
+        clearLocalDraft();
+      } else {
+        autosaveRetryCount++;
+        const delay = Math.min(30000, 3000 * autosaveRetryCount);
+        clearTimeout(autosaveTimer);
+        autosaveTimer = setTimeout(runAutosave, delay);
+      }
+    } finally {
+      // autosaveInFlight WAJIB direset apapun yang terjadi di atas — kalau
+      // tidak, semua penyimpanan berikutnya akan macet permanen.
+      autosaveInFlight = false;
+    }
+
+    try {
+      if (success) showSaveStatus('Tersimpan', false);
+      else showSaveStatus(`Gagal tersimpan — mencoba lagi (${autosaveRetryCount})...`, true, true);
+    } catch (e) { console.error(e); }
+
+    if (autosavePending) { autosavePending = false; if (success) scheduleAutosave(); }
+  }
+
+  window.addEventListener('online', () => {
+    autosaveRetryCount = 0;
+    if (existingNoteLoadFailed) {
+      showSaveStatus('Koneksi kembali, memuat ulang...');
+      loadExistingNote();
+      return;
+    }
+    if (hasUnsyncedChanges) { showSaveStatus('Koneksi kembali, menyimpan...'); runAutosave(); }
+  });
+  window.addEventListener('offline', () => {
+    clearTimeout(autosaveTimer);
+    if (hasUnsyncedChanges) showSaveStatus('Tersimpan di HP (offline)', false, true);
+  });
+  window.addEventListener('beforeunload', (e) => {
+    if (hasUnsyncedChanges) { e.preventDefault(); e.returnValue = ''; }
+  });
+
+  let saveStatusTimer = null;
+  function showSaveStatus(text, isError, sticky){
+    const el = document.getElementById('saveStatusIndicator');
+    if (!el) return;
+    el.textContent = text;
+    el.style.background = isError ? 'rgba(194,68,68,0.9)' : 'rgba(0,0,0,0.6)';
+    el.style.opacity = '1';
+    clearTimeout(saveStatusTimer);
+    if (!sticky) saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+  }
+
+  let migrationToastTimer = null;
+  function showMigrationToast(text){
+    const el = document.getElementById('migrationToast');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.add('show');
+    clearTimeout(migrationToastTimer);
+    migrationToastTimer = setTimeout(() => el.classList.remove('show'), 6000);
+  }
+
+  // =====================================================================
+  // ROUTER ANTAR HALAMAN
+  // =====================================================================
+  function goView(name){
+    currentView = name;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail' || name === 'trash') ? 'none' : 'flex';
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
+    document.getElementById('view-' + name).querySelector('.scroll').scrollTop = 0;
+    if (name === 'add') prepareAddForm();
+    if (name === 'settings') renderSettings();
+    if (name === 'trash') renderTrash();
+    if (name === 'home') renderHome();
+  }
+
+  document.getElementById('btnHomeBack').addEventListener('click', () => {
+    // Editor ini biasanya berjalan sebagai iframe di dalam dashboard-admin.html
+    // (lihat pola window.parent.postMessage('note-autosaved', ...) di atas).
+    // 'close-editor' adalah nama pesan yang sudah didengarkan oleh
+    // dashboard-admin.html untuk menutup modal editor & refresh daftar note.
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage('close-editor', '*');
+        return;
+      }
+    } catch (e) { /* cross-origin atau tidak ada parent — lanjut ke fallback */ }
+
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = 'dashboard-admin.html';
+    }
+  });
+
+  document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
+  document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
+  document.getElementById('btnDetailBack').addEventListener('click', () => goView('home'));
+  document.getElementById('btnDetailClose').addEventListener('click', () => goView('home'));
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => goView(btn.dataset.nav));
+  });
+
+  // =====================================================================
+  // HOME
+  // =====================================================================
+  function renderHome(){
+    const now = new Date();
+    document.getElementById('statTotal').textContent = records.length;
+    document.getElementById('statToday').textContent = records.filter(r => isSameDay(r.created_at, now)).length;
+    const totalSisa = records.reduce((sum, r) => sum + sisaOf(r), 0);
+    document.getElementById('statHargaTotal').textContent = rp(totalSisa);
+    document.getElementById('statIncomplete').textContent = records.filter(isRecordIncomplete).length;
+    document.getElementById('homeGreetName').textContent = noteTitle && noteTitle.trim() ? noteTitle : 'Kasbon';
+    renderRecentList();
+  }
+
+  function renderRecentList(){
+    const all = sortedRecords();
+    const noMap = new Map(all.map((r, i) => [r.id, i + 1]));
+    const recent = all.slice().reverse();
+    const listEl = document.getElementById('recentList');
+    const emptyEl = document.getElementById('recentEmptyHint');
+
+    if (recent.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      return;
+    }
+    emptyEl.style.display = 'none';
+
+    listEl.innerHTML = recent.map(r => {
+      const rightHtml = isLunas(r)
+        ? `<div class="r-right lunas">Lunas</div>`
+        : `<div class="r-right">${escapeHtml(rp(sisaOf(r)))}<div class="r-sub">sisa</div></div>`;
+      return `
+        <div class="recent-row tap" data-id="${r.id}">
+          <div class="r-no">${pad3(noMap.get(r.id))}</div>
+          <div class="r-mid">
+            <b>${escapeHtml(r.nama) || '(tanpa nama)'}</b>
+            <span>Tagihan ${escapeHtml(rp(r.total))} · Bayar ${escapeHtml(rp(r.dibayar))}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
+          </div>
+          ${rightHtml}
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('.recent-row').forEach(el => {
+      el.addEventListener('click', () => openDetail(el.dataset.id));
+    });
+  }
+
+  // =====================================================================
+  // TAMBAH DATA
+  // =====================================================================
+  // Tampilkan Sisa Tagihan (Total - Dibayar) di elemen `el`. Kalau Dibayar > Total -> peringatan merah.
+  function renderSisaText(el, total, dibayar){
+    const box = el.closest('.readonly-box');
+    const setState = (cls) => {
+      [el, box].forEach(n => { if (n) { n.classList.remove('warn', 'ok'); if (cls) n.classList.add(cls); } });
+    };
+    if (dibayar > total) { el.textContent = 'Dibayar melebihi Total'; setState('warn'); return; }
+    const sisa = total - dibayar;
+    if (total > 0 && sisa === 0) { el.textContent = 'Rp 0 · Lunas'; setState('ok'); return; }
+    el.textContent = rp(sisa);
+    setState(null);
+  }
+  function updateAddSisa(){
+    renderSisaText(
+      document.getElementById('addPreviewSisa'),
+      parseUang(document.getElementById('inputTotal').value),
+      parseUang(document.getElementById('inputDibayar').value)
+    );
+  }
+
+  function prepareAddForm(){
+    const now = new Date();
+    document.getElementById('addPreviewNo').textContent = pad3(records.length + 1);
+    document.getElementById('addPreviewTanggal').textContent = fmtTanggal(now);
+    document.getElementById('addPreviewWaktu').textContent = fmtWaktu(now);
+    ['inputNama','inputTotal','inputDibayar','inputKeterangan'].forEach(id => { document.getElementById(id).value = ''; });
+    updateAddSisa();
+  }
+
+  function getNamaCustomer(){
+    return [...new Set(records.map(r => r.nama).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  }
+
+  const FIELD_ORDER = [
+    ['inputNama','inputTotal','inputDibayar','inputKeterangan'],
+    ['detNamaEdit','detTotalEdit','detDibayarEdit','detKetEdit']
+  ];
+  function focusNextField(el){
+    const order = FIELD_ORDER.find(o => o.includes(el.id));
+    if (!order) return;
+    for (let i = order.indexOf(el.id) + 1; i < order.length; i++){
+      const n = document.getElementById(order[i]);
+      if (n && n.offsetParent !== null) { n.focus(); return; }
+    }
+    el.blur();
+  }
+  FIELD_ORDER.flat().forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.tagName !== 'INPUT') return;
+    el.setAttribute('enterkeyhint', 'next');
+    el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      const list = el.parentElement && el.parentElement.querySelector('.suggest-list');
+      if (list) list.classList.remove('open');
+      focusNextField(el);
+    });
+  });
+
+  function setupSuggestDropdown(inputEl, listEl, getNames){
+    function renderList(){
+      const q = inputEl.value.trim().toLowerCase();
+      const names = getNames().filter(n => !q || n.toLowerCase().includes(q));
+      if (!names.length) { listEl.classList.remove('open'); listEl.innerHTML = ''; return; }
+      listEl.innerHTML = names.map(n => `<div class="suggest-item">${escapeHtml(n)}</div>`).join('');
+      listEl.classList.add('open');
+    }
+    inputEl.addEventListener('focus', renderList);
+    inputEl.addEventListener('input', renderList);
+    inputEl.addEventListener('blur', () => { listEl.classList.remove('open'); });
+    listEl.addEventListener('mousedown', (e) => {
+      const item = e.target.closest('.suggest-item');
+      if (!item) return;
+      e.preventDefault();
+      inputEl.value = item.textContent;
+      listEl.classList.remove('open');
+      setTimeout(() => focusNextField(inputEl), 0);
+    });
+  }
+  setupSuggestDropdown(document.getElementById('inputNama'), document.getElementById('namaSuggestList'), getNamaCustomer);
+  setupSuggestDropdown(document.getElementById('detNamaEdit'), document.getElementById('detNamaSuggestList'), getNamaCustomer);
+
+  function autoCapitalizeFirst(el){
+    el.addEventListener('input', () => {
+      const v = el.value;
+      if (v.length > 0 && v[0] !== v[0].toUpperCase()) {
+        const start = el.selectionStart, end = el.selectionEnd;
+        el.value = v[0].toUpperCase() + v.slice(1);
+        try { el.setSelectionRange(start, end); } catch (e) {}
+      }
+    });
+  }
+  ['inputNama','inputKeterangan','detNamaEdit','detKetEdit','inputJudulTabel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) autoCapitalizeFirst(el);
+  });
+
+  // Kolom uang: hanya angka, otomatis diberi pemisah ribuan, sisa tagihan ikut terhitung live.
+  document.getElementById('inputTotal').addEventListener('input', (e) => { e.target.value = formatUangLive(e.target.value); updateAddSisa(); });
+  document.getElementById('inputDibayar').addEventListener('input', (e) => { e.target.value = formatUangLive(e.target.value); updateAddSisa(); });
+
+  function setPreviewOptional(id, val){
+    const el = document.getElementById(id);
+    if (val) { el.textContent = val; el.classList.remove('empty-val'); }
+    else { el.textContent = 'Belum diisi'; el.classList.add('empty-val'); }
+  }
+
+  let pendingNewRecord = null;
+  document.getElementById('btnBukaKonfirmasi').addEventListener('click', () => {
+    const nama = document.getElementById('inputNama').value.trim();
+    const total = parseUang(document.getElementById('inputTotal').value);
+    const dibayar = parseUang(document.getElementById('inputDibayar').value);
+    const keterangan = document.getElementById('inputKeterangan').value.trim();
+
+    if (!nama) { alert('Nama wajib diisi.'); document.getElementById('inputNama').focus(); return; }
+    if (!total) { alert('Total Tagihan wajib diisi.'); document.getElementById('inputTotal').focus(); return; }
+    if (dibayar > total) { alert('Dibayar tidak boleh melebihi Total Tagihan.'); document.getElementById('inputDibayar').focus(); return; }
+
+    const now = new Date();
+    document.getElementById('cfNo').textContent = pad3(records.length + 1);
+    document.getElementById('cfTanggal').textContent = fmtTanggal(now);
+    document.getElementById('cfWaktu').textContent = fmtWaktu(now);
+    document.getElementById('cfNama').textContent = nama;
+    document.getElementById('cfTotal').textContent = rp(total);
+    document.getElementById('cfDibayar').textContent = rp(dibayar);
+    document.getElementById('cfSisa').textContent = (total - dibayar === 0) ? 'Rp 0 · Lunas' : rp(total - dibayar);
+    setPreviewOptional('cfKet', keterangan);
+
+    pendingNewRecord = { nama, total, dibayar, keterangan };
+    openOverlay('overlayConfirm');
+  });
+  document.getElementById('btnConfirmBatal').addEventListener('click', () => closeOverlay('overlayConfirm'));
+  document.getElementById('btnConfirmSimpan').addEventListener('click', () => {
+    if (!pendingNewRecord) return;
+    records.push({ id: uid(), ...pendingNewRecord, created_at: new Date().toISOString() });
+    pendingNewRecord = null;
+    closeOverlay('overlayConfirm');
+    scheduleAutosave();
+    goView('home');
+  });
+
+  // =====================================================================
+  // DETAIL / EDIT / HAPUS
+  // =====================================================================
+  function setDetailView(id, val){
+    const el = document.getElementById(id);
+    if (val) { el.textContent = val; el.classList.remove('empty'); }
+    else { el.textContent = 'Belum diisi'; el.classList.add('empty'); }
+  }
+  function setDetailSisa(total, dibayar){
+    const el = document.getElementById('detSisaView');
+    el.classList.remove('warn', 'ok', 'empty');
+    if (dibayar > total) { el.textContent = 'Dibayar melebihi Total'; el.classList.add('warn'); return; }
+    const sisa = total - dibayar;
+    if (total > 0 && sisa === 0) { el.textContent = 'Rp 0 · Lunas'; el.classList.add('ok'); return; }
+    el.textContent = rp(sisa);
+  }
+
+  const VIEW_IDS = ['detNamaView','detTotalView','detDibayarView','detKetView'];
+  const EDIT_IDS = ['detNamaEdit','detKetEdit'];
+  const EDIT_WRAP_IDS = ['detTotalEditWrap','detDibayarEditWrap'];
+
+  function openDetail(id){
+    editingRecordId = id;
+    const all = sortedRecords();
+    const idx = all.findIndex(r => r.id === id);
+    const r = all[idx];
+    if (!r) return;
+
+    document.getElementById('detailSubtitle').textContent = 'No. ' + pad3(idx + 1);
+    document.getElementById('detNo').textContent = pad3(idx + 1);
+    document.getElementById('detTanggal').textContent = fmtTanggalFromISO(r.created_at);
+    document.getElementById('detWaktu').textContent = fmtWaktuFromISO(r.created_at);
+    setDetailView('detNamaView', r.nama);
+    document.getElementById('detTotalView').textContent = rp(r.total);
+    document.getElementById('detDibayarView').textContent = rp(r.dibayar);
+    setDetailView('detKetView', r.keterangan);
+    setDetailSisa(toNum(r.total), toNum(r.dibayar));
+
+    exitEditMode();
+    goView('detail');
+  }
+
+  function exitEditMode(){
+    VIEW_IDS.forEach(id => { document.getElementById(id).style.display = ''; });
+    EDIT_IDS.forEach(id => { document.getElementById(id).style.display = 'none'; });
+    EDIT_WRAP_IDS.forEach(id => { document.getElementById(id).style.display = 'none'; });
+    document.getElementById('detailActionsView').style.display = 'flex';
+    document.getElementById('detailActionsEdit').style.display = 'none';
+  }
+
+  function updateDetailSisaLive(){
+    setDetailSisa(
+      parseUang(document.getElementById('detTotalEdit').value),
+      parseUang(document.getElementById('detDibayarEdit').value)
+    );
+  }
+
+  document.getElementById('btnDetailEdit').addEventListener('click', () => {
+    const r = records.find(x => x.id === editingRecordId);
+    if (!r) return;
+    VIEW_IDS.forEach(id => { document.getElementById(id).style.display = 'none'; });
+    EDIT_IDS.forEach(id => { document.getElementById(id).style.display = 'block'; });
+    EDIT_WRAP_IDS.forEach(id => { document.getElementById(id).style.display = 'flex'; });
+    document.getElementById('detNamaEdit').value = r.nama || '';
+    document.getElementById('detTotalEdit').value = uangToInput(r.total);
+    document.getElementById('detDibayarEdit').value = uangToInput(r.dibayar);
+    document.getElementById('detKetEdit').value = r.keterangan || '';
+    updateDetailSisaLive();
+    document.getElementById('detailActionsView').style.display = 'none';
+    document.getElementById('detailActionsEdit').style.display = 'flex';
+  });
+  document.getElementById('detTotalEdit').addEventListener('input', (e) => { e.target.value = formatUangLive(e.target.value); updateDetailSisaLive(); });
+  document.getElementById('detDibayarEdit').addEventListener('input', (e) => { e.target.value = formatUangLive(e.target.value); updateDetailSisaLive(); });
+  document.getElementById('btnDetailCancelEdit').addEventListener('click', () => openDetail(editingRecordId));
+
+  document.getElementById('btnDetailSaveEdit').addEventListener('click', () => {
+    const r = records.find(x => x.id === editingRecordId);
+    if (!r) return;
+    const nama = document.getElementById('detNamaEdit').value.trim();
+    const total = parseUang(document.getElementById('detTotalEdit').value);
+    const dibayar = parseUang(document.getElementById('detDibayarEdit').value);
+    const keterangan = document.getElementById('detKetEdit').value.trim();
+    if (!nama) { alert('Nama wajib diisi.'); return; }
+    if (!total) { alert('Total Tagihan wajib diisi.'); return; }
+    if (dibayar > total) { alert('Dibayar tidak boleh melebihi Total Tagihan.'); return; }
+
+    // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
+    r.nama = nama; r.total = total; r.dibayar = dibayar; r.keterangan = keterangan;
+    scheduleAutosave();
+    openDetail(editingRecordId);
+  });
+
+  // =====================================================================
+  // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
+  // Tombol "Ya, Hapus" baru aktif setelah puzzle berhasil diselesaikan.
+  // Posisi lubang & gambar diacak setiap kali dibuka / salah geser.
+  // =====================================================================
+  const deletePuzzle = (function(){
+    const wrap = document.getElementById('pzWrap');
+    const canvas = document.getElementById('pzCanvas');
+    const piece = document.getElementById('pzPiece');
+    const track = document.getElementById('pzTrack');
+    const fill = document.getElementById('pzFill');
+    const label = document.getElementById('pzLabel');
+    const handle = document.getElementById('pzHandle');
+    const btnYakin = document.getElementById('btnDeleteYakin');
+    const btnRefresh = document.getElementById('pzRefresh');
+
+    const P = 40;          // sisi kotak potongan puzzle
+    const R = 7;           // jari-jari tonjolan
+    const H = 130;         // tinggi area gambar
+    const HANDLE = 39;     // diameter tombol geser
+    const TOL = 6;         // toleransi (px) posisi benar
+    const LABEL_DEFAULT = 'Geser untuk mencocokkan';
+
+    let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
+    let solved = false, dragging = false, startX = 0, startOff = 0, offset = 0, maxOff = 1, pieceMax = 1, dragX = 0;
+    let failTimer = null;
+
+    function makeRng(seed){
+      let a = seed >>> 0;
+      return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; };
+    }
+
+    // bentuk potongan: kotak dengan tonjolan di atas & kanan
+    function piecePath(ctx, x, y){
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + P / 2 - R, y);
+      ctx.arc(x + P / 2, y, R, Math.PI, 2 * Math.PI, false);
+      ctx.lineTo(x + P, y);
+      ctx.lineTo(x + P, y + P / 2 - R);
+      ctx.arc(x + P, y + P / 2, R, -Math.PI / 2, Math.PI / 2, false);
+      ctx.lineTo(x + P, y + P);
+      ctx.lineTo(x, y + P);
+      ctx.closePath();
+    }
+
+    // gambar latar acak (deterministik per seed supaya lubang & potongan identik)
+    function drawScene(ctx){
+      const rnd = makeRng(sceneSeed);
+      const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, 'hsl(' + h1 + ',70%,58%)');
+      g.addColorStop(1, 'hsl(' + h2 + ',72%,42%)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',75%,' + (40 + Math.floor(rnd() * 30)) + '%,0.55)';
+        ctx.beginPath();
+        ctx.arc(rnd() * W, rnd() * H, 12 + rnd() * 34, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+      for (let i = 0; i < 6; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',70%,60%,0.5)';
+        ctx.beginPath();
+        const x = rnd() * W, y = rnd() * H;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 30 + rnd() * 50, y + (rnd() - 0.5) * 60);
+        ctx.lineTo(x + (rnd() - 0.5) * 60, y + 30 + rnd() * 40);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++){
+        ctx.beginPath();
+        ctx.moveTo(rnd() * W, 0);
+        ctx.lineTo(rnd() * W, H);
+        ctx.stroke();
+      }
+    }
+
+    function render(){
+      // kanvas utama + lubang
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      const c = canvas.getContext('2d');
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawScene(c);
+      piecePath(c, tx, ty);
+      c.fillStyle = 'rgba(0,0,0,0.5)';
+      c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.85)';
+      c.lineWidth = 1.5;
+      c.stroke();
+
+      // kanvas potongan (kotak berada di offset (2, R+2))
+      const pw = P + R + 4, ph = P + R + 4;
+      piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
+      piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
+      piece.style.top = (ty - (R + 2)) + 'px';
+      const p = piece.getContext('2d');
+      p.setTransform(dpr, 0, 0, dpr, 0, 0);
+      p.clearRect(0, 0, pw, ph);
+      p.save();
+      p.translate(2 - tx, R + 2 - ty);
+      piecePath(p, tx, ty);
+      p.clip();
+      drawScene(p);
+      p.restore();
+      p.save();
+      p.translate(2 - tx, R + 2 - ty);
+      piecePath(p, tx, ty);
+      p.strokeStyle = 'rgba(255,255,255,0.95)';
+      p.lineWidth = 2;
+      p.stroke();
+      p.restore();
+    }
+
+    function setOffset(o){
+      offset = Math.max(0, Math.min(maxOff, o));
+      handle.style.transform = 'translateX(' + offset + 'px)';
+      fill.style.width = (offset + HANDLE + 2) + 'px';
+      dragX = maxOff > 0 ? (offset / maxOff) * pieceMax : 0;
+      piece.style.transform = 'translateX(' + (dragX - 2) + 'px)';
+    }
+
+    function reset(){
+      clearTimeout(failTimer);
+      solved = false; dragging = false;
+      wrap.parentElement.classList.remove('pz-anim');
+      track.classList.remove('ok');
+      label.textContent = LABEL_DEFAULT;
+      btnYakin.disabled = true;
+
+      W = Math.max(220, Math.floor(wrap.clientWidth) || 300);
+      dpr = window.devicePixelRatio || 1;
+      sceneSeed = Math.floor(Math.random() * 1e9) + 1;
+      pieceMax = W - P - R - 2;
+      const minX = Math.round(W * 0.42);
+      tx = Math.round(minX + Math.random() * (pieceMax - minX));
+      ty = Math.round((R + 8) + Math.random() * (H - P - (R + 8) - 8));
+      maxOff = Math.max(1, track.clientWidth - HANDLE - 4);
+      render();
+      setOffset(0);
+    }
+
+    function fail(){
+      wrap.classList.remove('fail'); void wrap.offsetWidth; wrap.classList.add('fail');
+      wrap.parentElement.classList.add('pz-anim');
+      setOffset(0);
+      failTimer = setTimeout(reset, 380);
+    }
+
+    handle.addEventListener('pointerdown', (e) => {
+      if (solved) return;
+      dragging = true; startX = e.clientX; startOff = offset;
+      wrap.parentElement.classList.remove('pz-anim');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      setOffset(startOff + (e.clientX - startX));
+    });
+    function endDrag(){
+      if (!dragging) return;
+      dragging = false;
+      if (offset < 6) return; // hanya tap, bukan geser
+      if (Math.abs(dragX - tx) <= TOL) {
+        solved = true;
+        setOffset(offset);
+        track.classList.add('ok');
+        label.textContent = 'Terverifikasi';
+        btnYakin.disabled = false;
+      } else {
+        fail();
+      }
+    }
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+    btnRefresh.addEventListener('click', reset);
+
+    return { reset: reset, isSolved: function(){ return solved; } };
+  })();
+
+  // Satu popup puzzle dipakai untuk 3 mode:
+  //  'soft'   = hapus data -> pindah ke Sampah (bisa dipulihkan)
+  //  'purge'  = hapus permanen 1 data dari Sampah
+  //  'empty'  = kosongkan seluruh Sampah
+  let deleteMode = 'soft';
+  let deleteTargetIndex = null;
+  function openDeleteConfirm(mode, target){
+    deleteMode = mode;
+    deleteTargetIndex = target;
+    const t = document.getElementById('deleteTitle');
+    const d = document.getElementById('deleteDesc');
+    const b = document.getElementById('btnDeleteYakin');
+    if (mode === 'soft') {
+      t.textContent = 'Hapus Data?';
+      d.textContent = 'Data akan dipindahkan ke Sampah dan bisa dipulihkan selama ' + TRASH_DAYS + ' hari. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Ya, Hapus';
+    } else if (mode === 'purge') {
+      t.textContent = 'Hapus Permanen?';
+      d.textContent = 'Data ini akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Hapus Permanen';
+    } else {
+      t.textContent = 'Kosongkan Sampah?';
+      d.textContent = trash.length + ' data di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Kosongkan';
+    }
+    openOverlay('overlayDelete');
+    deletePuzzle.reset();
+  }
+
+  document.getElementById('btnDetailDelete').addEventListener('click', () => {
+    deletingRecordId = editingRecordId;
+    openDeleteConfirm('soft', null);
+  });
+  document.getElementById('btnDeleteBatal').addEventListener('click', () => closeOverlay('overlayDelete'));
+  document.getElementById('btnDeleteYakin').addEventListener('click', () => {
+    if (!deletePuzzle.isSolved()) return; // puzzle wajib selesai dulu
+    closeOverlay('overlayDelete');
+
+    if (deleteMode === 'soft') {
+      const rec = records.find(r => r.id === deletingRecordId);
+      if (rec) {
+        records = records.filter(r => r !== rec);
+        moveToTrash([rec]);
+        showMigrationToast('Data dipindahkan ke Sampah. Bisa dipulihkan selama ' + TRASH_DAYS + ' hari (Pengaturan → Sampah).');
+      }
+      deletingRecordId = null;
+      scheduleAutosave();
+      goView('home');
+    } else if (deleteMode === 'purge') {
+      if (deleteTargetIndex != null && trash[deleteTargetIndex]) trash.splice(deleteTargetIndex, 1);
+      scheduleAutosave();
+      renderTrash();
+      showMigrationToast('Data dihapus permanen.');
+    } else {
+      trash = [];
+      scheduleAutosave();
+      renderTrash();
+      showMigrationToast('Sampah dikosongkan.');
+    }
+  });
+
+  // =====================================================================
+  // HALAMAN SAMPAH — pulihkan / hapus permanen
+  // =====================================================================
+  function renderTrash(){
+    if (purgeExpiredTrash() > 0) scheduleAutosave();
+    const listEl = document.getElementById('trashList');
+    const emptyEl = document.getElementById('trashEmptyHint');
+    const btnEmpty = document.getElementById('btnEmptyTrash');
+    document.getElementById('trashSub').textContent = trash.length
+      ? trash.length + ' data · otomatis hilang setelah ' + TRASH_DAYS + ' hari'
+      : 'Data yang dihapus muncul di sini';
+
+    if (trash.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      btnEmpty.style.display = 'none';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    btnEmpty.style.display = 'block';
+
+    // terbaru dihapus di atas; simpan index asli supaya tombol menunjuk item yang benar
+    const rows = trash.map((r, i) => ({ r, i }))
+      .sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
+
+    listEl.innerHTML = rows.map(({ r, i }) => {
+      const left = trashDaysLeft(r);
+      const delAt = new Date(r.deleted_at);
+      const delTxt = isNaN(delAt.getTime()) ? '—' : fmtTanggal(delAt) + ' ' + fmtWaktu(delAt);
+      return `
+        <div class="trash-item">
+          <div class="recent-row" style="cursor:default;">
+            <div class="r-mid">
+              <b>${escapeHtml(r.nama) || '(tanpa nama)'}</b>
+              <span>Tagihan ${escapeHtml(rp(r.total))} · Dibayar ${escapeHtml(rp(r.dibayar))}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''}</span>
+              <span>Dihapus ${delTxt} · sisa ${left} hari</span>
+            </div>
+          </div>
+          <div class="trash-actions">
+            <button type="button" class="btn-secondary" data-act="restore" data-idx="${i}">Pulihkan</button>
+            <button type="button" class="btn-danger-outline" data-act="purge" data-idx="${i}">Hapus Permanen</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('button[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        if (btn.dataset.act === 'restore') restoreFromTrash(idx);
+        else openDeleteConfirm('purge', idx);
+      });
+    });
+  }
+
+  function restoreFromTrash(idx){
+    const item = trash[idx];
+    if (!item) return;
+    trash.splice(idx, 1);
+    const rec = { ...item };
+    delete rec.deleted_at;
+    if (records.some(r => r.id === rec.id)) rec.id = uid(); // hindari id kembar
+    records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
+    scheduleAutosave();
+    renderTrash();
+    showMigrationToast('Data berhasil dipulihkan.');
+  }
+
+  document.getElementById('btnOpenTrash').addEventListener('click', () => goView('trash'));
+  document.getElementById('btnTrashBack').addEventListener('click', () => goView('settings'));
+
+
+  // =====================================================================
+  // SETTINGS — judul tabel & tema
+  // =====================================================================
+  function renderSettings(){
+    document.getElementById('inputJudulTabel').value = noteTitle || '';
+    const dup = dedupeRecords(records).removed;
+    document.getElementById('btnOpenTrash').textContent = trash.length ? `Buka Sampah (${trash.length})` : 'Buka Sampah';
+    document.getElementById('btnDedupe').textContent = dup ? `Bersihkan Data Duplikat (${dup})` : 'Bersihkan Data Duplikat';
+    applyThemeUI();
+  }
+  document.getElementById('btnDedupe').addEventListener('click', () => {
+    const { kept, removed } = dedupeRecords(records);
+    if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
+    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`)) return;
+    const keptSet = new Set(kept);
+    moveToTrash(records.filter(r => !keptSet.has(r))); // duplikat juga masuk Sampah, bukan hilang
+    records = kept;
+    scheduleAutosave();
+    renderHome();
+    renderSettings();
+    showMigrationToast(`${removed} data duplikat dipindahkan ke Sampah.`);
+  });
+  document.getElementById('inputJudulTabel').addEventListener('change', (e) => {
+    noteTitle = e.target.value.trim();
+    scheduleAutosave();
+    renderHome();
+  });
+
+  function getStoredTheme(){ try { return localStorage.getItem('admdash_theme') || 'default'; } catch (e) { return 'default'; } }
+  function setStoredTheme(t){ try { localStorage.setItem('admdash_theme', t); } catch (e) {} }
+  function applyTheme(t){
+    document.body.classList.toggle('surface-dark', t === 'dark');
+    document.getElementById('themeColorMeta').setAttribute('content', t === 'dark' ? '#15140F' : '#F6F1E7');
+  }
+  function applyThemeUI(){
+    const t = getStoredTheme();
+    document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
+  }
+  document.querySelectorAll('.theme-opt').forEach(el => {
+    el.addEventListener('click', () => {
+      const t = el.dataset.theme;
+      setStoredTheme(t);
+      applyTheme(t);
+      applyThemeUI();
+    });
+  });
+  applyTheme(getStoredTheme());
+
+  // =====================================================================
+  // OVERLAY (modal & sheet) HELPERS
+  // =====================================================================
+  function openOverlay(id){ document.getElementById(id).classList.add('show'); }
+  function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
+  document.querySelectorAll('.overlay').forEach(ov => {
+    ov.addEventListener('click', (e) => { if (e.target === ov) closeOverlay(ov.id); });
+  });
+
+  // =====================================================================
+  // RENDER SEMUA & INIT
+  // =====================================================================
+  // =====================================================================
+  // BOTTOM NAV NOTCH — bentuk cekungan mengikuti ukuran tombol ADD DATA
+  // Cukup ubah --fab-size / --fab-lift di :root (bagian atas CSS), lebar &
+  // kedalaman cekungan di bawah ini otomatis menyesuaikan, tidak perlu
+  // hitung ulang path SVG manual.
+  // =====================================================================
+  function updateNavNotch(){
+    var surface = document.querySelector('.bottom-nav-surface');
+    var pathEl  = document.getElementById('navNotchPath');
+    if (!surface || !pathEl) return;
+
+    var fabSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fab-size')) || 44;
+    var navWidth  = surface.offsetWidth  || 360;
+    var barHeight = surface.offsetHeight || 64;
+    if (!navWidth || !barHeight) return;
+
+    var notchTopWidth = fabSize + 16;                          // ruang 8px kiri-kanan tombol
+    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5); // kedalaman proporsional, dibatasi tinggi bar
+
+    var cx = navWidth / 2;
+    var x1 = cx - notchTopWidth / 2;
+    var w  = cx - x1;
+
+    function pt(tFrac, yFrac){
+      return { x:(x1 + tFrac * w) / navWidth, y:(yFrac * notchDepth) / barHeight };
+    }
+    var cxFrac = cx / navWidth;
+    function mirror(p){ return { x:2 * cxFrac - p.x, y:p.y }; }
+
+    var C1 = pt(0.346, 0), C2 = pt(0.5, 0.071), E1 = pt(0.615, 0.321);
+    var C3 = pt(0.731, 0.607), C4 = pt(0.846, 1.0);
+    var C3m = mirror(C3), C4m = mirror(C4), E1m = mirror(E1), C2m = mirror(C2), C1m = mirror(C1);
+    var x1Frac = x1 / navWidth, x2Frac = mirror({x:x1Frac,y:0}).x, peakY = notchDepth / barHeight;
+
+    var d = 'M0,0 L' + x1Frac + ',0'
+      + ' C' + C1.x + ',' + C1.y + ' ' + C2.x + ',' + C2.y + ' ' + E1.x + ',' + E1.y
+      + ' C' + C3.x + ',' + C3.y + ' ' + C4.x + ',' + C4.y + ' ' + cxFrac + ',' + peakY
+      + ' C' + C4m.x + ',' + C4m.y + ' ' + C3m.x + ',' + C3m.y + ' ' + E1m.x + ',' + E1m.y
+      + ' C' + C2m.x + ',' + C2m.y + ' ' + C1m.x + ',' + C1m.y + ' ' + x2Frac + ',0'
+      + ' L1,0 L1,1 L0,1 Z';
+
+    pathEl.setAttribute('d', d);
+  }
+  window.addEventListener('resize', updateNavNotch);
+  window.addEventListener('load', updateNavNotch);
+  updateNavNotch();
+
+  loadExistingNote();
+</script>
+
+<script>
+  // Daftarkan Service Worker — WAJIB supaya app-shell tersedia offline dan
+  // supaya iOS mengenali halaman ini sebagai PWA yang bisa di-cache.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('Gagal mendaftarkan service worker:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
