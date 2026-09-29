@@ -2,9 +2,14 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BM-TECH">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="format-detection" content="telephone=no">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#000000">
 <title>BM-TECH-VIEWER</title>
 
 <!-- Open Graph & Twitter Card: banner preview saat link dibagikan ke WA/sosmed -->
@@ -49,6 +54,8 @@
     --radius-pill: 999px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
     --app-max-width: 480px;
   }
 
@@ -129,15 +136,25 @@
     background: linear-gradient(180deg, rgba(245, 245, 247, 0.78) 0%, rgba(245, 245, 247, 0.2) 75%, rgba(245, 245, 247, 0) 100%) !important;
   }
 
+  html {
+    height: 100%;
+    -webkit-text-size-adjust: 100%;  /* cegah iOS membesarkan teks saat landscape */
+    text-size-adjust: 100%;
+    overscroll-behavior: none;       /* cegah pull-to-refresh Android & bounce iOS di level halaman */
+  }
+
   body {
     background-color: var(--bg-dark);
     color: var(--text-primary);
     overflow: hidden;
     height: 100vh;   /* fallback utk browser lama */
+    height: -webkit-fill-available;
     height: 100dvh;  /* dynamic viewport height: otomatis nyesuaiin saat toolbar Safari muncul/hilang */
-    width: 100vw;
+    width: 100%;     /* bukan 100vw: 100vw bikin geser horizontal di Android */
     display: flex;
     justify-content: center;
+    overscroll-behavior: none;
+    touch-action: manipulation;      /* hilangkan delay & double-tap zoom, pinch tetap jalan */
   }
 
   .app-stage {
@@ -213,7 +230,11 @@
     color: var(--text-secondary);
     font-size: 14px;
     font-weight: 600;
-    padding: 6px 18px;
+    min-height: 38px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: var(--radius-pill);
     cursor: pointer;
     transition: all 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
@@ -260,6 +281,7 @@
     gap: 12px;
     padding: 10px 14px;
     width: 100%;
+    min-height: 44px;
     background: transparent;
     border: none;
     color: var(--text-primary);
@@ -375,7 +397,7 @@
 
   /* 3. Grid View Mode */
   .notes-container.view-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: 10px;
   }
 
@@ -685,6 +707,9 @@
     border: none;
     color: var(--text-secondary);
     font-size: 11px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
     cursor: pointer;
   }
   .drawer-foot-btn svg { width: 20px; height: 20px; }
@@ -732,8 +757,9 @@
     background: transparent;
     border: none;
     color: var(--text-primary);
-    font-size: 15px;
+    font-size: 16px;  /* min 16px: kalau lebih kecil iOS otomatis zoom saat fokus */
     width: 100%;
+    min-width: 0;
     outline: none;
   }
 
@@ -985,7 +1011,7 @@
     z-index: 130;
     display: flex;
     flex-direction: column;
-    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 20px) 16px;
+    padding: calc(var(--safe-top) + 12px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 20px) calc(var(--safe-left) + 16px);
     opacity: 0;
     pointer-events: none;
     transform: translateY(15px);
@@ -1099,9 +1125,9 @@
   .image-lightbox-close {
     position: absolute;
     top: calc(var(--safe-top) + 16px);
-    right: 20px;
-    width: 40px;
-    height: 40px;
+    right: calc(var(--safe-right) + 20px);
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.12);
     backdrop-filter: blur(20px);
@@ -1244,6 +1270,26 @@
     animation: shareSpin 0.7s linear infinite;
   }
   @keyframes shareSpin { to { transform: rotate(360deg); } }
+
+  /* --- Layar sempit (iPhone SE/mini, Android kecil <= 360px) --- */
+  @media (max-width: 360px) {
+    .header { padding-left: 12px; padding-right: 12px; }
+    .content-scroll { padding-left: 12px; padding-right: 12px; }
+    .bottom-bar { left: 12px; right: 12px; gap: 8px; }
+    .page-title { font-size: 22px; }
+    .tab-btn { padding: 0 12px; font-size: 13px; }
+    .settings-row { padding: 15px 14px; }
+    .settings-row-label { font-size: 14.5px; }
+    .settings-row-status { font-size: 13px; }
+    .notes-container.view-grid { gap: 8px; }
+  }
+
+  /* --- HP landscape (tinggi pendek) --- */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .search-pill { height: 46px; }
+    .content-scroll { padding-bottom: calc(var(--safe-bottom) + 76px); }
+    .drawer { padding-top: calc(var(--safe-top) + 12px); }
+  }
 
   /* --- Desktop/tablet: beri latar pembeda di kiri-kanan kartu + garis tepi
      tipis, biar kartu yang melebar terasa disengaja (bukan kolom sempit) --- */
@@ -2296,14 +2342,21 @@
   // --- Dark Theme Toggle (fungsional, tersimpan di localStorage) ---
   const toggleDarkTheme = document.getElementById('toggleDarkTheme');
   const savedTheme = localStorage.getItem('bm-theme');
+  // Warna status bar / address bar PWA ikut tema (Android & iOS)
+  function applyThemeColor(isLight) {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', isLight ? '#F2F1EC' : '#000000');
+  }
   if (savedTheme === 'light') {
     document.body.classList.add('light-theme');
     toggleDarkTheme.classList.remove('active');
+    applyThemeColor(true);
   }
   toggleDarkTheme.addEventListener('click', () => {
     const isLight = document.body.classList.toggle('light-theme');
     toggleDarkTheme.classList.toggle('active', !isLight);
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
+    applyThemeColor(isLight);
   });
 
   // --- Pilihan Font (tersimpan di localStorage key 'bm-font', kepakai
