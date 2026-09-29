@@ -289,6 +289,51 @@
     font-size:14.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .btn-danger-outline svg{ width:16px; height:16px; }
+  .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
+
+  /* ---------- Puzzle konfirmasi hapus ---------- */
+  .pz-wrap{
+    position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
+    background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  .pz-wrap canvas{ display:block; }
+  #pzPiece{
+    position:absolute; left:0; top:0; will-change:transform;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.4)); pointer-events:none;
+  }
+  .pz-refresh{
+    position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.5); background:rgba(0,0,0,0.28); color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  .pz-refresh svg{ width:15px; height:15px; }
+  .pz-wrap.fail{ animation:pzShake .4s ease; }
+  @keyframes pzShake{
+    0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-8px); } 40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-5px); } 80%{ transform:translateX(5px); }
+  }
+  .pz-track{
+    position:relative; height:46px; border-radius:23px; border:1.5px solid var(--line);
+    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:none;
+  }
+  .pz-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-soft); }
+  .pz-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:650; color:var(--ink-soft); pointer-events:none; padding-left:30px;
+  }
+  .pz-handle{
+    position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
+    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
+  }
+  .pz-handle svg{ width:18px; height:18px; }
+  .pz-handle:active{ transform:none; }
+  .pz-anim .pz-handle, .pz-anim #pzPiece, .pz-anim .pz-fill{ transition:transform .22s ease, width .22s ease; }
+  .pz-track.ok{ border-color:#3E9B5F; }
+  .pz-track.ok .pz-fill{ background:rgba(62,155,95,0.22); }
+  .pz-track.ok .pz-handle{ background:#3E9B5F; }
+  .pz-track.ok .pz-label{ color:#3E9B5F; }
   .btn-row{ display:flex; gap:10px; }
   .btn-row > *{ flex:1; }
 
@@ -322,7 +367,8 @@
 
   /* ---------- Modal / sheet ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(15,13,8,0.5); z-index:200;
+    position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
     display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
   .overlay.center{ align-items:center; padding:0 20px; }
@@ -664,10 +710,20 @@
     <div class="modal-card">
       <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
       <h3>Hapus Data?</h3>
-      <p class="desc">Data yang sudah dihapus tidak dapat dikembalikan.</p>
-      <div class="btn-row">
+      <p class="desc">Data yang sudah dihapus tidak dapat dikembalikan. Geser potongan gambar ke lubang yang pas untuk melanjutkan.</p>
+      <div class="pz-wrap" id="pzWrap">
+        <canvas id="pzCanvas"></canvas>
+        <canvas id="pzPiece"></canvas>
+        <button type="button" class="pz-refresh" id="pzRefresh" aria-label="Ganti puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg></button>
+      </div>
+      <div class="pz-track" id="pzTrack">
+        <div class="pz-fill" id="pzFill"></div>
+        <div class="pz-label" id="pzLabel">Geser untuk mencocokkan</div>
+        <button type="button" class="pz-handle" id="pzHandle" aria-label="Geser potongan puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
         <button class="btn-secondary" id="btnDeleteBatal">Batal</button>
-        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin">Ya, Hapus</button>
+        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin" disabled>Ya, Hapus</button>
       </div>
     </div>
   </div>
@@ -1325,14 +1381,51 @@
     if (el) autoCapitalizeFirst(el);
   });
 
+  // =====================================================================
+  // OTOMATIS: Barang Keluar -> Stok Barang (B&J <-> Tidak ada)
+  //  - Barang Keluar = "B&J"       -> Stok Barang otomatis "Tidak ada"
+  //  - Barang Keluar = "Tidak ada" -> Stok Barang otomatis "B&J"
+  //  - Selain itu Stok Barang dibiarkan (tetap bisa diisi manual)
+  //  - Tulisan b&j di kedua kolom selalu dipaksa kapital: B&J
+  // =====================================================================
+  const LABEL_BJ = 'B&J';
+  const LABEL_TIDAK_ADA = 'Tidak ada';
+
+  function normalizeBJ(text){
+    return String(text || '').replace(/\bb&j\b/gi, LABEL_BJ);
+  }
+  function sameLabel(text, label){
+    return String(text || '').trim().replace(/\s+/g, ' ').toLowerCase() === label.toLowerCase();
+  }
+  function forceBJUppercase(el){
+    const fixed = normalizeBJ(el.value);
+    if (fixed === el.value) return;
+    const start = el.selectionStart, end = el.selectionEnd;
+    el.value = fixed; // panjang teks tidak berubah, posisi kursor aman
+    try { el.setSelectionRange(start, end); } catch (e) {}
+  }
+  function setupKeluarStokAuto(keluarId, stokId){
+    const keluarEl = document.getElementById(keluarId);
+    const stokEl = document.getElementById(stokId);
+    if (!keluarEl || !stokEl) return;
+    keluarEl.addEventListener('input', () => {
+      forceBJUppercase(keluarEl);
+      if (sameLabel(keluarEl.value, LABEL_BJ)) stokEl.value = LABEL_TIDAK_ADA;
+      else if (sameLabel(keluarEl.value, LABEL_TIDAK_ADA)) stokEl.value = LABEL_BJ;
+    });
+    stokEl.addEventListener('input', () => forceBJUppercase(stokEl));
+  }
+  setupKeluarStokAuto('inputBarangKeluar', 'inputStokBarang');   // form Tambah Data
+  setupKeluarStokAuto('detKeluarEdit', 'detStokEdit');           // form Edit Detail
+
   document.getElementById('inputHarga').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
 
   document.getElementById('btnBukaKonfirmasi').addEventListener('click', () => {
     const pj = document.getElementById('inputPJ').value.trim();
     const customer = document.getElementById('inputCustomer').value.trim();
     const barang = document.getElementById('inputBarang').value.trim();
-    const barangKeluar = document.getElementById('inputBarangKeluar').value.trim();
-    const stokBarang = document.getElementById('inputStokBarang').value.trim();
+    const barangKeluar = normalizeBJ(document.getElementById('inputBarangKeluar').value.trim());
+    const stokBarang = normalizeBJ(document.getElementById('inputStokBarang').value.trim());
     const keterangan = document.getElementById('inputKeterangan').value.trim();
     const harga = parseHarga(document.getElementById('inputHarga').value);
 
@@ -1460,8 +1553,8 @@
     const pj = document.getElementById('detPJedit').value.trim();
     const customer = document.getElementById('detCustomerEdit').value.trim();
     const barang = document.getElementById('detBarangEdit').value.trim();
-    const barangKeluar = document.getElementById('detKeluarEdit').value.trim();
-    const stokBarang = document.getElementById('detStokEdit').value.trim();
+    const barangKeluar = normalizeBJ(document.getElementById('detKeluarEdit').value.trim());
+    const stokBarang = normalizeBJ(document.getElementById('detStokEdit').value.trim());
     const keterangan = document.getElementById('detKetEdit').value.trim();
     const harga = parseHarga(document.getElementById('detHargaEdit').value);
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); return; }
@@ -1474,12 +1567,199 @@
     openDetail(editingRecordId);
   });
 
+  // =====================================================================
+  // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
+  // Tombol "Ya, Hapus" baru aktif setelah puzzle berhasil diselesaikan.
+  // Posisi lubang & gambar diacak setiap kali dibuka / salah geser.
+  // =====================================================================
+  const deletePuzzle = (function(){
+    const wrap = document.getElementById('pzWrap');
+    const canvas = document.getElementById('pzCanvas');
+    const piece = document.getElementById('pzPiece');
+    const track = document.getElementById('pzTrack');
+    const fill = document.getElementById('pzFill');
+    const label = document.getElementById('pzLabel');
+    const handle = document.getElementById('pzHandle');
+    const btnYakin = document.getElementById('btnDeleteYakin');
+    const btnRefresh = document.getElementById('pzRefresh');
+
+    const P = 40;          // sisi kotak potongan puzzle
+    const R = 7;           // jari-jari tonjolan
+    const H = 130;         // tinggi area gambar
+    const HANDLE = 39;     // diameter tombol geser
+    const TOL = 6;         // toleransi (px) posisi benar
+    const LABEL_DEFAULT = 'Geser untuk mencocokkan';
+
+    let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
+    let solved = false, dragging = false, startX = 0, startOff = 0, offset = 0, maxOff = 1, pieceMax = 1, dragX = 0;
+    let failTimer = null;
+
+    function makeRng(seed){
+      let a = seed >>> 0;
+      return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; };
+    }
+
+    // bentuk potongan: kotak dengan tonjolan di atas & kanan
+    function piecePath(ctx, x, y){
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + P / 2 - R, y);
+      ctx.arc(x + P / 2, y, R, Math.PI, 2 * Math.PI, false);
+      ctx.lineTo(x + P, y);
+      ctx.lineTo(x + P, y + P / 2 - R);
+      ctx.arc(x + P, y + P / 2, R, -Math.PI / 2, Math.PI / 2, false);
+      ctx.lineTo(x + P, y + P);
+      ctx.lineTo(x, y + P);
+      ctx.closePath();
+    }
+
+    // gambar latar acak (deterministik per seed supaya lubang & potongan identik)
+    function drawScene(ctx){
+      const rnd = makeRng(sceneSeed);
+      const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, 'hsl(' + h1 + ',70%,58%)');
+      g.addColorStop(1, 'hsl(' + h2 + ',72%,42%)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',75%,' + (40 + Math.floor(rnd() * 30)) + '%,0.55)';
+        ctx.beginPath();
+        ctx.arc(rnd() * W, rnd() * H, 12 + rnd() * 34, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+      for (let i = 0; i < 6; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',70%,60%,0.5)';
+        ctx.beginPath();
+        const x = rnd() * W, y = rnd() * H;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 30 + rnd() * 50, y + (rnd() - 0.5) * 60);
+        ctx.lineTo(x + (rnd() - 0.5) * 60, y + 30 + rnd() * 40);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++){
+        ctx.beginPath();
+        ctx.moveTo(rnd() * W, 0);
+        ctx.lineTo(rnd() * W, H);
+        ctx.stroke();
+      }
+    }
+
+    function render(){
+      // kanvas utama + lubang
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      const c = canvas.getContext('2d');
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawScene(c);
+      piecePath(c, tx, ty);
+      c.fillStyle = 'rgba(0,0,0,0.5)';
+      c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.85)';
+      c.lineWidth = 1.5;
+      c.stroke();
+
+      // kanvas potongan (kotak berada di offset (2, R+2))
+      const pw = P + R + 4, ph = P + R + 4;
+      piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
+      piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
+      piece.style.top = (ty - (R + 2)) + 'px';
+      const p = piece.getContext('2d');
+      p.setTransform(dpr, 0, 0, dpr, 0, 0);
+      p.clearRect(0, 0, pw, ph);
+      p.save();
+      p.translate(2 - tx, R + 2 - ty);
+      piecePath(p, tx, ty);
+      p.clip();
+      drawScene(p);
+      p.restore();
+      p.save();
+      p.translate(2 - tx, R + 2 - ty);
+      piecePath(p, tx, ty);
+      p.strokeStyle = 'rgba(255,255,255,0.95)';
+      p.lineWidth = 2;
+      p.stroke();
+      p.restore();
+    }
+
+    function setOffset(o){
+      offset = Math.max(0, Math.min(maxOff, o));
+      handle.style.transform = 'translateX(' + offset + 'px)';
+      fill.style.width = (offset + HANDLE + 2) + 'px';
+      dragX = maxOff > 0 ? (offset / maxOff) * pieceMax : 0;
+      piece.style.transform = 'translateX(' + (dragX - 2) + 'px)';
+    }
+
+    function reset(){
+      clearTimeout(failTimer);
+      solved = false; dragging = false;
+      wrap.parentElement.classList.remove('pz-anim');
+      track.classList.remove('ok');
+      label.textContent = LABEL_DEFAULT;
+      btnYakin.disabled = true;
+
+      W = Math.max(220, Math.floor(wrap.clientWidth) || 300);
+      dpr = window.devicePixelRatio || 1;
+      sceneSeed = Math.floor(Math.random() * 1e9) + 1;
+      pieceMax = W - P - R - 2;
+      const minX = Math.round(W * 0.42);
+      tx = Math.round(minX + Math.random() * (pieceMax - minX));
+      ty = Math.round((R + 8) + Math.random() * (H - P - (R + 8) - 8));
+      maxOff = Math.max(1, track.clientWidth - HANDLE - 4);
+      render();
+      setOffset(0);
+    }
+
+    function fail(){
+      wrap.classList.remove('fail'); void wrap.offsetWidth; wrap.classList.add('fail');
+      wrap.parentElement.classList.add('pz-anim');
+      setOffset(0);
+      failTimer = setTimeout(reset, 380);
+    }
+
+    handle.addEventListener('pointerdown', (e) => {
+      if (solved) return;
+      dragging = true; startX = e.clientX; startOff = offset;
+      wrap.parentElement.classList.remove('pz-anim');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      setOffset(startOff + (e.clientX - startX));
+    });
+    function endDrag(){
+      if (!dragging) return;
+      dragging = false;
+      if (offset < 6) return; // hanya tap, bukan geser
+      if (Math.abs(dragX - tx) <= TOL) {
+        solved = true;
+        setOffset(offset);
+        track.classList.add('ok');
+        label.textContent = 'Terverifikasi';
+        btnYakin.disabled = false;
+      } else {
+        fail();
+      }
+    }
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+    btnRefresh.addEventListener('click', reset);
+
+    return { reset: reset, isSolved: function(){ return solved; } };
+  })();
+
   document.getElementById('btnDetailDelete').addEventListener('click', () => {
     deletingRecordId = editingRecordId;
     openOverlay('overlayDelete');
+    deletePuzzle.reset();
   });
   document.getElementById('btnDeleteBatal').addEventListener('click', () => closeOverlay('overlayDelete'));
   document.getElementById('btnDeleteYakin').addEventListener('click', () => {
+    if (!deletePuzzle.isSolved()) return; // puzzle wajib selesai dulu
     records = records.filter(r => r.id !== deletingRecordId);
     deletingRecordId = null;
     closeOverlay('overlayDelete');
