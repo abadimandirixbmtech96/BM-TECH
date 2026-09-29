@@ -776,6 +776,7 @@
     const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
     return `${tgl} · ${NAMA_HARI[d.getDay()]} ${fmtWaktu(d)}`;
   }
+  function digitsOnly(str){ return (str || '').replace(/[^\d]/g, ''); }
   // ---------- UANG KASBON (angka murni, supaya sisa tagihan bisa dihitung) ----------
   function toNum(v){ return Number(v) || 0; }
   function rp(n){ return 'Rp ' + Math.round(toNum(n)).toLocaleString('id-ID'); }
