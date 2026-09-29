@@ -2801,6 +2801,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
@@ -5333,6 +5334,19 @@
     return fmt === 'JPG' ? 'JPEG' : fmt;
   }
 
+  // Kolom "Bukti" di-export sebagai QR code (bukan foto asli) -- foto aslinya kekecilan kalau
+  // dikecilin jadi thumbnail di tabel PDF/PNG, jadi nggak kebaca apa isinya. QR tetap bisa
+  // di-scan HP buat buka fotonya ukuran penuh. Bonus: nggak perlu fetch byte fotonya sama
+  // sekali (beda dari urlToBase64 di atas), jadi lebih cepat & nggak kena masalah CORS.
+  async function buktiUrlToQrDataUrl(url) {
+    try {
+      return await QRCode.toDataURL(url, { margin: 1, width: 200, color: { dark: '#1C1B19', light: '#FFFFFF' } });
+    } catch (err) {
+      console.error('Gagal bikin QR buat bukti:', url, err);
+      return null;
+    }
+  }
+
   document.getElementById('btnShareExportPdf').addEventListener('click', async () => {
     if (!currentDetailNote) return;
     const content = getDisplayTable(currentDetailNote);
@@ -5346,12 +5360,22 @@
 
     try {
       const imageColIds = content.columns.filter(c => c.type === 'image').map(c => c.id);
-      const imageCache = {}; // key: "rowIndex-colId" -> base64 data URL
+      const buktiColId = (content.columns.find(c => c.id === 'bukti') || {}).id;
+      const imageCache = {}; // key: "rowIndex-colId" -> base64 data URL (foto asli) ATAU array data URL QR (khusus kolom bukti)
 
       if (imageColIds.length > 0) {
         for (let r = 0; r < content.rows.length; r++) {
           for (const colId of imageColIds) {
-            const val = content.rows[r].cells ? content.rows[r].cells[colId] : null;
+            const cell = content.rows[r].cells || {};
+            if (colId === buktiColId) {
+              const urls = (Array.isArray(cell._buktiAll) ? cell._buktiAll : (cell.bukti ? [cell.bukti] : [])).slice(0, 2);
+              if (urls.length) {
+                const qrs = (await Promise.all(urls.map(buktiUrlToQrDataUrl))).filter(Boolean);
+                if (qrs.length) imageCache[`${r}-${colId}`] = qrs;
+              }
+              continue;
+            }
+            const val = cell[colId];
             if (val) {
               const base64 = await urlToBase64(val);
               if (base64) imageCache[`${r}-${colId}`] = base64;
@@ -5379,6 +5403,10 @@
         })
       );
 
+      // Kolom bukti dilebarin dikit -- biar muat 2 QR bersisian kalau ada 2 foto
+      const buktiColIndex = content.columns.findIndex(c => c.id === 'bukti');
+      const columnStyles = buktiColIndex !== -1 ? { [buktiColIndex]: { cellWidth: 52 } } : {};
+
       doc.autoTable({
         head,
         body,
@@ -5386,13 +5414,28 @@
         styles: { fontSize: 9, cellPadding: 6, overflow: 'linebreak', minCellHeight: 28 },
         headStyles: { fillColor: [217, 165, 54], textColor: [30, 28, 20], fontStyle: 'bold' },
         alternateRowStyles: { fillColor: [245, 245, 245] },
+        columnStyles,
         margin: { left: 30, right: 30 },
         didDrawCell: (data) => {
           if (data.section !== 'body') return;
           const col = content.columns[data.column.index];
           if (!col || col.type !== 'image') return;
-          const base64 = imageCache[`${data.row.index}-${col.id}`];
-          if (!base64) return;
+          const cached = imageCache[`${data.row.index}-${col.id}`];
+          if (!cached) return;
+          if (col.id === buktiColId) {
+            // 1-2 QR code kecil bersisian (masing-masing link ke 1 foto bukti)
+            const qrs = cached;
+            const size = Math.min(data.cell.height - 6, 22);
+            qrs.forEach((qr, i) => {
+              try {
+                doc.addImage(qr, 'PNG', data.cell.x + 3 + i * (size + 4), data.cell.y + 3, size, size);
+              } catch (imgErr) {
+                console.error('Gagal nyisip QR bukti ke PDF:', imgErr);
+              }
+            });
+            return;
+          }
+          const base64 = cached;
           const size = Math.min(data.cell.height - 6, 22);
           try {
             doc.addImage(base64, getImageFormat(base64), data.cell.x + 3, data.cell.y + 3, size, size);
@@ -5489,7 +5532,7 @@
   });
 
   // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
-  function buildExportTableEl(note) {
+  function buildExportTableEl(note, buktiQrCache) {
     const content = getDisplayTable(note);
 
     const wrap = document.createElement('div');
@@ -5522,7 +5565,20 @@
         const td = document.createElement('td');
         const val = row.cells ? row.cells[col.id] : '';
         td.style.cssText = 'padding:10px 16px; color:#1a1a1a; white-space:nowrap; border:1px solid #e2e2e2;';
-        if (col.type === 'image' && val) {
+        if (col.id === 'bukti') {
+          const qrs = (buktiQrCache && buktiQrCache[i]) || [];
+          if (qrs.length) {
+            const group = document.createElement('div');
+            group.style.cssText = 'display:flex; gap:6px;';
+            qrs.forEach(qr => {
+              const img = document.createElement('img');
+              img.src = qr; // data URL lokal -> nggak butuh crossOrigin, nggak kena CORS
+              img.style.cssText = 'width:40px; height:40px; border-radius:4px; display:block;';
+              group.appendChild(img);
+            });
+            td.appendChild(group);
+          }
+        } else if (col.type === 'image' && val) {
           const img = document.createElement('img');
           img.src = val;
           img.crossOrigin = 'anonymous';
@@ -5564,7 +5620,22 @@
     closeShareSheet();
     showShareLoading('Membuat gambar...');
 
-    const exportEl = buildExportTableEl(currentDetailNote);
+    const buktiColIndex = content.columns.findIndex(c => c.id === 'bukti');
+    const buktiQrCache = {}; // key: rowIndex -> array data URL QR (1-2)
+    if (buktiColIndex !== -1) {
+      showShareLoading('Membuat QR bukti...');
+      for (let i = 0; i < content.rows.length; i++) {
+        const cell = content.rows[i].cells || {};
+        const urls = (Array.isArray(cell._buktiAll) ? cell._buktiAll : (cell.bukti ? [cell.bukti] : [])).slice(0, 2);
+        if (urls.length) {
+          const qrs = (await Promise.all(urls.map(buktiUrlToQrDataUrl))).filter(Boolean);
+          if (qrs.length) buktiQrCache[i] = qrs;
+        }
+      }
+      showShareLoading('Membuat gambar...');
+    }
+
+    const exportEl = buildExportTableEl(currentDetailNote, buktiQrCache);
 
     try {
       await waitForImages(exportEl);
