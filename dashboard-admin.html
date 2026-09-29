@@ -3716,6 +3716,36 @@
     return !!(cat && /warung/i.test(cat.name || ''));
   }
 
+  // =====================================================================
+  // BUKU KASBON — data terpisah dari buku besar & warung
+  // Note kasbon disimpan dengan schema 'kasbon-data-v1' (field: nama, total,
+  // dibayar, keterangan; sisa tagihan dihitung total - dibayar). Sama seperti
+  // warung, getNoteTable() mengembalikan null untuk schema ini sehingga Tasks,
+  // Search, dan Analisa buku besar tidak menyentuhnya.
+  // =====================================================================
+  const KASBON_SCHEMA = 'kasbon-data-v1';
+  const KASBON_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-kasbon.html';
+
+  function isKasbonNote(note) {
+    return !!(note && note.content && note.content.schema === KASBON_SCHEMA);
+  }
+  // Folder dianggap folder kasbon kalau namanya mengandung kata "kasbon".
+  function isKasbonFolderId(folderId) {
+    const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
+    return !!(cat && /kasbon/i.test(cat.name || ''));
+  }
+
+  const KASBON_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'nama', label: 'Nama' },
+    { id: 'total', label: 'Total Tagihan' },
+    { id: 'dibayar', label: 'Dibayar' },
+    { id: 'sisa', label: 'Sisa Tagihan' },
+    { id: 'keterangan', label: 'Keterangan' }
+  ];
+
   const WARUNG_COLUMNS = [
     { id: 'no', label: 'No' },
     { id: 'tanggal', label: 'Tanggal' },
@@ -3746,6 +3776,28 @@
         };
       });
       return { columns: WARUNG_COLUMNS, rows };
+    }
+    if (isKasbonNote(note) && Array.isArray(note.content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const fmtUang = v => { const n = Number(v) || 0; return n ? Math.round(n).toLocaleString('id-ID') : '0'; };
+      const sorted = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const dt = r.created_at ? new Date(r.created_at) : null;
+        const total = Number(r.total) || 0, dibayar = Number(r.dibayar) || 0;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal: dt ? `${pad2(dt.getDate())}-${pad2(dt.getMonth() + 1)}-${dt.getFullYear()}` : '',
+            jam: dt ? `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}` : '',
+            nama: r.nama || '',
+            total: fmtUang(total),
+            dibayar: fmtUang(dibayar),
+            sisa: (total > 0 && total - dibayar <= 0) ? '0 (Lunas)' : fmtUang(Math.max(0, total - dibayar)),
+            keterangan: r.keterangan || ''
+          }
+        };
+      });
+      return { columns: KASBON_COLUMNS, rows };
     }
     return getNoteTable(note);
   }
@@ -4683,10 +4735,15 @@
     }
     if (folderId) params.set('folder', folderId);
 
-    // Pilih editor: note warung / folder warung -> editor warung, selain itu buku besar.
-    // (Kalau salah pilih, kedua editor otomatis mengalihkan diri — data tidak akan tertimpa.)
+    // Pilih editor: kasbon -> editor kasbon, warung -> editor warung, selain itu buku besar.
+    // (Kalau salah pilih, ketiga editor otomatis mengalihkan diri — data tidak akan tertimpa.)
     const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
-    const editorFile = (isWarungFolderId(folderId) || isWarungNote(noteObj)) ? WARUNG_EDITOR_FILE : LEDGER_EDITOR_FILE;
+    // Jenis note (schema) menang atas nama folder; kalau note baru/lama tanpa schema, nama folder yang menentukan.
+    const editorFile = isKasbonNote(noteObj) ? KASBON_EDITOR_FILE
+                     : isWarungNote(noteObj) ? WARUNG_EDITOR_FILE
+                     : isKasbonFolderId(folderId) ? KASBON_EDITOR_FILE
+                     : isWarungFolderId(folderId) ? WARUNG_EDITOR_FILE
+                     : LEDGER_EDITOR_FILE;
 
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);
@@ -5108,8 +5165,8 @@
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
 
-    // Note warung TIDAK ikut Analisa/Tasks/Search buku besar
-    allNotesData = (data || []).filter(n => !isWarungNote(n)).map(n => ({
+    // Note warung & kasbon TIDAK ikut Analisa/Tasks/Search buku besar
+    allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
