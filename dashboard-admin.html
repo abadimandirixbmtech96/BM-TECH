@@ -1103,6 +1103,23 @@
 
   .logout-row .settings-item-title { color: #F0555C; }
 
+  /* ---------- Kelola Karyawan (styling sama persis dgn Kelola Customer,
+       cuma nama class-nya di-alias biar nggak duplikat CSS) ---------- */
+  .karyawan-screen, .karyawan-form-overlay, .karyawan-form-sheet { all: unset; }
+  .karyawan-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 260; transform: translateX(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+  .karyawan-screen.open { transform: translateX(0); }
+  .karyawan-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-shrink: 0; }
+  .karyawan-header h2 { flex: 1; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .karyawan-add-btn { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--accent-yellow); color: #1C1B19; font-size: 22px; font-weight: 700; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  .karyawan-add-btn:active { transform: scale(0.92); }
+  .karyawan-list { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
+  .karyawan-empty { text-align: center; color: var(--text-secondary); padding: 60px 20px; font-size: 13.5px; }
+  .karyawan-form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 270; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .karyawan-form-overlay.open { opacity: 1; pointer-events: auto; }
+  .karyawan-form-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-surface-dark); border-radius: 24px 24px 0 0; padding: 18px 18px calc(18px + var(--safe-bottom)); z-index: 271; transform: translateY(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); }
+  .karyawan-form-sheet.open { transform: translateY(0); }
+  .karyawan-form-sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
+
   /* ---------- Kelola Customer ---------- */
   .customer-screen {
     position: fixed; inset: 0;
@@ -2259,7 +2276,7 @@
     <div id="notesSection">
       <!-- Title Kategori Dinamis -->
       <h1 class="page-title" id="currentCategoryTitle">PILIH KATEGORI</h1>
-      <p class="section-label" id="currentCategorySubtitle">???</p>
+      <p class="section-label" id="currentCategorySubtitle">Previous 7 Days</p>
 
       <!-- Supabase Data Feed Container -->
       <div class="notes-container view-grid" id="notesList"></div>
@@ -2331,6 +2348,10 @@
     <button class="drawer-foot-btn" id="btnOpenCustomers">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Customer
+    </button>
+    <button class="drawer-foot-btn" id="btnOpenKaryawan">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Karyawan
     </button>
     <button class="drawer-foot-btn" id="btnOpenSettings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -2451,6 +2472,50 @@
   <div class="customer-form-actions">
     <button id="btnCustomerCancel">Batal</button>
     <button id="btnCustomerSubmit">Buat Akun</button>
+  </div>
+</div>
+
+<!-- Kelola Karyawan Screen -->
+<div class="karyawan-screen" id="karyawanScreen">
+  <div class="karyawan-header">
+    <button class="settings-back-btn" id="btnKaryawanScreenBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <h2>Kelola Karyawan</h2>
+    <button class="karyawan-add-btn" id="btnKaryawanAddOpen" aria-label="Tambah Karyawan">+</button>
+  </div>
+  <div class="karyawan-list" id="karyawanListEl">
+    <div class="karyawan-empty">Memuat data karyawan...</div>
+  </div>
+</div>
+
+<!-- Form Tambah Karyawan -->
+<div class="karyawan-form-overlay" id="karyawanFormOverlay"></div>
+<div class="karyawan-form-sheet" id="karyawanFormSheet">
+  <h3>Tambah Karyawan Baru</h3>
+  <div class="customer-form-field">
+    <label for="inpKwDisplayName">Nama PJ (harus SAMA PERSIS dengan yang ditulis di kolom "PJ" buku besar)</label>
+    <input type="text" id="inpKwDisplayName" placeholder="contoh: Budi" autocomplete="off">
+  </div>
+  <div class="customer-form-field">
+    <label for="inpKwUsername">Username (untuk link login, tanpa spasi/simbol)</label>
+    <input type="text" id="inpKwUsername" placeholder="contoh: budi" autocomplete="off">
+  </div>
+  <div class="customer-form-field">
+    <label for="inpKwEmail">Email</label>
+    <input type="email" id="inpKwEmail" placeholder="karyawan@email.com" autocomplete="off">
+  </div>
+  <div class="customer-form-field">
+    <label for="inpKwPassword">Password (min. 6 karakter)</label>
+    <input type="password" id="inpKwPassword" placeholder="Password login karyawan" autocomplete="off">
+  </div>
+  <div class="customer-form-error" id="karyawanFormError"></div>
+  <div class="customer-form-actions">
+    <button id="btnKaryawanCancel">Batal</button>
+    <button id="btnKaryawanSubmit">Buat Akun</button>
   </div>
 </div>
 
@@ -3705,7 +3770,8 @@
     { id: 'barangKeluar', label: 'Barang Keluar' },
     { id: 'stokBarang', label: 'Stok Barang' },
     { id: 'keterangan', label: 'Keterangan' },
-    { id: 'harga', label: 'Harga' }
+    { id: 'harga', label: 'Harga' },
+    { id: 'bukti', label: 'Bukti', type: 'image' }
   ];
 
   function getNoteTable(note) {
@@ -4426,6 +4492,240 @@
       customerFormError.style.display = 'block';
       btnCustomerSubmit.disabled = false;
       btnCustomerSubmit.textContent = 'Buat Akun';
+    }
+  });
+
+
+  // --- Kelola Karyawan (pola identik Kelola Customer, dicek langsung dari
+  //     source function create-customer/delete-customer yang sudah live) ---
+  const KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/create-karyawan';
+  const DELETE_KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/delete-karyawan';
+  const karyawanScreen = document.getElementById('karyawanScreen');
+  const btnOpenKaryawan = document.getElementById('btnOpenKaryawan');
+  const btnKaryawanScreenBack = document.getElementById('btnKaryawanScreenBack');
+  const karyawanListEl = document.getElementById('karyawanListEl');
+  const karyawanFormOverlay = document.getElementById('karyawanFormOverlay');
+  const karyawanFormSheet = document.getElementById('karyawanFormSheet');
+  const btnKaryawanAddOpen = document.getElementById('btnKaryawanAddOpen');
+  const btnKaryawanCancel = document.getElementById('btnKaryawanCancel');
+  const btnKaryawanSubmit = document.getElementById('btnKaryawanSubmit');
+  const inpKwDisplayName = document.getElementById('inpKwDisplayName');
+  const inpKwUsername = document.getElementById('inpKwUsername');
+  const inpKwEmail = document.getElementById('inpKwEmail');
+  const inpKwPassword = document.getElementById('inpKwPassword');
+  const karyawanFormError = document.getElementById('karyawanFormError');
+
+  btnOpenKaryawan.addEventListener('click', () => {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    karyawanScreen.classList.add('open');
+    loadKaryawanList();
+  });
+
+  btnKaryawanScreenBack.addEventListener('click', () => {
+    karyawanScreen.classList.remove('open');
+  });
+
+  function openKaryawanForm() {
+    inpKwDisplayName.value = '';
+    inpKwUsername.value = '';
+    inpKwUsername.dataset.autoFilled = 'true';
+    inpKwEmail.value = '';
+    inpKwPassword.value = '';
+    karyawanFormError.style.display = 'none';
+    btnKaryawanSubmit.disabled = false;
+    btnKaryawanSubmit.textContent = 'Buat Akun';
+    karyawanFormOverlay.classList.add('open');
+    karyawanFormSheet.classList.add('open');
+  }
+  function closeKaryawanForm() {
+    karyawanFormOverlay.classList.remove('open');
+    karyawanFormSheet.classList.remove('open');
+  }
+  btnKaryawanAddOpen.addEventListener('click', openKaryawanForm);
+
+  // Auto-isi username dari Nama PJ (selama user belum ngetik manual di kolom username)
+  inpKwDisplayName.addEventListener('input', () => {
+    if (inpKwUsername.dataset.autoFilled !== 'false') {
+      inpKwUsername.value = inpKwDisplayName.value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .slice(0, 24);
+    }
+  });
+  inpKwUsername.addEventListener('input', () => {
+    inpKwUsername.dataset.autoFilled = 'false';
+  });
+  btnKaryawanCancel.addEventListener('click', closeKaryawanForm);
+  karyawanFormOverlay.addEventListener('click', closeKaryawanForm);
+
+  async function loadKaryawanList() {
+    karyawanListEl.innerHTML = '<div class="karyawan-empty">Memuat data karyawan...</div>';
+    const { data, error } = await supabaseClient
+      .from('karyawan')
+      .select('id, username, email, display_name, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      karyawanListEl.innerHTML = '<div class="karyawan-empty">Gagal memuat: ' + escapeHtmlAdmin(error.message) + '</div>';
+      return;
+    }
+    if (!data || data.length === 0) {
+      karyawanListEl.innerHTML = '<div class="karyawan-empty">Belum ada karyawan. Tekan tombol + untuk menambahkan.</div>';
+      return;
+    }
+
+    karyawanListEl.innerHTML = '';
+    data.forEach((k) => {
+      const loginUrl = 'https://dashboard-bm-tech.vercel.app/role-karyawan-' + k.username;
+      const card = document.createElement('div');
+      card.className = 'customer-card';
+      card.innerHTML = `
+        <div class="customer-card-top">
+          <div>
+            <div class="customer-card-name">${escapeHtmlAdmin(k.display_name || k.username)}</div>
+            <div class="customer-card-email">@${escapeHtmlAdmin(k.username)} · ${escapeHtmlAdmin(k.email)}</div>
+          </div>
+        </div>
+        <div class="customer-card-actions">
+          <button class="customer-mini-btn" data-action="copy" data-url="${loginUrl}">Salin Link Login</button>
+          <button class="customer-mini-btn danger" data-action="remove" data-id="${k.id}" data-username="${escapeHtmlAdmin(k.username)}">Hapus</button>
+        </div>
+      `;
+      karyawanListEl.appendChild(card);
+    });
+  }
+
+  karyawanListEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
+
+    if (btn.dataset.action === 'copy') {
+      try {
+        await navigator.clipboard.writeText(btn.dataset.url);
+        showMiniToast('Link login disalin');
+      } catch {
+        showMiniToast(btn.dataset.url);
+      }
+    }
+
+    if (btn.dataset.action === 'remove') {
+      const username = btn.dataset.username;
+      const kwId = btn.dataset.id;
+      if (!confirm('Hapus akun karyawan "' + username + '" SEPENUHNYA (email, password, username login)? Baris buku besar yang sudah ada TETAP tersimpan sebagai arsip.')) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Menghapus...';
+
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+          alert('Sesi admin habis, silakan login ulang.');
+          btn.disabled = false;
+          btn.textContent = 'Hapus';
+          return;
+        }
+
+        const res = await fetch(DELETE_KARYAWAN_FN_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + session.access_token,
+            'apikey': SUPABASE_ANON_KEY
+          },
+          body: JSON.stringify({ karyawan_id: kwId })
+        });
+        const result = await res.json();
+
+        if (!res.ok || result.error) {
+          alert('Gagal menghapus: ' + (result.error || 'terjadi kesalahan'));
+          btn.disabled = false;
+          btn.textContent = 'Hapus';
+          return;
+        }
+
+        showMiniToast('Akun karyawan "' + username + '" dihapus sepenuhnya');
+        loadKaryawanList();
+      } catch (err) {
+        alert('Gagal terhubung ke server: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Hapus';
+      }
+    }
+  });
+
+  btnKaryawanSubmit.addEventListener('click', async () => {
+    const displayName = inpKwDisplayName.value.trim();
+    const username = inpKwUsername.value.trim().toLowerCase().replace(/^@+/, '');
+    const email = inpKwEmail.value.trim();
+    const password = inpKwPassword.value;
+
+    karyawanFormError.style.display = 'none';
+
+    if (!displayName || displayName.length < 2 || displayName.length > 60) {
+      karyawanFormError.textContent = 'Nama PJ wajib diisi (2-60 karakter), dan harus sama persis dengan yang nanti ditulis di kolom PJ buku besar.';
+      karyawanFormError.style.display = 'block';
+      return;
+    }
+    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
+      karyawanFormError.textContent = 'Username harus 3-24 karakter: huruf kecil, angka, underscore.';
+      karyawanFormError.style.display = 'block';
+      return;
+    }
+    if (!email.includes('@')) {
+      karyawanFormError.textContent = 'Email tidak valid.';
+      karyawanFormError.style.display = 'block';
+      return;
+    }
+    if (password.length < 6) {
+      karyawanFormError.textContent = 'Password minimal 6 karakter.';
+      karyawanFormError.style.display = 'block';
+      return;
+    }
+
+    btnKaryawanSubmit.disabled = true;
+    btnKaryawanSubmit.textContent = 'Memproses...';
+
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        karyawanFormError.textContent = 'Sesi admin habis, silakan login ulang.';
+        karyawanFormError.style.display = 'block';
+        btnKaryawanSubmit.disabled = false;
+        btnKaryawanSubmit.textContent = 'Buat Akun';
+        return;
+      }
+
+      const res = await fetch(KARYAWAN_FN_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': SUPABASE_ANON_KEY
+        },
+        body: JSON.stringify({ username, email, password, display_name: displayName })
+      });
+      const result = await res.json();
+
+      if (!res.ok || result.error) {
+        karyawanFormError.textContent = result.error || 'Gagal membuat akun karyawan.';
+        karyawanFormError.style.display = 'block';
+        btnKaryawanSubmit.disabled = false;
+        btnKaryawanSubmit.textContent = 'Buat Akun';
+        return;
+      }
+
+      closeKaryawanForm();
+      showMiniToast('Karyawan "' + displayName + '" berhasil dibuat');
+      loadKaryawanList();
+
+    } catch (err) {
+      karyawanFormError.textContent = 'Gagal terhubung ke server: ' + err.message;
+      karyawanFormError.style.display = 'block';
+      btnKaryawanSubmit.disabled = false;
+      btnKaryawanSubmit.textContent = 'Buat Akun';
     }
   });
 
