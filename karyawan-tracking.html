@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="/manifest-karyawan.json">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<meta name="apple-mobile-web-app-title" content="BM-TECH Karyawan">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#000000">
+<title>BM-TECH Karyawan</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Design tokens disalin dari index.html biar konsisten satu keluarga tampilan */
+  :root {
+    --bg-dark: #000000;
+    --card-surface-dark: #121214;
+    --card-border-dark: rgba(255, 255, 255, 0.08);
+    --accent-yellow: #F0A529;
+    --accent-yellow-glow: rgba(240, 165, 41, 0.28);
+    --text-primary: #FFFFFF;
+    --text-secondary: #7C7C82;
+    --text-muted: #4A4A4F;
+    --text-dark: #1C1B19;
+    --glass-pill-bg: rgba(255, 255, 255, 0.09);
+    --glass-pill-border: rgba(255, 255, 255, 0.12);
+    --divider-soft: rgba(255, 255, 255, 0.06);
+    --danger-text: #FBC9CC;
+    --radius-xl: 22px;
+    --radius-lg: 16px;
+    --radius-pill: 999px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --app-max-width: 480px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    width: 100%; min-height: 100%;
+    background: var(--bg-dark);
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text-primary);
+  }
+  body {
+    max-width: var(--app-max-width);
+    margin: 0 auto;
+    min-height: 100vh;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(var(--safe-bottom) + 24px);
+  }
+
+  /* ---------- Header ---------- */
+  .kw-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 18px 18px 6px;
+  }
+  .kw-avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--accent-yellow); color: var(--text-dark);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; flex-shrink: 0;
+  }
+  .kw-header-info { flex: 1; min-width: 0; }
+  .kw-header-name { font-size: 16px; font-weight: 800; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kw-header-role { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .kw-logout-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--card-border-dark); background: var(--glass-pill-bg);
+    color: var(--text-secondary); display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .kw-logout-btn svg { width: 18px; height: 18px; }
+
+  /* ---------- Stat cards ---------- */
+  .kw-stats-row { display: flex; gap: 10px; padding: 14px 18px 4px; }
+  .kw-stat-card {
+    flex: 1; background: var(--card-surface-dark);
+    border: 1px solid var(--card-border-dark); border-radius: var(--radius-lg);
+    padding: 14px 12px;
+  }
+  .kw-stat-value { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+  .kw-stat-label { font-size: 11px; color: var(--text-secondary); margin-top: 4px; font-weight: 600; }
+
+  /* ---------- Search ---------- */
+  .kw-search-box {
+    margin: 14px 18px 4px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border);
+    border-radius: var(--radius-pill); padding: 11px 16px;
+  }
+  .kw-search-box svg { width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0; }
+  .kw-search-box input {
+    flex: 1; background: none; border: none; outline: none;
+    color: var(--text-primary); font-size: 14px; font-family: inherit;
+  }
+  .kw-search-box input::placeholder { color: var(--text-muted); }
+
+  /* ---------- List ---------- */
+  .kw-list-title {
+    padding: 20px 18px 8px; font-size: 13px; font-weight: 700;
+    color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .kw-list { padding: 0 18px; display: flex; flex-direction: column; gap: 8px; }
+  .kw-item {
+    background: var(--card-surface-dark); border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-lg); padding: 13px 14px;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+  }
+  .kw-item-main { min-width: 0; flex: 1; }
+  .kw-item-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
+  .kw-item-sub { font-size: 12px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45; }
+  .kw-item-amount { font-size: 14px; font-weight: 800; color: var(--accent-yellow); white-space: nowrap; flex-shrink: 0; }
+  .kw-item-amount.empty { color: var(--text-muted); font-weight: 600; font-size: 12px; }
+
+  .kw-empty {
+    text-align: center; color: var(--text-secondary); font-size: 13.5px;
+    padding: 60px 20px;
+  }
+  .kw-empty svg { width: 40px; height: 40px; color: var(--text-muted); margin-bottom: 10px; }
+
+  .kw-guard-msg {
+    padding: 60px 24px; text-align: center; color: var(--text-secondary);
+    font-size: 14px; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<div class="kw-header">
+  <div class="kw-avatar" id="kwAvatar">-</div>
+  <div class="kw-header-info">
+    <div class="kw-header-name" id="kwName">Memuat...</div>
+    <div class="kw-header-role">Karyawan &middot; Riwayat Pekerjaan</div>
+  </div>
+  <button class="kw-logout-btn" id="btnKwLogout" aria-label="Keluar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+  </button>
+</div>
+
+<div class="kw-stats-row">
+  <div class="kw-stat-card">
+    <p class="kw-stat-value" id="kwStatTotal">0</p>
+    <p class="kw-stat-label">Total Pekerjaan</p>
+  </div>
+  <div class="kw-stat-card">
+    <p class="kw-stat-value" id="kwStatMonth">0</p>
+    <p class="kw-stat-label">Bulan Ini</p>
+  </div>
+  <div class="kw-stat-card">
+    <p class="kw-stat-value" id="kwStatValue">Rp 0</p>
+    <p class="kw-stat-label">Total Nilai</p>
+  </div>
+</div>
+
+<div class="kw-search-box">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  <input type="text" id="kwSearchInput" placeholder="Cari customer, barang, atau tabel...">
+</div>
+
+<p class="kw-list-title">Riwayat Pekerjaan Saya</p>
+<div class="kw-list" id="kwList">
+  <div class="kw-empty">Memuat data...</div>
+</div>
+
+<!-- Supabase Client SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
+      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
+      storage: window.localStorage,
+      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
+    }
+  });
+</script>
+
+<script>
+  // =====================================================================
+  // Halaman ini READ-ONLY: karyawan cuma bisa MELIHAT baris buku besar
+  // yang kolom PJ-nya cocok dengan nama dirinya sendiri. Tidak ada tombol
+  // tambah/edit/hapus data di sini sama sekali (sesuai permintaan).
+  // Data mentahnya sendiri (tabel notes/folders) memang sudah bisa dibaca
+  // publik lewat anon key (sama seperti index.html) — pintu masuk yang
+  // dijaga di sini adalah LOGIN-nya: harus akun karyawan yang valid dulu
+  // baru halaman ini kebuka & terisi.
+  // =====================================================================
+
+  let notesData = [];
+  let myDisplayName = '';
+
+  const NEW_SCHEMA_COLUMNS = [
+    { id: 'no', label: 'No' }, { id: 'tanggal', label: 'Tanggal' }, { id: 'jam', label: 'Jam' },
+    { id: 'pj', label: 'PJ' }, { id: 'customer', label: 'Customer' }, { id: 'barang', label: 'Barang' },
+    { id: 'barangKeluar', label: 'Barang Keluar' }, { id: 'stokBarang', label: 'Stok Barang' },
+    { id: 'keterangan', label: 'Keterangan' }, { id: 'harga', label: 'Harga' }
+  ];
+
+  // Sama persis dengan normalizeNoteContent di index.html: tabel dari editor
+  // baru (schema 'admin-data-v1' / content.records) diratakan ke {columns, rows}.
+  // Note WARUNG (schema 'warung-data-v1') SENGAJA tidak dikenali fungsi ini,
+  // jadi otomatis ke-skip di bawah — histori karyawan tidak pernah bocor ke
+  // data warung.
+  function normalizeNoteContent(content) {
+    if (!content) return content;
+    if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const sorted = [...content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const d = r.created_at ? new Date(r.created_at) : null;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal: d ? `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}` : '',
+            jam: d ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '',
+            pj: r.pj || '', customer: r.customer || '', barang: r.barang || '',
+            barangKeluar: r.barangKeluar || '', stokBarang: r.stokBarang || '',
+            keterangan: r.keterangan || '',
+            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : ''
+          }
+        };
+      });
+      return { columns: NEW_SCHEMA_COLUMNS, rows };
+    }
+    return content;
+  }
+
+  async function loadNotes() {
+    const { data: folders } = await supabaseClient.from('folders').select('id, name');
+    const folderNameById = {};
+    (folders || []).forEach(f => { folderNameById[f.id] = f.name; });
+
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal memuat data:', error.message);
+      notesData = [];
+      return;
+    }
+    notesData = (data || []).map(n => ({
+      ...n,
+      folder: folderNameById[n.folder_id] || 'Uncategorized',
+      content: normalizeNoteContent(n.content)
+    }));
+  }
+
+  function normalizeKey(str) { return String(str).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+  function getRowValueByLabel(columns, row, label) {
+    const target = normalizeKey(label);
+    const col = (columns || []).find(c => normalizeKey(c.label) === target);
+    if (!col) return undefined;
+    return row && row.cells ? row.cells[col.id] : undefined;
+  }
+
+  function parseRupiah(val) {
+    if (val === undefined || val === null) return 0;
+    const cleaned = String(val).replace(/[^0-9]/g, '');
+    const parsed = parseInt(cleaned, 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+
+  function parseRowDate(val, fallbackISO) {
+    if (val) {
+      const s = String(val).trim();
+      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+      if (m) {
+        let [, d, mo, y] = m;
+        if (y.length === 2) y = '20' + y;
+        const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
+        if (!isNaN(dt)) return dt;
+      }
+      const dt2 = new Date(s);
+      if (!isNaN(dt2)) return dt2;
+    }
+    return fallbackISO ? new Date(fallbackISO) : null;
+  }
+
+  function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function formatRupiah(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+  function timeAgo(iso) {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'Baru saja';
+    if (mins < 60) return `${mins} menit lalu`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} jam lalu`;
+    return `${Math.floor(hrs / 24)} hari lalu`;
+  }
+
+  // Semua baris (dari SEMUA folder/tabel) yang kolom PJ-nya cocok dengan
+  // nama karyawan yang sedang login. Baris tanpa Harga tetap ikut (ini
+  // histori PEKERJAAN, bukan cuma histori transaksi berbayar).
+  function extractMyRows() {
+    const rows = [];
+    const myKey = normalizeKey(myDisplayName);
+    notesData.forEach(note => {
+      const content = note.content;
+      if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
+      const columns = content.columns;
+      content.rows.forEach(row => {
+        const pj = getRowValueByLabel(columns, row, 'PJ') || '';
+        if (normalizeKey(pj) !== myKey) return;
+
+        const date = parseRowDate(getRowValueByLabel(columns, row, 'Tanggal'), note.created_at);
+        rows.push({
+          date: date || new Date(note.created_at),
+          amount: parseRupiah(getRowValueByLabel(columns, row, 'Harga')),
+          customer: getRowValueByLabel(columns, row, 'Customer') || 'Tanpa Nama',
+          barang: getRowValueByLabel(columns, row, 'Barang') || 'Lainnya',
+          keterangan: getRowValueByLabel(columns, row, 'Keterangan') || '',
+          folder: note.folder || 'Uncategorized',
+          noteTitle: note.title || 'Untitled'
+        });
+      });
+    });
+    return rows.sort((a, b) => b.date - a.date);
+  }
+
+  function renderList(filterTerm) {
+    const listEl = document.getElementById('kwList');
+    let rows = extractMyRows();
+
+    // Statistik dihitung dari SELURUH riwayat (sebelum difilter pencarian)
+    const now = new Date();
+    const thisMonth = rows.filter(r => r.date.getFullYear() === now.getFullYear() && r.date.getMonth() === now.getMonth());
+    const totalValue = rows.reduce((sum, r) => sum + r.amount, 0);
+    document.getElementById('kwStatTotal').textContent = rows.length;
+    document.getElementById('kwStatMonth').textContent = thisMonth.length;
+    document.getElementById('kwStatValue').textContent = formatRupiah(totalValue);
+
+    if (filterTerm) {
+      rows = rows.filter(r =>
+        r.customer.toLowerCase().includes(filterTerm) ||
+        r.barang.toLowerCase().includes(filterTerm) ||
+        r.folder.toLowerCase().includes(filterTerm)
+      );
+    }
+
+    if (rows.length === 0) {
+      listEl.innerHTML = `
+        <div class="kw-empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <p>${filterTerm ? 'Tidak ada yang cocok' : 'Belum ada pekerjaan tercatat atas nama Anda'}</p>
+        </div>`;
+      return;
+    }
+
+    listEl.innerHTML = rows.map(r => `
+      <div class="kw-item">
+        <div class="kw-item-main">
+          <div class="kw-item-title">${escapeHtml(r.customer)} &middot; ${escapeHtml(r.barang)}</div>
+          <div class="kw-item-sub">${escapeHtml(r.folder)} · ${timeAgo(r.date.toISOString())}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''}</div>
+        </div>
+        ${r.amount ? `<span class="kw-item-amount">${formatRupiah(r.amount)}</span>` : `<span class="kw-item-amount empty">Belum ada harga</span>`}
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('kwSearchInput').addEventListener('input', (e) => {
+    renderList(e.target.value.trim().toLowerCase());
+  });
+
+  document.getElementById('btnKwLogout').addEventListener('click', async () => {
+    if (!confirm('Keluar dari akun karyawan ini?')) return;
+    await supabaseClient.auth.signOut();
+    window.location.href = 'karyawan-login.html';
+  });
+
+  async function init() {
+    await loadNotes();
+    renderList('');
+  }
+
+  /* ================= AUTH GUARD ================= */
+  (async function guardKaryawanAccess() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'karyawan-login.html';
+      return;
+    }
+
+    const { data: isKaryawan, error } = await supabaseClient.rpc('is_karyawan');
+    if (error) {
+      // Error JARINGAN (bukan konfirmasi "bukan karyawan") — jangan paksa
+      // logout, ini sering kejadian pas PWA baru dibuka & koneksi belum pulih.
+      console.error('Gagal cek status karyawan (jaringan?):', error.message);
+    } else if (!isKaryawan) {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'karyawan-login.html';
+      return;
+    }
+
+    const myUserId = session.user.id;
+    const { data: profile, error: profileErr } = await supabaseClient
+      .from('karyawan')
+      .select('username, display_name')
+      .eq('id', myUserId)
+      .single();
+
+    if (profileErr || !profile) {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'karyawan-login.html';
+      return;
+    }
+
+    myDisplayName = profile.display_name || profile.username;
+    document.getElementById('kwName').textContent = myDisplayName;
+    document.getElementById('kwAvatar').textContent = myDisplayName.charAt(0).toUpperCase();
+
+    init();
+  })();
+</script>
+
+<script>
+  // Minta browser TIDAK menghapus localStorage (sesi login) saat perangkat
+  // kekurangan memori — penting khusus untuk PWA iOS "Add to Home Screen".
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+</script>
+<script>
+  // Daftarkan Service Worker — WAJIB supaya app-shell tersedia offline dan
+  // supaya iOS mengenali halaman ini sebagai PWA yang bisa di-cache.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('Gagal mendaftarkan service worker:', err);
+      });
+    });
+  }
+</script>
+</body>
+</html>
