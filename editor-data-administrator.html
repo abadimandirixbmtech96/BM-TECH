@@ -289,6 +289,9 @@
     font-size:14.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .btn-danger-outline svg{ width:16px; height:16px; }
+  .trash-item{ margin-bottom:14px; }
+  .trash-actions{ display:flex; gap:10px; margin-top:8px; }
+  .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
   .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
 
   /* ---------- Puzzle konfirmasi hapus ---------- */
@@ -646,11 +649,25 @@
 
       <div class="section-label">Pemeliharaan Data</div>
       <button class="btn-secondary" id="btnDedupe">Bersihkan Data Duplikat</button>
+      <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
 
       <div class="section-label">Tema Tampilan</div>
       <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ SAMPAH ============ -->
+  <section class="view" id="view-trash">
+    <div class="topbar">
+      <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Sampah</h2><span id="trashSub">Data yang dihapus muncul di sini</span></div>
+    </div>
+    <div class="scroll no-nav px">
+      <div id="trashList" style="margin-top:6px;"></div>
+      <div id="trashEmptyHint" style="display:none; text-align:center; padding:40px 10px; color:var(--ink-soft); font-size:14px;">Sampah kosong</div>
+      <button class="btn-danger-outline" id="btnEmptyTrash" style="display:none; width:100%; margin-top:14px;">Kosongkan Sampah</button>
     </div>
   </section>
 
@@ -709,8 +726,8 @@
   <div class="overlay center" id="overlayDelete">
     <div class="modal-card">
       <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
-      <h3>Hapus Data?</h3>
-      <p class="desc">Data yang sudah dihapus tidak dapat dikembalikan. Geser potongan gambar ke lubang yang pas untuk melanjutkan.</p>
+      <h3 id="deleteTitle">Hapus Data?</h3>
+      <p class="desc" id="deleteDesc">Data yang sudah dihapus tidak dapat dikembalikan. Geser potongan gambar ke lubang yang pas untuk melanjutkan.</p>
       <div class="pz-wrap" id="pzWrap">
         <canvas id="pzCanvas"></canvas>
         <canvas id="pzPiece"></canvas>
@@ -747,6 +764,9 @@
   let noteTitle = '';
   // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO) }
   let records = [];
+  // sampah: record yang dihapus, disimpan 30 hari sebelum hilang permanen. { ...record, deleted_at(ISO) }
+  let trash = [];
+  const TRASH_DAYS = 30;
   let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
 
   let currentView = 'home';
@@ -797,6 +817,26 @@
     return typeof h === 'string' ? h : Number(h).toLocaleString('id-ID');
   }
   // Tanda pengenal isi data: dua data dengan isi & waktu buat persis sama dianggap duplikat.
+  // ---------- SAMPAH (soft delete) ----------
+  // Hapus data = pindah ke `trash` dulu. Baru hilang permanen setelah TRASH_DAYS hari
+  // atau kalau user memilih "Hapus Permanen" / "Kosongkan Sampah".
+  function trashDaysLeft(item){
+    const d = new Date(item.deleted_at).getTime();
+    if (isNaN(d)) return TRASH_DAYS;
+    return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
+  }
+  function purgeExpiredTrash(){
+    const before = trash.length;
+    trash = trash.filter(t => {
+      const d = new Date(t.deleted_at).getTime();
+      return isNaN(d) || (Date.now() - d) < TRASH_DAYS * 86400000; // deleted_at rusak = jangan dibuang
+    });
+    return before - trash.length;
+  }
+  function moveToTrash(list){
+    const stamp = new Date().toISOString();
+    list.forEach(r => trash.push({ ...r, deleted_at: stamp }));
+  }
   function recordSignature(r){
     return [r.created_at, r.pj, r.customer, r.barang, r.barangKeluar, r.stokBarang, r.keterangan, r.harga]
       .map(v => (v == null ? '' : String(v).trim())).join('\u0001');
@@ -907,7 +947,7 @@
   function saveLocalDraft(){
     try {
       localStorage.setItem(getLocalDraftKey(), JSON.stringify({
-        title: noteTitle, records, legacyBackup, savedAt: Date.now()
+        title: noteTitle, records, trash, legacyBackup, savedAt: Date.now()
       }));
     } catch (e) {}
   }
@@ -934,6 +974,7 @@
         const draft = JSON.parse(raw);
         noteTitle = draft.title || '';
         records = draft.records || [];
+        trash = Array.isArray(draft.trash) ? draft.trash : [];
         legacyBackup = draft.legacyBackup || null;
         renderHome();
         showSaveStatus('Tersimpan di HP (offline)', false, true);
@@ -972,15 +1013,18 @@
     let needsMigrationSave = false;
     if (note.content && note.content.schema === SCHEMA_VERSION) {
       records = Array.isArray(note.content.records) ? note.content.records : [];
+      trash = Array.isArray(note.content.trash) ? note.content.trash : [];
       legacyBackup = note.content.legacy || null;
     } else if (note.content && (note.content.columns || note.content.rows)) {
       records = migrateLegacyContent(note.content, note.created_at);
+      trash = [];
       needsMigrationSave = true;
       showMigrationToast(records.length > 0
         ? `Data lama terdeteksi: ${records.length} data berhasil diimpor otomatis ke format baru. Data asli tetap diarsipkan dengan aman.`
         : 'Data lama terdeteksi dalam format tabel manual. Data asli diarsipkan dengan aman — silakan tambahkan data baru dengan format baru.');
     } else {
       records = [];
+      trash = [];
       legacyBackup = null;
     }
 
@@ -995,8 +1039,8 @@
       const raw = localStorage.getItem(getLocalDraftKey());
       if (raw) {
         const draft = JSON.parse(raw);
-        const knownIds = new Set(records.map(r => r.id));
-        const knownSigs = new Set(records.map(recordSignature));
+        const knownIds = new Set([...records, ...trash].map(r => r.id));
+        const knownSigs = new Set([...records, ...trash].map(recordSignature));
         (draft.records || []).forEach(r => {
           if (!r || !r.id) return;
           if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return; // sudah ada (id atau isinya sama)
@@ -1016,7 +1060,8 @@
     if (dupInfo.removed > 0 && !addedFromDraft) {
       showMigrationToast(`Terdeteksi ${dupInfo.removed} data duplikat. Buka Pengaturan → Bersihkan Data Duplikat.`);
     }
-    if (needsMigrationSave || addedFromDraft > 0) scheduleAutosave();
+    const purgedCount = purgeExpiredTrash();
+    if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
   }
 
   // =====================================================================
@@ -1047,7 +1092,7 @@
       title: (noteTitle || '').trim() || 'Untitled',
       preview: buildPreviewText(),
       date_tag: buildDateTag(),
-      content: { schema: SCHEMA_VERSION, records, legacy: legacyBackup }
+      content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
     };
 
     let result;
@@ -1196,11 +1241,12 @@
     currentView = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
-    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail') ? 'none' : 'flex';
+    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail' || name === 'trash') ? 'none' : 'flex';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
     document.getElementById('view-' + name).querySelector('.scroll').scrollTop = 0;
     if (name === 'add') prepareAddForm();
     if (name === 'settings') renderSettings();
+    if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
   }
 
@@ -1752,19 +1798,140 @@
     return { reset: reset, isSolved: function(){ return solved; } };
   })();
 
-  document.getElementById('btnDetailDelete').addEventListener('click', () => {
-    deletingRecordId = editingRecordId;
+  // Satu popup puzzle dipakai untuk 3 mode:
+  //  'soft'   = hapus data -> pindah ke Sampah (bisa dipulihkan)
+  //  'purge'  = hapus permanen 1 data dari Sampah
+  //  'empty'  = kosongkan seluruh Sampah
+  let deleteMode = 'soft';
+  let deleteTargetIndex = null;
+  function openDeleteConfirm(mode, target){
+    deleteMode = mode;
+    deleteTargetIndex = target;
+    const t = document.getElementById('deleteTitle');
+    const d = document.getElementById('deleteDesc');
+    const b = document.getElementById('btnDeleteYakin');
+    if (mode === 'soft') {
+      t.textContent = 'Hapus Data?';
+      d.textContent = 'Data akan dipindahkan ke Sampah dan bisa dipulihkan selama ' + TRASH_DAYS + ' hari. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Ya, Hapus';
+    } else if (mode === 'purge') {
+      t.textContent = 'Hapus Permanen?';
+      d.textContent = 'Data ini akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Hapus Permanen';
+    } else {
+      t.textContent = 'Kosongkan Sampah?';
+      d.textContent = trash.length + ' data di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Kosongkan';
+    }
     openOverlay('overlayDelete');
     deletePuzzle.reset();
+  }
+
+  document.getElementById('btnDetailDelete').addEventListener('click', () => {
+    deletingRecordId = editingRecordId;
+    openDeleteConfirm('soft', null);
   });
   document.getElementById('btnDeleteBatal').addEventListener('click', () => closeOverlay('overlayDelete'));
   document.getElementById('btnDeleteYakin').addEventListener('click', () => {
     if (!deletePuzzle.isSolved()) return; // puzzle wajib selesai dulu
-    records = records.filter(r => r.id !== deletingRecordId);
-    deletingRecordId = null;
     closeOverlay('overlayDelete');
+
+    if (deleteMode === 'soft') {
+      const rec = records.find(r => r.id === deletingRecordId);
+      if (rec) {
+        records = records.filter(r => r !== rec);
+        moveToTrash([rec]);
+        showMigrationToast('Data dipindahkan ke Sampah. Bisa dipulihkan selama ' + TRASH_DAYS + ' hari (Pengaturan → Sampah).');
+      }
+      deletingRecordId = null;
+      scheduleAutosave();
+      goView('home');
+    } else if (deleteMode === 'purge') {
+      if (deleteTargetIndex != null && trash[deleteTargetIndex]) trash.splice(deleteTargetIndex, 1);
+      scheduleAutosave();
+      renderTrash();
+      showMigrationToast('Data dihapus permanen.');
+    } else {
+      trash = [];
+      scheduleAutosave();
+      renderTrash();
+      showMigrationToast('Sampah dikosongkan.');
+    }
+  });
+
+  // =====================================================================
+  // HALAMAN SAMPAH — pulihkan / hapus permanen
+  // =====================================================================
+  function renderTrash(){
+    if (purgeExpiredTrash() > 0) scheduleAutosave();
+    const listEl = document.getElementById('trashList');
+    const emptyEl = document.getElementById('trashEmptyHint');
+    const btnEmpty = document.getElementById('btnEmptyTrash');
+    document.getElementById('trashSub').textContent = trash.length
+      ? trash.length + ' data · otomatis hilang setelah ' + TRASH_DAYS + ' hari'
+      : 'Data yang dihapus muncul di sini';
+
+    if (trash.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      btnEmpty.style.display = 'none';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    btnEmpty.style.display = 'block';
+
+    // terbaru dihapus di atas; simpan index asli supaya tombol menunjuk item yang benar
+    const rows = trash.map((r, i) => ({ r, i }))
+      .sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
+
+    listEl.innerHTML = rows.map(({ r, i }) => {
+      const left = trashDaysLeft(r);
+      const delAt = new Date(r.deleted_at);
+      const delTxt = isNaN(delAt.getTime()) ? '—' : fmtTanggal(delAt) + ' ' + fmtWaktu(delAt);
+      const harga = r.harga ? escapeHtml(rupiah(r.harga)) : '';
+      return `
+        <div class="trash-item">
+          <div class="recent-row" style="cursor:default;">
+            <div class="r-mid">
+              <b>${escapeHtml(r.customer) || '(tanpa customer)'}</b>
+              <span>${escapeHtml(r.pj) || '—'} · ${escapeHtml(r.barang) || '—'}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''}</span>
+              <span>Dihapus ${delTxt} · sisa ${left} hari${harga ? ' · ' + harga : ''}</span>
+            </div>
+          </div>
+          <div class="trash-actions">
+            <button type="button" class="btn-secondary" data-act="restore" data-idx="${i}">Pulihkan</button>
+            <button type="button" class="btn-danger-outline" data-act="purge" data-idx="${i}">Hapus Permanen</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('button[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        if (btn.dataset.act === 'restore') restoreFromTrash(idx);
+        else openDeleteConfirm('purge', idx);
+      });
+    });
+  }
+
+  function restoreFromTrash(idx){
+    const item = trash[idx];
+    if (!item) return;
+    trash.splice(idx, 1);
+    const rec = { ...item };
+    delete rec.deleted_at;
+    if (records.some(r => r.id === rec.id)) rec.id = uid(); // hindari id kembar
+    records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
     scheduleAutosave();
-    goView('home');
+    renderTrash();
+    showMigrationToast('Data berhasil dipulihkan.');
+  }
+
+  document.getElementById('btnOpenTrash').addEventListener('click', () => goView('trash'));
+  document.getElementById('btnTrashBack').addEventListener('click', () => goView('settings'));
+  document.getElementById('btnEmptyTrash').addEventListener('click', () => {
+    if (trash.length) openDeleteConfirm('empty', null);
   });
 
   // =====================================================================
@@ -1773,18 +1940,21 @@
   function renderSettings(){
     document.getElementById('inputJudulTabel').value = noteTitle || '';
     const dup = dedupeRecords(records).removed;
+    document.getElementById('btnOpenTrash').textContent = trash.length ? `Buka Sampah (${trash.length})` : 'Buka Sampah';
     document.getElementById('btnDedupe').textContent = dup ? `Bersihkan Data Duplikat (${dup})` : 'Bersihkan Data Duplikat';
     applyThemeUI();
   }
   document.getElementById('btnDedupe').addEventListener('click', () => {
     const { kept, removed } = dedupeRecords(records);
     if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
-    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nHapus duplikatnya dan sisakan 1 dari tiap pasang?`)) return;
+    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`)) return;
+    const keptSet = new Set(kept);
+    moveToTrash(records.filter(r => !keptSet.has(r))); // duplikat juga masuk Sampah, bukan hilang
     records = kept;
     scheduleAutosave();
     renderHome();
     renderSettings();
-    showMigrationToast(`${removed} data duplikat berhasil dihapus.`);
+    showMigrationToast(`${removed} data duplikat dipindahkan ke Sampah.`);
   });
   document.getElementById('inputJudulTabel').addEventListener('change', (e) => {
     noteTitle = e.target.value.trim();
