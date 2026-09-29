@@ -972,299 +972,6 @@
   .font-picker-item svg { width: 18px; height: 18px; color: var(--accent-yellow); visibility: hidden; }
   .font-picker-item.selected svg { visibility: visible; }
 
-  /* --- Analytics Overlay --- */
-  .analytics-overlay {
-    position: absolute;
-    inset: 0;
-    background: var(--bg-dark);
-    z-index: 130;
-    display: flex;
-    flex-direction: column;
-    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 20px) 16px;
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(15px);
-    transition: all 0.26s cubic-bezier(0.2, 0.8, 0.2, 1);
-    overflow-y: auto;
-  }
-
-  .analytics-overlay.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
-
-  .stat-cards-row {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 24px;
-    flex-shrink: 0;
-  }
-
-  .stat-card {
-    flex: 1;
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-lg);
-    padding: 14px 12px;
-  }
-
-  .stat-card-value { font-size: 22px; font-weight: 800; color: var(--text-primary); }
-  .stat-card-label { font-size: 11.5px; color: var(--text-secondary); margin-top: 4px; font-weight: 600; }
-
-  .analytics-section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    margin-bottom: 12px;
-    flex-shrink: 0;
-  }
-
-  .folder-bar-list {
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-xl);
-    padding: 16px;
-    margin-bottom: 26px;
-    flex-shrink: 0;
-  }
-
-  .folder-bar-empty {
-    font-size: 13px;
-    color: var(--text-muted);
-    text-align: center;
-    padding: 20px 4px;
-  }
-
-  .folder-bar-row { margin-bottom: 14px; }
-  .folder-bar-row:last-child { margin-bottom: 0; }
-
-  .folder-bar-top {
-    display: flex;
-    justify-content: space-between;
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
-
-  .folder-bar-name { color: var(--text-primary); font-weight: 600; }
-  .folder-bar-count { color: var(--text-secondary); font-weight: 600; }
-
-  .folder-bar-track {
-    height: 8px;
-    border-radius: 999px;
-    background: var(--glass-pill-bg);
-    overflow: hidden;
-  }
-
-  .folder-bar-fill {
-    height: 100%;
-    border-radius: 999px;
-    background: var(--accent-yellow);
-    transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-
-  .upcoming-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 10px; }
-
-  .upcoming-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-lg);
-    padding: 14px;
-    opacity: 0.6;
-  }
-
-  .upcoming-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: var(--glass-pill-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .upcoming-icon svg { width: 20px; height: 20px; color: var(--text-secondary); }
-
-  .upcoming-text-title { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-  .upcoming-text-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-
-  .upcoming-badge {
-    margin-left: auto;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text-secondary);
-    background: var(--overlay-2);
-    padding: 4px 8px;
-    border-radius: 999px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  /* --- Income Chart Card (gaya Google Finance) --- */
-  .income-card {
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-xl);
-    padding: 18px 16px 14px 16px;
-    margin-bottom: 26px;
-    flex-shrink: 0;
-  }
-
-  .income-total-label { font-size: 12.5px; color: var(--text-secondary); font-weight: 600; }
-  .income-total-value { font-size: 30px; font-weight: 800; color: var(--text-primary); margin: 4px 0 2px 0; }
-  .income-total-sub { font-size: 11.5px; color: var(--text-muted); margin-bottom: 14px; }
-
-  .period-tabs {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    margin-bottom: 14px;
-    scrollbar-width: none;
-  }
-  .period-tabs::-webkit-scrollbar { display: none; }
-
-  .period-tab {
-    flex-shrink: 0;
-    border: none;
-    background: var(--glass-pill-bg);
-    color: var(--text-secondary);
-    font-size: 12.5px;
-    font-weight: 700;
-    padding: 7px 14px;
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    transition: all 0.22s ease;
-  }
-
-  .period-tab.active { background: var(--accent-yellow); color: #1C1B19; }
-
-  .income-chart-wrap { width: 100%; position: relative; }
-  .income-chart-wrap svg { width: 100%; height: 150px; display: block; }
-
-  .income-chart-empty {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12.5px;
-    color: var(--text-muted);
-  }
-
-  .income-mini-stats {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid var(--card-border-dark);
-  }
-
-  .income-mini-stat { text-align: center; flex: 1; }
-  .income-mini-stat-value { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-  .income-mini-stat-label { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
-
-  /* --- Analytics: search, insight, trend, custom range, export --- */
-  .analytics-search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--input-bg);
-    border-radius: var(--radius-pill);
-    padding: 11px 16px;
-    margin-bottom: 18px;
-    flex-shrink: 0;
-  }
-  .analytics-search-box svg { width: 16px; height: 16px; color: var(--text-secondary); flex-shrink: 0; }
-  .analytics-search-box input {
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text-primary);
-    font-size: 13.5px;
-    width: 100%;
-  }
-
-  .insight-banner {
-    display: none;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 12px 14px;
-    border-radius: var(--radius-lg);
-    font-size: 12.5px;
-    line-height: 1.5;
-    margin-bottom: 18px;
-    flex-shrink: 0;
-  }
-  .insight-banner.positive { background: rgba(61, 214, 140, 0.10); border: 1px solid rgba(61, 214, 140, 0.28); color: var(--success-text); }
-  .insight-banner.negative { background: rgba(240, 85, 92, 0.10); border: 1px solid rgba(240, 85, 92, 0.28); color: var(--danger-text); }
-
-  .trend-badge {
-    display: none;
-    align-items: center;
-    gap: 3px;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: 999px;
-    margin-left: 8px;
-    vertical-align: middle;
-  }
-  .trend-badge.up { display: inline-flex; color: #3DD68C; background: rgba(61, 214, 140, 0.14); }
-  .trend-badge.down { display: inline-flex; color: #F0555C; background: rgba(240, 85, 92, 0.14); }
-  .trend-badge.flat { display: inline-flex; color: var(--text-secondary); background: rgba(255, 255, 255, 0.08); }
-
-  .custom-range-row {
-    display: none;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .custom-range-row.show { display: flex; }
-
-  .date-input {
-    flex: 1;
-    background: var(--glass-pill-bg);
-    border: 1px solid var(--glass-pill-border);
-    border-radius: 10px;
-    padding: 8px 10px;
-    color: var(--text-primary);
-    font-size: 12.5px;
-    color-scheme: dark;
-  }
-
-  .apply-range-btn {
-    background: var(--accent-yellow);
-    color: #1C1B19;
-    border: none;
-    border-radius: 10px;
-    padding: 8px 14px;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .export-row { display: flex; gap: 8px; margin-top: 14px; }
-
-  .export-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: var(--glass-pill-bg);
-    border: 1px solid var(--glass-pill-border);
-    color: var(--text-primary);
-    font-size: 12.5px;
-    font-weight: 700;
-    padding: 10px;
-    border-radius: 12px;
-    cursor: pointer;
-  }
-  .export-btn svg { width: 15px; height: 15px; }
-  .export-btn:active { background: var(--overlay-3); }
-
   /* --- Note Detail Overlay (read-only, publik cuma bisa lihat) --- */
   .note-detail-overlay {
     position: fixed;
@@ -1538,47 +1245,6 @@
   }
   @keyframes shareSpin { to { transform: rotate(360deg); } }
 
-  .recent-activity-list {
-    display: flex;
-    flex-direction: column;
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    margin-bottom: 26px;
-    flex-shrink: 0;
-  }
-
-  .recent-activity-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 13px 16px;
-    border-bottom: 1px solid var(--card-border-dark);
-  }
-  .recent-activity-item:last-child { border-bottom: none; }
-
-  .recent-activity-title { font-size: 13.5px; font-weight: 700; color: var(--text-primary); }
-  .recent-activity-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; }
-  .recent-activity-amount { font-size: 13px; font-weight: 700; color: #3DD68C; flex-shrink: 0; margin-left: 10px; white-space: nowrap; }
-  .recent-activity-empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 16px; }
-
-  @media print {
-    body > *:not(.analytics-overlay) { display: none !important; }
-    .analytics-overlay {
-      position: static !important;
-      opacity: 1 !important;
-      transform: none !important;
-      background: #fff !important;
-      color: #000 !important;
-    }
-    .analytics-overlay .header-btn,
-    .analytics-overlay .period-tabs,
-    .analytics-overlay .custom-range-row,
-    .analytics-overlay .export-row,
-    .analytics-overlay .analytics-search-box { display: none !important; }
-  }
-
   /* --- Desktop/tablet: beri latar pembeda di kiri-kanan kartu + garis tepi
      tipis, biar kartu yang melebar terasa disengaja (bukan kolom sempit) --- */
   @media (min-width: 600px) {
@@ -1679,10 +1345,6 @@
     <button class="drawer-foot-btn" id="btnModeAdmin" onclick="window.location.href='dashboard-admin.html'">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><path d="M6 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><rect x="4" y="19" width="16" height="3" rx="1"/></svg>
       Mode Admin
-    </button>
-    <button class="drawer-foot-btn" id="btnAnalyticsOpen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
-      Analisa
     </button>
     <button class="drawer-foot-btn" id="btnSettingsOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1813,7 +1475,7 @@
     <div class="settings-row clickable" id="rowSyncCloud">
       <span class="settings-row-label">Sync to Cloud Database</span>
       <div class="settings-row-right">
-        <span class="settings-row-status" id="syncStatusText">Belum Terhubung</span>
+        <span class="settings-row-status" id="syncStatusText">Menghubungkan...</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="9 6 15 12 9 18"/></svg>
       </div>
     </div>
@@ -1853,112 +1515,6 @@
   </div>
 </div>
 
-<!-- Analytics Overlay -->
-<div class="analytics-overlay" id="analyticsOverlay">
-  <div class="settings-top">
-    <button class="header-btn" id="btnAnalyticsBack">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="15 18 9 12 15 6"/></svg>
-    </button>
-    <h2>Analisa &amp; Laporan</h2>
-  </div>
-
-  <div class="analytics-search-box">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input type="text" id="analyticsSearchInput" placeholder="Cari folder, kategori, atau transaksi...">
-  </div>
-
-  <div class="insight-banner" id="insightBanner"></div>
-
-  <div class="stat-cards-row">
-    <div class="stat-card">
-      <p class="stat-card-value" id="statTotalNotes">0</p>
-      <p class="stat-card-label">Total Note</p>
-    </div>
-    <div class="stat-card">
-      <p class="stat-card-value" id="statTotalFolders">0</p>
-      <p class="stat-card-label">Total Folder</p>
-    </div>
-    <div class="stat-card">
-      <p class="stat-card-value" id="statAvgPerFolder">0</p>
-      <p class="stat-card-label">Rata-rata / Folder</p>
-    </div>
-  </div>
-
-  <div class="income-card">
-    <p class="income-total-label" id="incomeTotalLabel">Total Pemasukan Bulan Ini</p>
-    <p class="income-total-value">
-      <span id="incomeTotalValue">Rp 0</span><span class="trend-badge" id="incomeTrendBadge"></span>
-    </p>
-    <p class="income-total-sub" id="incomeTotalSub">Belum ada data transaksi</p>
-
-    <div class="period-tabs">
-      <button class="period-tab" data-period="day">Hari Ini</button>
-      <button class="period-tab" data-period="week">Minggu Ini</button>
-      <button class="period-tab active" data-period="month">Bulan Ini</button>
-      <button class="period-tab" data-period="year">Tahun Ini</button>
-      <button class="period-tab" data-period="all">Semua</button>
-      <button class="period-tab" data-period="custom">Kustom</button>
-    </div>
-
-    <div class="custom-range-row" id="customRangeRow">
-      <input type="date" class="date-input" id="customDateFrom">
-      <input type="date" class="date-input" id="customDateTo">
-      <button class="apply-range-btn" id="btnApplyCustomRange">Terapkan</button>
-    </div>
-
-    <div class="income-chart-wrap">
-      <svg id="incomeChartSvg" viewBox="0 0 320 150" preserveAspectRatio="none"></svg>
-      <div class="income-chart-empty" id="incomeChartEmpty">Belum ada data untuk periode ini</div>
-    </div>
-
-    <div class="income-mini-stats">
-      <div class="income-mini-stat">
-        <p class="income-mini-stat-value" id="incomeStatHighest">-</p>
-        <p class="income-mini-stat-label">Tertinggi</p>
-      </div>
-      <div class="income-mini-stat">
-        <p class="income-mini-stat-value" id="incomeStatAvg">-</p>
-        <p class="income-mini-stat-label">Rata-rata</p>
-      </div>
-      <div class="income-mini-stat">
-        <p class="income-mini-stat-value" id="incomeStatLowest">-</p>
-        <p class="income-mini-stat-label">Terendah</p>
-      </div>
-    </div>
-
-    <div class="export-row">
-      <button class="export-btn" id="btnExportCSV">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export CSV
-      </button>
-      <button class="export-btn" id="btnExportPDF">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        Cetak / PDF
-      </button>
-    </div>
-  </div>
-
-  <p class="analytics-section-title">Breakdown per Kategori</p>
-  <div class="folder-bar-list" id="categoryBarList">
-    <p class="folder-bar-empty">Belum ada data kategori</p>
-  </div>
-
-  <p class="analytics-section-title">Distribusi per Folder</p>
-  <div class="folder-bar-list" id="folderBarList">
-    <p class="folder-bar-empty">Belum ada data untuk dianalisa</p>
-  </div>
-
-  <p class="analytics-section-title">Aktivitas Terbaru</p>
-  <div class="recent-activity-list" id="recentActivityList">
-    <p class="recent-activity-empty">Belum ada aktivitas</p>
-  </div>
-
-  <p class="analytics-section-title">Top Customer</p>
-  <div class="upcoming-list">
-    <div class="upcoming-item" id="topCustomerCard" style="opacity:1;"></div>
-  </div>
-</div>
-
 </div><!-- /app-stage -->
 
 <!-- Library Export PDF & Gambar (dipakai fitur Share di Note Detail) -->
@@ -1978,11 +1534,9 @@
   // --- Data dari Supabase, sinkron dengan Dashboard Admin (tabel 'folders' & 'notes') ---
   // Struktur tiap note: { id, title, preview, date_tag, folder_id, folder, amount, category, created_at }
   // 'folder'     = nama folder hasil join dari folder_id (dipakai fitur search & distribusi)
-  // 'amount'     = nominal transaksi/pemasukan (angka, Rupiah) — dipakai fitur grafik & breakdown Analisa
-  // 'category'   = jenis transaksi, mis. "Jasa Servis" / "Sparepart" — dipakai breakdown kategori
-  // 'created_at' = tanggal-waktu asli ISO 8601 — dipakai filter periode & aktivitas terbaru
+  // 'created_at' = tanggal-waktu asli ISO 8601
   let categoriesData = [];   // daftar folder dari Supabase (dipakai drawer)
-  let notesData = [];        // SELURUH notes dari semua folder (dipakai Analisa & search global)
+  let notesData = [];        // SELURUH notes dari semua folder (dipakai search global)
   let activeFolderId = null; // null = tampilkan semua folder di list utama ("ALL")
   let activeFilterYear = null;   // tahun yang lagi difilter (null = belum pilih bulan spesifik)
   let activeFilterMonth = null;  // bulan yang lagi difilter
@@ -1998,17 +1552,18 @@
       .order('created_at', { ascending: true });
 
     if (error) {
+      // Gagal (mis. offline): pertahankan data terakhir yang valid, JANGAN dikosongkan
       console.error('Gagal memuat folder:', error.message);
-      categoriesData = [];
-    } else {
+      return false;
+    }
     // Filter folder yang datanya nggak valid (mis. insert gagal separuh jalan, nama kosong/null)
     // biar nggak ada folder "hantu" yang sebenarnya nggak ke-save dengan benar di database
     categoriesData = (data || []).filter(f => f && f.id && typeof f.name === 'string' && f.name.trim() !== '');
-    }
+    return true;
   }
 
   // Editor baru nyimpen isi tabel sebagai content.records (schema 'admin-data-v1'),
-  // sedangkan seluruh fitur viewer ini (detail, search, analisa, PDF, gambar)
+  // sedangkan seluruh fitur viewer ini (detail, search, PDF, gambar)
   // bacanya format lama { columns, rows }. Jadi dinormalisasi sekali di sini
   // (sama persis dengan getNoteTable di dashboard-admin.html) — data asli di
   // database nggak diubah sama sekali.
@@ -2063,25 +1618,61 @@
       .order('created_at', { ascending: false });
 
     if (error) {
+      // Gagal (mis. offline): pertahankan data terakhir yang valid, JANGAN dikosongkan
       console.error('Gagal memuat notes:', error.message);
-      notesData = [];
-    } else {
-      const folderNameById = {};
-      categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
-      notesData = (data || []).map(n => ({
-        ...n,
-        folder: folderNameById[n.folder_id] || 'Uncategorized',
-        content: normalizeNoteContent(n.content)
-      }));
+      return false;
     }
+    const folderNameById = {};
+    categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
+    notesData = (data || []).map(n => ({
+      ...n,
+      folder: folderNameById[n.folder_id] || 'Uncategorized',
+      content: normalizeNoteContent(n.content)
+    }));
+    return true;
   }
 
   // Muat ulang folder + notes sekaligus, lalu refresh semua tampilan
+  // Status sinkronisasi cloud (dipakai baris Settings > Sync to Cloud Database)
+  let syncBusy = false;
+  let syncLastOk = null;      // Date sinkron sukses terakhir
+  let syncLastFailed = false; // true kalau percobaan terakhir gagal
+  let realtimeStatus = '';    // status channel realtime Supabase
+
+  function updateSyncStatus() {
+    const el = document.getElementById('syncStatusText');
+    if (!el) return;
+    let text;
+    if (syncBusy) text = 'Menyinkronkan...';
+    else if (syncLastFailed) text = 'Gagal - ketuk untuk ulangi';
+    else if (syncLastOk) {
+      const pad2 = n => String(n).padStart(2, '0');
+      text = 'Tersinkron ' + pad2(syncLastOk.getHours()) + ':' + pad2(syncLastOk.getMinutes());
+    } else text = 'Menghubungkan...';
+    if (!syncBusy && !syncLastFailed && realtimeStatus === 'SUBSCRIBED' && syncLastOk) text += ' · Live';
+    el.textContent = text;
+  }
+
+  // Muat ulang folder + notes sekaligus, lalu refresh semua tampilan.
+  // Return true hanya kalau KEDUANYA sukses.
   async function loadAllData() {
-    await loadFolders();
-    await loadNotes();
+    syncBusy = true;
+    updateSyncStatus();
+    let ok = false;
+    try {
+      const foldersOk = await loadFolders();
+      const notesOk = await loadNotes();
+      ok = foldersOk && notesOk;
+    } catch (err) {
+      console.error('Sinkronisasi error:', err && err.message ? err.message : err);
+    }
+    syncBusy = false;
+    syncLastFailed = !ok;
+    if (ok) syncLastOk = new Date();
     renderFolderDrawer();
     renderNotes();
+    updateSyncStatus();
+    return ok;
   }
 
   // Notes yang tampil di grid utama (difilter folder aktif, "ALL" kalau null)
@@ -2192,9 +1783,9 @@
     `;
 
     const folderRows = categoriesData.map(cat => `
-      <div class="folder-item ${activeFolderId === cat.id ? 'active' : ''}" data-folder-id="${cat.id}">
+      <div class="folder-item ${activeFolderId === cat.id ? 'active' : ''}" data-folder-id="${escapeHtml(cat.id)}">
         <div class="folder-item-left">
-          <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color || '#D9A536'}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" stroke="${safeColor(cat.color)}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <span>${escapeHtml(cat.name)}</span>
         </div>
         <span class="folder-count">${countByFolder[cat.id] || 0} &rsaquo;</span>
@@ -2281,7 +1872,7 @@
       const monthsHtml = isYearOpen ? `
         <div class="folder-month-list">
           ${meta.monthsByYear[year].map(m => `
-            <div class="folder-month-item" data-folder-id="${catId}" data-year="${year}" data-month="${m.num}">
+            <div class="folder-month-item" data-folder-id="${escapeHtml(catId)}" data-year="${year}" data-month="${m.num}">
               <span>${m.label}</span>
             </div>
           `).join('')}
@@ -2299,7 +1890,7 @@
 
   function noteCardHtml(note, idx) {
     return `
-      <div class="note-card" data-id="${note.id}" style="animation-delay: ${idx * 0.04}s">
+      <div class="note-card" data-id="${escapeHtml(note.id)}" style="animation-delay: ${idx * 0.04}s">
         <div class="note-content-layer">
           <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
           <p class="note-desc">${escapeHtml(note.preview || '')}</p>
@@ -2556,6 +2147,18 @@
 
   let searchHistory = [];
 
+  // Warna folder dari database: hanya boleh hex / rgb / hsl / nama warna, selain itu pakai default
+  function safeColor(c) {
+    const v = String(c || '').trim();
+    return /^(#[0-9a-fA-F]{3,8}|[a-zA-Z]{3,20}|(rgb|hsl)a?\([0-9.,%\s]+\))$/.test(v) ? v : '#D9A536';
+  }
+
+  // URL gambar dari database: hanya https atau data:image base64
+  function safeImageUrl(u) {
+    const v = String(u || '').trim();
+    return /^(https:\/\/|data:image\/(png|jpe?g|gif|webp);base64,)/i.test(v) ? v : '';
+  }
+
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -2641,7 +2244,7 @@
     }
 
     searchResultsList.innerHTML = matches.map(({ note: n, cellMatch }) => `
-      <div class="search-result-item" data-id="${n.id}">
+      <div class="search-result-item" data-id="${escapeHtml(n.id)}">
         <div class="search-result-main">
           <p class="search-result-title">${highlightMatch(n.title || 'Untitled', query)}</p>
           <p class="search-result-preview">${
@@ -2682,503 +2285,6 @@
   });
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
-  // --- Analytics Overlay (menggantikan slot User Feedback) ---
-  const btnAnalyticsOpen = document.getElementById('btnAnalyticsOpen');
-  const analyticsOverlay = document.getElementById('analyticsOverlay');
-  const btnAnalyticsBack = document.getElementById('btnAnalyticsBack');
-
-  let currentIncomePeriod = 'month';
-  let customRange = null; // { start: Date, end: Date }
-
-  function formatRupiah(n) {
-    return 'Rp ' + Math.round(n).toLocaleString('id-ID');
-  }
-
-  function timeAgo(iso) {
-    const diffMs = Date.now() - new Date(iso).getTime();
-    const mins = Math.floor(diffMs / 60000);
-    if (mins < 1) return 'Baru saja';
-    if (mins < 60) return `${mins} menit lalu`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs} jam lalu`;
-    return `${Math.floor(hrs / 24)} hari lalu`;
-  }
-
-  const periodLabels = {
-    day: 'Total Pemasukan Hari Ini',
-    week: 'Total Pemasukan Minggu Ini',
-    month: 'Total Pemasukan Bulan Ini',
-    year: 'Total Pemasukan Tahun Ini',
-    all: 'Total Pemasukan Sepanjang Waktu',
-    custom: 'Total Pemasukan (Rentang Kustom)'
-  };
-
-  function getPeriodStart(period, now) {
-    const d = new Date(now);
-    if (period === 'day') { d.setHours(0, 0, 0, 0); return d; }
-    if (period === 'week') {
-      const day = d.getDay();
-      d.setDate(d.getDate() - day);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
-    if (period === 'month') { return new Date(d.getFullYear(), d.getMonth(), 1); }
-    if (period === 'year') { return new Date(d.getFullYear(), 0, 1); }
-    return new Date(0); // all
-  }
-
-  function getPeriodRange(period) {
-    const now = new Date();
-    if (period === 'custom' && customRange) return { start: customRange.start, end: customRange.end };
-    return { start: getPeriodStart(period, now), end: now };
-  }
-
-  function getPreviousPeriodRange(period) {
-    const now = new Date();
-    const start = getPeriodStart(period, now);
-    if (period === 'day') {
-      const prevEnd = new Date(start.getTime() - 1);
-      const prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 1);
-      return { start: prevStart, end: prevEnd };
-    }
-    if (period === 'week') {
-      const prevEnd = new Date(start.getTime() - 1);
-      const prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 7);
-      return { start: prevStart, end: prevEnd };
-    }
-    if (period === 'month') {
-      const prevEnd = new Date(start.getTime() - 1);
-      const prevStart = new Date(start.getFullYear(), start.getMonth() - 1, 1);
-      return { start: prevStart, end: prevEnd };
-    }
-    if (period === 'year') {
-      const prevEnd = new Date(start.getTime() - 1);
-      const prevStart = new Date(start.getFullYear() - 1, 0, 1);
-      return { start: prevStart, end: prevEnd };
-    }
-    return null; // 'all' & 'custom' tidak punya pembanding yang jelas
-  }
-
-  // =====================================================================
-  // --- LAPISAN TRANSAKSI ASLI: turunan dari kolom Harga/Tanggal/Customer/Barang
-  // per baris tabel (bukan dari notes.amount/tx_category yang nggak pernah diisi
-  // editor). Dipakai Analisa (grafik omzet, breakdown, Top Customer) biar
-  // datanya beneran nyambung ke apa yang admin isi di tabel.
-  // =====================================================================
-  function parseRupiah(val) {
-    if (val === undefined || val === null) return 0;
-    const cleaned = String(val).replace(/[^0-9]/g, '');
-    const parsed = parseInt(cleaned, 10);
-    return isNaN(parsed) ? 0 : parsed;
-  }
-
-  function parseRowDate(val, fallbackISO) {
-    if (val) {
-      const s = String(val).trim();
-      // format "25/08/26" atau "25-08-2026" (DD/MM/YY atau DD-MM-YYYY)
-      const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-      if (m) {
-        let [, d, mo, y] = m;
-        if (y.length === 2) y = '20' + y;
-        const dt = new Date(`${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`);
-        if (!isNaN(dt)) return dt;
-      }
-      const dt2 = new Date(s);
-      if (!isNaN(dt2)) return dt2;
-    }
-    return fallbackISO ? new Date(fallbackISO) : null;
-  }
-
-  // Satu baris tabel yang punya nilai Harga = satu transaksi
-  function extractTransactions() {
-    const txs = [];
-    notesData.forEach(note => {
-      const content = note.content;
-      if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
-
-      const columns = content.columns;
-      content.rows.forEach(row => {
-        const hargaVal = getRowValueByLabel(columns, row, 'Harga');
-        const amount = parseRupiah(hargaVal);
-        if (!amount) return; // baris tanpa harga bukan transaksi
-
-        const date = parseRowDate(getRowValueByLabel(columns, row, 'Tanggal'), note.created_at);
-        if (!date) return;
-
-        txs.push({
-          amount,
-          date,
-          customer: getRowValueByLabel(columns, row, 'Customer') || 'Tanpa Nama',
-          barang: getRowValueByLabel(columns, row, 'Barang') || 'Lainnya',
-          folder: note.folder || 'Uncategorized',
-          noteTitle: note.title || 'Untitled'
-        });
-      });
-    });
-    return txs;
-  }
-
-  function sumAmountInRange(start, end) {
-    return extractTransactions()
-      .filter(t => t.date >= start && t.date <= end)
-      .reduce((sum, t) => sum + t.amount, 0);
-  }
-
-  function computeIncomeSeries(period) {
-    const { start, end } = getPeriodRange(period);
-    const txs = extractTransactions().filter(t => t.date >= start && t.date <= end);
-
-    const byDay = {};
-    txs.forEach(t => {
-      const key = t.date.toISOString().slice(0, 10);
-      byDay[key] = (byDay[key] || 0) + t.amount;
-    });
-
-    const points = Object.keys(byDay).sort().map(key => ({ date: key, value: byDay[key] }));
-    const total = txs.reduce((sum, t) => sum + t.amount, 0);
-
-    return { points, total };
-  }
-
-  function renderIncomeChartSVG(points) {
-    const svgEl = document.getElementById('incomeChartSvg');
-    const emptyEl = document.getElementById('incomeChartEmpty');
-    const w = 320, h = 150, pad = 6;
-
-    if (points.length === 0) {
-      const baseStroke = document.body.classList.contains('light-theme') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.12)';
-      svgEl.innerHTML = `<line x1="0" y1="${h - pad}" x2="${w}" y2="${h - pad}" stroke="${baseStroke}" stroke-width="1.5"/>`;
-      emptyEl.style.display = 'flex';
-      return;
-    }
-    emptyEl.style.display = 'none';
-
-    const values = points.map(p => p.value);
-    const max = Math.max(...values);
-    const min = Math.min(0, ...values);
-    const range = (max - min) || 1;
-    const stepX = points.length > 1 ? (w - pad * 2) / (points.length - 1) : 0;
-
-    const coords = points.map((p, i) => {
-      const x = pad + i * stepX;
-      const y = h - pad - ((p.value - min) / range) * (h - pad * 2);
-      return [x, y];
-    });
-
-    const linePath = coords.map((c, i) => (i === 0 ? 'M' : 'L') + c[0].toFixed(1) + ',' + c[1].toFixed(1)).join(' ');
-    const last = coords[coords.length - 1];
-    const first = coords[0];
-    const areaPath = `${linePath} L${last[0].toFixed(1)},${h - pad} L${first[0].toFixed(1)},${h - pad} Z`;
-
-    svgEl.innerHTML = `
-      <defs>
-        <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3DD68C" stop-opacity="0.38"/>
-          <stop offset="100%" stop-color="#3DD68C" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d="${areaPath}" fill="url(#incomeGrad)"></path>
-      <path d="${linePath}" fill="none" stroke="#3DD68C" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
-      <circle cx="${last[0]}" cy="${last[1]}" r="4.2" fill="#3DD68C"></circle>
-    `;
-  }
-
-  function renderTrendBadge(period, currentTotal) {
-    const badgeEl = document.getElementById('incomeTrendBadge');
-    const prevRange = getPreviousPeriodRange(period);
-
-    if (!prevRange) { badgeEl.className = 'trend-badge'; badgeEl.textContent = ''; return; }
-
-    const prevTotal = sumAmountInRange(prevRange.start, prevRange.end);
-    if (prevTotal === 0 && currentTotal === 0) { badgeEl.className = 'trend-badge'; badgeEl.textContent = ''; return; }
-
-    const pct = prevTotal === 0 ? 100 : ((currentTotal - prevTotal) / prevTotal) * 100;
-    const dir = pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat');
-    const arrow = dir === 'up' ? '▲' : (dir === 'down' ? '▼' : '—');
-
-    badgeEl.className = 'trend-badge ' + dir;
-    badgeEl.textContent = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
-  }
-
-  function renderIncomeCard() {
-    const { points, total } = computeIncomeSeries(currentIncomePeriod);
-
-    document.getElementById('incomeTotalLabel').textContent = periodLabels[currentIncomePeriod];
-    document.getElementById('incomeTotalValue').textContent = formatRupiah(total);
-    document.getElementById('incomeTotalSub').textContent = points.length
-      ? `${points.length} hari tercatat`
-      : 'Belum ada data transaksi';
-
-    renderTrendBadge(currentIncomePeriod, total);
-    renderIncomeChartSVG(points);
-
-    const values = points.map(p => p.value);
-    const highestEl = document.getElementById('incomeStatHighest');
-    const avgEl = document.getElementById('incomeStatAvg');
-    const lowestEl = document.getElementById('incomeStatLowest');
-
-    if (values.length === 0) {
-      highestEl.textContent = '-';
-      avgEl.textContent = '-';
-      lowestEl.textContent = '-';
-    } else {
-      highestEl.textContent = formatRupiah(Math.max(...values));
-      avgEl.textContent = formatRupiah(values.reduce((a, b) => a + b, 0) / values.length);
-      lowestEl.textContent = formatRupiah(Math.min(...values));
-    }
-  }
-
-  document.querySelectorAll('.period-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      currentIncomePeriod = tab.dataset.period;
-
-      const customRow = document.getElementById('customRangeRow');
-      if (currentIncomePeriod === 'custom') {
-        customRow.classList.add('show');
-        if (!customRange) return; // tunggu user pilih tanggal & klik Terapkan
-      } else {
-        customRow.classList.remove('show');
-      }
-      renderIncomeCard();
-    });
-  });
-
-  document.getElementById('btnApplyCustomRange').addEventListener('click', () => {
-    const fromVal = document.getElementById('customDateFrom').value;
-    const toVal = document.getElementById('customDateTo').value;
-    if (!fromVal || !toVal) return;
-    customRange = { start: new Date(fromVal + 'T00:00:00'), end: new Date(toVal + 'T23:59:59') };
-    renderIncomeCard();
-  });
-
-  // --- Export CSV & Cetak/PDF ---
-  document.getElementById('btnExportCSV').addEventListener('click', () => {
-    const { points } = computeIncomeSeries(currentIncomePeriod);
-    let csv = 'Tanggal,Total Pemasukan (Rp)\n';
-    points.forEach(p => { csv += `${p.date},${p.value}\n`; });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `laporan-pemasukan-${currentIncomePeriod}-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('btnExportPDF').addEventListener('click', () => window.print());
-
-  // --- Insight Banner (bandingkan omzet hari ini vs rata-rata 7 hari terakhir) ---
-  function renderInsightBanner() {
-    const el = document.getElementById('insightBanner');
-    const now = new Date();
-    const todayStart = new Date(now); todayStart.setHours(0, 0, 0, 0);
-    const todayTotal = sumAmountInRange(todayStart, now);
-
-    const sevenAgo = new Date(todayStart); sevenAgo.setDate(sevenAgo.getDate() - 7);
-    const last7 = extractTransactions().filter(t => t.date >= sevenAgo && t.date < todayStart);
-
-    if (last7.length === 0) { el.style.display = 'none'; return; }
-
-    const byDay = {};
-    last7.forEach(t => {
-      const key = t.date.toISOString().slice(0, 10);
-      byDay[key] = (byDay[key] || 0) + t.amount;
-    });
-    const days = Object.keys(byDay);
-    const avg7 = days.reduce((s, k) => s + byDay[k], 0) / days.length;
-
-    if (avg7 === 0) { el.style.display = 'none'; return; }
-
-    const diffPct = ((todayTotal - avg7) / avg7) * 100;
-    el.style.display = 'flex';
-    if (diffPct >= 0) {
-      el.className = 'insight-banner positive';
-      el.innerHTML = `<span>✅</span><span>Omzet hari ini <strong>${diffPct.toFixed(0)}% di atas</strong> rata-rata 7 hari terakhir.</span>`;
-    } else {
-      el.className = 'insight-banner negative';
-      el.innerHTML = `<span>⚠️</span><span>Omzet hari ini <strong>${Math.abs(diffPct).toFixed(0)}% di bawah</strong> rata-rata 7 hari terakhir.</span>`;
-    }
-  }
-
-  // --- Breakdown per Barang (kolom "Barang" tiap baris, bukan tx_category yang nggak pernah diisi) ---
-  function renderCategoryBreakdown(filterTerm) {
-    const el = document.getElementById('categoryBarList');
-    const byCategory = {};
-    extractTransactions().forEach(t => {
-      const cat = t.barang;
-      if (filterTerm && !cat.toLowerCase().includes(filterTerm)) return;
-      byCategory[cat] = (byCategory[cat] || 0) + t.amount;
-    });
-    const names = Object.keys(byCategory);
-    if (names.length === 0) {
-      el.innerHTML = `<p class="folder-bar-empty">${filterTerm ? 'Tidak ada kategori cocok' : 'Belum ada data kategori'}</p>`;
-      return;
-    }
-    const max = Math.max(...names.map(n => byCategory[n]));
-    el.innerHTML = names
-      .sort((a, b) => byCategory[b] - byCategory[a])
-      .map(name => {
-        const val = byCategory[name];
-        const pct = Math.round((val / max) * 100);
-        return `
-          <div class="folder-bar-row">
-            <div class="folder-bar-top">
-              <span class="folder-bar-name">${escapeHtml(name)}</span>
-              <span class="folder-bar-count">${formatRupiah(val)}</span>
-            </div>
-            <div class="folder-bar-track"><div class="folder-bar-fill" style="width:${pct}%"></div></div>
-          </div>
-        `;
-      }).join('');
-  }
-
-  // --- Distribusi per Folder ---
-  function renderFolderDistribution(filterTerm) {
-    const barList = document.getElementById('folderBarList');
-    const folderCounts = {};
-    notesData.forEach(n => {
-      const f = n.folder || 'Uncategorized';
-      if (filterTerm && !f.toLowerCase().includes(filterTerm)) return;
-      folderCounts[f] = (folderCounts[f] || 0) + 1;
-    });
-    const folderNames = Object.keys(folderCounts);
-
-    if (folderNames.length === 0) {
-      barList.innerHTML = `<p class="folder-bar-empty">${filterTerm ? 'Tidak ada folder cocok' : 'Belum ada data untuk dianalisa'}</p>`;
-      return;
-    }
-
-    const maxCount = Math.max(...folderNames.map(f => folderCounts[f]));
-    barList.innerHTML = folderNames
-      .sort((a, b) => folderCounts[b] - folderCounts[a])
-      .map(name => {
-        const count = folderCounts[name];
-        const pct = Math.round((count / maxCount) * 100);
-        return `
-          <div class="folder-bar-row">
-            <div class="folder-bar-top">
-              <span class="folder-bar-name">${escapeHtml(name)}</span>
-              <span class="folder-bar-count">${count}</span>
-            </div>
-            <div class="folder-bar-track"><div class="folder-bar-fill" style="width:${pct}%"></div></div>
-          </div>
-        `;
-      }).join('');
-  }
-
-  // --- Aktivitas Terbaru (transaksi per baris, bukan per note) ---
-  function renderRecentActivity(filterTerm) {
-    const el = document.getElementById('recentActivityList');
-    let items = extractTransactions();
-
-    if (filterTerm) {
-      items = items.filter(t =>
-        t.customer.toLowerCase().includes(filterTerm) ||
-        t.barang.toLowerCase().includes(filterTerm) ||
-        t.folder.toLowerCase().includes(filterTerm)
-      );
-    }
-
-    items = items.sort((a, b) => b.date - a.date).slice(0, 5);
-
-    if (items.length === 0) {
-      el.innerHTML = `<p class="recent-activity-empty">${filterTerm ? 'Tidak ada aktivitas cocok' : 'Belum ada aktivitas'}</p>`;
-      return;
-    }
-
-    el.innerHTML = items.map(t => `
-      <div class="recent-activity-item">
-        <div>
-          <p class="recent-activity-title">${escapeHtml(t.customer)} &middot; ${escapeHtml(t.barang)}</p>
-          <p class="recent-activity-sub">${escapeHtml(t.folder)} · ${timeAgo(t.date.toISOString())}</p>
-        </div>
-        <span class="recent-activity-amount">${formatRupiah(t.amount)}</span>
-      </div>
-    `).join('');
-  }
-
-  // --- Top Customer (dulu "Segera Hadir" — sekarang dihitung dari kolom Customer + Harga tiap baris) ---
-  function renderTopCustomer() {
-    const el = document.getElementById('topCustomerCard');
-    if (!el) return;
-
-    const byCustomer = {};
-    extractTransactions().forEach(t => {
-      if (t.customer === 'Tanpa Nama') return;
-      if (!byCustomer[t.customer]) byCustomer[t.customer] = { total: 0, count: 0 };
-      byCustomer[t.customer].total += t.amount;
-      byCustomer[t.customer].count += 1;
-    });
-
-    const names = Object.keys(byCustomer);
-    if (names.length === 0) {
-      el.innerHTML = `
-        <div class="upcoming-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-        </div>
-        <div>
-          <p class="upcoming-text-title">Top Customer</p>
-          <p class="upcoming-text-sub">Belum ada data customer</p>
-        </div>
-      `;
-      return;
-    }
-
-    const top = names.sort((a, b) => byCustomer[b].total - byCustomer[a].total)[0];
-    el.innerHTML = `
-      <div class="upcoming-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-      </div>
-      <div>
-        <p class="upcoming-text-title">${escapeHtml(top)}</p>
-        <p class="upcoming-text-sub">${byCustomer[top].count}x transaksi &middot; total ${formatRupiah(byCustomer[top].total)}</p>
-      </div>
-    `;
-  }
-
-  // --- Search di dalam Analisa ---
-  document.getElementById('analyticsSearchInput').addEventListener('input', (e) => {
-    const term = e.target.value.trim().toLowerCase();
-    renderFolderDistribution(term);
-    renderCategoryBreakdown(term);
-    renderRecentActivity(term);
-  });
-
-  function renderAnalytics() {
-    renderTopCustomer();
-    renderIncomeCard();
-    renderInsightBanner();
-
-    const total = notesData.length;
-    const folderCounts = {};
-    notesData.forEach(n => {
-      const f = n.folder || 'Uncategorized';
-      folderCounts[f] = (folderCounts[f] || 0) + 1;
-    });
-    const folderNames = Object.keys(folderCounts);
-
-    document.getElementById('statTotalNotes').textContent = total;
-    document.getElementById('statTotalFolders').textContent = folderNames.length;
-    document.getElementById('statAvgPerFolder').textContent = folderNames.length
-      ? Math.round((total / folderNames.length) * 10) / 10
-      : 0;
-
-    renderFolderDistribution('');
-    renderCategoryBreakdown('');
-    renderRecentActivity('');
-  }
-
-  btnAnalyticsOpen.addEventListener('click', () => {
-    document.getElementById('analyticsSearchInput').value = '';
-    renderAnalytics();
-    analyticsOverlay.classList.add('open');
-  });
-  btnAnalyticsBack.addEventListener('click', () => analyticsOverlay.classList.remove('open'));
-
   // --- Settings Overlay ---
   const btnSettingsOpen = document.getElementById('btnSettingsOpen');
   const settingsOverlay = document.getElementById('settingsOverlay');
@@ -3198,7 +2304,6 @@
     const isLight = document.body.classList.toggle('light-theme');
     toggleDarkTheme.classList.toggle('active', !isLight);
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
-    if (analyticsOverlay.classList.contains('open')) renderIncomeCard();
   });
 
   // --- Pilihan Font (tersimpan di localStorage key 'bm-font', kepakai
@@ -3286,11 +2391,20 @@
     if (e.target === liquidAlertBackdrop) liquidAlertBackdrop.classList.remove('open');
   });
 
-  document.getElementById('rowSyncCloud').addEventListener('click', () => {
-    showLiquidAlert(
-      'Sync to Cloud Database',
-      'Aplikasi ini belum terhubung ke database Supabase.\nData akan otomatis tersinkron begitu koneksi database sudah diaktifkan dari sisi admin.'
-    );
+  document.getElementById('rowSyncCloud').addEventListener('click', async () => {
+    if (syncBusy) return;
+    const ok = await loadAllData();
+    if (ok) {
+      showLiquidAlert(
+        'Sync to Cloud Database',
+        'Berhasil. ' + notesData.length + ' note dari ' + categoriesData.length + ' folder sudah diperbarui dari database.\nPerubahan dari admin juga masuk otomatis.'
+      );
+    } else {
+      showLiquidAlert(
+        'Sync Gagal',
+        'Tidak bisa mengambil data dari database. Data yang tampil tetap data terakhir yang berhasil dimuat.\nCek koneksi internet lalu coba lagi.'
+      );
+    }
   });
 
   document.getElementById('rowUserAgreement').addEventListener('click', () => {
@@ -3331,7 +2445,10 @@
         return '<tr>' + cols.map(c => {
           const val = row.cells ? row.cells[c.id] : '';
           if (c.type === 'image' && val) {
-            return `<td><img src="${escapeHtml(val)}" class="note-detail-img" alt="Gambar"></td>`;
+            const imgUrl = safeImageUrl(val);
+            return imgUrl
+              ? `<td><img src="${escapeHtml(imgUrl)}" class="note-detail-img" alt="Gambar" referrerpolicy="no-referrer"></td>`
+              : '<td></td>';
           }
           return `<td>${escapeHtml(val || '')}</td>`;
         }).join('') + '</tr>';
@@ -3675,7 +2792,10 @@
     .channel('public-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'folders' }, scheduleRealtimeRefresh)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, scheduleRealtimeRefresh)
-    .subscribe();
+    .subscribe((status) => {
+      realtimeStatus = status;
+      updateSyncStatus();
+    });
 
   loadAllData().then(() => {
     // Deep-link dari link yang dibagikan (?note=<id>) — langsung buka tabel itu
