@@ -2120,6 +2120,7 @@
   .share-option-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .share-option-icon.pdf { background: rgba(240, 85, 92, 0.15); color: #F0555C; }
   .share-option-icon.img { background: rgba(61, 214, 140, 0.15); color: #3DD68C; }
+  .share-option-icon.csv { background: rgba(62, 155, 95, 0.15); color: #3E9B5F; }
   .share-option-icon.link { background: rgba(240, 165, 41, 0.15); color: var(--accent-yellow); }
   .share-option-icon svg { width: 22px; height: 22px; }
   .share-option-title { font-size: 14.5px; font-weight: 700; }
@@ -2343,6 +2344,14 @@
       </label>
     </div>
 
+    <div class="settings-item" id="rowBackupAll">
+      <span class="settings-item-title" id="backupAllTitle">Backup Semua Data</span>
+      <div class="settings-item-right">
+        <span>JSON</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
     <div class="settings-item" id="rowSyncCloud">
       <span class="settings-item-title">Sync to Cloud Database</span>
       <div class="settings-item-right">
@@ -2523,7 +2532,7 @@
   <img id="lightboxImage" src="" alt="Gambar">
 </div>
 
-<!-- Share Sheet: pilihan Bagikan Link / Export PDF / Export Gambar -->
+<!-- Share Sheet: pilihan Bagikan Link / Export PDF / Export Gambar / Export Excel (CSV) -->
 <div class="share-sheet-overlay" id="shareSheetOverlay"></div>
 <div class="share-sheet" id="shareSheet">
   <div class="share-sheet-handle"></div>
@@ -2556,6 +2565,16 @@
     <div>
       <p class="share-option-title">Export ke Gambar</p>
       <p class="share-option-sub">PNG, gampang dikirim lewat WhatsApp/chat</p>
+    </div>
+  </div>
+
+  <div class="share-option-btn" id="btnShareExportCsv">
+    <div class="share-option-icon csv">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+    </div>
+    <div>
+      <p class="share-option-title">Export ke Excel (CSV)</p>
+      <p class="share-option-sub">Bisa dibuka di Excel / Google Sheets</p>
     </div>
   </div>
 
@@ -5022,6 +5041,83 @@
       alert('Gagal membuat PDF: ' + err.message);
     } finally {
       hideShareLoading();
+    }
+  });
+
+  // --- Download file dari browser (dipakai CSV & backup). BOM dipasang supaya Excel membaca UTF-8 dengan benar ---
+  function downloadTextFile(filename, text, mime, withBom) {
+    const blob = new Blob([withBom ? '\uFEFF' + text : text], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  // Sel CSV: pakai tanda kutip jika perlu, dan netralkan awalan = + @ (mencegah formula injection di Excel)
+  function csvCell(val) {
+    let v = val == null ? '' : String(val);
+    if (/^[=+@]/.test(v)) v = "'" + v;
+    if (/[";\n\r]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+    return v;
+  }
+  // Pemisah titik koma (;) supaya langsung rapi di Excel berbahasa Indonesia
+  function tableToCsv(content) {
+    const lines = [content.columns.map(c => csvCell(c.label || '')).join(';')];
+    content.rows.forEach(row => {
+      lines.push(content.columns.map(c => csvCell(row.cells ? row.cells[c.id] : '')).join(';'));
+    });
+    return lines.join('\r\n');
+  }
+
+  document.getElementById('btnShareExportCsv').addEventListener('click', () => {
+    if (!currentDetailNote) return;
+    const content = getDisplayTable(currentDetailNote);
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
+      alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
+      return;
+    }
+    closeShareSheet();
+    const title = currentDetailNote.title || 'tabel';
+    downloadTextFile(`${safeFileName(title)}.csv`, tableToCsv(content), 'text/csv;charset=utf-8;', true);
+  });
+
+  // --- Backup semua data: seluruh notes (semua folder, semua jenis buku) + Sampah ikut tersimpan di content ---
+  let backupRunning = false;
+  document.getElementById('rowBackupAll').addEventListener('click', async () => {
+    if (backupRunning) return;
+    backupRunning = true;
+    const titleEl = document.getElementById('backupAllTitle');
+    const originalText = titleEl.textContent;
+    titleEl.textContent = 'Menyiapkan backup...';
+    try {
+      const [notesRes, foldersRes] = await Promise.all([
+        supabaseClient.from('notes').select('*').order('created_at', { ascending: true }),
+        supabaseClient.from('folders').select('*')
+      ]);
+      if (notesRes.error) throw new Error(notesRes.error.message);
+      const notes = notesRes.data || [];
+      const folders = foldersRes.error ? (typeof categoriesData !== 'undefined' ? categoriesData : []) : (foldersRes.data || []);
+      const backup = {
+        app: 'BM-TECH',
+        type: 'backup-semua-data',
+        created_at: new Date().toISOString(),
+        total_notes: notes.length,
+        folders,
+        notes
+      };
+      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+      downloadTextFile(`backup-bm-tech-${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8;', false);
+      showLiquidAlert('Backup selesai', `${notes.length} catatan dari semua buku berhasil diunduh. Simpan file ini di tempat aman (Drive/WhatsApp ke diri sendiri).`);
+    } catch (err) {
+      console.error('Gagal backup:', err);
+      showLiquidAlert('Backup gagal', 'Tidak bisa mengambil data: ' + err.message);
+    } finally {
+      titleEl.textContent = originalText;
+      backupRunning = false;
     }
   });
 
