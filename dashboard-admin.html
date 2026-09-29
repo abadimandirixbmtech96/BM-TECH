@@ -3778,6 +3778,17 @@
     { id: 'bukti', label: 'Bukti', type: 'image' }
   ];
 
+  // Tampilan kolom Harga: angka murni diformat id-ID, teks/simbol (mis. "√", "Rp 50.000 √")
+  // ditampilkan apa adanya. Tidak pernah menghasilkan "NaN".
+  function formatHargaCell(v) {
+    if (v === undefined || v === null) return '';
+    if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v).toLocaleString('id-ID') : '';
+    const str = String(v).trim();
+    if (!str || /^(nan|undefined|null)$/i.test(str)) return '';
+    if (/^\d+(\.\d+)?$/.test(str)) return Math.round(Number(str)).toLocaleString('id-ID');
+    return str;
+  }
+
   function getNoteTable(note) {
     const content = note && note.content;
     if (!content) return null;
@@ -3799,7 +3810,7 @@
             barangKeluar: r.barangKeluar || '',
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
-            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : '',
+            harga: formatHargaCell(r.harga),
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
           }
@@ -5684,6 +5695,7 @@
     }[c]));
   }
 
+  let analyticsNotes = []; // hanya notes folder BUKU BESAR, khusus Analisa
   let allNotesData = []; // seluruh notes dari semua folder, khusus buat Analisa
 
   // Ambil semua notes dari semua folder + tempel nama foldernya masing-masing
@@ -5696,6 +5708,7 @@
     if (error) {
       console.error('Gagal memuat data Analisa:', error.message);
       allNotesData = [];
+      analyticsNotes = [];
       return;
     }
 
@@ -5707,6 +5720,10 @@
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
+
+    // Analisa KHUSUS folder BUKU BESAR (Tasks & Search tetap pakai allNotesData)
+    const ledgerIds = new Set(categoriesData.filter(c => /buku\s*besar/i.test(c.name || '')).map(c => c.id));
+    analyticsNotes = allNotesData.filter(n => ledgerIds.has(n.folder_id) && getNoteTable(n));
   }
 
   // --- Liquid Glass Alert ---
@@ -5829,11 +5846,15 @@
   // editor). Dipakai Analisa (grafik omzet, breakdown, Top Customer) biar
   // datanya beneran nyambung ke apa yang admin isi di tabel.
   // =====================================================================
+  // Ketat: hanya nominal murni (opsional awalan "Rp", tanda centang √✓✔ diabaikan).
+  // Nilai berisi simbol/teks lain ("√" saja, "2x", "-", "50rb") = BUKAN transaksi.
   function parseRupiah(val) {
     if (val === undefined || val === null) return 0;
-    const cleaned = String(val).replace(/[^0-9]/g, '');
-    const parsed = parseInt(cleaned, 10);
-    return isNaN(parsed) ? 0 : parsed;
+    if (typeof val === 'number') return Number.isFinite(val) && val > 0 ? Math.round(val) : 0;
+    let str = String(val).trim().replace(/[√✓✔]/g, '').replace(/^rp\.?\s*/i, '').trim();
+    if (!/^\d{1,3}([.,]\d{3})+$|^\d+$/.test(str)) return 0;
+    const parsed = parseInt(str.replace(/[.,]/g, ''), 10);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   function parseRowDate(val, fallbackISO) {
@@ -5855,7 +5876,7 @@
   // Satu baris tabel yang punya nilai Harga = satu transaksi
   function extractTransactions() {
     const txs = [];
-    allNotesData.forEach(note => {
+    analyticsNotes.forEach(note => {
       const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
 
@@ -6103,7 +6124,7 @@
   function renderFolderDistribution(filterTerm) {
     const barList = document.getElementById('folderBarList');
     const folderCounts = {};
-    allNotesData.forEach(n => {
+    analyticsNotes.forEach(n => {
       const f = n.folder || 'Uncategorized';
       if (filterTerm && !f.toLowerCase().includes(filterTerm)) return;
       folderCounts[f] = (folderCounts[f] || 0) + 1;
@@ -6216,16 +6237,16 @@
     renderIncomeCard();
     renderInsightBanner();
 
-    const total = allNotesData.length;
+    const total = analyticsNotes.length;
     const folderCounts = {};
-    allNotesData.forEach(n => {
+    analyticsNotes.forEach(n => {
       const f = n.folder || 'Uncategorized';
       folderCounts[f] = (folderCounts[f] || 0) + 1;
     });
     const folderNames = Object.keys(folderCounts);
 
     document.getElementById('statTotalNotes').textContent = total;
-    document.getElementById('statTotalFolders').textContent = categoriesData.length;
+    document.getElementById('statTotalFolders').textContent = categoriesData.filter(c => /buku\s*besar/i.test(c.name || '')).length;
     document.getElementById('statAvgPerFolder').textContent = folderNames.length
       ? Math.round((total / folderNames.length) * 10) / 10
       : 0;
