@@ -1010,7 +1010,14 @@ body::after{
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
+      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
+      storage: window.localStorage,
+      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
+    }
+  });
 </script>
 
 <script>
@@ -1378,6 +1385,16 @@ updateLoginButton();
 
 </script>
 
+<script>
+  // Minta browser TIDAK menghapus localStorage (sesi login) saat perangkat
+  // kekurangan memori. Penting khusus untuk PWA iOS yang di-"Add to Home
+  // Screen" — tanpa ini, iOS kadang membersihkan local storage app yang
+  // jarang dibuka dan memaksa login ulang. Aman dipanggil berkali-kali,
+  // dan tidak memunculkan dialog izin apapun ke pengguna.
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+</script>
 <script>
   // Daftarkan Service Worker — WAJIB supaya app-shell tersedia offline dan
   // supaya iOS mengenali halaman ini sebagai PWA yang bisa di-cache.
