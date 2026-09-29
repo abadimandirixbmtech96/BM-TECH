@@ -289,6 +289,54 @@
     font-size:14.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .btn-danger-outline svg{ width:16px; height:16px; }
+  .trash-item{ margin-bottom:14px; }
+  .trash-actions{ display:flex; gap:10px; margin-top:8px; }
+  .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
+  .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
+
+  /* ---------- Puzzle konfirmasi hapus ---------- */
+  .pz-wrap{
+    position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
+    background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  .pz-wrap canvas{ display:block; }
+  #pzPiece{
+    position:absolute; left:0; top:0; will-change:transform;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.4)); pointer-events:none;
+  }
+  .pz-refresh{
+    position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.5); background:rgba(0,0,0,0.28); color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  .pz-refresh svg{ width:15px; height:15px; }
+  .pz-wrap.fail{ animation:pzShake .4s ease; }
+  @keyframes pzShake{
+    0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-8px); } 40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-5px); } 80%{ transform:translateX(5px); }
+  }
+  .pz-track{
+    position:relative; height:46px; border-radius:23px; border:1.5px solid var(--line);
+    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:none;
+  }
+  .pz-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-soft); }
+  .pz-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:650; color:var(--ink-soft); pointer-events:none; padding-left:30px;
+  }
+  .pz-handle{
+    position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
+    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
+  }
+  .pz-handle svg{ width:18px; height:18px; }
+  .pz-handle:active{ transform:none; }
+  .pz-anim .pz-handle, .pz-anim #pzPiece, .pz-anim .pz-fill{ transition:transform .22s ease, width .22s ease; }
+  .pz-track.ok{ border-color:#3E9B5F; }
+  .pz-track.ok .pz-fill{ background:rgba(62,155,95,0.22); }
+  .pz-track.ok .pz-handle{ background:#3E9B5F; }
+  .pz-track.ok .pz-label{ color:#3E9B5F; }
   .btn-row{ display:flex; gap:10px; }
   .btn-row > *{ flex:1; }
 
@@ -322,7 +370,8 @@
 
   /* ---------- Modal / sheet ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(15,13,8,0.5); z-index:200;
+    position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
     display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
   .overlay.center{ align-items:center; padding:0 20px; }
@@ -570,11 +619,25 @@
 
       <div class="section-label">Pemeliharaan Data</div>
       <button class="btn-secondary" id="btnDedupe">Bersihkan Data Duplikat</button>
+      <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
 
       <div class="section-label">Tema Tampilan</div>
       <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+    </div>
+  </section>
+
+  <!-- ============ SAMPAH ============ -->
+  <section class="view" id="view-trash">
+    <div class="topbar">
+      <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Sampah</h2><span id="trashSub">Data yang dihapus muncul di sini</span></div>
+    </div>
+    <div class="scroll no-nav px">
+      <div id="trashList" style="margin-top:6px;"></div>
+      <div id="trashEmptyHint" style="display:none; text-align:center; padding:40px 10px; color:var(--ink-soft); font-size:14px;">Sampah kosong</div>
+      <button class="btn-danger-outline" id="btnEmptyTrash" style="display:none; width:100%; margin-top:14px;">Kosongkan Sampah</button>
     </div>
   </section>
 
@@ -630,11 +693,21 @@
   <div class="overlay center" id="overlayDelete">
     <div class="modal-card">
       <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
-      <h3>Hapus Data?</h3>
-      <p class="desc">Data yang sudah dihapus tidak dapat dikembalikan.</p>
-      <div class="btn-row">
+      <h3 id="deleteTitle">Hapus Data?</h3>
+      <p class="desc" id="deleteDesc">Data akan dipindahkan ke Sampah.</p>
+      <div class="pz-wrap" id="pzWrap">
+        <canvas id="pzCanvas"></canvas>
+        <canvas id="pzPiece"></canvas>
+        <button type="button" class="pz-refresh" id="pzRefresh" aria-label="Ganti puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg></button>
+      </div>
+      <div class="pz-track" id="pzTrack">
+        <div class="pz-fill" id="pzFill"></div>
+        <div class="pz-label" id="pzLabel">Geser untuk mencocokkan</div>
+        <button type="button" class="pz-handle" id="pzHandle" aria-label="Geser potongan puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+      <div class="btn-row" style="margin-top:14px;">
         <button class="btn-secondary" id="btnDeleteBatal">Batal</button>
-        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin">Ya, Hapus</button>
+        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin" disabled>Ya, Hapus</button>
       </div>
     </div>
   </div>
@@ -658,6 +731,9 @@
   let noteTitle = '';
   // record: { id, nama, jumlah, keterangan, nominal(number|string), created_at(ISO) }
   let records = [];
+  // sampah: record yang dihapus, disimpan 30 hari sebelum hilang permanen. { ...record, deleted_at(ISO) }
+  let trash = [];
+  const TRASH_DAYS = 30;
   let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
 
   let currentView = 'home';
@@ -706,6 +782,26 @@
   function hargaToInput(h){
     if (!h) return '';
     return typeof h === 'string' ? h : Number(h).toLocaleString('id-ID');
+  }
+  // ---------- SAMPAH (soft delete) ----------
+  // Hapus data = pindah ke `trash` dulu. Baru hilang permanen setelah TRASH_DAYS hari
+  // atau kalau user memilih "Hapus Permanen" / "Kosongkan Sampah".
+  function trashDaysLeft(item){
+    const d = new Date(item.deleted_at).getTime();
+    if (isNaN(d)) return TRASH_DAYS;
+    return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
+  }
+  function purgeExpiredTrash(){
+    const before = trash.length;
+    trash = trash.filter(t => {
+      const d = new Date(t.deleted_at).getTime();
+      return isNaN(d) || (Date.now() - d) < TRASH_DAYS * 86400000; // deleted_at rusak = jangan dibuang
+    });
+    return before - trash.length;
+  }
+  function moveToTrash(list){
+    const stamp = new Date().toISOString();
+    list.forEach(r => trash.push({ ...r, deleted_at: stamp }));
   }
   // Tanda pengenal isi data: dua data dengan isi & waktu buat persis sama dianggap duplikat.
   function recordSignature(r){
@@ -758,7 +854,7 @@
   function saveLocalDraft(){
     try {
       localStorage.setItem(getLocalDraftKey(), JSON.stringify({
-        title: noteTitle, records, legacyBackup, savedAt: Date.now()
+        title: noteTitle, records, trash, legacyBackup, savedAt: Date.now()
       }));
     } catch (e) {}
   }
@@ -785,6 +881,7 @@
         const draft = JSON.parse(raw);
         noteTitle = draft.title || '';
         records = draft.records || [];
+        trash = Array.isArray(draft.trash) ? draft.trash : [];
         legacyBackup = draft.legacyBackup || null;
         renderHome();
         showSaveStatus('Tersimpan di HP (offline)', false, true);
@@ -817,9 +914,11 @@
     let needsMigrationSave = false;
     if (note.content && note.content.schema === SCHEMA_VERSION) {
       records = Array.isArray(note.content.records) ? note.content.records : [];
+      trash = Array.isArray(note.content.trash) ? note.content.trash : [];
       legacyBackup = note.content.legacy || null;
     } else {
       records = [];
+      trash = [];
       // Note lama berskema lain: simpan utuh sebagai cadangan (tidak hilang saat disimpan)
       legacyBackup = (note.content && (note.content.schema || note.content.columns || note.content.rows)) ? note.content : null;
     }
@@ -835,8 +934,8 @@
       const raw = localStorage.getItem(getLocalDraftKey());
       if (raw) {
         const draft = JSON.parse(raw);
-        const knownIds = new Set(records.map(r => r.id));
-        const knownSigs = new Set(records.map(recordSignature));
+        const knownIds = new Set([...records, ...trash].map(r => r.id));
+        const knownSigs = new Set([...records, ...trash].map(recordSignature));
         (draft.records || []).forEach(r => {
           if (!r || !r.id) return;
           if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return; // sudah ada (id atau isinya sama)
@@ -856,7 +955,8 @@
     if (dupInfo.removed > 0 && !addedFromDraft) {
       showMigrationToast(`Terdeteksi ${dupInfo.removed} data duplikat. Buka Pengaturan → Bersihkan Data Duplikat.`);
     }
-    if (needsMigrationSave || addedFromDraft > 0) scheduleAutosave();
+    const purgedCount = purgeExpiredTrash();
+    if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
   }
 
   // =====================================================================
@@ -887,7 +987,7 @@
       title: (noteTitle || '').trim() || 'Untitled',
       preview: buildPreviewText(),
       date_tag: buildDateTag(),
-      content: { schema: SCHEMA_VERSION, records, legacy: legacyBackup }
+      content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
     };
 
     let result;
@@ -1036,11 +1136,12 @@
     currentView = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
-    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail') ? 'none' : 'flex';
+    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail' || name === 'trash') ? 'none' : 'flex';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
     document.getElementById('view-' + name).querySelector('.scroll').scrollTop = 0;
     if (name === 'add') prepareAddForm();
     if (name === 'settings') renderSettings();
+    if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
   }
 
@@ -1312,18 +1413,324 @@
     openDetail(editingRecordId);
   });
 
+  // =====================================================================
+  // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
+  // Tombol "Ya, Hapus" baru aktif setelah puzzle berhasil diselesaikan.
+  // Posisi lubang & gambar diacak setiap kali dibuka / salah geser.
+  // =====================================================================
+  const deletePuzzle = (function(){
+    const wrap = document.getElementById('pzWrap');
+    const canvas = document.getElementById('pzCanvas');
+    const piece = document.getElementById('pzPiece');
+    const track = document.getElementById('pzTrack');
+    const fill = document.getElementById('pzFill');
+    const label = document.getElementById('pzLabel');
+    const handle = document.getElementById('pzHandle');
+    const btnYakin = document.getElementById('btnDeleteYakin');
+    const btnRefresh = document.getElementById('pzRefresh');
+
+    const P = 40;          // sisi kotak potongan puzzle
+    const R = 7;           // jari-jari tonjolan
+    const H = 130;         // tinggi area gambar
+    const HANDLE = 39;     // diameter tombol geser
+    const TOL = 6;         // toleransi (px) posisi benar
+    const LABEL_DEFAULT = 'Geser untuk mencocokkan';
+
+    let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
+    let solved = false, dragging = false, startX = 0, startOff = 0, offset = 0, maxOff = 1, pieceMax = 1, dragX = 0;
+    let failTimer = null;
+
+    function makeRng(seed){
+      let a = seed >>> 0;
+      return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; };
+    }
+
+    // bentuk potongan: kotak dengan tonjolan di atas & kanan
+    function piecePath(ctx, x, y){
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + P / 2 - R, y);
+      ctx.arc(x + P / 2, y, R, Math.PI, 2 * Math.PI, false);
+      ctx.lineTo(x + P, y);
+      ctx.lineTo(x + P, y + P / 2 - R);
+      ctx.arc(x + P, y + P / 2, R, -Math.PI / 2, Math.PI / 2, false);
+      ctx.lineTo(x + P, y + P);
+      ctx.lineTo(x, y + P);
+      ctx.closePath();
+    }
+
+    // gambar latar acak (deterministik per seed supaya lubang & potongan identik)
+    function drawScene(ctx){
+      const rnd = makeRng(sceneSeed);
+      const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, 'hsl(' + h1 + ',70%,58%)');
+      g.addColorStop(1, 'hsl(' + h2 + ',72%,42%)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',75%,' + (40 + Math.floor(rnd() * 30)) + '%,0.55)';
+        ctx.beginPath();
+        ctx.arc(rnd() * W, rnd() * H, 12 + rnd() * 34, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+      for (let i = 0; i < 6; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',70%,60%,0.5)';
+        ctx.beginPath();
+        const x = rnd() * W, y = rnd() * H;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 30 + rnd() * 50, y + (rnd() - 0.5) * 60);
+        ctx.lineTo(x + (rnd() - 0.5) * 60, y + 30 + rnd() * 40);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++){
+        ctx.beginPath();
+        ctx.moveTo(rnd() * W, 0);
+        ctx.lineTo(rnd() * W, H);
+        ctx.stroke();
+      }
+    }
+
+    function render(){
+      // kanvas utama + lubang
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      const c = canvas.getContext('2d');
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawScene(c);
+      piecePath(c, tx, ty);
+      c.fillStyle = 'rgba(0,0,0,0.5)';
+      c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.85)';
+      c.lineWidth = 1.5;
+      c.stroke();
+
+      // kanvas potongan (kotak berada di offset (2, R+2))
+      const pw = P + R + 4, ph = P + R + 4;
+      piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
+      piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
+      piece.style.top = (ty - (R + 2)) + 'px';
+      const p = piece.getContext('2d');
+      p.setTransform(dpr, 0, 0, dpr, 0, 0);
+      p.clearRect(0, 0, pw, ph);
+      p.save();
+      p.translate(2 - tx, R + 2 - ty);
+      piecePath(p, tx, ty);
+      p.clip();
+      drawScene(p);
+      p.restore();
+      p.save();
+      p.translate(2 - tx, R + 2 - ty);
+      piecePath(p, tx, ty);
+      p.strokeStyle = 'rgba(255,255,255,0.95)';
+      p.lineWidth = 2;
+      p.stroke();
+      p.restore();
+    }
+
+    function setOffset(o){
+      offset = Math.max(0, Math.min(maxOff, o));
+      handle.style.transform = 'translateX(' + offset + 'px)';
+      fill.style.width = (offset + HANDLE + 2) + 'px';
+      dragX = maxOff > 0 ? (offset / maxOff) * pieceMax : 0;
+      piece.style.transform = 'translateX(' + (dragX - 2) + 'px)';
+    }
+
+    function reset(){
+      clearTimeout(failTimer);
+      solved = false; dragging = false;
+      wrap.parentElement.classList.remove('pz-anim');
+      track.classList.remove('ok');
+      label.textContent = LABEL_DEFAULT;
+      btnYakin.disabled = true;
+
+      W = Math.max(220, Math.floor(wrap.clientWidth) || 300);
+      dpr = window.devicePixelRatio || 1;
+      sceneSeed = Math.floor(Math.random() * 1e9) + 1;
+      pieceMax = W - P - R - 2;
+      const minX = Math.round(W * 0.42);
+      tx = Math.round(minX + Math.random() * (pieceMax - minX));
+      ty = Math.round((R + 8) + Math.random() * (H - P - (R + 8) - 8));
+      maxOff = Math.max(1, track.clientWidth - HANDLE - 4);
+      render();
+      setOffset(0);
+    }
+
+    function fail(){
+      wrap.classList.remove('fail'); void wrap.offsetWidth; wrap.classList.add('fail');
+      wrap.parentElement.classList.add('pz-anim');
+      setOffset(0);
+      failTimer = setTimeout(reset, 380);
+    }
+
+    handle.addEventListener('pointerdown', (e) => {
+      if (solved) return;
+      dragging = true; startX = e.clientX; startOff = offset;
+      wrap.parentElement.classList.remove('pz-anim');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      setOffset(startOff + (e.clientX - startX));
+    });
+    function endDrag(){
+      if (!dragging) return;
+      dragging = false;
+      if (offset < 6) return; // hanya tap, bukan geser
+      if (Math.abs(dragX - tx) <= TOL) {
+        solved = true;
+        setOffset(offset);
+        track.classList.add('ok');
+        label.textContent = 'Terverifikasi';
+        btnYakin.disabled = false;
+      } else {
+        fail();
+      }
+    }
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+    btnRefresh.addEventListener('click', reset);
+
+    return { reset: reset, isSolved: function(){ return solved; } };
+  })();
+
+  // Satu popup puzzle dipakai untuk 3 mode:
+  //  'soft'   = hapus data -> pindah ke Sampah (bisa dipulihkan)
+  //  'purge'  = hapus permanen 1 data dari Sampah
+  //  'empty'  = kosongkan seluruh Sampah
+  let deleteMode = 'soft';
+  let deleteTargetIndex = null;
+  function openDeleteConfirm(mode, target){
+    deleteMode = mode;
+    deleteTargetIndex = target;
+    const t = document.getElementById('deleteTitle');
+    const d = document.getElementById('deleteDesc');
+    const b = document.getElementById('btnDeleteYakin');
+    if (mode === 'soft') {
+      t.textContent = 'Hapus Data?';
+      d.textContent = 'Data akan dipindahkan ke Sampah dan bisa dipulihkan selama ' + TRASH_DAYS + ' hari. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Ya, Hapus';
+    } else if (mode === 'purge') {
+      t.textContent = 'Hapus Permanen?';
+      d.textContent = 'Data ini akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Hapus Permanen';
+    } else {
+      t.textContent = 'Kosongkan Sampah?';
+      d.textContent = trash.length + ' data di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+      b.textContent = 'Kosongkan';
+    }
+    openOverlay('overlayDelete');
+    deletePuzzle.reset();
+  }
+
   document.getElementById('btnDetailDelete').addEventListener('click', () => {
     deletingRecordId = editingRecordId;
-    openOverlay('overlayDelete');
+    openDeleteConfirm('soft', null);
   });
   document.getElementById('btnDeleteBatal').addEventListener('click', () => closeOverlay('overlayDelete'));
   document.getElementById('btnDeleteYakin').addEventListener('click', () => {
-    records = records.filter(r => r.id !== deletingRecordId);
-    deletingRecordId = null;
+    if (!deletePuzzle.isSolved()) return; // puzzle wajib selesai dulu
     closeOverlay('overlayDelete');
-    scheduleAutosave();
-    goView('home');
+
+    if (deleteMode === 'soft') {
+      const rec = records.find(r => r.id === deletingRecordId);
+      if (rec) {
+        records = records.filter(r => r !== rec);
+        moveToTrash([rec]);
+        showMigrationToast('Data dipindahkan ke Sampah. Bisa dipulihkan selama ' + TRASH_DAYS + ' hari (Pengaturan → Sampah).');
+      }
+      deletingRecordId = null;
+      scheduleAutosave();
+      goView('home');
+    } else if (deleteMode === 'purge') {
+      if (deleteTargetIndex != null && trash[deleteTargetIndex]) trash.splice(deleteTargetIndex, 1);
+      scheduleAutosave();
+      renderTrash();
+      showMigrationToast('Data dihapus permanen.');
+    } else {
+      trash = [];
+      scheduleAutosave();
+      renderTrash();
+      showMigrationToast('Sampah dikosongkan.');
+    }
   });
+
+  // =====================================================================
+  // HALAMAN SAMPAH — pulihkan / hapus permanen
+  // =====================================================================
+  function renderTrash(){
+    if (purgeExpiredTrash() > 0) scheduleAutosave();
+    const listEl = document.getElementById('trashList');
+    const emptyEl = document.getElementById('trashEmptyHint');
+    const btnEmpty = document.getElementById('btnEmptyTrash');
+    document.getElementById('trashSub').textContent = trash.length
+      ? trash.length + ' data · otomatis hilang setelah ' + TRASH_DAYS + ' hari'
+      : 'Data yang dihapus muncul di sini';
+
+    if (trash.length === 0) {
+      listEl.innerHTML = '';
+      emptyEl.style.display = 'block';
+      btnEmpty.style.display = 'none';
+      return;
+    }
+    emptyEl.style.display = 'none';
+    btnEmpty.style.display = 'block';
+
+    // terbaru dihapus di atas; simpan index asli supaya tombol menunjuk item yang benar
+    const rows = trash.map((r, i) => ({ r, i }))
+      .sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
+
+    listEl.innerHTML = rows.map(({ r, i }) => {
+      const left = trashDaysLeft(r);
+      const delAt = new Date(r.deleted_at);
+      const delTxt = isNaN(delAt.getTime()) ? '—' : fmtTanggal(delAt) + ' ' + fmtWaktu(delAt);
+      const harga = r.nominal ? escapeHtml(rupiah(r.nominal)) : '';
+      return `
+        <div class="trash-item">
+          <div class="recent-row" style="cursor:default;">
+            <div class="r-mid">
+              <b>${escapeHtml(r.nama) || '(tanpa nama)'}</b>
+              <span>${escapeHtml(r.jumlah) || '—'}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''}</span>
+              <span>Dihapus ${delTxt} · sisa ${left} hari${harga ? ' · ' + harga : ''}</span>
+            </div>
+          </div>
+          <div class="trash-actions">
+            <button type="button" class="btn-secondary" data-act="restore" data-idx="${i}">Pulihkan</button>
+            <button type="button" class="btn-danger-outline" data-act="purge" data-idx="${i}">Hapus Permanen</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('button[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.idx);
+        if (btn.dataset.act === 'restore') restoreFromTrash(idx);
+        else openDeleteConfirm('purge', idx);
+      });
+    });
+  }
+
+  function restoreFromTrash(idx){
+    const item = trash[idx];
+    if (!item) return;
+    trash.splice(idx, 1);
+    const rec = { ...item };
+    delete rec.deleted_at;
+    if (records.some(r => r.id === rec.id)) rec.id = uid(); // hindari id kembar
+    records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
+    scheduleAutosave();
+    renderTrash();
+    showMigrationToast('Data berhasil dipulihkan.');
+  }
+
+  document.getElementById('btnOpenTrash').addEventListener('click', () => goView('trash'));
+  document.getElementById('btnTrashBack').addEventListener('click', () => goView('settings'));
+
 
   // =====================================================================
   // SETTINGS — judul tabel & tema
@@ -1331,18 +1738,21 @@
   function renderSettings(){
     document.getElementById('inputJudulTabel').value = noteTitle || '';
     const dup = dedupeRecords(records).removed;
+    document.getElementById('btnOpenTrash').textContent = trash.length ? `Buka Sampah (${trash.length})` : 'Buka Sampah';
     document.getElementById('btnDedupe').textContent = dup ? `Bersihkan Data Duplikat (${dup})` : 'Bersihkan Data Duplikat';
     applyThemeUI();
   }
   document.getElementById('btnDedupe').addEventListener('click', () => {
     const { kept, removed } = dedupeRecords(records);
     if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
-    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nHapus duplikatnya dan sisakan 1 dari tiap pasang?`)) return;
+    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`)) return;
+    const keptSet = new Set(kept);
+    moveToTrash(records.filter(r => !keptSet.has(r))); // duplikat juga masuk Sampah, bukan hilang
     records = kept;
     scheduleAutosave();
     renderHome();
     renderSettings();
-    showMigrationToast(`${removed} data duplikat berhasil dihapus.`);
+    showMigrationToast(`${removed} data duplikat dipindahkan ke Sampah.`);
   });
   document.getElementById('inputJudulTabel').addEventListener('change', (e) => {
     noteTitle = e.target.value.trim();
