@@ -176,6 +176,67 @@
   body.surface-dark .recent-row .r-right{ color:var(--accent); }
   .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
 
+  /* ---------- Bukti (upload gambar, opsional maks. 2) ---------- */
+  .bukti-dropzone{
+    border:1.5px dashed var(--line); border-radius:var(--radius-md); background:var(--paper-alt);
+    padding:14px; transition:border-color .15s ease, background .15s ease;
+  }
+  .bukti-dropzone.dragover{ border-color:var(--accent); background:var(--accent-soft); }
+  .bukti-dropzone.full .bukti-empty-state{ display:none; }
+  .bukti-empty-state{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; padding:10px 0; color:var(--ink-soft); }
+  .bukti-empty-state svg{ width:26px; height:26px; opacity:0.6; }
+  .bukti-empty-state span{ font-size:12px; font-weight:600; }
+  .bukti-btn-row{ display:flex; gap:8px; margin-top:2px; }
+  .bukti-pick-btn{
+    padding:8px 14px; border-radius:var(--radius-pill); border:1.5px solid var(--line); background:var(--paper);
+    color:var(--ink); font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .bukti-pick-btn:active{ background:var(--accent-soft); border-color:var(--accent); }
+  .bukti-thumbs{ display:flex; gap:10px; flex-wrap:wrap; }
+  .bukti-dropzone.has-items .bukti-thumbs{ margin-top:10px; }
+  .bukti-thumb{ position:relative; width:72px; height:72px; border-radius:12px; overflow:hidden; background:var(--line-soft); flex-shrink:0; cursor:pointer; }
+  .bukti-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bukti-thumb-remove{
+    position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; border:none;
+    background:rgba(20,16,8,0.65); color:#fff; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .bukti-thumb-spinner{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(20,16,8,0.35); }
+  .bukti-thumb-spinner::after{
+    content:''; width:18px; height:18px; border-radius:50%; border:2.5px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    animation:bukti-spin .7s linear infinite;
+  }
+  @keyframes bukti-spin{ to{ transform:rotate(360deg); } }
+  .bukti-thumb.error{ outline:2px solid var(--danger); outline-offset:-2px; }
+  .bukti-thumb-error{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(194,68,68,0.55);
+    color:#fff; font-weight:800; font-size:16px;
+  }
+  .bukti-view-thumbs{ display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; }
+  .bukti-view-thumb{ width:56px; height:56px; border-radius:10px; object-fit:cover; cursor:pointer; }
+  .r-photo-badge{ font-size:12px; margin-right:2px; vertical-align:-1px; }
+
+  /* ---------- Viewer bukti: preview geser (swipe) antar gambar ---------- */
+  .bukti-viewer-overlay{
+    position:fixed; inset:0; background:rgba(10,8,4,0.92); z-index:300;
+    display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .bukti-viewer-overlay.show{ opacity:1; pointer-events:auto; }
+  .bukti-viewer-stage{ position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
+  .bukti-viewer-stage img{ max-width:92%; max-height:80vh; border-radius:14px; object-fit:contain; user-select:none; -webkit-user-drag:none; }
+  .bukti-viewer-close{
+    position:absolute; top:calc(var(--safe-top) + 14px); right:18px; width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,0.14); border:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  }
+  .bukti-viewer-nav{
+    position:absolute; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%;
+    background:rgba(255,255,255,0.14); border:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  }
+  .bukti-viewer-nav.prev{ left:12px; }
+  .bukti-viewer-nav.next{ right:12px; }
+  .bukti-viewer-dots{ position:absolute; bottom:calc(var(--safe-bottom) + 20px); left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:2; }
+  .bukti-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all .15s ease; }
+  .bukti-dot.active{ background:#fff; width:16px; border-radius:3px; }
+
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
@@ -289,54 +350,6 @@
     font-size:14.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
   }
   .btn-danger-outline svg{ width:16px; height:16px; }
-  .trash-item{ margin-bottom:14px; }
-  .trash-actions{ display:flex; gap:10px; margin-top:8px; }
-  .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
-  .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
-
-  /* ---------- Puzzle konfirmasi hapus ---------- */
-  .pz-wrap{
-    position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
-    background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
-  }
-  .pz-wrap canvas{ display:block; }
-  #pzPiece{
-    position:absolute; left:0; top:0; will-change:transform;
-    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.4)); pointer-events:none;
-  }
-  .pz-refresh{
-    position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%;
-    border:1px solid rgba(255,255,255,0.5); background:rgba(0,0,0,0.28); color:#fff; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-  }
-  .pz-refresh svg{ width:15px; height:15px; }
-  .pz-wrap.fail{ animation:pzShake .4s ease; }
-  @keyframes pzShake{
-    0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-8px); } 40%{ transform:translateX(8px); }
-    60%{ transform:translateX(-5px); } 80%{ transform:translateX(5px); }
-  }
-  .pz-track{
-    position:relative; height:46px; border-radius:23px; border:1.5px solid var(--line);
-    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:none;
-  }
-  .pz-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-soft); }
-  .pz-label{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-size:13px; font-weight:650; color:var(--ink-soft); pointer-events:none; padding-left:30px;
-  }
-  .pz-handle{
-    position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
-    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
-    cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
-  }
-  .pz-handle svg{ width:18px; height:18px; }
-  .pz-handle:active{ transform:none; }
-  .pz-anim .pz-handle, .pz-anim #pzPiece, .pz-anim .pz-fill{ transition:transform .22s ease, width .22s ease; }
-  .pz-track.ok{ border-color:#3E9B5F; }
-  .pz-track.ok .pz-fill{ background:rgba(62,155,95,0.22); }
-  .pz-track.ok .pz-handle{ background:#3E9B5F; }
-  .pz-track.ok .pz-label{ color:#3E9B5F; }
   .btn-row{ display:flex; gap:10px; }
   .btn-row > *{ flex:1; }
 
@@ -370,8 +383,7 @@
 
   /* ---------- Modal / sheet ---------- */
   .overlay{
-    position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
-    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
+    position:fixed; inset:0; background:rgba(15,13,8,0.5); z-index:200;
     display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
   .overlay.center{ align-items:center; padding:0 20px; }
@@ -560,6 +572,23 @@
         </div>
       </div>
 
+      <div class="field">
+        <label>Bukti <span class="opt-tag">(opsional — maks. 2 gambar)</span></label>
+        <div class="bukti-dropzone" id="buktiDropzone">
+          <input type="file" id="buktiFileGaleri" accept="image/*" multiple hidden>
+          <input type="file" id="buktiFileKamera" accept="image/*" capture="environment" hidden>
+          <div class="bukti-empty-state" id="buktiEmptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span>Tarik &amp; lepas gambar di sini</span>
+            <div class="bukti-btn-row">
+              <button type="button" class="bukti-pick-btn" id="btnBuktiGaleri">Galeri</button>
+              <button type="button" class="bukti-pick-btn" id="btnBuktiKamera">Kamera</button>
+            </div>
+          </div>
+          <div class="bukti-thumbs" id="buktiThumbs"></div>
+        </div>
+      </div>
+
       <button class="btn-primary" id="btnBukaKonfirmasi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6"/></svg>
         Simpan Data
@@ -617,6 +646,23 @@
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
         </div>
+        <div class="detail-row">
+          <label>Bukti</label>
+          <div class="val" id="detBuktiView">—</div>
+          <div class="bukti-dropzone" id="detBuktiDropzone" style="display:none;">
+            <input type="file" id="detBuktiFileGaleri" accept="image/*" multiple hidden>
+            <input type="file" id="detBuktiFileKamera" accept="image/*" capture="environment" hidden>
+            <div class="bukti-empty-state" id="detBuktiEmptyState">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Tarik &amp; lepas gambar di sini</span>
+              <div class="bukti-btn-row">
+                <button type="button" class="bukti-pick-btn" id="detBtnBuktiGaleri">Galeri</button>
+                <button type="button" class="bukti-pick-btn" id="detBtnBuktiKamera">Kamera</button>
+              </div>
+            </div>
+            <div class="bukti-thumbs" id="detBuktiThumbs"></div>
+          </div>
+        </div>
       </div>
 
       <div class="detail-actions" id="detailActionsView">
@@ -649,25 +695,11 @@
 
       <div class="section-label">Pemeliharaan Data</div>
       <button class="btn-secondary" id="btnDedupe">Bersihkan Data Duplikat</button>
-      <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
 
       <div class="section-label">Tema Tampilan</div>
       <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
       <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
-    </div>
-  </section>
-
-  <!-- ============ SAMPAH ============ -->
-  <section class="view" id="view-trash">
-    <div class="topbar">
-      <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
-      <div class="topbar-titles"><h2>Sampah</h2><span id="trashSub">Data yang dihapus muncul di sini</span></div>
-    </div>
-    <div class="scroll no-nav px">
-      <div id="trashList" style="margin-top:6px;"></div>
-      <div id="trashEmptyHint" style="display:none; text-align:center; padding:40px 10px; color:var(--ink-soft); font-size:14px;">Sampah kosong</div>
-      <button class="btn-danger-outline" id="btnEmptyTrash" style="display:none; width:100%; margin-top:14px;">Kosongkan Sampah</button>
     </div>
   </section>
 
@@ -714,6 +746,7 @@
         <div class="preview-row"><span>Stok Barang</span><span id="cfStok">—</span></div>
         <div class="preview-row"><span>Keterangan</span><span id="cfKet">—</span></div>
         <div class="preview-row"><span>Harga</span><span id="cfHarga">—</span></div>
+        <div class="preview-row"><span>Bukti</span><span id="cfBukti">—</span></div>
       </div>
       <div class="btn-row">
         <button class="btn-secondary" id="btnConfirmBatal">Batal</button>
@@ -726,22 +759,23 @@
   <div class="overlay center" id="overlayDelete">
     <div class="modal-card">
       <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
-      <h3 id="deleteTitle">Hapus Data?</h3>
-      <p class="desc" id="deleteDesc">Data yang sudah dihapus tidak dapat dikembalikan. Geser potongan gambar ke lubang yang pas untuk melanjutkan.</p>
-      <div class="pz-wrap" id="pzWrap">
-        <canvas id="pzCanvas"></canvas>
-        <canvas id="pzPiece"></canvas>
-        <button type="button" class="pz-refresh" id="pzRefresh" aria-label="Ganti puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg></button>
-      </div>
-      <div class="pz-track" id="pzTrack">
-        <div class="pz-fill" id="pzFill"></div>
-        <div class="pz-label" id="pzLabel">Geser untuk mencocokkan</div>
-        <button type="button" class="pz-handle" id="pzHandle" aria-label="Geser potongan puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
-      </div>
-      <div class="btn-row" style="margin-top:14px;">
+      <h3>Hapus Data?</h3>
+      <p class="desc">Data yang sudah dihapus tidak dapat dikembalikan.</p>
+      <div class="btn-row">
         <button class="btn-secondary" id="btnDeleteBatal">Batal</button>
-        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin" disabled>Ya, Hapus</button>
+        <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin">Ya, Hapus</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Viewer bukti: tap thumbnail buat lihat ukuran penuh, geser (swipe) kalau ada 2 gambar -->
+  <div class="bukti-viewer-overlay" id="overlayBuktiViewer">
+    <div class="bukti-viewer-stage" id="buktiViewerStage">
+      <button class="bukti-viewer-close" id="btnBuktiViewerClose" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="bukti-viewer-nav prev" id="buktiViewerPrev" aria-label="Sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <img id="buktiViewerImg" src="" alt="Bukti">
+      <button class="bukti-viewer-nav next" id="buktiViewerNext" aria-label="Berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <div class="bukti-viewer-dots" id="buktiViewerDots"></div>
     </div>
   </div>
 
@@ -764,9 +798,6 @@
   let noteTitle = '';
   // record: { id, pj, customer, barang, barangKeluar, stokBarang, keterangan, harga(number), created_at(ISO) }
   let records = [];
-  // sampah: record yang dihapus, disimpan 30 hari sebelum hilang permanen. { ...record, deleted_at(ISO) }
-  let trash = [];
-  const TRASH_DAYS = 30;
   let legacyBackup = null; // struktur lama (columns/rows) kalau note ini hasil migrasi — TIDAK PERNAH dihapus
 
   let currentView = 'home';
@@ -776,7 +807,215 @@
   // =====================================================================
   // HELPERS
   // =====================================================================
+
   function uid(){ return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
+
+  // =====================================================================
+  // BUKTI (upload gambar opsional, maks. 2 per data) — disimpan di Supabase
+  // Storage, bucket "bukti" (bucket + policy dibuat sekali lewat SQL, lihat
+  // catatan terpisah). Pakai supabaseClient yang sama dengan data notes,
+  // jadi tidak perlu API key tambahan.
+  // Sebelum diupload, gambar dikompres dulu lewat <canvas> (maks 1280px,
+  // JPEG kualitas 0.8) supaya tetap ringan & cepat walau sinyal lemot.
+  // =====================================================================
+  const BUKTI_BUCKET = 'bukti';
+
+  function compressImageFile(file, maxDim, quality){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Gagal membaca file gambar'));
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => reject(new Error('File bukan gambar yang valid'));
+        img.onload = () => {
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+            else { w = Math.round(w * maxDim / h); h = maxDim; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal memproses gambar')), 'image/jpeg', quality);
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Upload -> { url: link publik untuk ditampilkan, path: lokasi di bucket untuk dihapus nanti }
+  async function uploadBuktiToSupabase(blob){
+    const path = new Date().toISOString().slice(0, 10) + '/' + uid() + '.jpg';
+    const { error } = await supabaseClient.storage.from(BUKTI_BUCKET).upload(path, blob, {
+      contentType: 'image/jpeg',
+      upsert: false
+    });
+    if (error) throw new Error(error.message || 'Upload bukti gagal, coba lagi.');
+    const { data } = supabaseClient.storage.from(BUKTI_BUCKET).getPublicUrl(path);
+    return { url: data.publicUrl, path };
+  }
+
+  // Hapus file di bucket. Dipanggil saat: user hapus thumbnail (sebelum/sesudah simpan),
+  // dan saat seluruh data dihapus — supaya tidak ada file nyangkut (beda dari ImgBB yang
+  // tidak punya cara hapus dari client). Gagal hapus tidak masalah besar (biarkan, jangan
+  // sampai mengganggu alur user) — cukup dicatat di console.
+  function deleteBuktiFromSupabase(paths){
+    const list = (paths || []).filter(Boolean);
+    if (!list.length) return;
+    supabaseClient.storage.from(BUKTI_BUCKET).remove(list)
+      .then(({ error }) => { if (error) console.warn('Gagal hapus file bukti lama:', error.message); })
+      .catch(err => console.warn('Gagal hapus file bukti lama:', err.message));
+  }
+  // Path Supabase Storage selalu berbentuk ".../object/public/<bucket>/<path>" — ambil bagian setelah nama bucket.
+  function buktiPathFromUrl(url){
+    if (!url) return null;
+    const marker = '/' + BUKTI_BUCKET + '/';
+    const i = url.indexOf(marker);
+    return i === -1 ? null : url.slice(i + marker.length);
+  }
+
+  // Satu controller dipakai 2x: form Tambah Data & mode Edit di Detail Data.
+  // Menangani 3 cara input (drag & drop, pilih dari galeri, foto dari kamera),
+  // preview thumbnail instan (sebelum upload selesai), status upload/gagal,
+  // dan hapus per gambar (langsung terhapus juga dari Storage). Maks 2 gambar per data.
+  function setupBuktiUploader(cfg){
+    let items = []; // { id, url, path, previewUrl, status: 'uploading'|'done'|'error' }
+
+    function render(){
+      cfg.thumbs.innerHTML = items.map((it, i) => `
+        <div class="bukti-thumb ${it.status === 'error' ? 'error' : ''}" data-idx="${i}">
+          <img src="${it.previewUrl || it.url || ''}" alt="Bukti ${i + 1}">
+          ${it.status === 'uploading' ? '<div class="bukti-thumb-spinner"></div>' : ''}
+          ${it.status === 'error' ? '<div class="bukti-thumb-error" title="Gagal upload — tap untuk hapus lalu coba lagi">!</div>' : ''}
+          <button type="button" class="bukti-thumb-remove" data-idx="${i}" aria-label="Hapus gambar">&times;</button>
+        </div>
+      `).join('');
+      cfg.dropzone.classList.toggle('has-items', items.length > 0);
+      cfg.dropzone.classList.toggle('full', items.length >= 2);
+    }
+
+    async function addFiles(fileList){
+      const remaining = 2 - items.length;
+      if (remaining <= 0) { showMigrationToast('Maksimal 2 gambar bukti.'); return; }
+      const files = Array.from(fileList || []).filter(f => f.type && f.type.startsWith('image/')).slice(0, remaining);
+      if (!files.length) return;
+      for (const file of files) {
+        const item = { id: uid(), url: '', path: null, previewUrl: URL.createObjectURL(file), status: 'uploading' };
+        items.push(item);
+        render();
+        try {
+          const blob = await compressImageFile(file, 1280, 0.8);
+          const { url, path } = await uploadBuktiToSupabase(blob);
+          item.url = url; item.path = path;
+          item.status = 'done';
+        } catch (err) {
+          console.error('Upload bukti gagal:', err);
+          item.status = 'error';
+        }
+        render();
+      }
+    }
+
+    cfg.btnGaleri.addEventListener('click', () => cfg.inputGaleri.click());
+    cfg.btnKamera.addEventListener('click', () => cfg.inputKamera.click());
+    cfg.inputGaleri.addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+    cfg.inputKamera.addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+
+    ['dragover', 'dragenter'].forEach(evt => cfg.dropzone.addEventListener(evt, (e) => {
+      e.preventDefault(); cfg.dropzone.classList.add('dragover');
+    }));
+    ['dragleave', 'dragend'].forEach(evt => cfg.dropzone.addEventListener(evt, () => {
+      cfg.dropzone.classList.remove('dragover');
+    }));
+    cfg.dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      cfg.dropzone.classList.remove('dragover');
+      if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+    });
+
+    cfg.thumbs.addEventListener('click', (e) => {
+      const removeBtn = e.target.closest('.bukti-thumb-remove');
+      if (removeBtn) {
+        const idx = Number(removeBtn.dataset.idx);
+        if (items[idx].path) deleteBuktiFromSupabase([items[idx].path]); // sudah keburu terupload -> hapus dari Storage juga
+        items.splice(idx, 1);
+        render();
+        return;
+      }
+      const thumb = e.target.closest('.bukti-thumb');
+      if (!thumb) return;
+      const idx = Number(thumb.dataset.idx);
+      if (items[idx].status === 'error') { items.splice(idx, 1); render(); return; } // gagal -> hapus, biar bisa dicoba lagi
+      const doneUrls = items.filter(it => it.status === 'done').map(it => it.url);
+      openBuktiViewer(doneUrls, doneUrls.indexOf(items[idx].url));
+    });
+
+    return {
+      getUrls(){ return items.filter(it => it.status === 'done').map(it => it.url); },
+      isUploading(){ return items.some(it => it.status === 'uploading'); },
+      setUrls(urls){ items = (urls || []).map(u => ({ id: uid(), url: u, path: buktiPathFromUrl(u), previewUrl: u, status: 'done' })); render(); },
+      reset(){ items = []; render(); }
+    };
+  }
+
+  const addBukti = setupBuktiUploader({
+    dropzone: document.getElementById('buktiDropzone'), thumbs: document.getElementById('buktiThumbs'),
+    inputGaleri: document.getElementById('buktiFileGaleri'), inputKamera: document.getElementById('buktiFileKamera'),
+    btnGaleri: document.getElementById('btnBuktiGaleri'), btnKamera: document.getElementById('btnBuktiKamera')
+  });
+  const detBukti = setupBuktiUploader({
+    dropzone: document.getElementById('detBuktiDropzone'), thumbs: document.getElementById('detBuktiThumbs'),
+    inputGaleri: document.getElementById('detBuktiFileGaleri'), inputKamera: document.getElementById('detBuktiFileKamera'),
+    btnGaleri: document.getElementById('detBtnBuktiGaleri'), btnKamera: document.getElementById('detBtnBuktiKamera')
+  });
+
+  function renderDetailBuktiView(list){
+    const el = document.getElementById('detBuktiView');
+    if (!list || !list.length) { el.innerHTML = 'Belum diisi'; el.classList.add('empty'); return; }
+    el.classList.remove('empty');
+    el.innerHTML = '<div class="bukti-view-thumbs">' + list.map((u, i) =>
+      `<img src="${escapeHtml(u)}" data-idx="${i}" class="bukti-view-thumb" alt="Bukti ${i + 1}">`
+    ).join('') + '</div>';
+  }
+  document.getElementById('detBuktiView').addEventListener('click', (e) => {
+    const img = e.target.closest('.bukti-view-thumb');
+    if (!img) return;
+    const r = records.find(x => x.id === editingRecordId);
+    if (!r || !r.bukti || !r.bukti.length) return;
+    openBuktiViewer(r.bukti, Number(img.dataset.idx));
+  });
+
+  // Viewer geser (swipe kalau 2 gambar; tombol panah juga tersedia)
+  let viewerUrls = [], viewerIndex = 0;
+  function openBuktiViewer(urls, startIdx){
+    if (!urls || !urls.length) return;
+    viewerUrls = urls; viewerIndex = Math.max(0, Math.min(startIdx || 0, urls.length - 1));
+    renderBuktiViewer();
+    openOverlay('overlayBuktiViewer');
+  }
+  function renderBuktiViewer(){
+    document.getElementById('buktiViewerImg').src = viewerUrls[viewerIndex] || '';
+    document.getElementById('buktiViewerDots').innerHTML = viewerUrls.map((_, i) =>
+      `<span class="bukti-dot ${i === viewerIndex ? 'active' : ''}"></span>`).join('');
+    document.getElementById('buktiViewerPrev').style.display = (viewerUrls.length > 1 && viewerIndex > 0) ? 'flex' : 'none';
+    document.getElementById('buktiViewerNext').style.display = (viewerUrls.length > 1 && viewerIndex < viewerUrls.length - 1) ? 'flex' : 'none';
+  }
+  document.getElementById('buktiViewerPrev').addEventListener('click', () => { if (viewerIndex > 0) { viewerIndex--; renderBuktiViewer(); } });
+  document.getElementById('buktiViewerNext').addEventListener('click', () => { if (viewerIndex < viewerUrls.length - 1) { viewerIndex++; renderBuktiViewer(); } });
+  document.getElementById('btnBuktiViewerClose').addEventListener('click', () => closeOverlay('overlayBuktiViewer'));
+  (function () {
+    const stage = document.getElementById('buktiViewerStage');
+    let startX = 0, deltaX = 0, dragging = false;
+    stage.addEventListener('touchstart', (e) => { dragging = true; startX = e.touches[0].clientX; deltaX = 0; }, { passive: true });
+    stage.addEventListener('touchmove', (e) => { if (dragging) deltaX = e.touches[0].clientX - startX; }, { passive: true });
+    stage.addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+      if (deltaX > 40 && viewerIndex > 0) { viewerIndex--; renderBuktiViewer(); }
+      else if (deltaX < -40 && viewerIndex < viewerUrls.length - 1) { viewerIndex++; renderBuktiViewer(); }
+    });
+  })();
   function pad2(n){ return String(n).padStart(2, '0'); }
   function pad3(n){ return String(n).padStart(3, '0'); }
   function fmtTanggal(d){ return pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear(); }
@@ -817,26 +1056,6 @@
     return typeof h === 'string' ? h : Number(h).toLocaleString('id-ID');
   }
   // Tanda pengenal isi data: dua data dengan isi & waktu buat persis sama dianggap duplikat.
-  // ---------- SAMPAH (soft delete) ----------
-  // Hapus data = pindah ke `trash` dulu. Baru hilang permanen setelah TRASH_DAYS hari
-  // atau kalau user memilih "Hapus Permanen" / "Kosongkan Sampah".
-  function trashDaysLeft(item){
-    const d = new Date(item.deleted_at).getTime();
-    if (isNaN(d)) return TRASH_DAYS;
-    return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
-  }
-  function purgeExpiredTrash(){
-    const before = trash.length;
-    trash = trash.filter(t => {
-      const d = new Date(t.deleted_at).getTime();
-      return isNaN(d) || (Date.now() - d) < TRASH_DAYS * 86400000; // deleted_at rusak = jangan dibuang
-    });
-    return before - trash.length;
-  }
-  function moveToTrash(list){
-    const stamp = new Date().toISOString();
-    list.forEach(r => trash.push({ ...r, deleted_at: stamp }));
-  }
   function recordSignature(r){
     return [r.created_at, r.pj, r.customer, r.barang, r.barangKeluar, r.stokBarang, r.keterangan, r.harga]
       .map(v => (v == null ? '' : String(v).trim())).join('\u0001');
@@ -947,7 +1166,7 @@
   function saveLocalDraft(){
     try {
       localStorage.setItem(getLocalDraftKey(), JSON.stringify({
-        title: noteTitle, records, trash, legacyBackup, savedAt: Date.now()
+        title: noteTitle, records, legacyBackup, savedAt: Date.now()
       }));
     } catch (e) {}
   }
@@ -974,7 +1193,6 @@
         const draft = JSON.parse(raw);
         noteTitle = draft.title || '';
         records = draft.records || [];
-        trash = Array.isArray(draft.trash) ? draft.trash : [];
         legacyBackup = draft.legacyBackup || null;
         renderHome();
         showSaveStatus('Tersimpan di HP (offline)', false, true);
@@ -1006,13 +1224,6 @@
       return;
     }
 
-    // Pengaman: note ini ternyata data KASBON -> alihkan ke editor kasbon.
-    if (note.content && note.content.schema === 'kasbon-data-v1') {
-      existingNoteLoadFailed = true; // blok autosave selama pengalihan
-      window.location.replace('editor-data-kasbon.html' + window.location.search);
-      return;
-    }
-
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
     noteTitle = note.title || '';
@@ -1020,18 +1231,15 @@
     let needsMigrationSave = false;
     if (note.content && note.content.schema === SCHEMA_VERSION) {
       records = Array.isArray(note.content.records) ? note.content.records : [];
-      trash = Array.isArray(note.content.trash) ? note.content.trash : [];
       legacyBackup = note.content.legacy || null;
     } else if (note.content && (note.content.columns || note.content.rows)) {
       records = migrateLegacyContent(note.content, note.created_at);
-      trash = [];
       needsMigrationSave = true;
       showMigrationToast(records.length > 0
         ? `Data lama terdeteksi: ${records.length} data berhasil diimpor otomatis ke format baru. Data asli tetap diarsipkan dengan aman.`
         : 'Data lama terdeteksi dalam format tabel manual. Data asli diarsipkan dengan aman — silakan tambahkan data baru dengan format baru.');
     } else {
       records = [];
-      trash = [];
       legacyBackup = null;
     }
 
@@ -1046,8 +1254,8 @@
       const raw = localStorage.getItem(getLocalDraftKey());
       if (raw) {
         const draft = JSON.parse(raw);
-        const knownIds = new Set([...records, ...trash].map(r => r.id));
-        const knownSigs = new Set([...records, ...trash].map(recordSignature));
+        const knownIds = new Set(records.map(r => r.id));
+        const knownSigs = new Set(records.map(recordSignature));
         (draft.records || []).forEach(r => {
           if (!r || !r.id) return;
           if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return; // sudah ada (id atau isinya sama)
@@ -1067,8 +1275,7 @@
     if (dupInfo.removed > 0 && !addedFromDraft) {
       showMigrationToast(`Terdeteksi ${dupInfo.removed} data duplikat. Buka Pengaturan → Bersihkan Data Duplikat.`);
     }
-    const purgedCount = purgeExpiredTrash();
-    if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
+    if (needsMigrationSave || addedFromDraft > 0) scheduleAutosave();
   }
 
   // =====================================================================
@@ -1099,7 +1306,7 @@
       title: (noteTitle || '').trim() || 'Untitled',
       preview: buildPreviewText(),
       date_tag: buildDateTag(),
-      content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
+      content: { schema: SCHEMA_VERSION, records, legacy: legacyBackup }
     };
 
     let result;
@@ -1248,12 +1455,11 @@
     currentView = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
-    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail' || name === 'trash') ? 'none' : 'flex';
+    document.getElementById('bottomNav').style.display = (name === 'add' || name === 'detail') ? 'none' : 'flex';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === name));
     document.getElementById('view-' + name).querySelector('.scroll').scrollTop = 0;
     if (name === 'add') prepareAddForm();
     if (name === 'settings') renderSettings();
-    if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
   }
 
@@ -1315,8 +1521,8 @@
 
     listEl.innerHTML = recent.map(r => {
       const rightHtml = r.harga
-        ? `<div class="r-right">${escapeHtml(rupiah(r.harga))}</div>`
-        : `<div class="r-right pending">Belum lengkap</div>`;
+        ? `<div class="r-right">${(r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : ''}${escapeHtml(rupiah(r.harga))}</div>`
+        : `<div class="r-right pending">${(r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : ''}Belum lengkap</div>`;
       return `
         <div class="recent-row tap" data-id="${r.id}">
           <div class="r-no">${pad3(noMap.get(r.id))}</div>
@@ -1349,6 +1555,7 @@
     document.getElementById('inputStokBarang').value = '';
     document.getElementById('inputKeterangan').value = '';
     document.getElementById('inputHarga').value = '';
+    addBukti.reset();
   }
 
   // Saran nama PJ: dropdown kustom yang rapi (bukan <datalist> native — di
@@ -1434,56 +1641,21 @@
     if (el) autoCapitalizeFirst(el);
   });
 
-  // =====================================================================
-  // OTOMATIS: Barang Keluar -> Stok Barang (B&J <-> Tidak ada)
-  //  - Barang Keluar = "B&J"       -> Stok Barang otomatis "Tidak ada"
-  //  - Barang Keluar = "Tidak ada" -> Stok Barang otomatis "B&J"
-  //  - Selain itu Stok Barang dibiarkan (tetap bisa diisi manual)
-  //  - Tulisan b&j di kedua kolom selalu dipaksa kapital: B&J
-  // =====================================================================
-  const LABEL_BJ = 'B&J';
-  const LABEL_TIDAK_ADA = 'Tidak ada';
-
-  function normalizeBJ(text){
-    return String(text || '').replace(/\bb&j\b/gi, LABEL_BJ);
-  }
-  function sameLabel(text, label){
-    return String(text || '').trim().replace(/\s+/g, ' ').toLowerCase() === label.toLowerCase();
-  }
-  function forceBJUppercase(el){
-    const fixed = normalizeBJ(el.value);
-    if (fixed === el.value) return;
-    const start = el.selectionStart, end = el.selectionEnd;
-    el.value = fixed; // panjang teks tidak berubah, posisi kursor aman
-    try { el.setSelectionRange(start, end); } catch (e) {}
-  }
-  function setupKeluarStokAuto(keluarId, stokId){
-    const keluarEl = document.getElementById(keluarId);
-    const stokEl = document.getElementById(stokId);
-    if (!keluarEl || !stokEl) return;
-    keluarEl.addEventListener('input', () => {
-      forceBJUppercase(keluarEl);
-      if (sameLabel(keluarEl.value, LABEL_BJ)) stokEl.value = LABEL_TIDAK_ADA;
-      else if (sameLabel(keluarEl.value, LABEL_TIDAK_ADA)) stokEl.value = LABEL_BJ;
-    });
-    stokEl.addEventListener('input', () => forceBJUppercase(stokEl));
-  }
-  setupKeluarStokAuto('inputBarangKeluar', 'inputStokBarang');   // form Tambah Data
-  setupKeluarStokAuto('detKeluarEdit', 'detStokEdit');           // form Edit Detail
-
   document.getElementById('inputHarga').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
 
   document.getElementById('btnBukaKonfirmasi').addEventListener('click', () => {
     const pj = document.getElementById('inputPJ').value.trim();
     const customer = document.getElementById('inputCustomer').value.trim();
     const barang = document.getElementById('inputBarang').value.trim();
-    const barangKeluar = normalizeBJ(document.getElementById('inputBarangKeluar').value.trim());
-    const stokBarang = normalizeBJ(document.getElementById('inputStokBarang').value.trim());
+    const barangKeluar = document.getElementById('inputBarangKeluar').value.trim();
+    const stokBarang = document.getElementById('inputStokBarang').value.trim();
     const keterangan = document.getElementById('inputKeterangan').value.trim();
     const harga = parseHarga(document.getElementById('inputHarga').value);
+    const bukti = addBukti.getUrls();
 
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); document.getElementById('inputBarang').focus(); return; }
     if (!pj) { alert('PJ (Penanggung Jawab) wajib diisi.'); document.getElementById('inputPJ').focus(); return; }
+    if (addBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
 
     const now = new Date();
     document.getElementById('cfNo').textContent = pad3(records.length + 1);
@@ -1496,8 +1668,9 @@
     setPreviewOptional('cfStok', stokBarang);
     setPreviewOptional('cfKet', keterangan);
     setPreviewOptional('cfHarga', harga ? rupiah(harga) : '');
+    setPreviewOptional('cfBukti', bukti.length ? bukti.length + ' gambar dilampirkan' : '');
 
-    pendingNewRecord = { pj, customer, barang, barangKeluar, stokBarang, keterangan, harga };
+    pendingNewRecord = { pj, customer, barang, barangKeluar, stokBarang, keterangan, harga, bukti };
     openOverlay('overlayConfirm');
   });
 
@@ -1546,6 +1719,7 @@
     setDetailView('detStokView', r.stokBarang);
     setDetailView('detKetView', r.keterangan);
     setDetailView('detHargaView', r.harga ? rupiah(r.harga) : '');
+    renderDetailBuktiView(r.bukti);
 
     exitEditMode();
     goView('detail');
@@ -1566,6 +1740,8 @@
     document.getElementById('detStokEdit').style.display = 'none';
     document.getElementById('detKetEdit').style.display = 'none';
     document.getElementById('detHargaEditWrap').style.display = 'none';
+    document.getElementById('detBuktiView').style.display = '';
+    document.getElementById('detBuktiDropzone').style.display = 'none';
     document.getElementById('detailActionsView').style.display = 'flex';
     document.getElementById('detailActionsEdit').style.display = 'none';
   }
@@ -1587,6 +1763,9 @@
     document.getElementById('detStokEdit').style.display = 'block';
     document.getElementById('detKetEdit').style.display = 'block';
     document.getElementById('detHargaEditWrap').style.display = 'flex';
+    document.getElementById('detBuktiView').style.display = 'none';
+    document.getElementById('detBuktiDropzone').style.display = 'block';
+    detBukti.setUrls(r.bukti || []);
     document.getElementById('detPJedit').value = r.pj || '';
     document.getElementById('detCustomerEdit').value = r.customer || '';
     document.getElementById('detBarangEdit').value = r.barang || '';
@@ -1606,339 +1785,37 @@
     const pj = document.getElementById('detPJedit').value.trim();
     const customer = document.getElementById('detCustomerEdit').value.trim();
     const barang = document.getElementById('detBarangEdit').value.trim();
-    const barangKeluar = normalizeBJ(document.getElementById('detKeluarEdit').value.trim());
-    const stokBarang = normalizeBJ(document.getElementById('detStokEdit').value.trim());
+    const barangKeluar = document.getElementById('detKeluarEdit').value.trim();
+    const stokBarang = document.getElementById('detStokEdit').value.trim();
     const keterangan = document.getElementById('detKetEdit').value.trim();
     const harga = parseHarga(document.getElementById('detHargaEdit').value);
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); return; }
     if (!pj) { alert('PJ wajib diisi.'); return; }
+    if (detBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
+    const bukti = detBukti.getUrls();
 
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
     r.pj = pj; r.customer = customer; r.barang = barang; r.barangKeluar = barangKeluar;
-    r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga;
+    r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga; r.bukti = bukti;
     scheduleAutosave();
     openDetail(editingRecordId);
   });
 
-  // =====================================================================
-  // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
-  // Tombol "Ya, Hapus" baru aktif setelah puzzle berhasil diselesaikan.
-  // Posisi lubang & gambar diacak setiap kali dibuka / salah geser.
-  // =====================================================================
-  const deletePuzzle = (function(){
-    const wrap = document.getElementById('pzWrap');
-    const canvas = document.getElementById('pzCanvas');
-    const piece = document.getElementById('pzPiece');
-    const track = document.getElementById('pzTrack');
-    const fill = document.getElementById('pzFill');
-    const label = document.getElementById('pzLabel');
-    const handle = document.getElementById('pzHandle');
-    const btnYakin = document.getElementById('btnDeleteYakin');
-    const btnRefresh = document.getElementById('pzRefresh');
-
-    const P = 40;          // sisi kotak potongan puzzle
-    const R = 7;           // jari-jari tonjolan
-    const H = 130;         // tinggi area gambar
-    const HANDLE = 39;     // diameter tombol geser
-    const TOL = 6;         // toleransi (px) posisi benar
-    const LABEL_DEFAULT = 'Geser untuk mencocokkan';
-
-    let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
-    let solved = false, dragging = false, startX = 0, startOff = 0, offset = 0, maxOff = 1, pieceMax = 1, dragX = 0;
-    let failTimer = null;
-
-    function makeRng(seed){
-      let a = seed >>> 0;
-      return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; };
-    }
-
-    // bentuk potongan: kotak dengan tonjolan di atas & kanan
-    function piecePath(ctx, x, y){
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + P / 2 - R, y);
-      ctx.arc(x + P / 2, y, R, Math.PI, 2 * Math.PI, false);
-      ctx.lineTo(x + P, y);
-      ctx.lineTo(x + P, y + P / 2 - R);
-      ctx.arc(x + P, y + P / 2, R, -Math.PI / 2, Math.PI / 2, false);
-      ctx.lineTo(x + P, y + P);
-      ctx.lineTo(x, y + P);
-      ctx.closePath();
-    }
-
-    // gambar latar acak (deterministik per seed supaya lubang & potongan identik)
-    function drawScene(ctx){
-      const rnd = makeRng(sceneSeed);
-      const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
-      const g = ctx.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, 'hsl(' + h1 + ',70%,58%)');
-      g.addColorStop(1, 'hsl(' + h2 + ',72%,42%)');
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
-      for (let i = 0; i < 9; i++){
-        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',75%,' + (40 + Math.floor(rnd() * 30)) + '%,0.55)';
-        ctx.beginPath();
-        ctx.arc(rnd() * W, rnd() * H, 12 + rnd() * 34, 0, 2 * Math.PI);
-        ctx.fill();
-      }
-      for (let i = 0; i < 6; i++){
-        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',70%,60%,0.5)';
-        ctx.beginPath();
-        const x = rnd() * W, y = rnd() * H;
-        ctx.moveTo(x, y);
-        ctx.lineTo(x + 30 + rnd() * 50, y + (rnd() - 0.5) * 60);
-        ctx.lineTo(x + (rnd() - 0.5) * 60, y + 30 + rnd() * 40);
-        ctx.closePath();
-        ctx.fill();
-      }
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 5; i++){
-        ctx.beginPath();
-        ctx.moveTo(rnd() * W, 0);
-        ctx.lineTo(rnd() * W, H);
-        ctx.stroke();
-      }
-    }
-
-    function render(){
-      // kanvas utama + lubang
-      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
-      const c = canvas.getContext('2d');
-      c.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawScene(c);
-      piecePath(c, tx, ty);
-      c.fillStyle = 'rgba(0,0,0,0.5)';
-      c.fill();
-      c.strokeStyle = 'rgba(255,255,255,0.85)';
-      c.lineWidth = 1.5;
-      c.stroke();
-
-      // kanvas potongan (kotak berada di offset (2, R+2))
-      const pw = P + R + 4, ph = P + R + 4;
-      piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
-      piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
-      piece.style.top = (ty - (R + 2)) + 'px';
-      const p = piece.getContext('2d');
-      p.setTransform(dpr, 0, 0, dpr, 0, 0);
-      p.clearRect(0, 0, pw, ph);
-      p.save();
-      p.translate(2 - tx, R + 2 - ty);
-      piecePath(p, tx, ty);
-      p.clip();
-      drawScene(p);
-      p.restore();
-      p.save();
-      p.translate(2 - tx, R + 2 - ty);
-      piecePath(p, tx, ty);
-      p.strokeStyle = 'rgba(255,255,255,0.95)';
-      p.lineWidth = 2;
-      p.stroke();
-      p.restore();
-    }
-
-    function setOffset(o){
-      offset = Math.max(0, Math.min(maxOff, o));
-      handle.style.transform = 'translateX(' + offset + 'px)';
-      fill.style.width = (offset + HANDLE + 2) + 'px';
-      dragX = maxOff > 0 ? (offset / maxOff) * pieceMax : 0;
-      piece.style.transform = 'translateX(' + (dragX - 2) + 'px)';
-    }
-
-    function reset(){
-      clearTimeout(failTimer);
-      solved = false; dragging = false;
-      wrap.parentElement.classList.remove('pz-anim');
-      track.classList.remove('ok');
-      label.textContent = LABEL_DEFAULT;
-      btnYakin.disabled = true;
-
-      W = Math.max(220, Math.floor(wrap.clientWidth) || 300);
-      dpr = window.devicePixelRatio || 1;
-      sceneSeed = Math.floor(Math.random() * 1e9) + 1;
-      pieceMax = W - P - R - 2;
-      const minX = Math.round(W * 0.42);
-      tx = Math.round(minX + Math.random() * (pieceMax - minX));
-      ty = Math.round((R + 8) + Math.random() * (H - P - (R + 8) - 8));
-      maxOff = Math.max(1, track.clientWidth - HANDLE - 4);
-      render();
-      setOffset(0);
-    }
-
-    function fail(){
-      wrap.classList.remove('fail'); void wrap.offsetWidth; wrap.classList.add('fail');
-      wrap.parentElement.classList.add('pz-anim');
-      setOffset(0);
-      failTimer = setTimeout(reset, 380);
-    }
-
-    handle.addEventListener('pointerdown', (e) => {
-      if (solved) return;
-      dragging = true; startX = e.clientX; startOff = offset;
-      wrap.parentElement.classList.remove('pz-anim');
-      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
-      e.preventDefault();
-    });
-    handle.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      setOffset(startOff + (e.clientX - startX));
-    });
-    function endDrag(){
-      if (!dragging) return;
-      dragging = false;
-      if (offset < 6) return; // hanya tap, bukan geser
-      if (Math.abs(dragX - tx) <= TOL) {
-        solved = true;
-        setOffset(offset);
-        track.classList.add('ok');
-        label.textContent = 'Terverifikasi';
-        btnYakin.disabled = false;
-      } else {
-        fail();
-      }
-    }
-    handle.addEventListener('pointerup', endDrag);
-    handle.addEventListener('pointercancel', endDrag);
-    btnRefresh.addEventListener('click', reset);
-
-    return { reset: reset, isSolved: function(){ return solved; } };
-  })();
-
-  // Satu popup puzzle dipakai untuk 3 mode:
-  //  'soft'   = hapus data -> pindah ke Sampah (bisa dipulihkan)
-  //  'purge'  = hapus permanen 1 data dari Sampah
-  //  'empty'  = kosongkan seluruh Sampah
-  let deleteMode = 'soft';
-  let deleteTargetIndex = null;
-  function openDeleteConfirm(mode, target){
-    deleteMode = mode;
-    deleteTargetIndex = target;
-    const t = document.getElementById('deleteTitle');
-    const d = document.getElementById('deleteDesc');
-    const b = document.getElementById('btnDeleteYakin');
-    if (mode === 'soft') {
-      t.textContent = 'Hapus Data?';
-      d.textContent = 'Data akan dipindahkan ke Sampah dan bisa dipulihkan selama ' + TRASH_DAYS + ' hari. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
-      b.textContent = 'Ya, Hapus';
-    } else if (mode === 'purge') {
-      t.textContent = 'Hapus Permanen?';
-      d.textContent = 'Data ini akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
-      b.textContent = 'Hapus Permanen';
-    } else {
-      t.textContent = 'Kosongkan Sampah?';
-      d.textContent = trash.length + ' data di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi. Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
-      b.textContent = 'Kosongkan';
-    }
-    openOverlay('overlayDelete');
-    deletePuzzle.reset();
-  }
-
   document.getElementById('btnDetailDelete').addEventListener('click', () => {
     deletingRecordId = editingRecordId;
-    openDeleteConfirm('soft', null);
+    openOverlay('overlayDelete');
   });
   document.getElementById('btnDeleteBatal').addEventListener('click', () => closeOverlay('overlayDelete'));
   document.getElementById('btnDeleteYakin').addEventListener('click', () => {
-    if (!deletePuzzle.isSolved()) return; // puzzle wajib selesai dulu
+    const target = records.find(r => r.id === deletingRecordId);
+    if (target && target.bukti && target.bukti.length) {
+      deleteBuktiFromSupabase(target.bukti.map(buktiPathFromUrl));
+    }
+    records = records.filter(r => r.id !== deletingRecordId);
+    deletingRecordId = null;
     closeOverlay('overlayDelete');
-
-    if (deleteMode === 'soft') {
-      const rec = records.find(r => r.id === deletingRecordId);
-      if (rec) {
-        records = records.filter(r => r !== rec);
-        moveToTrash([rec]);
-        showMigrationToast('Data dipindahkan ke Sampah. Bisa dipulihkan selama ' + TRASH_DAYS + ' hari (Pengaturan → Sampah).');
-      }
-      deletingRecordId = null;
-      scheduleAutosave();
-      goView('home');
-    } else if (deleteMode === 'purge') {
-      if (deleteTargetIndex != null && trash[deleteTargetIndex]) trash.splice(deleteTargetIndex, 1);
-      scheduleAutosave();
-      renderTrash();
-      showMigrationToast('Data dihapus permanen.');
-    } else {
-      trash = [];
-      scheduleAutosave();
-      renderTrash();
-      showMigrationToast('Sampah dikosongkan.');
-    }
-  });
-
-  // =====================================================================
-  // HALAMAN SAMPAH — pulihkan / hapus permanen
-  // =====================================================================
-  function renderTrash(){
-    if (purgeExpiredTrash() > 0) scheduleAutosave();
-    const listEl = document.getElementById('trashList');
-    const emptyEl = document.getElementById('trashEmptyHint');
-    const btnEmpty = document.getElementById('btnEmptyTrash');
-    document.getElementById('trashSub').textContent = trash.length
-      ? trash.length + ' data · otomatis hilang setelah ' + TRASH_DAYS + ' hari'
-      : 'Data yang dihapus muncul di sini';
-
-    if (trash.length === 0) {
-      listEl.innerHTML = '';
-      emptyEl.style.display = 'block';
-      btnEmpty.style.display = 'none';
-      return;
-    }
-    emptyEl.style.display = 'none';
-    btnEmpty.style.display = 'block';
-
-    // terbaru dihapus di atas; simpan index asli supaya tombol menunjuk item yang benar
-    const rows = trash.map((r, i) => ({ r, i }))
-      .sort((a, b) => new Date(b.r.deleted_at) - new Date(a.r.deleted_at));
-
-    listEl.innerHTML = rows.map(({ r, i }) => {
-      const left = trashDaysLeft(r);
-      const delAt = new Date(r.deleted_at);
-      const delTxt = isNaN(delAt.getTime()) ? '—' : fmtTanggal(delAt) + ' ' + fmtWaktu(delAt);
-      const harga = r.harga ? escapeHtml(rupiah(r.harga)) : '';
-      return `
-        <div class="trash-item">
-          <div class="recent-row" style="cursor:default;">
-            <div class="r-mid">
-              <b>${escapeHtml(r.customer) || '(tanpa customer)'}</b>
-              <span>${escapeHtml(r.pj) || '—'} · ${escapeHtml(r.barang) || '—'}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''}</span>
-              <span>Dihapus ${delTxt} · sisa ${left} hari${harga ? ' · ' + harga : ''}</span>
-            </div>
-          </div>
-          <div class="trash-actions">
-            <button type="button" class="btn-secondary" data-act="restore" data-idx="${i}">Pulihkan</button>
-            <button type="button" class="btn-danger-outline" data-act="purge" data-idx="${i}">Hapus Permanen</button>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    listEl.querySelectorAll('button[data-act]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = Number(btn.dataset.idx);
-        if (btn.dataset.act === 'restore') restoreFromTrash(idx);
-        else openDeleteConfirm('purge', idx);
-      });
-    });
-  }
-
-  function restoreFromTrash(idx){
-    const item = trash[idx];
-    if (!item) return;
-    trash.splice(idx, 1);
-    const rec = { ...item };
-    delete rec.deleted_at;
-    if (records.some(r => r.id === rec.id)) rec.id = uid(); // hindari id kembar
-    records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
     scheduleAutosave();
-    renderTrash();
-    showMigrationToast('Data berhasil dipulihkan.');
-  }
-
-  document.getElementById('btnOpenTrash').addEventListener('click', () => goView('trash'));
-  document.getElementById('btnTrashBack').addEventListener('click', () => goView('settings'));
-  document.getElementById('btnEmptyTrash').addEventListener('click', () => {
-    if (trash.length) openDeleteConfirm('empty', null);
+    goView('home');
   });
 
   // =====================================================================
@@ -1947,21 +1824,18 @@
   function renderSettings(){
     document.getElementById('inputJudulTabel').value = noteTitle || '';
     const dup = dedupeRecords(records).removed;
-    document.getElementById('btnOpenTrash').textContent = trash.length ? `Buka Sampah (${trash.length})` : 'Buka Sampah';
     document.getElementById('btnDedupe').textContent = dup ? `Bersihkan Data Duplikat (${dup})` : 'Bersihkan Data Duplikat';
     applyThemeUI();
   }
   document.getElementById('btnDedupe').addEventListener('click', () => {
     const { kept, removed } = dedupeRecords(records);
     if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
-    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`)) return;
-    const keptSet = new Set(kept);
-    moveToTrash(records.filter(r => !keptSet.has(r))); // duplikat juga masuk Sampah, bukan hilang
+    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nHapus duplikatnya dan sisakan 1 dari tiap pasang?`)) return;
     records = kept;
     scheduleAutosave();
     renderHome();
     renderSettings();
-    showMigrationToast(`${removed} data duplikat dipindahkan ke Sampah.`);
+    showMigrationToast(`${removed} data duplikat berhasil dihapus.`);
   });
   document.getElementById('inputJudulTabel').addEventListener('change', (e) => {
     noteTitle = e.target.value.trim();
