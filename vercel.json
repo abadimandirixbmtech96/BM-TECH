@@ -1,5 +1,6 @@
 {
   "rewrites": [
-    { "source": "/role-customer-:username", "destination": "/customer-tracking.html" }
+    { "source": "/role-customer-:username", "destination": "/customer-tracking.html" },
+    { "source": "/role-karyawan-:username", "destination": "/karyawan-tracking.html" }
   ]
 }
