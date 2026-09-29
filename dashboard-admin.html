@@ -2000,6 +2000,7 @@
 
   .note-detail-img { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; display: block; cursor: pointer; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
   .note-detail-img:active { transform: scale(0.92); }
+  .note-detail-bukti-group { display: flex; gap: 6px; }
 
   .note-detail-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
@@ -2049,6 +2050,29 @@
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .image-lightbox-overlay.open img { transform: scale(1); }
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: none;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .lightbox-nav.prev { left: 14px; }
+  .lightbox-nav.next { right: 14px; }
+  .lightbox-dots { position: absolute; bottom: calc(var(--safe-bottom) + 22px); left: 0; right: 0; display: flex; justify-content: center; gap: 6px; z-index: 2; }
+  .lightbox-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.4); transition: all 0.15s ease; }
+  .lightbox-dot.active { background: #fff; width: 16px; border-radius: 3px; }
   .image-lightbox-close {
     position: absolute;
     top: calc(var(--safe-top) + 16px);
@@ -2524,12 +2548,15 @@
   </div>
 </div>
 
-<!-- Lightbox: lihat gambar ukuran penuh (tap thumbnail di tabel preview) -->
+<!-- Lightbox: lihat gambar ukuran penuh (tap thumbnail di tabel preview) — geser kalau bukti 2 foto -->
 <div class="image-lightbox-overlay" id="imageLightboxOverlay">
   <button class="image-lightbox-close" id="btnLightboxClose">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   </button>
+  <button class="lightbox-nav prev" id="btnLightboxPrev" aria-label="Sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
   <img id="lightboxImage" src="" alt="Gambar">
+  <button class="lightbox-nav next" id="btnLightboxNext" aria-label="Berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+  <div class="lightbox-dots" id="lightboxDots"></div>
 </div>
 
 <!-- Share Sheet: pilihan Bagikan Link / Export PDF / Export Gambar / Export Excel (CSV) -->
@@ -3702,7 +3729,9 @@
             barangKeluar: r.barangKeluar || '',
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
-            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : ''
+            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : '',
+            bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
+            _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
           }
         };
       });
@@ -4827,6 +4856,14 @@
       const tbodyHtml = '<tbody>' + content.rows.map(row => {
         return '<tr>' + cols.map(c => {
           const val = row.cells ? row.cells[c.id] : '';
+          if (c.id === 'bukti') {
+            const list = Array.isArray(row.cells && row.cells._buktiAll) ? row.cells._buktiAll : (val ? [val] : []);
+            if (!list.length) return '<td></td>';
+            const imgs = list.map((u, i) =>
+              `<img src="${escapeHtml(u)}" class="note-detail-img" data-bukti-group="${escapeHtml(list.join('|'))}" data-bukti-idx="${i}" alt="Bukti ${i + 1}">`
+            ).join('');
+            return `<td><div class="note-detail-bukti-group">${imgs}</div></td>`;
+          }
           if (c.type === 'image' && val) {
             return `<td><img src="${escapeHtml(val)}" class="note-detail-img" alt="Gambar"></td>`;
           }
@@ -4852,21 +4889,51 @@
   const imageLightboxOverlay = document.getElementById('imageLightboxOverlay');
   const lightboxImage = document.getElementById('lightboxImage');
 
-  function openLightbox(src) {
-    lightboxImage.src = src;
+  let lightboxUrls = [], lightboxIndex = 0;
+  function renderLightbox() {
+    lightboxImage.src = lightboxUrls[lightboxIndex] || '';
+    document.getElementById('lightboxDots').innerHTML = lightboxUrls.length > 1
+      ? lightboxUrls.map((_, i) => `<span class="lightbox-dot ${i === lightboxIndex ? 'active' : ''}"></span>`).join('')
+      : '';
+    document.getElementById('btnLightboxPrev').style.display = (lightboxUrls.length > 1 && lightboxIndex > 0) ? 'flex' : 'none';
+    document.getElementById('btnLightboxNext').style.display = (lightboxUrls.length > 1 && lightboxIndex < lightboxUrls.length - 1) ? 'flex' : 'none';
+  }
+  // src bisa 1 URL string (kolom gambar format lama) atau array URL (kolom "Bukti", maks 2 -> bisa digeser)
+  function openLightbox(src, startIdx) {
+    lightboxUrls = Array.isArray(src) ? src : [src];
+    lightboxIndex = Math.max(0, Math.min(startIdx || 0, lightboxUrls.length - 1));
+    renderLightbox();
     imageLightboxOverlay.classList.add('open');
   }
   function closeLightbox() {
     imageLightboxOverlay.classList.remove('open');
   }
-  imageLightboxOverlay.addEventListener('click', closeLightbox);
+  imageLightboxOverlay.addEventListener('click', (e) => { if (e.target === imageLightboxOverlay) closeLightbox(); });
   document.getElementById('btnLightboxClose').addEventListener('click', closeLightbox);
+  document.getElementById('btnLightboxPrev').addEventListener('click', (e) => { e.stopPropagation(); if (lightboxIndex > 0) { lightboxIndex--; renderLightbox(); } });
+  document.getElementById('btnLightboxNext').addEventListener('click', (e) => { e.stopPropagation(); if (lightboxIndex < lightboxUrls.length - 1) { lightboxIndex++; renderLightbox(); } });
+  (function () {
+    let startX = 0, deltaX = 0, dragging = false;
+    imageLightboxOverlay.addEventListener('touchstart', (e) => { dragging = true; startX = e.touches[0].clientX; deltaX = 0; }, { passive: true });
+    imageLightboxOverlay.addEventListener('touchmove', (e) => { if (dragging) deltaX = e.touches[0].clientX - startX; }, { passive: true });
+    imageLightboxOverlay.addEventListener('touchend', () => {
+      if (!dragging) return;
+      dragging = false;
+      if (deltaX > 40 && lightboxIndex > 0) { lightboxIndex--; renderLightbox(); }
+      else if (deltaX < -40 && lightboxIndex < lightboxUrls.length - 1) { lightboxIndex++; renderLightbox(); }
+    });
+  })();
 
   // Delegasi klik: tabel di-render ulang tiap buka note, jadi listener dipasang
   // di container-nya (noteDetailTable), bukan per-<img> yang keburu hilang
   document.getElementById('noteDetailTable').addEventListener('click', (e) => {
     const img = e.target.closest('.note-detail-img');
-    if (img) openLightbox(img.src);
+    if (!img) return;
+    if (img.dataset.buktiGroup) {
+      openLightbox(img.dataset.buktiGroup.split('|'), Number(img.dataset.buktiIdx || 0));
+    } else {
+      openLightbox(img.src);
+    }
   });
 
   // =====================================================================
