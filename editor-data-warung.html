@@ -907,6 +907,13 @@
 
     // Pengaman: note ini data BUKU BESAR -> alihkan ke editor buku besar, jangan ditimpa.
 
+    // Pengaman: note ini ternyata data KASBON -> alihkan ke editor kasbon, jangan ditimpa format warung.
+    if (note.content && note.content.schema === 'kasbon-data-v1') {
+      existingNoteLoadFailed = true; // blok autosave selama pengalihan
+      window.location.replace('editor-data-kasbon.html' + window.location.search);
+      return;
+    }
+
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
     noteTitle = note.title || '';
