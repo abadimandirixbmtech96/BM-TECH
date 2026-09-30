@@ -2206,6 +2206,16 @@
     animation: shareSpin 0.7s linear infinite;
   }
   @keyframes shareSpin { to { transform: rotate(360deg); } }
+  /* --- Fix: bayangan pop-up bawah tidak boleh nongol saat pop-up tertutup ---
+     Sheet ditaruh lebih turun dari layar + shadow dimatikan sampai .open. */
+  .share-sheet:not(.open),
+  .note-action-sheet:not(.open),
+  .new-folder-sheet:not(.open),
+  .customer-form-sheet:not(.open),
+  .karyawan-form-sheet:not(.open) {
+    transform: translateY(calc(100% + 80px));
+    box-shadow: none !important;
+  }
 </style>
 </head>
 <body>
