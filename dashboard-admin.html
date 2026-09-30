@@ -2814,7 +2814,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
@@ -5363,12 +5363,15 @@
   // di-scan HP buat buka fotonya ukuran penuh. Bonus: nggak perlu fetch byte fotonya sama
   // sekali (beda dari urlToBase64 di atas), jadi lebih cepat & nggak kena masalah CORS.
   async function buktiUrlToQrDataUrl(url) {
-    if (typeof QRCode === 'undefined') {
-      console.error('Library QR (cdn.jsdelivr.net/npm/qrcode) belum termuat -- cek koneksi internet.');
+    if (typeof qrcode === 'undefined') {
+      console.error('Library QR (cdnjs.cloudflare.com/qrcode-generator) belum termuat -- cek koneksi internet.');
       return null;
     }
     try {
-      return await QRCode.toDataURL(url, { margin: 1, width: 200, color: { dark: '#1C1B19', light: '#FFFFFF' } });
+      const qr = qrcode(0, 'M'); // 0 = ukuran auto sesuai panjang link, M = koreksi error tingkat sedang
+      qr.addData(url);
+      qr.make();
+      return qr.createDataURL(6, 4); // 6px per kotak, margin 4 kotak -- hasilnya hitam di atas putih
     } catch (err) {
       console.error('Gagal bikin QR buat bukti:', url, err);
       return null;
