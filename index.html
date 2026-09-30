@@ -5,18 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="BMX TECH">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="format-detection" content="telephone=no">
 <meta name="color-scheme" content="dark light">
 <meta name="theme-color" content="#000000">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152.png">
-<link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <title>BM-TECH-VIEWER</title>
 
 <!-- Open Graph & Twitter Card: banner preview saat link dibagikan ke WA/sosmed -->
@@ -1102,6 +1094,7 @@
     font-size: 13px;
   }
 
+  .note-detail-bukti-group { display: flex; gap: 6px; }
   .note-detail-img { cursor: pointer; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
   .note-detail-img:active { transform: scale(0.92); }
 
@@ -1630,34 +1623,119 @@
     { id: 'barangKeluar', label: 'Barang Keluar' },
     { id: 'stokBarang', label: 'Stok Barang' },
     { id: 'keterangan', label: 'Keterangan' },
-    { id: 'harga', label: 'Harga' }
+    { id: 'harga', label: 'Harga' },
+    { id: 'bukti', label: 'Bukti', type: 'image' }
   ];
 
+  const WARUNG_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'nama', label: 'Nama Barang' },
+    { id: 'jumlah', label: 'Jumlah' },
+    { id: 'keterangan', label: 'Keterangan' },
+    { id: 'nominal', label: 'Harga' }
+  ];
+
+  const KASBON_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'nama', label: 'Nama' },
+    { id: 'total', label: 'Total Tagihan' },
+    { id: 'dibayar', label: 'Dibayar' },
+    { id: 'sisa', label: 'Sisa Tagihan' },
+    { id: 'keterangan', label: 'Keterangan' }
+  ];
+
+  // Harga bisa angka murni, atau teks/simbol (mis. "√", "Rp 50.000 √"). Angka
+  // diformat id-ID, teks ditampilkan apa adanya, dan tidak pernah jadi "NaN".
+  function formatHargaCell(v) {
+    if (v === undefined || v === null) return '';
+    if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v).toLocaleString('id-ID') : '';
+    const str = String(v).trim();
+    if (!str || /^(nan|undefined|null)$/i.test(str)) return '';
+    if (/^\d+(\.\d+)?$/.test(str)) return Math.round(Number(str)).toLocaleString('id-ID');
+    return str;
+  }
+
+  function formatUangCell(v) {
+    const n = Number(v) || 0;
+    return n ? Math.round(n).toLocaleString('id-ID') : '0';
+  }
+
+  // Ubah content dari database (semua skema yang dipakai admin/editor) jadi
+  // bentuk { columns, rows } yang dipahami seluruh fitur viewer.
+  // _kind menandai jenis note supaya Tasks tidak salah menganggap
+  // note warung/kasbon sebagai buku besar yang datanya kurang.
   function normalizeNoteContent(content) {
-    if (!content) return content;
+    if (!content || typeof content !== 'object') return content;
+    const pad2 = n => String(n).padStart(2, '0');
+    const dateParts = iso => {
+      const d = iso ? new Date(iso) : null;
+      if (!d || isNaN(d)) return { tanggal: '', jam: '' };
+      return {
+        tanggal: `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}`,
+        jam: `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+      };
+    };
+    const sortRecords = list => [...list].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
     if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
-      const pad2 = n => String(n).padStart(2, '0');
-      const sorted = [...content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-      const rows = sorted.map((r, i) => {
-        const d = r.created_at ? new Date(r.created_at) : null;
+      const rows = sortRecords(content.records).map((r, i) => {
+        const buktiAll = Array.isArray(r.bukti) ? r.bukti.filter(Boolean) : [];
         return {
           cells: {
             no: String(i + 1).padStart(3, '0'),
-            tanggal: d ? `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}` : '',
-            jam: d ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '',
+            ...dateParts(r.created_at),
             pj: r.pj || '',
             customer: r.customer || '',
             barang: r.barang || '',
             barangKeluar: r.barangKeluar || '',
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
-            harga: r.harga ? Math.round(r.harga).toLocaleString('id-ID') : ''
+            harga: formatHargaCell(r.harga),
+            bukti: buktiAll[0] || '',
+            _buktiAll: buktiAll
           }
         };
       });
-      return { columns: NEW_SCHEMA_COLUMNS, rows };
+      return { columns: NEW_SCHEMA_COLUMNS, rows, _kind: 'ledger' };
     }
-    return content; // format lama: dipakai apa adanya
+
+    if (content.schema === 'warung-data-v1' && Array.isArray(content.records)) {
+      const rows = sortRecords(content.records).map((r, i) => ({
+        cells: {
+          no: String(i + 1).padStart(3, '0'),
+          ...dateParts(r.created_at),
+          nama: r.nama || '',
+          jumlah: r.jumlah || '',
+          keterangan: r.keterangan || '',
+          nominal: typeof r.nominal === 'string' ? r.nominal : formatHargaCell(r.nominal)
+        }
+      }));
+      return { columns: WARUNG_COLUMNS, rows, _kind: 'warung' };
+    }
+
+    if (content.schema === 'kasbon-data-v1' && Array.isArray(content.records)) {
+      const rows = sortRecords(content.records).map((r, i) => {
+        const total = Number(r.total) || 0, dibayar = Number(r.dibayar) || 0;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            ...dateParts(r.created_at),
+            nama: r.nama || '',
+            total: formatUangCell(total),
+            dibayar: formatUangCell(dibayar),
+            sisa: (total > 0 && total - dibayar <= 0) ? '0 (Lunas)' : formatUangCell(Math.max(0, total - dibayar)),
+            keterangan: r.keterangan || ''
+          }
+        };
+      });
+      return { columns: KASBON_COLUMNS, rows, _kind: 'kasbon' };
+    }
+
+    return content; // format lama { columns, rows }: dipakai apa adanya
   }
 
   // Ambil semua notes dari semua folder, lalu tempel nama foldernya.
@@ -1677,7 +1755,9 @@
     }
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
-    notesData = (data || []).map(n => ({
+    // Note yang di-pin tampil paling atas (sama seperti dashboard admin); urutan created_at tetap terjaga
+    const ordered = [...(data || [])].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
+    notesData = ordered.map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized',
       content: normalizeNoteContent(n.content)
@@ -2099,6 +2179,7 @@
     notesData.forEach(note => {
       const content = note.content;
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
+      if (content._kind === 'warung' || content._kind === 'kasbon') return;
 
       const columns = content.columns;
       content.rows.forEach((row, rowIndex) => {
@@ -2505,10 +2586,12 @@
         return '<tr>' + cols.map(c => {
           const val = row.cells ? row.cells[c.id] : '';
           if (c.type === 'image' && val) {
-            const imgUrl = safeImageUrl(val);
-            return imgUrl
-              ? `<td><img src="${escapeHtml(imgUrl)}" class="note-detail-img" alt="Gambar" referrerpolicy="no-referrer"></td>`
-              : '<td></td>';
+            const list = (row.cells && Array.isArray(row.cells._buktiAll) && row.cells._buktiAll.length)
+              ? row.cells._buktiAll : [val];
+            const imgs = list.map(safeImageUrl).filter(Boolean).map((u, i) =>
+              `<img src="${escapeHtml(u)}" class="note-detail-img" alt="Bukti ${i + 1}" referrerpolicy="no-referrer">`
+            ).join('');
+            return imgs ? `<td><div class="note-detail-bukti-group">${imgs}</div></td>` : '<td></td>';
           }
           return `<td>${escapeHtml(val || '')}</td>`;
         }).join('') + '</tr>';
