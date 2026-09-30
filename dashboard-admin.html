@@ -5363,6 +5363,10 @@
   // di-scan HP buat buka fotonya ukuran penuh. Bonus: nggak perlu fetch byte fotonya sama
   // sekali (beda dari urlToBase64 di atas), jadi lebih cepat & nggak kena masalah CORS.
   async function buktiUrlToQrDataUrl(url) {
+    if (typeof QRCode === 'undefined') {
+      console.error('Library QR (cdn.jsdelivr.net/npm/qrcode) belum termuat -- cek koneksi internet.');
+      return null;
+    }
     try {
       return await QRCode.toDataURL(url, { margin: 1, width: 200, color: { dark: '#1C1B19', light: '#FFFFFF' } });
     } catch (err) {
@@ -5387,6 +5391,7 @@
       const buktiColId = (content.columns.find(c => c.id === 'bukti') || {}).id;
       const imageCache = {}; // key: "rowIndex-colId" -> base64 data URL (foto asli) ATAU array data URL QR (khusus kolom bukti)
 
+      let buktiUrlTotal = 0, buktiQrSukses = 0;
       if (imageColIds.length > 0) {
         for (let r = 0; r < content.rows.length; r++) {
           for (const colId of imageColIds) {
@@ -5394,7 +5399,9 @@
             if (colId === buktiColId) {
               const urls = (Array.isArray(cell._buktiAll) ? cell._buktiAll : (cell.bukti ? [cell.bukti] : [])).slice(0, 2);
               if (urls.length) {
+                buktiUrlTotal += urls.length;
                 const qrs = (await Promise.all(urls.map(buktiUrlToQrDataUrl))).filter(Boolean);
+                buktiQrSukses += qrs.length;
                 if (qrs.length) imageCache[`${r}-${colId}`] = qrs;
               }
               continue;
@@ -5406,6 +5413,10 @@
             }
           }
         }
+      }
+      // Ada bukti yang seharusnya jadi QR tapi semuanya gagal dibuat -> kasih tau, jangan diam-diam kosong
+      if (buktiUrlTotal > 0 && buktiQrSukses === 0) {
+        alert('QR untuk kolom Bukti gagal dibuat (kemungkinan koneksi internet terputus saat memuat library QR). PDF tetap dibuat, tapi kolom Bukti akan kosong.');
       }
 
       showShareLoading('Membuat PDF...');
@@ -5648,13 +5659,19 @@
     const buktiQrCache = {}; // key: rowIndex -> array data URL QR (1-2)
     if (buktiColIndex !== -1) {
       showShareLoading('Membuat QR bukti...');
+      let buktiUrlTotal = 0, buktiQrSukses = 0;
       for (let i = 0; i < content.rows.length; i++) {
         const cell = content.rows[i].cells || {};
         const urls = (Array.isArray(cell._buktiAll) ? cell._buktiAll : (cell.bukti ? [cell.bukti] : [])).slice(0, 2);
         if (urls.length) {
+          buktiUrlTotal += urls.length;
           const qrs = (await Promise.all(urls.map(buktiUrlToQrDataUrl))).filter(Boolean);
+          buktiQrSukses += qrs.length;
           if (qrs.length) buktiQrCache[i] = qrs;
         }
+      }
+      if (buktiUrlTotal > 0 && buktiQrSukses === 0) {
+        alert('QR untuk kolom Bukti gagal dibuat (kemungkinan koneksi internet terputus saat memuat library QR). Gambar tetap dibuat, tapi kolom Bukti akan kosong.');
       }
       showShareLoading('Membuat gambar...');
     }
