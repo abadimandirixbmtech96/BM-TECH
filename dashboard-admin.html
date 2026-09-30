@@ -2920,6 +2920,96 @@
   let activeFilterYear = null;       // tahun yang lagi aktif difilter di notesList (null = tidak difilter)
   let activeFilterMonth = null;      // bulan yang lagi aktif difilter di notesList (null = tidak difilter)
 
+  // =====================================================================
+  // --- FOLDER KARYAWAN (PJ) ---
+  // Folder VIRTUAL (tidak disimpan di tabel folders): tiap folder = 1 nama PJ.
+  // Isinya dikumpulkan dengan memfilter SEMUA notes buku besar yang punya
+  // baris dengan kolom "PJ" = nama itu. Saat dibuka, tabel hanya menampilkan
+  // baris milik PJ tersebut (data asli di database tidak diubah).
+  // =====================================================================
+  const PJ_NAMES = ['Amin', 'BM', 'Mail', 'Kuswanto', 'Yono'];
+  const PJ_PREFIX = '__pj__';
+  const PJ_COLOR = '#4FB58A';
+  let pjNotesSource = [];
+  let pjFolders = [];
+
+  function isPjId(id) { return typeof id === 'string' && id.indexOf(PJ_PREFIX) === 0; }
+  function pjNameFromId(id) { return PJ_NAMES.find(n => PJ_PREFIX + n === id) || null; }
+
+  function rowPjMatches(columns, row, name) {
+    const v = getRowValueByLabel(columns, row, 'PJ');
+    return !isEmptyValue(v) && normalizeKey(v) === normalizeKey(name);
+  }
+  function noteHasPj(note, name) {
+    const t = getNoteTable(note);
+    return !!(t && Array.isArray(t.columns) && Array.isArray(t.rows) && t.rows.some(r => rowPjMatches(t.columns, r, name)));
+  }
+  function filterTableByPj(table, name) {
+    if (!table || !Array.isArray(table.rows)) return table;
+    const hasNo = (table.columns || []).some(c => c.id === 'no');
+    const rows = table.rows.filter(r => rowPjMatches(table.columns, r, name)).map((r, i) =>
+      hasNo ? { ...r, cells: { ...r.cells, no: String(i + 1).padStart(3, '0') } } : r);
+    return { ...table, rows };
+  }
+  function rebuildPjFolders() {
+    pjFolders = PJ_NAMES.map(name => ({
+      id: PJ_PREFIX + name,
+      name,
+      color: PJ_COLOR,
+      count: pjNotesSource.filter(n => noteHasPj(n, name)).length
+    }));
+  }
+
+  async function loadPjNotes(catId, year, month) {
+    const name = pjNameFromId(catId);
+    if (!name) return;
+    activeCategoryId = catId;
+    activeFilterYear = year || null;
+    activeFilterMonth = month || null;
+    updateComposeButtonVisibility();
+
+    const { data, error } = await supabaseClient
+      .from('notes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Gagal memuat data PJ:', error.message);
+      notesData = [];
+      notesLoadFailed = true;
+    } else {
+      notesLoadFailed = false;
+      notesData = (data || [])
+        .filter(n => noteHasPj(n, name))
+        .filter(n => {
+          if (!(year && month)) return true;
+          const d = getNoteEffectiveDate(n);
+          return d && !isNaN(d) && d.getFullYear() === year && (d.getMonth() + 1) === month;
+        })
+        .map(n => ({ ...n, _pjFilter: name }))
+        .sort((a, b) => {
+          const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+          if (pinDiff !== 0) return pinDiff;
+          return getNoteEffectiveDate(b) - getNoteEffectiveDate(a);
+        });
+    }
+    renderNotes();
+  }
+
+  function selectPjMonth(catId, year, month) {
+    const name = pjNameFromId(catId);
+    if (!name) return;
+    categoriesData.forEach(c => c.active = false);
+    expandedFolderId = null;
+    expandedYear = null;
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    document.getElementById('currentCategoryTitle').innerText = `${name} - ${MONTH_NAMES_ID[month - 1]} ${year}`;
+    activeCategoryId = catId;
+    renderCategories();
+    loadPjNotes(catId, year, month);
+  }
+
   // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
   // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
   document.addEventListener('click', (e) => {
@@ -2947,7 +3037,7 @@
 
     const { data: allNotes, error: notesError } = await supabaseClient
       .from('notes')
-      .select('id, folder_id');
+      .select('id, folder_id, title, content, created_at');
 
     const countByFolder = {};
     if (!notesError && allNotes) {
@@ -2955,6 +3045,10 @@
         if (n.folder_id) countByFolder[n.folder_id] = (countByFolder[n.folder_id] || 0) + 1;
       });
     }
+
+    // Folder virtual karyawan (PJ): dihitung dari semua notes buku besar
+    pjNotesSource = (!notesError && allNotes) ? allNotes : [];
+    rebuildPjFolders();
 
     // Filter folder yang datanya nggak valid (mis. insert gagal separuh jalan, nama kosong/null)
     // biar nggak ada folder "hantu" yang sebenarnya nggak ke-save dengan benar di database
@@ -2986,6 +3080,8 @@
     // Kalau ada kategori aktif sebelumnya, muat ulang notes-nya juga
     if (activeCategoryId === '__all__') {
       loadAllNotesInDashboard();
+    } else if (isPjId(activeCategoryId)) {
+      loadPjNotes(activeCategoryId, activeFilterYear, activeFilterMonth);
     } else if (activeCategoryId) {
       loadNotesForCategory(activeCategoryId);
     }
@@ -2998,7 +3094,7 @@
   function updateComposeButtonVisibility() {
     const btn = document.getElementById('btnComposePencil');
     if (!btn) return;
-    btn.style.display = (activeCategoryId === '__all__') ? 'none' : '';
+    btn.style.display = (activeCategoryId === '__all__' || isPjId(activeCategoryId)) ? 'none' : '';
   }
 
   async function loadNotesForCategory(catId) {
@@ -3107,7 +3203,27 @@
       ${customerCats.map(folderItemHtml).join('')}
     ` : '';
 
-    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml;
+    // Folder karyawan (virtual, filter kolom PJ) — tampilan sama, tanpa menu Edit/Delete
+    function pjItemHtml(cat) {
+      return `
+      <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''}" data-cat-id="${cat.id}">
+        <div class="folder-item-left">
+          <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>${cat.name}</span>
+        </div>
+        <span class="folder-count">${cat.count || 0} &rsaquo;</span>
+      </div>
+      ${expandedFolderId === cat.id ? renderFolderYearAccordion(cat.id) : ''}
+    `;
+    }
+    const pjSectionHtml = pjFolders.length ? `
+      <div class="folder-section-divider">
+        <span>Akun Karyawan</span>
+      </div>
+      ${pjFolders.map(pjItemHtml).join('')}
+    ` : '';
+
+    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml + pjSectionHtml;
 
     wireAllFolderRow(container);
 
@@ -3133,6 +3249,7 @@
 
       item.addEventListener('touchstart', () => {
         longPressed = false;
+        if (isPjId(item.dataset.catId)) return; // folder karyawan virtual: tidak ada Edit/Delete
         pressTimer = setTimeout(() => {
           longPressed = true;
           deleteModeCatId = item.dataset.catId;
@@ -3208,6 +3325,9 @@
     if (!meta) {
       return `<div class="folder-year-list"><div class="folder-year-loading">Memuat tahun...</div></div>`;
     }
+    if (!meta.years.length && isPjId(catId)) {
+      return `<div class="folder-year-list"><div class="folder-year-empty-wrap"><div class="folder-year-empty">Belum ada data untuk PJ ini</div></div></div>`;
+    }
     if (!meta.years.length) {
       return `<div class="folder-year-list">
         <div class="folder-year-empty-wrap">
@@ -3266,10 +3386,11 @@
   // Ambil notes di folder ini, kelompokkan jadi tahun → daftar bulan berdasarkan
   // TANGGAL EFEKTIF-nya (judul/isi tabel, bukan cuma created_at — lihat getNoteEffectiveDate)
   async function loadFolderYearMonths(catId) {
-    const { data, error } = await supabaseClient
-      .from('notes')
-      .select('id, title, content, created_at')
-      .eq('folder_id', catId);
+    let yearQuery = supabaseClient.from('notes').select('id, title, content, created_at');
+    if (!isPjId(catId)) yearQuery = yearQuery.eq('folder_id', catId);
+    const { data: rawYearData, error } = await yearQuery;
+    const pjNameForYears = isPjId(catId) ? pjNameFromId(catId) : null;
+    const data = pjNameForYears ? (rawYearData || []).filter(n => noteHasPj(n, pjNameForYears)) : rawYearData;
 
     if (error) {
       console.error('Gagal memuat tahun/bulan folder:', error.message);
@@ -3304,6 +3425,7 @@
 
   // Klik bulan: tutup drawer, tampilkan tabel folder ini yang terfilter tahun+bulan itu
   function selectFolderMonth(catId, year, month) {
+    if (isPjId(catId)) { selectPjMonth(catId, year, month); return; }
     const selected = categoriesData.find(c => c.id === catId);
     if (!selected) return;
 
@@ -3583,6 +3705,7 @@
         `;
         document.getElementById('btnRetryNotes').addEventListener('click', () => {
           if (activeCategoryId === '__all__') loadAllNotesInDashboard();
+          else if (isPjId(activeCategoryId)) loadPjNotes(activeCategoryId, activeFilterYear, activeFilterMonth);
           else if (activeCategoryId) loadNotesForCategory(activeCategoryId);
         });
       } else {
@@ -3897,6 +4020,8 @@
 
   // Khusus tampilan (preview detail + export PDF/Gambar). Data buku besar tetap lewat getNoteTable().
   function getDisplayTable(note) {
+    // Tampilan dari folder karyawan: cuma baris milik PJ tsb (data asli tak diubah)
+    if (note && note._pjFilter) return filterTableByPj(getNoteTable(note), note._pjFilter);
     if (isWarungNote(note) && Array.isArray(note.content.records)) {
       const pad2 = n => String(n).padStart(2, '0');
       const sorted = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -5063,7 +5188,7 @@
 
   // --- Tombol Pensil (compose) di bottom bar: buat catatan baru di folder aktif ---
   document.getElementById('btnComposePencil').addEventListener('click', () => {
-    if (!activeCategoryId || activeCategoryId === '__all__') {
+    if (!activeCategoryId || activeCategoryId === '__all__' || isPjId(activeCategoryId)) {
       alert('Pilih folder dulu sebelum bikin catatan baru.');
       return;
     }
