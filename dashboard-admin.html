@@ -2670,7 +2670,13 @@
   // f = { field: 'PJ'|'Customer', key: nilai ternormalisasi }
   function rowVfMatches(columns, row, f) {
     const v = getRowValueByLabel(columns, row, f.field);
-    return !isEmptyValue(v) && normalizeKey(v) === f.key;
+    if (isEmptyValue(v)) return false;
+    // PJ boleh berisi beberapa nama sekaligus ("Yono x Mail", "Yono & Mail", "Yono/Mail", "Yono, Mail"):
+    // baris ikut masuk folder tiap nama yang disebut. Dicocokkan per kata utuh, jadi "Mail" tidak nyangkut ke kata lain.
+    if (f.field === 'PJ') {
+      return String(v).split(/[^A-Za-z0-9]+/).some(tok => tok && normalizeKey(tok) === f.key);
+    }
+    return normalizeKey(v) === f.key;
   }
   function noteHasVf(note, f) {
     const t = getNoteTable(note);
