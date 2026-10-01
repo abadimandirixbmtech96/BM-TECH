@@ -3028,10 +3028,10 @@
   let pjNotesSource = [];
   let pjFolders = [];
 
-  // Folder virtual kedua: CUSTOMER — nama-nama customer diambil otomatis dari
-  // isi kolom "Customer" di semua tabel buku besar (dikelompokkan tanpa peduli
-  // huruf besar/kecil & spasi). Pengaturannya sama persis dengan folder PJ.
+  // Folder virtual kedua: CUSTOMER — memfilter kolom "Customer" di semua tabel
+  // buku besar (tanpa peduli huruf besar/kecil & spasi), sama seperti folder PJ.
   const CU_PREFIX = '__cu__';
+  const CUSTOMER_NAMES = ['Puji Bengkel']; // tambah nama di sini kalau perlu customer lain
   let customerFolders = [];
 
   // Semua folder virtual (PJ + Customer) dianggap 'isPjId' supaya perilakunya seragam
@@ -3077,27 +3077,16 @@
       count: pjNotesSource.filter(n => noteHasVf(n, { field: 'PJ', key: normalizeKey(name) })).length
     }));
 
-    // Folder Customer: kumpulkan semua nilai kolom "Customer" yang unik dari seluruh tabel
-    const buckets = {}; // key -> { names: {tampilan: jumlah}, noteIds: Set }
-    pjNotesSource.forEach(n => {
-      const t = getNoteTable(n);
-      if (!t || !Array.isArray(t.columns) || !Array.isArray(t.rows)) return;
-      t.rows.forEach(r => {
-        const v = getRowValueByLabel(t.columns, r, 'Customer');
-        if (isEmptyValue(v)) return;
-        const key = normalizeKey(v);
-        if (!key) return;
-        const shown = String(v).trim();
-        const b = buckets[key] || (buckets[key] = { names: {}, noteIds: new Set() });
-        b.names[shown] = (b.names[shown] || 0) + 1;
-        b.noteIds.add(n.id);
-      });
+    // Folder Customer: hanya nama yang terdaftar di CUSTOMER_NAMES
+    customerFolders = CUSTOMER_NAMES.map(name => {
+      const f = { field: 'Customer', key: normalizeKey(name) };
+      return {
+        id: CU_PREFIX + f.key,
+        name,
+        color: '#5B9BE6',
+        count: pjNotesSource.filter(n => noteHasVf(n, f)).length
+      };
     });
-    customerFolders = Object.keys(buckets).map(key => {
-      const b = buckets[key];
-      const name = Object.keys(b.names).sort((a, c) => b.names[c] - b.names[a])[0]; // ejaan paling sering dipakai
-      return { id: CU_PREFIX + key, name, color: '#5B9BE6', count: b.noteIds.size };
-    }).sort((a, b) => a.name.localeCompare(b.name, 'id'));
   }
 
   async function loadPjNotes(catId, year, month) {
