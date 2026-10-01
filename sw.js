@@ -4,12 +4,13 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v2'; // dinaikkan: app-shell iOS (manifest per-role, ikon, SW register) berubah
+const CACHE_NAME = 'bmtech-shell-v3'; // dinaikkan: halaman Analisa dipisah ke analisa.html
 
 const APP_SHELL = [
   '/',
   '/index.html',
   '/dashboard-admin.html',
+  '/analisa.html',
   '/admin-login.html',
   '/editor-data-administrator.html',
   '/editor-data-warung.html',
