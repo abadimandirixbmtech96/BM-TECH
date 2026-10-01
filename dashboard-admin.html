@@ -1103,6 +1103,57 @@
 
   .logout-row .settings-item-title { color: #F0555C; }
 
+
+  /* ---------- Puzzle verifikasi hapus ---------- */
+  .pzv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 0 20px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
+  .pzv-overlay.open { opacity: 1; pointer-events: auto; }
+  .pzv-card { width: 100%; max-width: 380px; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: 22px; padding: 22px 18px 18px; transform: translateY(14px) scale(.98); transition: transform .2s ease; }
+  .pzv-overlay.open .pzv-card { transform: none; }
+  .pzv-card h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; color: var(--text-primary); text-align: center; }
+  .pzv-card p { margin: 0 0 14px; font-size: 13px; line-height: 1.45; color: var(--text-secondary); text-align: center; }
+  .pzv-wrap { position: relative; width: 100%; height: 130px; border-radius: 14px; overflow: hidden; background: var(--glass-pill-bg); margin-bottom: 12px; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .pzv-wrap canvas { display: block; }
+  #pzvPiece { position: absolute; left: 0; top: 0; will-change: transform; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)); pointer-events: none; }
+  .pzv-refresh { position: absolute; top: 6px; right: 6px; width: 30px; height: 30px; padding: 0; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); background: rgba(0,0,0,0.28); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .pzv-refresh svg { width: 15px; height: 15px; }
+  .pzv-wrap.fail { animation: pzvShake .4s ease; }
+  @keyframes pzvShake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); } }
+  .pzv-track { position: relative; height: 46px; border-radius: 23px; border: 1.5px solid var(--card-border-dark); background: var(--glass-pill-bg); overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; box-sizing: border-box; }
+  .pzv-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent-yellow-glow); }
+  .pzv-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 650; color: var(--text-secondary); pointer-events: none; padding-left: 30px; }
+  .pzv-handle { position: absolute; left: 2px; top: 2px; width: 39px; height: 39px; border-radius: 50%; border: none; padding: 0; background: var(--accent-yellow); color: #1C1B19; display: flex; align-items: center; justify-content: center; cursor: grab; touch-action: none; box-shadow: 0 3px 10px rgba(0,0,0,0.35); will-change: transform; transition: none; }
+  .pzv-handle svg { width: 18px; height: 18px; }
+  .pzv-anim .pzv-handle, .pzv-anim #pzvPiece, .pzv-anim .pzv-fill { transition: transform .22s ease, width .22s ease; }
+  .pzv-track.ok { border-color: #3DD68C; }
+  .pzv-track.ok .pzv-fill { background: rgba(61,214,140,0.22); }
+  .pzv-track.ok .pzv-handle { background: #3DD68C; }
+  .pzv-track.ok .pzv-label { color: #3DD68C; }
+  .pzv-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .pzv-actions button { flex: 1; height: 46px; border-radius: 14px; border: none; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+  .pzv-cancel { background: var(--glass-pill-bg); color: var(--text-primary); }
+  .pzv-confirm { background: #F0555C; color: #fff; }
+  .pzv-confirm:disabled { opacity: .4; filter: grayscale(.4); pointer-events: none; }
+
+  /* ---------- Sampah ---------- */
+  .trash-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 260; transform: translateX(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
+  .trash-screen.open { transform: translateX(0); }
+  .trash-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-shrink: 0; }
+  .trash-header h2 { flex: 1; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
+  .trash-empty-all { border: none; background: transparent; color: #F0555C; font-size: 13.5px; font-weight: 700; cursor: pointer; padding: 8px 4px; }
+  .trash-sub { padding: 0 20px 6px; font-size: 12.5px; color: var(--text-secondary); }
+  .trash-list { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
+  .trash-empty { text-align: center; color: var(--text-secondary); padding: 60px 20px; font-size: 13.5px; }
+  .trash-card { background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
+  .trash-card-top { display: flex; align-items: center; gap: 12px; }
+  .trash-card-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--accent-yellow-glow); color: var(--accent-yellow); }
+  .trash-card-icon svg { width: 20px; height: 20px; }
+  .trash-card-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0; word-break: break-word; }
+  .trash-card-meta { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0; }
+  .trash-card-actions { display: flex; gap: 10px; margin-top: 12px; }
+  .trash-card-actions button { flex: 1; height: 40px; border-radius: 12px; border: none; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+  .trash-btn-restore { background: var(--accent-yellow); color: #1C1B19; }
+  .trash-btn-purge { background: transparent; border: 1.5px solid rgba(240,85,92,0.6) !important; color: #F0555C; }
+
   /* ---------- Kelola Karyawan (styling sama persis dgn Kelola Customer,
        cuma nama class-nya di-alias biar nggak duplikat CSS) ---------- */
   .karyawan-screen, .karyawan-form-overlay, .karyawan-form-sheet { all: unset; }
@@ -2383,6 +2434,10 @@
       <span class="settings-item-title">Kelola Karyawan</span>
       <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
+    <div class="settings-item" id="btnOpenTrash">
+      <span class="settings-item-title">Sampah</span>
+      <div class="settings-item-right"><span id="trashCountLabel"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
   </div>
 
   <div class="settings-group">
@@ -2485,6 +2540,46 @@
   <div class="customer-form-actions">
     <button id="btnCustomerCancel">Batal</button>
     <button id="btnCustomerSubmit">Buat Akun</button>
+  </div>
+</div>
+
+<!-- Sampah Screen -->
+<div class="trash-screen" id="trashScreen">
+  <div class="trash-header">
+    <button class="settings-back-btn" id="btnTrashBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <h2>Sampah</h2>
+    <button class="trash-empty-all" id="btnTrashEmptyAll" style="display:none;">Kosongkan</button>
+  </div>
+  <div class="trash-sub" id="trashSub">Catatan dan folder yang dihapus muncul di sini</div>
+  <div class="trash-list" id="trashListEl">
+    <div class="trash-empty">Memuat sampah...</div>
+  </div>
+</div>
+
+<!-- Puzzle verifikasi hapus -->
+<div class="pzv-overlay" id="pzvOverlay">
+  <div class="pzv-card" id="pzvCard">
+    <h3 id="pzvTitle">Hapus?</h3>
+    <p id="pzvText">Geser potongan gambar ke lubang yang pas untuk melanjutkan.</p>
+    <div class="pzv-wrap" id="pzvWrap">
+      <canvas id="pzvCanvas"></canvas>
+      <canvas id="pzvPiece"></canvas>
+      <button type="button" class="pzv-refresh" id="pzvRefresh" aria-label="Ganti puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.5 15a9 9 0 1 1-2.1-9.4L23 10"/></svg></button>
+    </div>
+    <div class="pzv-track" id="pzvTrack">
+      <div class="pzv-fill" id="pzvFill"></div>
+      <div class="pzv-label" id="pzvLabel">Geser untuk mencocokkan</div>
+      <button type="button" class="pzv-handle" id="pzvHandle" aria-label="Geser potongan puzzle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+    <div class="pzv-actions">
+      <button type="button" class="pzv-cancel" id="pzvCancel">Batal</button>
+      <button type="button" class="pzv-confirm" id="pzvConfirm" disabled>Hapus</button>
+    </div>
   </div>
 </div>
 
@@ -2933,21 +3028,44 @@
   let pjNotesSource = [];
   let pjFolders = [];
 
-  function isPjId(id) { return typeof id === 'string' && id.indexOf(PJ_PREFIX) === 0; }
-  function pjNameFromId(id) { return PJ_NAMES.find(n => PJ_PREFIX + n === id) || null; }
+  // Folder virtual kedua: CUSTOMER — nama-nama customer diambil otomatis dari
+  // isi kolom "Customer" di semua tabel buku besar (dikelompokkan tanpa peduli
+  // huruf besar/kecil & spasi). Pengaturannya sama persis dengan folder PJ.
+  const CU_PREFIX = '__cu__';
+  let customerFolders = [];
 
-  function rowPjMatches(columns, row, name) {
-    const v = getRowValueByLabel(columns, row, 'PJ');
-    return !isEmptyValue(v) && normalizeKey(v) === normalizeKey(name);
+  // Semua folder virtual (PJ + Customer) dianggap 'isPjId' supaya perilakunya seragam
+  function isPjId(id) {
+    return typeof id === 'string' && (id.indexOf(PJ_PREFIX) === 0 || id.indexOf(CU_PREFIX) === 0);
   }
-  function noteHasPj(note, name) {
+  // Ubah id folder virtual -> { field: 'PJ'|'Customer', key, name }
+  function vfParse(id) {
+    if (typeof id !== 'string') return null;
+    if (id.indexOf(PJ_PREFIX) === 0) {
+      const name = PJ_NAMES.find(n => PJ_PREFIX + n === id);
+      return name ? { field: 'PJ', key: normalizeKey(name), name } : null;
+    }
+    if (id.indexOf(CU_PREFIX) === 0) {
+      const f = customerFolders.find(c => c.id === id);
+      return f ? { field: 'Customer', key: id.slice(CU_PREFIX.length), name: f.name } : null;
+    }
+    return null;
+  }
+  function pjNameFromId(id) { const v = vfParse(id); return v ? v.name : null; }
+
+  // f = { field: 'PJ'|'Customer', key: nilai ternormalisasi }
+  function rowVfMatches(columns, row, f) {
+    const v = getRowValueByLabel(columns, row, f.field);
+    return !isEmptyValue(v) && normalizeKey(v) === f.key;
+  }
+  function noteHasVf(note, f) {
     const t = getNoteTable(note);
-    return !!(t && Array.isArray(t.columns) && Array.isArray(t.rows) && t.rows.some(r => rowPjMatches(t.columns, r, name)));
+    return !!(t && Array.isArray(t.columns) && Array.isArray(t.rows) && t.rows.some(r => rowVfMatches(t.columns, r, f)));
   }
-  function filterTableByPj(table, name) {
+  function filterTableByVf(table, f) {
     if (!table || !Array.isArray(table.rows)) return table;
     const hasNo = (table.columns || []).some(c => c.id === 'no');
-    const rows = table.rows.filter(r => rowPjMatches(table.columns, r, name)).map((r, i) =>
+    const rows = table.rows.filter(r => rowVfMatches(table.columns, r, f)).map((r, i) =>
       hasNo ? { ...r, cells: { ...r.cells, no: String(i + 1).padStart(3, '0') } } : r);
     return { ...table, rows };
   }
@@ -2956,13 +3074,35 @@
       id: PJ_PREFIX + name,
       name,
       color: PJ_COLOR,
-      count: pjNotesSource.filter(n => noteHasPj(n, name)).length
+      count: pjNotesSource.filter(n => noteHasVf(n, { field: 'PJ', key: normalizeKey(name) })).length
     }));
+
+    // Folder Customer: kumpulkan semua nilai kolom "Customer" yang unik dari seluruh tabel
+    const buckets = {}; // key -> { names: {tampilan: jumlah}, noteIds: Set }
+    pjNotesSource.forEach(n => {
+      const t = getNoteTable(n);
+      if (!t || !Array.isArray(t.columns) || !Array.isArray(t.rows)) return;
+      t.rows.forEach(r => {
+        const v = getRowValueByLabel(t.columns, r, 'Customer');
+        if (isEmptyValue(v)) return;
+        const key = normalizeKey(v);
+        if (!key) return;
+        const shown = String(v).trim();
+        const b = buckets[key] || (buckets[key] = { names: {}, noteIds: new Set() });
+        b.names[shown] = (b.names[shown] || 0) + 1;
+        b.noteIds.add(n.id);
+      });
+    });
+    customerFolders = Object.keys(buckets).map(key => {
+      const b = buckets[key];
+      const name = Object.keys(b.names).sort((a, c) => b.names[c] - b.names[a])[0]; // ejaan paling sering dipakai
+      return { id: CU_PREFIX + key, name, color: '#5B9BE6', count: b.noteIds.size };
+    }).sort((a, b) => a.name.localeCompare(b.name, 'id'));
   }
 
   async function loadPjNotes(catId, year, month) {
-    const name = pjNameFromId(catId);
-    if (!name) return;
+    const vf = vfParse(catId);
+    if (!vf) return;
     activeCategoryId = catId;
     activeFilterYear = year || null;
     activeFilterMonth = month || null;
@@ -2980,13 +3120,13 @@
     } else {
       notesLoadFailed = false;
       notesData = (data || [])
-        .filter(n => noteHasPj(n, name))
+        .filter(n => noteHasVf(n, vf))
         .filter(n => {
           if (!(year && month)) return true;
           const d = getNoteEffectiveDate(n);
           return d && !isNaN(d) && d.getFullYear() === year && (d.getMonth() + 1) === month;
         })
-        .map(n => ({ ...n, _pjFilter: name }))
+        .map(n => ({ ...n, _vfFilter: { field: vf.field, key: vf.key } }))
         .sort((a, b) => {
           const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
           if (pinDiff !== 0) return pinDiff;
@@ -3209,13 +3349,19 @@
       <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span>${cat.name}</span>
+          <span>${escapeHtml(cat.name)}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
       </div>
       ${expandedFolderId === cat.id ? renderFolderYearAccordion(cat.id) : ''}
     `;
     }
+    const customerVfSectionHtml = customerFolders.length ? `
+      <div class="folder-section-divider">
+        <span>Data Customer</span>
+      </div>
+      ${customerFolders.map(pjItemHtml).join('')}
+    ` : '';
     const pjSectionHtml = pjFolders.length ? `
       <div class="folder-section-divider">
         <span>Akun Karyawan</span>
@@ -3223,7 +3369,7 @@
       ${pjFolders.map(pjItemHtml).join('')}
     ` : '';
 
-    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml + pjSectionHtml;
+    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml + pjSectionHtml + customerVfSectionHtml;
 
     wireAllFolderRow(container);
 
@@ -3326,7 +3472,7 @@
       return `<div class="folder-year-list"><div class="folder-year-loading">Memuat tahun...</div></div>`;
     }
     if (!meta.years.length && isPjId(catId)) {
-      return `<div class="folder-year-list"><div class="folder-year-empty-wrap"><div class="folder-year-empty">Belum ada data untuk PJ ini</div></div></div>`;
+      return `<div class="folder-year-list"><div class="folder-year-empty-wrap"><div class="folder-year-empty">Belum ada data</div></div></div>`;
     }
     if (!meta.years.length) {
       return `<div class="folder-year-list">
@@ -3389,8 +3535,8 @@
     let yearQuery = supabaseClient.from('notes').select('id, title, content, created_at');
     if (!isPjId(catId)) yearQuery = yearQuery.eq('folder_id', catId);
     const { data: rawYearData, error } = await yearQuery;
-    const pjNameForYears = isPjId(catId) ? pjNameFromId(catId) : null;
-    const data = pjNameForYears ? (rawYearData || []).filter(n => noteHasPj(n, pjNameForYears)) : rawYearData;
+    const vfForYears = isPjId(catId) ? vfParse(catId) : null;
+    const data = vfForYears ? (rawYearData || []).filter(n => noteHasVf(n, vfForYears)) : rawYearData;
 
     if (error) {
       console.error('Gagal memuat tahun/bulan folder:', error.message);
@@ -3522,30 +3668,22 @@
 
   // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
   async function handleDeleteCategory(catId, catName) {
-    const confirmDelete = confirm(`Hapus folder "${catName}"?\nSemua notes di dalamnya juga akan terhapus permanen.`);
+    const confirmDelete = await askDeleteVerification({
+      title: 'Hapus Folder?',
+      text: 'Folder "' + catName + '" dan semua catatan di dalamnya akan dipindahkan ke Sampah (bisa dipulihkan ' + TRASH_DAYS + ' hari).',
+      confirmLabel: 'Ya, Hapus'
+    });
     if (!confirmDelete) return;
 
     deleteModeCatId = null;
 
-    const { error: notesDeleteError } = await supabaseClient
-      .from('notes')
-      .delete()
-      .eq('folder_id', catId);
-
-    if (notesDeleteError) {
-      alert('Gagal menghapus notes di folder ini: ' + notesDeleteError.message);
+    const moved = await moveFolderToTrash(catId, catName);
+    if (moved.error) {
+      alert('Gagal menghapus folder: ' + moved.error.message);
       return;
     }
-
-    const { error: folderDeleteError } = await supabaseClient
-      .from('folders')
-      .delete()
-      .eq('id', catId);
-
-    if (folderDeleteError) {
-      alert('Gagal menghapus folder: ' + folderDeleteError.message);
-      return;
-    }
+    showMiniToast('Folder dipindahkan ke Sampah');
+    refreshTrashCount();
 
     if (activeCategoryId === catId) {
       activeCategoryId = null;
@@ -4021,7 +4159,7 @@
   // Khusus tampilan (preview detail + export PDF/Gambar). Data buku besar tetap lewat getNoteTable().
   function getDisplayTable(note) {
     // Tampilan dari folder karyawan: cuma baris milik PJ tsb (data asli tak diubah)
-    if (note && note._pjFilter) return filterTableByPj(getNoteTable(note), note._pjFilter);
+    if (note && note._vfFilter) return filterTableByVf(getNoteTable(note), note._vfFilter);
     if (isWarungNote(note) && Array.isArray(note.content.records)) {
       const pad2 = n => String(n).padStart(2, '0');
       const sorted = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -4333,12 +4471,18 @@
     const count = selectedNoteIds.size;
     openActionSheet(`
       <p class="nas-title">Hapus ${count} Note?</p>
-      <p class="nas-text">Tindakan ini nggak bisa dibatalkan. Data yang dihapus hilang permanen.</p>
+      <p class="nas-text">Note akan dipindahkan ke Sampah dan bisa dipulihkan selama 30 hari.</p>
       <button class="nas-btn nas-btn-danger" id="nasConfirmDelete">Hapus</button>
       <button class="nas-btn nas-btn-cancel" id="nasCancel">Batal</button>
     `);
     document.getElementById('nasConfirmDelete').addEventListener('click', async () => {
       closeActionSheet();
+      const ok = await askDeleteVerification({
+        title: 'Hapus ' + count + ' Note?',
+        text: 'Note akan dipindahkan ke Sampah dan bisa dipulihkan selama ' + TRASH_DAYS + ' hari.',
+        confirmLabel: 'Ya, Hapus'
+      });
+      if (!ok) return;
       await handleDeleteSelected();
     });
     document.getElementById('nasCancel').addEventListener('click', closeActionSheet);
@@ -4347,16 +4491,17 @@
   async function handleDeleteSelected() {
     const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
-    const { error } = await supabaseClient.from('notes').delete().in('id', ids);
+    const moved = await moveNotesToTrash(ids);
 
-    if (error) {
-      alert('Gagal menghapus note: ' + error.message);
+    if (moved.error) {
+      alert('Gagal menghapus note: ' + moved.error.message);
       return;
     }
 
     exitSelectionMode();
     loadCategories();
-    showMiniToast(`${count} note dihapus`);
+    refreshTrashCount();
+    showMiniToast(`${count} note dipindahkan ke Sampah`);
   }
 
   // --- Drawer Folder Navigation ---
@@ -4411,6 +4556,383 @@
   btnSettingsBack.addEventListener('click', () => {
     settingsScreen.classList.remove('open');
   });
+
+  // =====================================================================
+  // PUZZLE VERIFIKASI HAPUS — dipakai semua tombol hapus di dashboard.
+  // askDeleteVerification({title,text,confirmLabel}) -> Promise<boolean>
+  // Tombol hapus baru aktif setelah potongan gambar digeser ke lubang yang pas.
+  // =====================================================================
+  const pzv = (function(){
+    const overlay = document.getElementById('pzvOverlay');
+    const card = document.getElementById('pzvCard');
+    const wrap = document.getElementById('pzvWrap');
+    const canvas = document.getElementById('pzvCanvas');
+    const piece = document.getElementById('pzvPiece');
+    const track = document.getElementById('pzvTrack');
+    const fill = document.getElementById('pzvFill');
+    const label = document.getElementById('pzvLabel');
+    const handle = document.getElementById('pzvHandle');
+    const btnOk = document.getElementById('pzvConfirm');
+    const btnCancel = document.getElementById('pzvCancel');
+    const btnRefresh = document.getElementById('pzvRefresh');
+
+    const P = 40, R = 7, H = 130, HANDLE = 39, TOL = 6;
+    const LABEL_DEFAULT = 'Geser untuk mencocokkan';
+    let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
+    let solved = false, dragging = false, startX = 0, startOff = 0, offset = 0, maxOff = 1, pieceMax = 1, dragX = 0;
+    let failTimer = null, resolver = null;
+
+    function makeRng(seed){ let a = seed >>> 0; return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; }; }
+    function piecePath(ctx, x, y){
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + P / 2 - R, y);
+      ctx.arc(x + P / 2, y, R, Math.PI, 2 * Math.PI, false);
+      ctx.lineTo(x + P, y);
+      ctx.lineTo(x + P, y + P / 2 - R);
+      ctx.arc(x + P, y + P / 2, R, -Math.PI / 2, Math.PI / 2, false);
+      ctx.lineTo(x + P, y + P);
+      ctx.lineTo(x, y + P);
+      ctx.closePath();
+    }
+    function drawScene(ctx){
+      const rnd = makeRng(sceneSeed);
+      const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
+      const g = ctx.createLinearGradient(0, 0, W, H);
+      g.addColorStop(0, 'hsl(' + h1 + ',70%,58%)');
+      g.addColorStop(1, 'hsl(' + h2 + ',72%,42%)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < 9; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',75%,' + (40 + Math.floor(rnd() * 30)) + '%,0.55)';
+        ctx.beginPath(); ctx.arc(rnd() * W, rnd() * H, 12 + rnd() * 34, 0, 2 * Math.PI); ctx.fill();
+      }
+      for (let i = 0; i < 6; i++){
+        ctx.fillStyle = 'hsla(' + Math.floor(rnd() * 360) + ',70%,60%,0.5)';
+        ctx.beginPath();
+        const x = rnd() * W, y = rnd() * H;
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + 30 + rnd() * 50, y + (rnd() - 0.5) * 60);
+        ctx.lineTo(x + (rnd() - 0.5) * 60, y + 30 + rnd() * 40);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 2;
+      for (let i = 0; i < 5; i++){ ctx.beginPath(); ctx.moveTo(rnd() * W, 0); ctx.lineTo(rnd() * W, H); ctx.stroke(); }
+    }
+    function render(){
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+      const c = canvas.getContext('2d');
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawScene(c);
+      piecePath(c, tx, ty);
+      c.fillStyle = 'rgba(0,0,0,0.5)'; c.fill();
+      c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.5; c.stroke();
+
+      const pw = P + R + 4, ph = P + R + 4;
+      piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
+      piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
+      piece.style.top = (ty - (R + 2)) + 'px';
+      const p = piece.getContext('2d');
+      p.setTransform(dpr, 0, 0, dpr, 0, 0);
+      p.clearRect(0, 0, pw, ph);
+      p.save(); p.translate(2 - tx, R + 2 - ty); piecePath(p, tx, ty); p.clip(); drawScene(p); p.restore();
+      p.save(); p.translate(2 - tx, R + 2 - ty); piecePath(p, tx, ty); p.strokeStyle = 'rgba(255,255,255,0.95)'; p.lineWidth = 2; p.stroke(); p.restore();
+    }
+    function setOffset(o){
+      offset = Math.max(0, Math.min(maxOff, o));
+      handle.style.transform = 'translateX(' + offset + 'px)';
+      fill.style.width = (offset + HANDLE + 2) + 'px';
+      dragX = maxOff > 0 ? (offset / maxOff) * pieceMax : 0;
+      piece.style.transform = 'translateX(' + (dragX - 2) + 'px)';
+    }
+    function reset(){
+      clearTimeout(failTimer);
+      solved = false; dragging = false;
+      card.classList.remove('pzv-anim');
+      track.classList.remove('ok');
+      label.textContent = LABEL_DEFAULT;
+      btnOk.disabled = true;
+      W = Math.max(220, Math.floor(wrap.clientWidth) || 300);
+      dpr = window.devicePixelRatio || 1;
+      sceneSeed = Math.floor(Math.random() * 1e9) + 1;
+      pieceMax = W - P - R - 2;
+      const minX = Math.round(W * 0.42);
+      tx = Math.round(minX + Math.random() * (pieceMax - minX));
+      ty = Math.round((R + 8) + Math.random() * (H - P - (R + 8) - 8));
+      maxOff = Math.max(1, track.clientWidth - HANDLE - 4);
+      render();
+      setOffset(0);
+    }
+    function fail(){
+      wrap.classList.remove('fail'); void wrap.offsetWidth; wrap.classList.add('fail');
+      card.classList.add('pzv-anim');
+      setOffset(0);
+      failTimer = setTimeout(reset, 380);
+    }
+    handle.addEventListener('pointerdown', (e) => {
+      if (solved) return;
+      dragging = true; startX = e.clientX; startOff = offset;
+      card.classList.remove('pzv-anim');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    handle.addEventListener('pointermove', (e) => { if (dragging) setOffset(startOff + (e.clientX - startX)); });
+    function endDrag(){
+      if (!dragging) return;
+      dragging = false;
+      if (offset < 6) return;
+      if (Math.abs(dragX - tx) <= TOL) {
+        solved = true; setOffset(offset);
+        track.classList.add('ok'); label.textContent = 'Terverifikasi';
+        btnOk.disabled = false;
+      } else { fail(); }
+    }
+    handle.addEventListener('pointerup', endDrag);
+    handle.addEventListener('pointercancel', endDrag);
+    btnRefresh.addEventListener('click', reset);
+
+    function finish(result){
+      if (!resolver) return;
+      overlay.classList.remove('open');
+      const r = resolver; resolver = null;
+      r(result);
+    }
+    btnCancel.addEventListener('click', () => finish(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(false); });
+    btnOk.addEventListener('click', () => { if (solved) finish(true); }); // puzzle wajib selesai dulu
+
+    return {
+      ask: function(opts){
+        if (resolver) finish(false);
+        document.getElementById('pzvTitle').textContent = opts.title || 'Hapus?';
+        document.getElementById('pzvText').textContent = (opts.text ? opts.text + ' ' : '') + 'Geser potongan gambar ke lubang yang pas untuk melanjutkan.';
+        btnOk.textContent = opts.confirmLabel || 'Hapus';
+        overlay.classList.add('open');
+        reset();
+        return new Promise(res => { resolver = res; });
+      }
+    };
+  })();
+  function askDeleteVerification(opts){ return pzv.ask(opts); }
+
+  // =====================================================================
+  // SAMPAH — catatan & folder yang dihapus disalin ke tabel trash_items dulu.
+  // Hilang permanen setelah TRASH_DAYS hari, atau lewat "Hapus Permanen" / "Kosongkan".
+  // =====================================================================
+  const TRASH_DAYS = 30;
+  const BUKTI_BUCKET = 'bukti';
+
+  function trashDaysLeft(item){
+    const d = new Date(item.deleted_at).getTime();
+    if (isNaN(d)) return TRASH_DAYS;
+    return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
+  }
+
+  // Kumpulkan path foto bukti (Supabase Storage) dari isi catatan buku besar (data aktif + Sampah editor)
+  function collectBuktiPathsFromNotes(notes){
+    const marker = '/' + BUKTI_BUCKET + '/';
+    const paths = [];
+    (notes || []).forEach(n => {
+      const c = n && n.content;
+      if (!c || typeof c !== 'object') return;
+      [].concat(Array.isArray(c.records) ? c.records : [], Array.isArray(c.trash) ? c.trash : []).forEach(r => {
+        (r && Array.isArray(r.bukti) ? r.bukti : []).forEach(url => {
+          if (typeof url !== 'string') return;
+          const i = url.indexOf(marker);
+          if (i !== -1) paths.push(url.slice(i + marker.length));
+        });
+      });
+    });
+    return paths;
+  }
+  function trashItemNotes(item){
+    const pl = item.payload || {};
+    return item.kind === 'folder' ? (Array.isArray(pl.notes) ? pl.notes : []) : (pl.note ? [pl.note] : []);
+  }
+  async function removeBuktiFilesOfTrashItems(items){
+    const paths = items.flatMap(it => collectBuktiPathsFromNotes(trashItemNotes(it)));
+    if (!paths.length) return;
+    try { await supabaseClient.storage.from(BUKTI_BUCKET).remove(paths); }
+    catch (err) { console.warn('Gagal hapus file bukti:', err && err.message); }
+  }
+
+  // Pindahkan catatan ke Sampah: salin ke trash_items dulu, baru hapus dari notes (gagal -> salinan dibatalkan)
+  async function moveNotesToTrash(ids){
+    const { data: rows, error: readErr } = await supabaseClient.from('notes').select('*').in('id', ids);
+    if (readErr) return { error: readErr };
+    if (!rows || rows.length === 0) return { error: { message: 'Catatan tidak ditemukan.' } };
+    const toInsert = rows.map(n => ({ kind: 'note', label: n.title || '(tanpa judul)', payload: { note: n } }));
+    const { data: inserted, error: insErr } = await supabaseClient.from('trash_items').insert(toInsert).select('id');
+    if (insErr) return { error: insErr };
+    const { error: delErr } = await supabaseClient.from('notes').delete().in('id', ids);
+    if (delErr) {
+      await supabaseClient.from('trash_items').delete().in('id', (inserted || []).map(r => r.id));
+      return { error: delErr };
+    }
+    return { error: null, count: rows.length };
+  }
+
+  // Pindahkan folder + seluruh catatannya ke Sampah (1 item di Sampah)
+  async function moveFolderToTrash(folderId, folderName){
+    const [{ data: folder, error: fErr }, { data: notes, error: nErr }] = await Promise.all([
+      supabaseClient.from('folders').select('*').eq('id', folderId).single(),
+      supabaseClient.from('notes').select('*').eq('folder_id', folderId)
+    ]);
+    if (fErr) return { error: fErr };
+    if (nErr) return { error: nErr };
+    const { data: inserted, error: insErr } = await supabaseClient.from('trash_items')
+      .insert({ kind: 'folder', label: folderName || folder.name || '(tanpa nama)', payload: { folder, notes: notes || [] } })
+      .select('id');
+    if (insErr) return { error: insErr };
+    const rollback = async () => { await supabaseClient.from('trash_items').delete().in('id', (inserted || []).map(r => r.id)); };
+
+    const { error: notesDelErr } = await supabaseClient.from('notes').delete().eq('folder_id', folderId);
+    if (notesDelErr) { await rollback(); return { error: notesDelErr }; }
+    const { error: folderDelErr } = await supabaseClient.from('folders').delete().eq('id', folderId);
+    if (folderDelErr) {
+      // folder gagal dihapus -> kembalikan catatan yang sudah terhapus, lalu batalkan salinan sampah
+      if (notes && notes.length) await supabaseClient.from('notes').insert(notes);
+      await rollback();
+      return { error: folderDelErr };
+    }
+    return { error: null, count: (notes || []).length };
+  }
+
+  async function restoreTrashItem(item){
+    const pl = item.payload || {};
+    if (item.kind === 'note') {
+      const note = pl.note;
+      if (!note) return { error: { message: 'Data catatan di Sampah rusak.' } };
+      if (note.folder_id) {
+        const { data: f } = await supabaseClient.from('folders').select('id').eq('id', note.folder_id).maybeSingle();
+        if (!f) return { error: { message: 'Folder asal catatan ini sudah dihapus. Pulihkan folder-nya dulu dari Sampah.' } };
+      }
+      const { error } = await supabaseClient.from('notes').insert(note);
+      if (error) return { error };
+    } else {
+      const folder = pl.folder, notes = Array.isArray(pl.notes) ? pl.notes : [];
+      if (!folder) return { error: { message: 'Data folder di Sampah rusak.' } };
+      const { error: fErr } = await supabaseClient.from('folders').insert(folder);
+      if (fErr) return { error: fErr };
+      if (notes.length) {
+        const { error: nErr } = await supabaseClient.from('notes').insert(notes);
+        if (nErr) { await supabaseClient.from('folders').delete().eq('id', folder.id); return { error: nErr }; }
+      }
+    }
+    const { error: delErr } = await supabaseClient.from('trash_items').delete().eq('id', item.id);
+    if (delErr) console.warn('Pulih berhasil tapi gagal hapus dari Sampah:', delErr.message);
+    return { error: null };
+  }
+
+  async function purgeExpiredTrash(){
+    const cutoff = new Date(Date.now() - TRASH_DAYS * 86400000).toISOString();
+    const { data: expired, error } = await supabaseClient.from('trash_items').select('*').lt('deleted_at', cutoff);
+    if (error || !expired || expired.length === 0) return 0;
+    await removeBuktiFilesOfTrashItems(expired);
+    await supabaseClient.from('trash_items').delete().in('id', expired.map(r => r.id));
+    return expired.length;
+  }
+
+  const trashScreen = document.getElementById('trashScreen');
+  const trashListEl = document.getElementById('trashListEl');
+  const btnTrashEmptyAll = document.getElementById('btnTrashEmptyAll');
+  let trashItems = [];
+
+  async function refreshTrashCount(){
+    const { count } = await supabaseClient.from('trash_items').select('id', { count: 'exact', head: true });
+    document.getElementById('trashCountLabel').textContent = count ? String(count) : '';
+  }
+
+  const TRASH_ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>';
+  const TRASH_ICON_FOLDER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+
+  async function loadTrashScreen(){
+    trashListEl.innerHTML = '<div class="trash-empty">Memuat sampah...</div>';
+    await purgeExpiredTrash();
+    const { data, error } = await supabaseClient.from('trash_items').select('*').order('deleted_at', { ascending: false });
+    if (error) {
+      trashListEl.innerHTML = '<div class="trash-empty">Gagal memuat Sampah: ' + escapeHtml(error.message) + '</div>';
+      return;
+    }
+    trashItems = data || [];
+    document.getElementById('trashCountLabel').textContent = trashItems.length ? String(trashItems.length) : '';
+    document.getElementById('trashSub').textContent = trashItems.length
+      ? trashItems.length + ' item · otomatis hilang setelah ' + TRASH_DAYS + ' hari'
+      : 'Catatan dan folder yang dihapus muncul di sini';
+    btnTrashEmptyAll.style.display = trashItems.length ? 'block' : 'none';
+
+    if (!trashItems.length) { trashListEl.innerHTML = '<div class="trash-empty">Sampah kosong</div>'; return; }
+
+    trashListEl.innerHTML = trashItems.map(it => {
+      const d = new Date(it.deleted_at);
+      const when = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const n = trashItemNotes(it).length;
+      const kindText = it.kind === 'folder' ? 'Folder · ' + n + ' catatan' : 'Catatan';
+      return `
+        <div class="trash-card">
+          <div class="trash-card-top">
+            <div class="trash-card-icon">${it.kind === 'folder' ? TRASH_ICON_FOLDER : TRASH_ICON_NOTE}</div>
+            <div style="min-width:0;">
+              <p class="trash-card-title">${escapeHtml(it.label || '(tanpa judul)')}</p>
+              <p class="trash-card-meta">${kindText} · Dihapus ${escapeHtml(when)} · sisa ${trashDaysLeft(it)} hari</p>
+            </div>
+          </div>
+          <div class="trash-card-actions">
+            <button type="button" class="trash-btn-restore" data-act="restore" data-id="${it.id}">Pulihkan</button>
+            <button type="button" class="trash-btn-purge" data-act="purge" data-id="${it.id}">Hapus Permanen</button>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  trashListEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const item = trashItems.find(t => t.id === btn.dataset.id);
+    if (!item) return;
+    if (btn.dataset.act === 'restore') {
+      btn.disabled = true; btn.textContent = 'Memulihkan...';
+      const { error } = await restoreTrashItem(item);
+      if (error) { alert('Gagal memulihkan: ' + error.message); }
+      else { showMiniToast(item.kind === 'folder' ? 'Folder dipulihkan' : 'Catatan dipulihkan'); loadCategories(); }
+      loadTrashScreen();
+    } else {
+      const ok = await askDeleteVerification({
+        title: 'Hapus Permanen?',
+        text: '"' + (item.label || 'Item ini') + '" akan hilang selamanya dan TIDAK bisa dipulihkan lagi.',
+        confirmLabel: 'Hapus Permanen'
+      });
+      if (!ok) return;
+      await removeBuktiFilesOfTrashItems([item]);
+      const { error } = await supabaseClient.from('trash_items').delete().eq('id', item.id);
+      if (error) alert('Gagal menghapus permanen: ' + error.message);
+      else showMiniToast('Dihapus permanen');
+      loadTrashScreen();
+    }
+  });
+
+  btnTrashEmptyAll.addEventListener('click', async () => {
+    if (!trashItems.length) return;
+    const ok = await askDeleteVerification({
+      title: 'Kosongkan Sampah?',
+      text: trashItems.length + ' item di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi.',
+      confirmLabel: 'Kosongkan'
+    });
+    if (!ok) return;
+    await removeBuktiFilesOfTrashItems(trashItems);
+    const { error } = await supabaseClient.from('trash_items').delete().in('id', trashItems.map(t => t.id));
+    if (error) alert('Gagal mengosongkan Sampah: ' + error.message);
+    else showMiniToast('Sampah dikosongkan');
+    loadTrashScreen();
+  });
+
+  document.getElementById('btnOpenTrash').addEventListener('click', () => {
+    trashScreen.classList.add('open');
+    loadTrashScreen();
+  });
+  document.getElementById('btnTrashBack').addEventListener('click', () => trashScreen.classList.remove('open'));
+  refreshTrashCount();
+  purgeExpiredTrash().then(refreshTrashCount);
 
   // --- Kelola Customer ---
   const CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/create-customer';
@@ -4529,7 +5051,11 @@
     if (btn.dataset.action === 'remove') {
       const username = btn.dataset.username;
       const custId = btn.dataset.id;
-      if (!confirm('Hapus akun customer "' + username + '" SEPENUHNYA (email, password, username login)? Folder & data tabel yang sudah dibuat TETAP tersimpan sebagai arsip.')) return;
+      if (!(await askDeleteVerification({
+        title: 'Hapus Akun Customer?',
+        text: 'Akun "' + username + '" dihapus SEPENUHNYA (email, password, username login) dan TIDAK bisa dipulihkan. Folder & data tabel yang sudah dibuat tetap tersimpan sebagai arsip.',
+        confirmLabel: 'Hapus Akun'
+      }))) return;
 
       btn.disabled = true;
       btn.textContent = 'Menghapus...';
@@ -4764,7 +5290,11 @@
     if (btn.dataset.action === 'remove') {
       const username = btn.dataset.username;
       const kwId = btn.dataset.id;
-      if (!confirm('Hapus akun karyawan "' + username + '" SEPENUHNYA (email, password, username login)? Baris buku besar yang sudah ada TETAP tersimpan sebagai arsip.')) return;
+      if (!(await askDeleteVerification({
+        title: 'Hapus Akun Karyawan?',
+        text: 'Akun "' + username + '" dihapus SEPENUHNYA (email, password, username login) dan TIDAK bisa dipulihkan. Baris buku besar yang sudah ada tetap tersimpan sebagai arsip.',
+        confirmLabel: 'Hapus Akun'
+      }))) return;
 
       btn.disabled = true;
       btn.textContent = 'Menghapus...';
@@ -5667,9 +6197,10 @@
     const originalText = titleEl.textContent;
     titleEl.textContent = 'Menyiapkan backup...';
     try {
-      const [notesRes, foldersRes] = await Promise.all([
+      const [notesRes, foldersRes, trashRes] = await Promise.all([
         supabaseClient.from('notes').select('*').order('created_at', { ascending: true }),
-        supabaseClient.from('folders').select('*')
+        supabaseClient.from('folders').select('*'),
+        supabaseClient.from('trash_items').select('*').order('deleted_at', { ascending: false })
       ]);
       if (notesRes.error) throw new Error(notesRes.error.message);
       const notes = notesRes.data || [];
@@ -5680,7 +6211,8 @@
         created_at: new Date().toISOString(),
         total_notes: notes.length,
         folders,
-        notes
+        notes,
+        trash_items: trashRes.error ? [] : (trashRes.data || [])
       };
       const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
       downloadTextFile(`backup-bm-tech-${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8;', false);
