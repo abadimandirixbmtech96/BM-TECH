@@ -4282,6 +4282,16 @@
     settingsScreen.classList.remove('open');
   });
 
+  try {
+    if (sessionStorage.getItem('bm-return-settings') === '1') {
+      sessionStorage.removeItem('bm-return-settings');
+      settingsScreen.classList.add('open');
+    }
+  } catch (e) {}
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) { try { sessionStorage.removeItem('bm-return-settings'); } catch (err) {} }
+  });
+
   const pzv = (function(){
     const overlay = document.getElementById('pzvOverlay');
     const card = document.getElementById('pzvCard');
@@ -6105,6 +6115,7 @@
   });
 
   document.getElementById('btnOpenPhones').addEventListener('click', () => {
+    try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
     window.location.href = 'daftar-nomor-hp.html';
   });
 
