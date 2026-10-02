@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Daftar Nomor Customer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #000000;
+    --card-surface-dark: #141416;
+    --card-border-dark: rgba(255, 255, 255, 0.08);
+    --accent-yellow: #F0A529;
+    --accent-yellow-glow: rgba(240, 165, 41, 0.28);
+    --wa-green: #25D366;
+    --text-primary: #FFFFFF;
+    --text-secondary: #7C7C82;
+    --text-muted: #4A4A4F;
+    --glass-pill-bg: rgba(255, 255, 255, 0.09);
+    --glass-pill-border: rgba(255, 255, 255, 0.12);
+    --skeleton-a: rgba(255, 255, 255, 0.04);
+    --skeleton-b: rgba(255, 255, 255, 0.10);
+    --radius-lg: 16px;
+    --radius-xl: 22px;
+    --radius-pill: 999px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --ease-spring: cubic-bezier(0.18, 0.85, 0.3, 1);
+  }
+
+  body.theme-light {
+    --bg-dark: #F5F5F7;
+    --card-surface-dark: #FFFFFF;
+    --card-border-dark: rgba(0, 0, 0, 0.08);
+    --text-primary: #000000;
+    --text-secondary: #8E8E93;
+    --text-muted: #A1A1A6;
+    --glass-pill-bg: rgba(0, 0, 0, 0.06);
+    --glass-pill-border: rgba(0, 0, 0, 0.08);
+    --skeleton-a: rgba(0, 0, 0, 0.04);
+    --skeleton-b: rgba(0, 0, 0, 0.10);
+  }
+  body.theme-light { color-scheme: light; }
+  body.theme-light .back-btn { background: rgba(0, 0, 0, 0.06); }
+  body.theme-light .search-box { background: rgba(255, 255, 255, 0.9); }
+
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-bold-mode * { font-weight: 700 !important; }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  *:focus, *:active, *:focus-visible { outline: none; -webkit-tap-highlight-color: transparent; }
+  ::selection { background: transparent; }
+  input { -webkit-user-select: text; user-select: text; }
+  input::selection { background: var(--accent-yellow-glow); color: inherit; }
+  a { color: inherit; text-decoration: none; -webkit-user-drag: none; }
+  button { font: inherit; color: inherit; border: none; background: none; cursor: pointer; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .page {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 32px) 16px;
+    animation: pageIn 0.5s var(--ease-spring) both;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  .page.leaving { opacity: 0; transform: translateX(24px); }
+
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .head {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .back-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.18s var(--ease-spring), background 0.2s ease;
+  }
+  .back-btn:active { transform: scale(0.86); }
+  .back-btn svg { width: 22px; height: 22px; }
+
+  .head-text h1 { font-size: 20px; font-weight: 700; line-height: 1.2; }
+  .head-text p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    transition: opacity 0.2s ease;
+  }
+
+  .search-wrap {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    padding: 6px 0 12px;
+    margin: 0 -4px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding: 0 14px;
+    border-radius: var(--radius-pill);
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s var(--ease-spring);
+  }
+  .search-box:focus-within {
+    border-color: var(--accent-yellow);
+    box-shadow: 0 0 0 4px var(--accent-yellow-glow);
+    transform: scale(1.01);
+  }
+  .search-box svg { width: 18px; height: 18px; color: var(--text-secondary); flex-shrink: 0; }
+  .search-box input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-weight: 500;
+  }
+  .search-box input::placeholder { color: var(--text-secondary); }
+
+  .clear-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--glass-pill-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.25s var(--ease-spring);
+  }
+  .clear-btn.show { opacity: 1; transform: scale(1); pointer-events: auto; }
+  .clear-btn:active { transform: scale(0.85); }
+  .clear-btn svg { width: 12px; height: 12px; color: var(--text-secondary); }
+
+  .list { display: flex; flex-direction: column; gap: 10px; }
+
+  .row {
+    display: flex;
+    align-items: stretch;
+    background: var(--card-surface-dark);
+    border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    transition: transform 0.22s var(--ease-spring), border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .row.anim {
+    opacity: 0;
+    animation: rowIn 0.5s var(--ease-spring) forwards;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  .row.fade { animation: rowFade 0.25s ease both; }
+
+  @keyframes rowIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes rowFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (hover: hover) {
+    .row:hover { border-color: rgba(240, 165, 41, 0.45); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); transform: translateY(-2px); }
+    .copy-btn:hover { color: var(--accent-yellow); }
+  }
+  .row:active { transform: scale(0.98); }
+
+  .row-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 8px 14px 16px;
+  }
+
+  .wa-badge {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: rgba(37, 211, 102, 0.14);
+    color: var(--wa-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s var(--ease-spring), background 0.25s ease;
+  }
+  .wa-badge svg { width: 22px; height: 22px; }
+  .row:active .wa-badge { transform: scale(0.9) rotate(-6deg); background: rgba(37, 211, 102, 0.24); }
+
+  .info { min-width: 0; }
+  .num {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+  .meta {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .meta b { color: var(--accent-yellow); font-weight: 600; }
+
+  .copy-btn {
+    width: 56px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    border-left: 1px solid var(--card-border-dark);
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s var(--ease-spring);
+  }
+  .copy-btn:active { background: var(--glass-pill-bg); transform: scale(0.9); }
+  .copy-btn svg { width: 19px; height: 19px; transition: transform 0.3s var(--ease-spring); }
+  .copy-btn.done { color: var(--wa-green); }
+  .copy-btn.done svg { transform: scale(1.2); }
+
+  .skeleton {
+    height: 74px;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--card-border-dark);
+    background: linear-gradient(100deg, var(--skeleton-a) 30%, var(--skeleton-b) 50%, var(--skeleton-a) 70%);
+    background-size: 220% 100%;
+    animation: shimmer 1.3s linear infinite, rowFade 0.4s ease both;
+    animation-delay: 0s, calc(var(--i, 0) * 60ms);
+  }
+  @keyframes shimmer {
+    from { background-position: 120% 0; }
+    to { background-position: -120% 0; }
+  }
+
+  .state {
+    text-align: center;
+    padding: 64px 24px;
+    animation: rowFade 0.45s var(--ease-spring) both;
+  }
+  .state-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: var(--glass-pill-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+  }
+  .state-icon svg { width: 30px; height: 30px; }
+  .state h3 { font-size: 17px; font-weight: 700; }
+  .state p { font-size: 13.5px; color: var(--text-secondary); margin-top: 6px; line-height: 1.5; }
+  .state .retry {
+    margin-top: 20px;
+    padding: 12px 26px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-yellow);
+    color: #1C1B19;
+    font-weight: 700;
+    font-size: 14px;
+    transition: transform 0.18s var(--ease-spring);
+  }
+  .state .retry:active { transform: scale(0.92); }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(var(--safe-bottom) + 28px);
+    transform: translate(-50%, 24px) scale(0.92);
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    background: var(--card-surface-dark);
+    border: 1px solid var(--glass-pill-border);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35);
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 50;
+    transition: opacity 0.25s ease, transform 0.35s var(--ease-spring);
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+<script>
+  (function applyDashboardAppearance() {
+    try {
+      var FONT_CLASS_BY_ID = {
+        serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis',
+        kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded'
+      };
+      if (localStorage.getItem('bm-theme') === 'light') document.body.classList.add('theme-light');
+      var f = localStorage.getItem('bm-font');
+      if (f && FONT_CLASS_BY_ID[f]) document.body.classList.add(FONT_CLASS_BY_ID[f]);
+      if (localStorage.getItem('bm-font-bold') === 'on') document.body.classList.add('font-bold-mode');
+    } catch (e) {}
+  })();
+</script>
+
+<div class="page" id="page">
+  <div class="head">
+    <button class="back-btn" id="btnBack" aria-label="Kembali">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+    </button>
+    <div class="head-text">
+      <h1>Daftar Nomor Customer</h1>
+      <p id="subtitle">Memuat data...</p>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+      </svg>
+      <input type="text" id="searchInput" inputmode="tel" placeholder="Cari nomor..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Cari nomor">
+      <button class="clear-btn" id="btnClear" aria-label="Hapus pencarian">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storage: window.localStorage,
+      storageKey: 'bmtech-auth'
+    }
+  });
+
+  const DASHBOARD_FILE = 'dashboard-admin.html';
+  const LOGIN_FILE = 'admin-login.html';
+  const LEDGER_FOLDER_KEY = 'bukubesar';
+  const PAGE_SIZE = 1000;
+
+  const listEl = document.getElementById('list');
+  const subtitleEl = document.getElementById('subtitle');
+  const searchInput = document.getElementById('searchInput');
+  const btnClear = document.getElementById('btnClear');
+  const toastEl = document.getElementById('toast');
+  const pageEl = document.getElementById('page');
+
+  const ICON_WA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 20.5l1.7-5.4A8.4 8.4 0 1 1 21 11.5z"/><path d="M9 8.5c0 3.3 2.7 6 6 6l1.2-1.5-2-1-1 .7a3.6 3.6 0 0 1-1.9-1.9l.7-1-1-2z" fill="currentColor" stroke="none"/></svg>';
+  const ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V6.5A2.5 2.5 0 0 1 7.5 4H15"/></svg>';
+  const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  const ICON_PHONE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>';
+  const ICON_ALERT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+  let allNumbers = [];
+  let toastTimer = null;
+
+  function normalizeKey(str) {
+    return String(str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  /* ---------- Ekstraksi & normalisasi nomor ---------- */
+
+  // Mengambil semua nomor HP Indonesia (08..., 628..., +628...) dari sebuah teks.
+  // Hasil: array kunci internasional tanpa plus, contoh "628123456789".
+  // Separator (spasi, strip, titik) dibolehkan hanya jika grup digit berikutnya >= 3 digit,
+  // supaya angka lain seperti "2 pcs" tidak ikut terbaca sebagai bagian nomor.
+  function extractPhones(text) {
+    const s = String(text || '');
+    const n = s.length;
+    const re = /(?:\+62|62)[ \-.]?0?8|08/g;
+    const found = [];
+    let m;
+    while ((m = re.exec(s)) !== null) {
+      const prev = m.index > 0 ? s[m.index - 1] : '';
+      if (/[\d.,+]/.test(prev)) continue;
+
+      let national = '8';
+      let j = m.index + m[0].length;
+      while (j < n) {
+        const c = s[j];
+        if (c >= '0' && c <= '9') {
+          national += c;
+          j++;
+        } else if (c === ' ' || c === '-' || c === '.') {
+          const run = s.slice(j + 1).match(/^\d+/);
+          if (run && run[0].length >= 3 && national.length + run[0].length <= 12) {
+            j++;
+          } else {
+            break;
+          }
+        } else {
+          break;
+        }
+      }
+      re.lastIndex = j;
+
+      // Nomor lokal valid: 10-13 digit (termasuk 0 di depan) => bagian nasional 9-12 digit.
+      if (national.length >= 9 && national.length <= 12) {
+        found.push('62' + national);
+      }
+    }
+    return found;
+  }
+
+  function formatDisplay(key) {
+    const nat = key.slice(2);
+    return '0' + nat.slice(0, 3) + '-' + nat.slice(3, 7) + (nat.length > 7 ? '-' + nat.slice(7) : '');
+  }
+
+  function formatLocal(key) {
+    return '0' + key.slice(2);
+  }
+
+  function pad2(n) { return String(n).padStart(2, '0'); }
+
+  function formatDate(d) {
+    return pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear();
+  }
+
+  function parseDMY(val) {
+    const m = String(val || '').trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+    if (!m) return null;
+    const y = m[3].length === 2 ? '20' + m[3] : m[3];
+    const d = new Date(y + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0') + 'T00:00:00');
+    return isNaN(d) ? null : d;
+  }
+
+  // Mengubah isi satu catatan buku besar menjadi daftar {text, date} dari kolom Keterangan.
+  function collectEntries(content) {
+    if (!content) return [];
+
+    if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
+      return content.records.map(r => {
+        const d = r && r.created_at ? new Date(r.created_at) : null;
+        return { text: r ? r.keterangan : '', date: d && !isNaN(d) ? d : null };
+      });
+    }
+
+    if (Array.isArray(content.columns) && Array.isArray(content.rows)) {
+      const kc = content.columns.find(c => normalizeKey(c.label) === 'keterangan');
+      if (!kc) return [];
+      const dc = content.columns.find(c => normalizeKey(c.label) === 'tanggal');
+      return content.rows.map(r => {
+        const cells = (r && r.cells) || {};
+        return { text: cells[kc.id], date: dc ? parseDMY(cells[dc.id]) : null };
+      });
+    }
+
+    return [];
+  }
+
+  function buildNumberList(notes) {
+    const map = new Map();
+    notes.forEach(note => {
+      collectEntries(note.content).forEach(entry => {
+        // Satu transaksi dihitung sekali per nomor, walau nomor yang sama ditulis dua kali.
+        const keys = new Set(extractPhones(entry.text));
+        keys.forEach(key => {
+          let item = map.get(key);
+          if (!item) {
+            item = { key, count: 0, last: null };
+            map.set(key, item);
+          }
+          item.count++;
+          if (entry.date && (!item.last || entry.date > item.last)) item.last = entry.date;
+        });
+      });
+    });
+
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.last && b.last) return b.last - a.last || b.count - a.count;
+      if (a.last) return -1;
+      if (b.last) return 1;
+      return b.count - a.count;
+    });
+  }
+
+  /* ---------- Data dari Supabase ---------- */
+
+  async function fetchLedgerNotes() {
+    const { data: folders, error: folderErr } = await supabaseClient
+      .from('folders')
+      .select('id, name, owner_username');
+    if (folderErr) throw folderErr;
+
+    const ledger = (folders || []).find(f =>
+      f && !f.owner_username && normalizeKey(f.name) === LEDGER_FOLDER_KEY
+    );
+    if (!ledger) return [];
+
+    const notes = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabaseClient
+        .from('notes')
+        .select('id, content, created_at')
+        .eq('folder_id', ledger.id)
+        .order('created_at', { ascending: true })
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      notes.push(...(data || []));
+      if (!data || data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
+    }
+    return notes;
+  }
+
+  /* ---------- Render ---------- */
+
+  function renderSkeleton() {
+    let html = '';
+    for (let i = 0; i < 7; i++) html += '<div class="skeleton" style="--i:' + i + '"></div>';
+    listEl.innerHTML = html;
+  }
+
+  function renderState(icon, title, text, onRetry) {
+    listEl.innerHTML =
+      '<div class="state"><div class="state-icon">' + icon + '</div>' +
+      '<h3>' + escapeHtml(title) + '</h3>' +
+      '<p>' + escapeHtml(text) + '</p>' +
+      (onRetry ? '<button class="retry" id="btnRetry">Coba Lagi</button>' : '') +
+      '</div>';
+    if (onRetry) document.getElementById('btnRetry').addEventListener('click', onRetry);
+  }
+
+  function rowHtml(item, index, animClass) {
+    const style = animClass === 'anim' ? ' style="--i:' + Math.min(index, 14) + '"' : '';
+    const meta = '<b>' + item.count + '</b> transaksi' + (item.last ? ' &middot; Terakhir ' + formatDate(item.last) : '');
+    return (
+      '<div class="row ' + animClass + '"' + style + '>' +
+        '<a class="row-main" href="https://wa.me/' + item.key + '" target="_blank" rel="noopener noreferrer" aria-label="Chat WhatsApp ' + formatLocal(item.key) + '">' +
+          '<div class="wa-badge">' + ICON_WA + '</div>' +
+          '<div class="info"><div class="num">' + formatDisplay(item.key) + '</div><div class="meta">' + meta + '</div></div>' +
+        '</a>' +
+        '<button class="copy-btn" data-copy="' + formatLocal(item.key) + '" aria-label="Salin nomor">' + ICON_COPY + '</button>' +
+      '</div>'
+    );
+  }
+
+  function getFiltered() {
+    const raw = searchInput.value.trim();
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return allNumbers;
+    const q1 = digits;
+    const q2 = digits.startsWith('0') ? '62' + digits.slice(1) : null;
+    return allNumbers.filter(it => it.key.includes(q1) || (q2 && it.key.includes(q2)));
+  }
+
+  function updateSubtitle(shown) {
+    if (!allNumbers.length) {
+      subtitleEl.textContent = 'Buku Besar';
+    } else if (shown === allNumbers.length) {
+      subtitleEl.textContent = allNumbers.length + ' nomor unik dari Buku Besar';
+    } else {
+      subtitleEl.textContent = shown + ' dari ' + allNumbers.length + ' nomor';
+    }
+  }
+
+  function renderList(animClass) {
+    if (!allNumbers.length) {
+      updateSubtitle(0);
+      renderState(ICON_PHONE, 'Belum ada nomor', 'Tulis nomor HP customer (08... atau +62...) di kolom Keterangan Buku Besar, nomornya akan muncul di sini.', null);
+      return;
+    }
+    const items = getFiltered();
+    updateSubtitle(items.length);
+    if (!items.length) {
+      renderState(ICON_PHONE, 'Nomor tidak ditemukan', 'Tidak ada nomor yang cocok dengan pencarian Anda.', null);
+      return;
+    }
+    listEl.innerHTML = items.map((it, i) => rowHtml(it, i, animClass)).join('');
+  }
+
+  async function loadData() {
+    subtitleEl.textContent = 'Memuat data...';
+    renderSkeleton();
+    try {
+      const notes = await fetchLedgerNotes();
+      allNumbers = buildNumberList(notes);
+      renderList('anim');
+    } catch (err) {
+      console.error('Gagal memuat nomor:', err && err.message ? err.message : err);
+      subtitleEl.textContent = 'Gagal memuat';
+      renderState(ICON_ALERT, 'Gagal memuat data', 'Periksa koneksi internet Anda lalu coba lagi.', loadData);
+    }
+  }
+
+  /* ---------- Interaksi ---------- */
+
+  function showToast(text) {
+    toastEl.textContent = text;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1700);
+  }
+
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch (e) {}
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;-webkit-user-select:text;user-select:text;';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  listEl.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.copy-btn');
+    if (!btn) return;
+    const text = btn.getAttribute('data-copy');
+    const ok = await copyText(text);
+    showToast(ok ? 'Nomor ' + text + ' disalin' : 'Gagal menyalin nomor');
+    if (ok) {
+      btn.classList.add('done');
+      btn.innerHTML = ICON_CHECK;
+      setTimeout(() => {
+        btn.classList.remove('done');
+        btn.innerHTML = ICON_COPY;
+      }, 1300);
+    }
+  });
+
+  searchInput.addEventListener('input', () => {
+    btnClear.classList.toggle('show', searchInput.value.length > 0);
+    if (allNumbers.length) renderList('fade');
+  });
+
+  btnClear.addEventListener('click', () => {
+    searchInput.value = '';
+    btnClear.classList.remove('show');
+    if (allNumbers.length) renderList('fade');
+    searchInput.focus();
+  });
+
+  document.getElementById('btnBack').addEventListener('click', () => {
+    pageEl.classList.add('leaving');
+    setTimeout(() => { window.location.href = DASHBOARD_FILE; }, 200);
+  });
+
+  window.addEventListener('pageshow', () => pageEl.classList.remove('leaving'));
+
+  /* ---------- Penjaga akses (sama seperti dashboard admin) ---------- */
+
+  (async function guardAdminAccess() {
+    renderSkeleton();
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (!session) {
+        window.location.href = LOGIN_FILE;
+        return;
+      }
+
+      const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+      if (error) throw error;
+
+      if (!isAdmin) {
+        await supabaseClient.auth.signOut();
+        window.location.href = LOGIN_FILE;
+        return;
+      }
+    } catch (err) {
+      console.error('Gagal cek akses admin:', err && err.message ? err.message : err);
+      subtitleEl.textContent = 'Gagal memuat';
+      renderState(ICON_ALERT, 'Gagal memeriksa akses', 'Periksa koneksi internet Anda lalu coba lagi.', () => window.location.reload());
+      return;
+    }
+
+    loadData();
+  })();
+</script>
+</body>
+</html>
