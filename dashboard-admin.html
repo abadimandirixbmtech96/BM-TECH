@@ -501,6 +501,60 @@
     border-radius: 999px;
   }
 
+
+  /* --- Tasks (dirombak): header + filter, ringkasan, kartu per jenis --- */
+  .tasks-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+  .tasks-head .page-title { margin-bottom: 2px; }
+  .tasks-head .section-label { margin: 0; }
+  .tasks-filter-btn { position: relative; width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--glass-pill-border); background: var(--glass-pill-bg); color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 6px; }
+  .tasks-filter-btn svg { width: 22px; height: 22px; }
+  .tasks-filter-btn.active { background: var(--accent-yellow); border-color: transparent; color: #1C1B19; }
+  .tasks-filter-badge { position: absolute; top: -4px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: #F0555C; color: #fff; font-size: 11px; font-weight: 800; display: none; align-items: center; justify-content: center; }
+
+  .tk-summary { display: flex; gap: 10px; margin-bottom: 6px; }
+  .tk-tile { flex: 1; min-width: 0; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-top: 4px solid var(--tc); border-radius: 16px; padding: 11px 12px 10px; cursor: pointer; transition: transform .15s ease; }
+  .tk-tile:active { transform: scale(.97); }
+  .tk-tile.on { box-shadow: inset 0 0 0 2px var(--tc); }
+  .tk-tile-num { font-size: 26px; font-weight: 800; line-height: 1.1; color: var(--text-primary); }
+  .tk-tile-label { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-top: 3px; }
+  .tk-tile-sub { font-size: 11px; font-weight: 700; color: var(--tc); margin-top: 2px; min-height: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .tk-group { display: flex; align-items: center; gap: 8px; margin: 20px 2px 10px; font-size: 13.5px; font-weight: 800; color: var(--text-primary); }
+  .tk-group i { width: 10px; height: 10px; border-radius: 50%; background: var(--tc); flex-shrink: 0; }
+  .tk-group span { margin-left: auto; min-width: 24px; text-align: center; padding: 2px 8px; border-radius: 999px; background: var(--glass-pill-bg); color: var(--text-secondary); font-size: 12px; font-weight: 800; }
+
+  .tk-card { position: relative; overflow: hidden; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: 16px; padding: 14px 14px 12px 20px; margin-bottom: 10px; cursor: pointer; animation: cardAppear 0.3s ease both; transition: transform .15s ease; }
+  .tk-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--tc); }
+  .tk-card:active { transform: scale(.98); }
+  .tk-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .tk-badge { font-size: 10.5px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--tc); margin-bottom: 3px; }
+  .tk-name { font-size: 16.5px; font-weight: 800; color: var(--text-primary); word-break: break-word; }
+  .tk-amount { font-size: 18px; font-weight: 800; color: var(--tc); white-space: nowrap; text-align: right; line-height: 1.15; }
+  .tk-amount small { display: block; font-size: 10.5px; font-weight: 700; color: var(--text-secondary); margin-top: 1px; }
+  .tk-detail { font-size: 13.5px; line-height: 1.45; color: var(--text-primary); margin-top: 8px; word-break: break-word; }
+  .tk-detail b { font-weight: 800; }
+  .tk-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--card-border-dark); font-size: 11.5px; color: var(--text-secondary); }
+  .tk-age { font-weight: 800; color: var(--tc); }
+
+  /* lembar filter */
+  .tf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); z-index: 350; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .tf-overlay.open { opacity: 1; pointer-events: auto; }
+  .tf-sheet { width: 100%; max-height: 82vh; overflow-y: auto; background: var(--card-surface-dark); border-radius: 26px 26px 0 0; padding: 10px 18px calc(var(--safe-bottom) + 18px); transform: translateY(100%); transition: transform .26s cubic-bezier(.32,.72,0,1); }
+  .tf-overlay.open .tf-sheet { transform: none; }
+  .tf-grab { width: 40px; height: 5px; border-radius: 3px; background: var(--card-border-dark); margin: 0 auto 14px; }
+  .tf-sheet h3 { margin: 0 0 14px; font-size: 18px; font-weight: 800; color: var(--text-primary); }
+  .tf-label { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--text-secondary); margin: 14px 0 9px; }
+  .tf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tf-chip { display: inline-flex; align-items: center; gap: 7px; padding: 10px 15px; border-radius: 999px; border: 1.5px solid var(--card-border-dark); background: var(--glass-pill-bg); color: var(--text-primary); font-size: 14px; font-weight: 700; cursor: pointer; }
+  .tf-chip i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .tf-chip em { font-style: normal; font-size: 12px; font-weight: 800; opacity: .65; }
+  .tf-chip.on { background: var(--accent-yellow); border-color: var(--accent-yellow); color: #1C1B19; }
+  .tf-chip.on em { opacity: .8; }
+  .tf-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .tf-actions button { flex: 1; height: 48px; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .tf-reset { background: var(--glass-pill-bg); color: var(--text-primary); }
+  .tf-done { background: var(--accent-yellow); color: #1C1B19; }
+
   /* --- Full Width Search Bar --- */
   .bottom-bar {
     position: absolute;
@@ -2065,8 +2119,17 @@
 
     <!-- Tasks Tab Content: daftar baris data yang belum lengkap di semua tabel/folder -->
     <div class="tasks-container" id="tasksSection">
-      <h1 class="page-title" id="tasksPageTitle" style="display:none;">Tasks</h1>
-      <p class="section-label" id="tasksPageSubtitle" style="display:none;">Data Belum Lengkap</p>
+      <div class="tasks-head">
+        <div>
+          <h1 class="page-title" id="tasksPageTitle">Tasks</h1>
+          <p class="section-label" id="tasksPageSubtitle">Memuat...</p>
+        </div>
+        <button class="tasks-filter-btn" id="btnTasksFilter" aria-label="Filter Tasks">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+          <span class="tasks-filter-badge" id="tasksFilterBadge"></span>
+        </button>
+      </div>
+      <div class="tk-summary" id="tasksSummary"></div>
       <div id="tasksList"></div>
     </div>
   </main>
@@ -2278,6 +2341,22 @@
   <div class="trash-sub" id="trashSub">Catatan dan folder yang dihapus muncul di sini</div>
   <div class="trash-list" id="trashListEl">
     <div class="trash-empty">Memuat sampah...</div>
+  </div>
+</div>
+
+<!-- Lembar filter Tasks -->
+<div class="tf-overlay" id="tfOverlay">
+  <div class="tf-sheet" id="tfSheet">
+    <div class="tf-grab"></div>
+    <h3>Filter Tasks</h3>
+    <div class="tf-label">Jenis tugas</div>
+    <div class="tf-chips" id="tfTypeChips"></div>
+    <div class="tf-label">Folder</div>
+    <div class="tf-chips" id="tfFolderChips"></div>
+    <div class="tf-actions">
+      <button type="button" class="tf-reset" id="tfReset">Reset</button>
+      <button type="button" class="tf-done" id="tfDone">Selesai</button>
+    </div>
   </div>
 </div>
 
@@ -3862,79 +3941,288 @@
     return note && note.created_at ? new Date(note.created_at) : null;
   }
 
+  // =====================================================================
+  // --- FITUR TASKS (dirombak): kotak masuk "yang perlu ditindaklanjuti" ---
+  // Tiga jenis tugas, semuanya hilang sendiri begitu masalahnya beres:
+  //   1. Kasbon belum lunas     -> sisa tagihan (Total - Dibayar) masih > 0
+  //   2. Barang masih ditinggal -> kolom Stok Barang terisi selain "Tidak ada"
+  //                                (stok "B&J" = semua barang & jumlah masih ditinggal)
+  //   3. Data belum lengkap     -> Customer / Barang / Harga masih kosong
+  // Filter: jenis tugas + folder (BUKU BESAR s/d BUKU KASBON). Pilihan filter diingat.
+  // =====================================================================
+  const TASK_TYPES = {
+    kasbon:    { badge: 'Kasbon belum lunas',     group: 'Kasbon belum lunas',     short: 'Kasbon',        sub: '',               color: '#F0555C' },
+    ditinggal: { badge: 'Barang ditinggal',       group: 'Barang masih ditinggal', short: 'Ditinggal',     sub: 'di bengkel',     color: '#4C9EFF' },
+    lengkap:   { badge: 'Data belum lengkap',     group: 'Data belum lengkap',     short: 'Belum lengkap', sub: 'perlu dilengkapi', color: '#FF8A4C' }
+  };
+  const TASK_TYPE_ORDER = ['kasbon', 'ditinggal', 'lengkap'];
+  // Kolom yang dianggap WAJIB untuk "Data belum lengkap". Ubah daftar ini kalau mau diperketat/dilonggarkan.
+  const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];
+  const TASKS_FILTER_KEY = 'bmtech_tasks_filter_v1';
+
+  let allKasbonNotes = []; // note kasbon (diisi loadAllNotesData), dipakai tugas "Kasbon belum lunas"
+  let tasksFilter = { types: new Set(), folders: new Set() }; // kosong = semua
+  try {
+    const saved = JSON.parse(localStorage.getItem(TASKS_FILTER_KEY) || 'null');
+    if (saved) tasksFilter = { types: new Set(saved.types || []), folders: new Set(saved.folders || []) };
+  } catch (e) {}
+  function saveTasksFilter() {
+    try { localStorage.setItem(TASKS_FILTER_KEY, JSON.stringify({ types: [...tasksFilter.types], folders: [...tasksFilter.folders] })); } catch (e) {}
+  }
+
+  function isStokNone(v) { return normalizeKey(v) === 'tidakada'; }
+  function isStokBJ(v) { return normalizeKey(v) === 'bj'; } // "B&J" = Barang dan Jumlah
+  function isHargaEmpty(v) { return isEmptyValue(v) || /^0+$/.test(String(v).trim()); }
+  function taskRp(n) { return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
+  function taskAgeDays(d) {
+    if (!d || isNaN(d.getTime())) return null;
+    return Math.max(0, Math.floor((Date.now() - d.getTime()) / 86400000));
+  }
+  function taskAgeText(d) {
+    const n = taskAgeDays(d);
+    if (n === null) return '';
+    if (n === 0) return 'Hari ini';
+    if (n === 1) return 'Kemarin';
+    return n + ' hari';
+  }
+  function taskDateText(d) {
+    if (!d || isNaN(d.getTime())) return '';
+    const p = x => String(x).padStart(2, '0');
+    return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
+  }
+
+  // Folder admin (BUKU BESAR s/d BUKU KASBON): folder asli tanpa pemilik, bukan folder virtual PJ/Customer
+  function getTaskFolders() {
+    return categoriesData.filter(c => !c.ownerUsername && !isPjId(c.id));
+  }
+
   function computeTasks() {
     const tasks = [];
+
+    // --- Buku besar: barang ditinggal + data belum lengkap ---
     allNotesData.forEach(note => {
       const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
-
       const columns = content.columns;
       content.rows.forEach((row, rowIndex) => {
-        const missing = TASK_REQUIRED_FIELDS.filter(f => isEmptyValue(getRowValueByLabel(columns, row, f)));
-        if (missing.length > 0) {
-          tasks.push({
-            noteId: note.id,
+        const val = label => getRowValueByLabel(columns, row, label);
+        const when = parseRowDate(val('Tanggal'), note.created_at);
+        const base = {
+          noteId: note.id,
+          folderId: note.folder_id,
+          folderName: note.folder || 'Uncategorized',
+          noteTitle: note.title || 'Untitled',
+          rowIndex,
+          when,
+          dateText: taskDateText(when),
+          jam: val('Jam') || '',
+          customer: String(val('Customer') || '').trim(),
+          barang: String(val('Barang') || '').trim()
+        };
 
-            folderId: note.folder_id,
-            folderName: note.folder || 'Uncategorized',
-            noteTitle: note.title || 'Untitled',
-            tanggal: getRowValueByLabel(columns, row, 'Tanggal') || note.date_tag || '',
-            jam: getRowValueByLabel(columns, row, 'Jam') || '',
-            rowIndex,
-            missing
-          });
+        const stok = String(val('Stok Barang') || '').trim();
+        if (!isEmptyValue(stok) && !isStokNone(stok)) {
+          const allLeft = isStokBJ(stok);
+          tasks.push({ ...base, type: 'ditinggal', allLeft, what: allLeft ? base.barang : stok });
         }
+
+        const missing = TASK_INCOMPLETE_FIELDS.filter(f => (f === 'Harga' ? isHargaEmpty(val(f)) : isEmptyValue(val(f))));
+        if (missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing });
       });
     });
+
+    // --- Buku kasbon: sisa tagihan masih ada ---
+    allKasbonNotes.forEach(note => {
+      const recs = Array.isArray(note.content && note.content.records) ? note.content.records : [];
+      const sorted = [...recs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // urutan sama dgn nomor di editor
+      sorted.forEach((r, rowIndex) => {
+        const total = Number(r.total) || 0;
+        const dibayar = Number(r.dibayar) || 0;
+        const sisa = total - dibayar;
+        if (sisa <= 0) return;
+        const when = r.created_at ? new Date(r.created_at) : null;
+        tasks.push({
+          type: 'kasbon',
+          noteId: note.id,
+          folderId: note.folder_id,
+          folderName: note.folder || 'Uncategorized',
+          noteTitle: note.title || 'Untitled',
+          rowIndex,
+          when,
+          dateText: taskDateText(when),
+          customer: String(r.nama || '').trim(),
+          total, dibayar, sisa,
+          keterangan: String(r.keterangan || '').trim()
+        });
+      });
+    });
+
     return tasks;
   }
 
+  // Kasbon: sisa terbesar dulu. Lainnya: yang paling lama di atas.
+  function sortTasksInType(type, arr) {
+    const t = d => (d && !isNaN(d.getTime())) ? d.getTime() : Infinity;
+    return arr.slice().sort((a, b) => type === 'kasbon' ? (b.sisa - a.sisa) || (t(a.when) - t(b.when)) : (t(a.when) - t(b.when)));
+  }
+
+  function taskCardHtml(t, idx) {
+    const meta = TASK_TYPES[t.type];
+    const name = escapeHtml(t.customer || (t.type === 'kasbon' ? '(tanpa nama)' : '(tanpa customer)'));
+    const age = taskAgeText(t.when);
+    let right = '';
+    let detail = '';
+    if (t.type === 'kasbon') {
+      right = `<div class="tk-amount">${escapeHtml(taskRp(t.sisa))}<small>sisa tagihan</small></div>`;
+      detail = `Tagihan ${escapeHtml(taskRp(t.total))} &middot; Dibayar ${escapeHtml(taskRp(t.dibayar))}${t.keterangan ? ' &middot; ' + escapeHtml(t.keterangan) : ''}`;
+    } else if (t.type === 'ditinggal') {
+      detail = t.allLeft
+        ? `<b>Semua barang masih di bengkel:</b> ${escapeHtml(t.what || '-')}`
+        : `<b>Ditinggal:</b> ${escapeHtml(t.what)}`;
+    } else {
+      detail = (t.barang ? `<div>${escapeHtml(t.barang)}</div>` : '') +
+        `<div class="task-missing-row" style="margin-top:6px;"><span style="font-size:12px;color:var(--text-secondary);align-self:center;">Belum diisi:</span>${t.missing.map(f => `<span class="task-missing-chip">${escapeHtml(f)}</span>`).join('')}</div>`;
+    }
+    return `
+      <div class="tk-card" data-idx="${idx}" style="--tc:${meta.color};">
+        <div class="tk-top">
+          <div style="min-width:0;">
+            <div class="tk-badge">${escapeHtml(meta.badge)}</div>
+            <div class="tk-name">${name}</div>
+          </div>
+          ${right}
+        </div>
+        <div class="tk-detail">${detail}</div>
+        <div class="tk-foot">
+          <span>${escapeHtml(t.folderName)} &rsaquo; baris ${t.rowIndex + 1}</span>
+          <span><span class="tk-age">${escapeHtml(age)}</span>${t.dateText ? ' &middot; ' + escapeHtml(t.dateText) : ''}</span>
+        </div>
+      </div>`;
+  }
+
+  let currentShownTasks = [];
+
   function renderTasks() {
     const list = document.getElementById('tasksList');
-    const titleEl = document.getElementById('tasksPageTitle');
+    const summaryEl = document.getElementById('tasksSummary');
     const subtitleEl = document.getElementById('tasksPageSubtitle');
-    const tasks = computeTasks();
 
-    if (tasks.length === 0) {
-      titleEl.style.display = 'none';
-      subtitleEl.style.display = 'none';
+    // buang pilihan folder yang sudah tidak ada
+    const folders = getTaskFolders();
+    const validFolderIds = new Set(folders.map(f => f.id));
+    [...tasksFilter.folders].forEach(id => { if (!validFolderIds.has(id)) tasksFilter.folders.delete(id); });
+
+    const all = computeTasks();
+    const folderScoped = all.filter(t => tasksFilter.folders.size === 0 || tasksFilter.folders.has(t.folderId));
+    const shown = folderScoped.filter(t => tasksFilter.types.size === 0 || tasksFilter.types.has(t.type));
+
+    // --- tombol filter + subjudul ---
+    const activeCount = tasksFilter.types.size + tasksFilter.folders.size;
+    const badgeEl = document.getElementById('tasksFilterBadge');
+    badgeEl.textContent = activeCount;
+    badgeEl.style.display = activeCount ? 'flex' : 'none';
+    document.getElementById('btnTasksFilter').classList.toggle('active', activeCount > 0);
+    subtitleEl.textContent = shown.length
+      ? shown.length + ' perlu tindakan' + (activeCount ? ' · filter aktif' : '')
+      : (activeCount ? 'Tidak ada tugas untuk filter ini' : 'Semua beres');
+
+    // --- ringkasan 3 kotak (ikut filter folder, tap = filter cepat per jenis) ---
+    summaryEl.innerHTML = TASK_TYPE_ORDER.map(type => {
+      const items = folderScoped.filter(t => t.type === type);
+      const meta = TASK_TYPES[type];
+      const sub = type === 'kasbon' ? taskRp(items.reduce((s, t) => s + t.sisa, 0)) : meta.sub;
+      const on = tasksFilter.types.has(type);
+      return `<div class="tk-tile${on ? ' on' : ''}" data-type="${type}" style="--tc:${meta.color};">
+        <div class="tk-tile-num">${items.length}</div>
+        <div class="tk-tile-label">${escapeHtml(meta.short)}</div>
+        <div class="tk-tile-sub">${escapeHtml(sub)}</div>
+      </div>`;
+    }).join('');
+
+    // --- daftar, dikelompokkan per jenis ---
+    currentShownTasks = [];
+    if (shown.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <circle cx="12" cy="12" r="9"/>
             <polyline points="9 12 11 14 15 10"/>
           </svg>
-          <p>Semua data sudah lengkap</p>
-        </div>
-      `;
+          <p>${activeCount ? 'Tidak ada tugas untuk filter ini' : 'Semua data beres, tidak ada yang perlu ditindaklanjuti'}</p>
+        </div>`;
       return;
     }
 
-    titleEl.style.display = 'block';
-    subtitleEl.style.display = 'block';
-
-    list.innerHTML = tasks.map((t, i) => `
-      <div class="task-item" data-idx="${i}">
-        <div class="task-item-top">
-          <div>
-            <p class="task-item-title">${escapeHtml(t.noteTitle)}</p>
-            <p class="task-item-loc">${escapeHtml(t.folderName)} &rsaquo; baris ${t.rowIndex + 1}</p>
-          </div>
-          <span class="task-item-date">${escapeHtml(t.tanggal)}${t.jam ? ' · ' + escapeHtml(t.jam) : ''}</span>
-        </div>
-        <div class="task-missing-row">
-          ${t.missing.map(f => `<span class="task-missing-chip">${escapeHtml(f)}</span>`).join('')}
-        </div>
-      </div>
-    `).join('');
-
-    list.querySelectorAll('.task-item').forEach(el => {
-      el.addEventListener('click', () => {
-        const t = tasks[Number(el.dataset.idx)];
-        openEditor(t.noteId, { folder: t.folderId, row: t.rowIndex, focus: t.missing[0] });
-      });
+    let html = '';
+    TASK_TYPE_ORDER.forEach(type => {
+      const items = sortTasksInType(type, shown.filter(t => t.type === type));
+      if (!items.length) return;
+      const meta = TASK_TYPES[type];
+      html += `<div class="tk-group" style="--tc:${meta.color};"><i></i>${escapeHtml(meta.group)}<span>${items.length}</span></div>`;
+      items.forEach(t => { html += taskCardHtml(t, currentShownTasks.length); currentShownTasks.push(t); });
     });
+    list.innerHTML = html;
   }
+
+  document.getElementById('tasksList').addEventListener('click', (e) => {
+    const card = e.target.closest('.tk-card');
+    if (!card) return;
+    const t = currentShownTasks[Number(card.dataset.idx)];
+    if (!t) return;
+    openEditor(t.noteId, { folder: t.folderId, row: t.rowIndex, focus: t.missing ? t.missing[0] : undefined });
+  });
+
+  // Ringkasan: tap kotak = tampilkan hanya jenis itu (tap lagi = semua)
+  document.getElementById('tasksSummary').addEventListener('click', (e) => {
+    const tile = e.target.closest('.tk-tile');
+    if (!tile) return;
+    const type = tile.dataset.type;
+    const onlyThis = tasksFilter.types.size === 1 && tasksFilter.types.has(type);
+    tasksFilter.types = onlyThis ? new Set() : new Set([type]);
+    saveTasksFilter();
+    renderTasks();
+  });
+
+  // --- Lembar filter (ikon filter di pojok kanan atas Tasks) ---
+  const tfOverlay = document.getElementById('tfOverlay');
+  function renderTasksFilterSheet() {
+    const all = computeTasks();
+    document.getElementById('tfTypeChips').innerHTML = TASK_TYPE_ORDER.map(type => {
+      const meta = TASK_TYPES[type];
+      const n = all.filter(t => t.type === type && (tasksFilter.folders.size === 0 || tasksFilter.folders.has(t.folderId))).length;
+      return `<button type="button" class="tf-chip${tasksFilter.types.has(type) ? ' on' : ''}" data-type="${type}"><i style="background:${meta.color};"></i>${escapeHtml(meta.short)} <em>${n}</em></button>`;
+    }).join('');
+    const folders = getTaskFolders();
+    document.getElementById('tfFolderChips').innerHTML = folders.length
+      ? folders.map(f => {
+          const n = all.filter(t => t.folderId === f.id && (tasksFilter.types.size === 0 || tasksFilter.types.has(t.type))).length;
+          return `<button type="button" class="tf-chip${tasksFilter.folders.has(f.id) ? ' on' : ''}" data-folder="${escapeHtml(f.id)}">${escapeHtml(f.name)} <em>${n}</em></button>`;
+        }).join('')
+      : '<span style="font-size:13px;color:var(--text-secondary);">Belum ada folder</span>';
+  }
+  function openTasksFilterSheet() { renderTasksFilterSheet(); tfOverlay.classList.add('open'); }
+  function closeTasksFilterSheet() { tfOverlay.classList.remove('open'); }
+
+  document.getElementById('btnTasksFilter').addEventListener('click', openTasksFilterSheet);
+  document.getElementById('tfDone').addEventListener('click', closeTasksFilterSheet);
+  tfOverlay.addEventListener('click', (e) => { if (e.target === tfOverlay) closeTasksFilterSheet(); });
+  document.getElementById('tfReset').addEventListener('click', () => {
+    tasksFilter = { types: new Set(), folders: new Set() };
+    saveTasksFilter();
+    renderTasksFilterSheet();
+    renderTasks();
+  });
+  tfOverlay.addEventListener('click', (e) => {
+    const chip = e.target.closest('.tf-chip');
+    if (!chip) return;
+    const toggle = (set, v) => { if (set.has(v)) set.delete(v); else set.add(v); };
+    if (chip.dataset.type) toggle(tasksFilter.types, chip.dataset.type);
+    if (chip.dataset.folder) toggle(tasksFilter.folders, chip.dataset.folder);
+    saveTasksFilter();
+    renderTasksFilterSheet();
+    renderTasks();
+  });
+
 
   // =====================================================================
   // --- SELECTION MODE: hold note/tabel manapun buat pilih banyak sekaligus
@@ -6020,14 +6308,20 @@
     if (error) {
       console.error('Gagal memuat semua notes:', error.message);
       allNotesData = [];
+      allKasbonNotes = [];
       return;
     }
 
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
 
-    // Note warung & kasbon TIDAK ikut Tasks/Search buku besar
+    // Note warung & kasbon TIDAK ikut Search/tugas buku besar
     allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n)).map(n => ({
+      ...n,
+      folder: folderNameById[n.folder_id] || 'Uncategorized'
+    }));
+    // Note kasbon disimpan terpisah: dipakai tugas "Kasbon belum lunas" di Tasks
+    allKasbonNotes = (data || []).filter(n => isKasbonNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
