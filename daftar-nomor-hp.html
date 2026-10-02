@@ -45,7 +45,9 @@
   }
   body.theme-light { color-scheme: light; }
   body.theme-light .back-btn { background: rgba(0, 0, 0, 0.06); }
-  body.theme-light .search-box { background: rgba(255, 255, 255, 0.9); }
+  body.theme-light .top-bar { background: rgba(245, 245, 247, 0.6); }
+  body.theme-light .search-pill,
+  body.theme-light .cancel-btn { background: rgba(255, 255, 255, 0.55); }
 
   body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
   body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
@@ -88,7 +90,7 @@
   .page {
     max-width: 640px;
     margin: 0 auto;
-    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 32px) 16px;
+    padding: calc(var(--safe-top) + 84px) 16px calc(var(--safe-bottom) + 110px) 16px;
     animation: pageIn 0.5s var(--ease-spring) both;
     transition: opacity 0.22s ease, transform 0.22s ease;
   }
@@ -99,11 +101,25 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  .top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    padding: calc(var(--safe-top) + 10px) 16px 12px 16px;
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    backdrop-filter: blur(24px) saturate(1.6);
+    border-bottom: 1px solid var(--card-border-dark);
+    transition: background-color 0.3s ease;
+  }
   .head {
+    max-width: 640px;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 18px;
   }
 
   .back-btn {
@@ -129,36 +145,73 @@
     transition: opacity 0.2s ease;
   }
 
-  .search-wrap {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    padding: 6px 0 12px;
-    margin: 0 -4px;
-    padding-left: 4px;
-    padding-right: 4px;
+  .bottom-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--safe-bottom) + 14px);
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    z-index: 40;
+    transition: bottom 0.28s var(--ease-spring);
   }
+  .bottom-bar.active { bottom: calc(var(--kb, 0px) + 10px); }
 
-  .search-box {
+  .cancel-btn {
+    width: 0;
+    height: 52px;
+    flex-shrink: 0;
+    margin-right: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(26, 25, 28, 0.55);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    backdrop-filter: blur(28px) saturate(1.6);
+    box-shadow: inset 0 0 0 1px var(--glass-pill-border), 0 4px 18px rgba(0, 0, 0, 0.18);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+    transition: width 0.3s var(--ease-spring), margin 0.3s var(--ease-spring), opacity 0.2s ease, transform 0.3s var(--ease-spring);
+  }
+  .cancel-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+  .bottom-bar.active .cancel-btn {
+    width: 52px;
+    margin-right: 12px;
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+  }
+  .bottom-bar.active .cancel-btn:active { transform: scale(0.88); }
+
+  .search-pill {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
     display: flex;
     align-items: center;
     gap: 10px;
-    height: 48px;
-    padding: 0 14px;
+    padding: 0 14px 0 18px;
     border-radius: var(--radius-pill);
-    background: var(--glass-pill-bg);
+    background: rgba(26, 25, 28, 0.55);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    backdrop-filter: blur(28px) saturate(1.6);
     border: 1px solid var(--glass-pill-border);
-    -webkit-backdrop-filter: blur(18px);
-    backdrop-filter: blur(18px);
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s var(--ease-spring);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
-  .search-box:focus-within {
+  .search-pill:focus-within {
     border-color: var(--accent-yellow);
-    box-shadow: 0 0 0 4px var(--accent-yellow-glow);
-    transform: scale(1.01);
+    box-shadow: 0 0 0 4px var(--accent-yellow-glow), 0 4px 18px rgba(0, 0, 0, 0.18);
   }
-  .search-box svg { width: 18px; height: 18px; color: var(--text-secondary); flex-shrink: 0; }
-  .search-box input {
+  .search-pill > svg { width: 19px; height: 19px; color: var(--text-secondary); flex-shrink: 0; }
+  .search-pill input {
     flex: 1;
     min-width: 0;
     height: 100%;
@@ -168,7 +221,7 @@
     font-size: 16px;
     font-weight: 500;
   }
-  .search-box input::placeholder { color: var(--text-secondary); }
+  .search-pill input::placeholder { color: var(--text-secondary); }
 
   .clear-btn {
     width: 24px;
@@ -225,15 +278,25 @@
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 8px 14px 16px;
+    gap: 12px;
+    padding: 14px 8px 14px 14px;
+  }
+
+  .idx {
+    min-width: 22px;
+    flex-shrink: 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
   }
 
   .wa-badge {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     flex-shrink: 0;
-    border-radius: 14px;
+    border-radius: 13px;
     background: rgba(37, 211, 102, 0.14);
     color: var(--wa-green);
     display: flex;
@@ -244,21 +307,29 @@
   .wa-badge svg { width: 22px; height: 22px; }
   .row:active .wa-badge { transform: scale(0.9) rotate(-6deg); background: rgba(37, 211, 102, 0.24); }
 
-  .info { min-width: 0; }
+  .info { min-width: 0; flex: 1; }
+  .sub {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
   .num {
     font-size: 17px;
     font-weight: 700;
     letter-spacing: 0.2px;
     font-variant-numeric: tabular-nums;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .meta {
     font-size: 12.5px;
     color: var(--text-secondary);
     margin-top: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.35;
   }
   .meta b { color: var(--accent-yellow); font-weight: 600; }
 
@@ -325,7 +396,7 @@
   .toast {
     position: fixed;
     left: 50%;
-    bottom: calc(var(--safe-bottom) + 28px);
+    bottom: calc(var(--safe-bottom) + 88px + var(--kb, 0px));
     transform: translate(-50%, 24px) scale(0.92);
     padding: 12px 20px;
     border-radius: var(--radius-pill);
@@ -367,7 +438,7 @@
   })();
 </script>
 
-<div class="page" id="page">
+<div class="top-bar">
   <div class="head">
     <button class="back-btn" id="btnBack" aria-label="Kembali">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -380,24 +451,32 @@
       <p id="subtitle">Memuat data...</p>
     </div>
   </div>
+</div>
 
-  <div class="search-wrap">
-    <div class="search-box">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-      </svg>
-      <input type="text" id="searchInput" inputmode="tel" placeholder="Cari nomor..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Cari nomor">
-      <button class="clear-btn" id="btnClear" aria-label="Hapus pencarian">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    </div>
-  </div>
-
+<div class="page" id="page">
   <div class="list" id="list"></div>
+</div>
+
+<div class="bottom-bar" id="bottomBar">
+  <button class="cancel-btn" id="btnCancel" aria-label="Batal cari" tabindex="-1">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12"></line>
+      <polyline points="12 19 5 12 12 5"></polyline>
+    </svg>
+  </button>
+  <div class="search-pill">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="7"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input type="text" id="searchInput" inputmode="text" enterkeyhint="search" placeholder="Cari nama atau nomor..." autocomplete="off" autocorrect="off" spellcheck="false" aria-label="Cari nama atau nomor">
+    <button class="clear-btn" id="btnClear" aria-label="Hapus pencarian">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -518,7 +597,7 @@
     if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
       return content.records.map(r => {
         const d = r && r.created_at ? new Date(r.created_at) : null;
-        return { text: r ? r.keterangan : '', date: d && !isNaN(d) ? d : null };
+        return { text: r ? r.keterangan : '', date: d && !isNaN(d) ? d : null, name: r && r.customer ? String(r.customer).trim() : '' };
       });
     }
 
@@ -526,9 +605,10 @@
       const kc = content.columns.find(c => normalizeKey(c.label) === 'keterangan');
       if (!kc) return [];
       const dc = content.columns.find(c => normalizeKey(c.label) === 'tanggal');
+      const cc = content.columns.find(c => normalizeKey(c.label) === 'customer');
       return content.rows.map(r => {
         const cells = (r && r.cells) || {};
-        return { text: cells[kc.id], date: dc ? parseDMY(cells[dc.id]) : null };
+        return { text: cells[kc.id], date: dc ? parseDMY(cells[dc.id]) : null, name: cc ? String(cells[cc.id] || '').trim() : '' };
       });
     }
 
@@ -544,11 +624,17 @@
         keys.forEach(key => {
           let item = map.get(key);
           if (!item) {
-            item = { key, count: 0, last: null };
+            item = { key, count: 0, last: null, name: '', nameDate: null };
             map.set(key, item);
           }
           item.count++;
           if (entry.date && (!item.last || entry.date > item.last)) item.last = entry.date;
+          // Nama yang dipakai: nama terbaru yang terisi.
+          const nm = String(entry.name || '').trim();
+          if (nm && (!item.name || (entry.date && (!item.nameDate || entry.date >= item.nameDate)))) {
+            item.name = nm;
+            item.nameDate = entry.date || item.nameDate;
+          }
         });
       });
     });
@@ -611,12 +697,17 @@
 
   function rowHtml(item, index, animClass) {
     const style = animClass === 'anim' ? ' style="--i:' + Math.min(index, 14) + '"' : '';
-    const meta = '<b>' + item.count + '</b> transaksi' + (item.last ? ' &middot; Terakhir ' + formatDate(item.last) : '');
+    const meta = '<b>' + item.count + '</b> transaksi' + (item.last ? ' &middot; ' + formatDate(item.last) : '');
     return (
       '<div class="row ' + animClass + '"' + style + '>' +
-        '<a class="row-main" href="https://wa.me/' + item.key + '" target="_blank" rel="noopener noreferrer" aria-label="Chat WhatsApp ' + formatLocal(item.key) + '">' +
+        '<a class="row-main" href="https://wa.me/' + item.key + '" target="_blank" rel="noopener noreferrer" aria-label="Chat WhatsApp ' + escapeHtml(item.name || formatLocal(item.key)) + '">' +
+          '<div class="idx">' + (index + 1) + '</div>' +
           '<div class="wa-badge">' + ICON_WA + '</div>' +
-          '<div class="info"><div class="num">' + formatDisplay(item.key) + '</div><div class="meta">' + meta + '</div></div>' +
+          '<div class="info">' +
+            (item.name
+              ? '<div class="num">' + escapeHtml(item.name) + '</div><div class="sub">' + formatDisplay(item.key) + '</div>'
+              : '<div class="num">' + formatDisplay(item.key) + '</div>') +
+            '<div class="meta">' + meta + '</div></div>' +
         '</a>' +
         '<button class="copy-btn" data-copy="' + formatLocal(item.key) + '" aria-label="Salin nomor">' + ICON_COPY + '</button>' +
       '</div>'
@@ -624,12 +715,16 @@
   }
 
   function getFiltered() {
-    const raw = searchInput.value.trim();
+    const raw = searchInput.value.trim().toLowerCase();
+    if (!raw) return allNumbers;
     const digits = raw.replace(/\D/g, '');
-    if (!digits) return allNumbers;
-    const q1 = digits;
+    const hasLetters = /[a-z]/.test(raw);
     const q2 = digits.startsWith('0') ? '62' + digits.slice(1) : null;
-    return allNumbers.filter(it => it.key.includes(q1) || (q2 && it.key.includes(q2)));
+    return allNumbers.filter(it => {
+      if (it.name && it.name.toLowerCase().includes(raw)) return true;
+      if (hasLetters || !digits) return false;
+      return it.key.includes(digits) || (q2 && it.key.includes(q2));
+    });
   }
 
   function updateSubtitle(shown) {
@@ -651,7 +746,7 @@
     const items = getFiltered();
     updateSubtitle(items.length);
     if (!items.length) {
-      renderState(ICON_PHONE, 'Nomor tidak ditemukan', 'Tidak ada nomor yang cocok dengan pencarian Anda.', null);
+      renderState(ICON_PHONE, 'Tidak ditemukan', 'Tidak ada nama atau nomor yang cocok dengan pencarian Anda.', null);
       return;
     }
     listEl.innerHTML = items.map((it, i) => rowHtml(it, i, animClass)).join('');
@@ -729,6 +824,47 @@
     btnClear.classList.remove('show');
     if (allNumbers.length) renderList('fade');
     searchInput.focus();
+  });
+
+  const bottomBar = document.getElementById('bottomBar');
+  const btnCancel = document.getElementById('btnCancel');
+  const rootStyle = document.documentElement.style;
+
+  // Posisi bar pencarian mengikuti tinggi keyboard.
+  function updateKeyboardOffset() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    rootStyle.setProperty('--kb', kb + 'px');
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', updateKeyboardOffset);
+    window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
+  }
+
+  searchInput.addEventListener('focus', () => {
+    bottomBar.classList.add('active');
+    updateKeyboardOffset();
+  });
+  searchInput.addEventListener('blur', () => {
+    bottomBar.classList.remove('active');
+    rootStyle.setProperty('--kb', '0px');
+  });
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') searchInput.blur();
+  });
+
+  // Tombol di dalam bar tidak boleh mencuri fokus supaya keyboard tidak menutup duluan.
+  [btnCancel, btnClear].forEach(btn => {
+    btn.addEventListener('pointerdown', (e) => e.preventDefault());
+    btn.addEventListener('mousedown', (e) => e.preventDefault());
+  });
+
+  btnCancel.addEventListener('click', () => {
+    searchInput.value = '';
+    btnClear.classList.remove('show');
+    if (allNumbers.length) renderList('fade');
+    searchInput.blur();
   });
 
   document.getElementById('btnBack').addEventListener('click', () => {
