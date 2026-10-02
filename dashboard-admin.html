@@ -2848,11 +2848,54 @@
   });
 
   // Ambil semua folder kategori + jumlah note di masing-masing folder
+  // =====================================================================
+  // --- FOLDER PERMANEN ---
+  // 5 folder utama di bawah ini bersifat tetap: dibuat otomatis kalau belum ada,
+  // dan TIDAK bisa di-Edit / di-Delete / di-rename (sama seperti folder Karyawan).
+  // Isinya tetap folder asli di database, jadi semua catatan lama tetap aman.
+  // =====================================================================
+  const PERMANENT_FOLDERS = ['BUKU BESAR', 'BUKU HUTANG PIUTANG', 'BUKU WARUNG', 'BUKU OPERASIONAL', 'BUKU KASBON'];
+  const PERMANENT_FOLDER_COLOR = '#D9A536';
+  let ensuringPermanentFolders = false;
+
+  function isPermanentName(name) {
+    const k = normalizeKey(name || '');
+    return PERMANENT_FOLDERS.some(n => normalizeKey(n) === k);
+  }
+  // Folder admin (bukan akun customer) yang namanya termasuk daftar permanen
+  function isPermanentFolder(cat) {
+    return !!cat && !cat.ownerUsername && isPermanentName(cat.name);
+  }
+
   async function loadCategories() {
-    const { data: folders, error: folderError } = await supabaseClient
+    let { data: folders, error: folderError } = await supabaseClient
       .from('folders')
       .select('*')
       .order('created_at', { ascending: true });
+
+    // Pastikan 5 folder permanen selalu ada (buat otomatis yang belum ada)
+    if (!folderError && !ensuringPermanentFolders) {
+      const have = new Set((folders || [])
+        .filter(f => f && !f.owner_username && typeof f.name === 'string')
+        .map(f => normalizeKey(f.name)));
+      const missing = PERMANENT_FOLDERS.filter(n => !have.has(normalizeKey(n)));
+      if (missing.length) {
+        ensuringPermanentFolders = true;
+        try {
+          const { error: insErr } = await supabaseClient
+            .from('folders')
+            .insert(missing.map(name => ({ name, color: PERMANENT_FOLDER_COLOR })));
+          if (insErr) {
+            console.error('Gagal membuat folder permanen:', insErr.message);
+          } else {
+            const re = await supabaseClient.from('folders').select('*').order('created_at', { ascending: true });
+            if (!re.error) folders = re.data;
+          }
+        } finally {
+          ensuringPermanentFolders = false;
+        }
+      }
+    }
 
     if (folderError) {
       console.error('Gagal memuat folder:', folderError.message);
@@ -3084,6 +3127,8 @@
       item.addEventListener('touchstart', () => {
         longPressed = false;
         if (isPjId(item.dataset.catId)) return; // folder karyawan virtual: tidak ada Edit/Delete
+        const pressedCat = categoriesData.find(c => c.id === item.dataset.catId);
+        if (isPermanentFolder(pressedCat)) return; // folder permanen: tidak ada Edit/Delete
         pressTimer = setTimeout(() => {
           longPressed = true;
           deleteModeCatId = item.dataset.catId;
@@ -3356,6 +3401,7 @@
 
   // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
   async function handleDeleteCategory(catId, catName) {
+    if (isPermanentFolder(categoriesData.find(c => c.id === catId))) return; // folder permanen tidak bisa dihapus
     const confirmDelete = await askDeleteVerification({
       title: 'Hapus Folder?',
       text: 'Folder "' + catName + '" dan semua catatan di dalamnya akan dipindahkan ke Sampah (bisa dipulihkan ' + TRASH_DAYS + ' hari).',
@@ -5531,6 +5577,7 @@
   let editingFolderId = null; // null = mode bikin folder baru, ada isinya = lagi edit folder ini
 
   function openNewFolderModal(catId = null) {
+    if (catId && isPermanentFolder(categoriesData.find(c => c.id === catId))) return; // folder permanen tidak bisa diedit
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
     editingFolderId = catId;
@@ -5589,6 +5636,12 @@
 
     const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
     const isEditing = !!editingFolderId;
+
+    // Nama folder permanen sudah dipakai & dikunci — jangan bikin duplikat
+    if (isPermanentName(name)) {
+      alert('Folder "' + name + '" sudah ada dan bersifat permanen.');
+      return;
+    }
 
     isSavingFolder = true;
     btnNewFolderComplete.disabled = true;
