@@ -37,9 +37,6 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  /* --- Pilihan Font (dipilih dari Settings index.html, disinkronkan lewat
-     localStorage key 'bm-font' & 'bm-font-bold' — sama persis di semua
-     halaman) --- */
   body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
   body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
   body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
@@ -87,10 +84,6 @@
     color: #000000 !important;
   }
 
-  /* Elemen "glass pill" yang latarnya sebelumnya hardcode gelap — disamakan
-     supaya beneran ikut tema (dulu teksnya bisa ke-cover sama backgroundnya
-     sendiri di mode light: search bar utama, tombol pensil, search box di
-     overlay Search, bottom bar Pin/Pindah/Hapus pas seleksi note). */
   body.theme-light .search-pill,
   body.theme-light .btn-compose-pencil,
   body.theme-light .search-input-box,
@@ -98,8 +91,6 @@
     background: rgba(255, 255, 255, 0.85) !important;
   }
 
-  /* Search bar utama & tombol pensil: dibikin lebih "glassmorphism" (kaca buram,
-     bukan solid) + hilangin shadow item hitam pekat di bawahnya. */
   body.theme-light .search-pill,
   body.theme-light .btn-compose-pencil {
     background: rgba(255, 255, 255, 0.35) !important;
@@ -152,7 +143,6 @@
     transition: background-color 0.25s ease;
   }
 
-  /* --- Top Header Navigation --- */
   .header {
     padding: calc(var(--safe-top) + 12px) 16px 8px 16px;
     display: flex;
@@ -187,7 +177,6 @@
 
   .header-btn svg { width: 20px; height: 20px; }
 
-  /* Segmented Pill Tabs */
   .segmented-tabs {
     display: flex;
     position: relative;
@@ -218,7 +207,6 @@
     transform: scale(1.02);
   }
 
-  /* --- View Mode Dropdown Popup --- */
   .view-popup {
     position: absolute;
     top: calc(var(--safe-top) + 60px);
@@ -271,7 +259,6 @@
   .view-option:active { background: rgba(255, 255, 255, 0.08); }
   .view-option svg { width: 17px; height: 17px; }
 
-  /* --- Scroll Container --- */
   .content-scroll {
     flex: 1;
     overflow-y: auto;
@@ -304,7 +291,6 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* --- Empty State Box --- */
   .empty-state {
     display: flex;
     flex-direction: column;
@@ -334,7 +320,6 @@
     to { opacity: 1; }
   }
 
-  /* --- Note Layout Modes --- */
   .notes-container {
     display: grid;
     gap: 10px;
@@ -376,7 +361,6 @@
     animation: cardAppear 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 
-  /* --- Pekan (Thu-Wed) group header, dipakai pas notes lagi difilter per bulan --- */
   .week-group-header {
     grid-column: 1 / -1;
     font-size: 12.5px;
@@ -396,7 +380,6 @@
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   }
 
-  /* Liquid Glass Backdrop */
   .note-card.liquid-glass {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(240, 235, 225, 0.82) 100%) !important;
     border: 1px solid rgba(255, 255, 255, 0.65);
@@ -468,7 +451,6 @@
     border-radius: 6px;
   }
 
-  /* --- Tasks View Section: kartu data belum lengkap --- */
   .tasks-container { display: none; }
   .task-item {
     background: var(--card-surface-dark);
@@ -502,7 +484,6 @@
   }
 
 
-  /* --- Tasks (dirombak): header + filter, ringkasan, kartu per jenis --- */
   .tasks-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .tasks-head .page-title { margin-bottom: 2px; }
   .tasks-head .section-label { margin: 0; }
@@ -536,7 +517,6 @@
   .tk-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--card-border-dark); font-size: 11.5px; color: var(--text-secondary); }
   .tk-age { font-weight: 800; color: var(--tc); }
 
-  /* lembar filter */
   .tf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); z-index: 350; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
   .tf-overlay.open { opacity: 1; pointer-events: auto; }
   .tf-sheet { width: 100%; max-height: 82vh; overflow-y: auto; background: var(--card-surface-dark); border-radius: 26px 26px 0 0; padding: 10px 18px calc(var(--safe-bottom) + 18px); transform: translateY(100%); transition: transform .26s cubic-bezier(.32,.72,0,1); }
@@ -555,7 +535,6 @@
   .tf-reset { background: var(--glass-pill-bg); color: var(--text-primary); }
   .tf-done { background: var(--accent-yellow); color: #1C1B19; }
 
-  /* --- Full Width Search Bar --- */
   .bottom-bar {
     position: absolute;
     bottom: calc(var(--safe-bottom) + 14px);
@@ -611,7 +590,6 @@
   .search-pill svg { width: 19px; height: 19px; }
   .search-pill span { font-size: 14.5px; font-weight: 500; }
 
-  /* --- Drawer Folder Side Sheet --- */
   .drawer-overlay {
     position: fixed;
     inset: 0;
@@ -744,7 +722,6 @@
   }
   body.theme-light .folder-section-divider { border-top-color: rgba(0,0,0,0.08); }
 
-  /* --- Folder Year/Month Dropdown Accordion --- */
   .folder-year-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 14px; animation: folderAccIn 0.16s ease; }
   .folder-month-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 4px 14px; animation: folderAccIn 0.16s ease; }
   @keyframes folderAccIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
@@ -848,7 +825,6 @@
   .drawer-foot-btn:active { transform: scale(0.9); }
   .drawer-foot-btn svg { width: 20px; height: 20px; }
 
-  /* --- Settings Screen Overlay --- */
   .settings-screen {
     position: fixed;
     inset: 0;
@@ -933,7 +909,6 @@
 
   .settings-item-right svg { width: 16px; height: 16px; color: var(--text-secondary); }
 
-  /* Custom iOS/Infinix Style Toggle Switch */
   .switch {
     position: relative;
     display: inline-block;
@@ -973,7 +948,6 @@
     transform: translateX(22px);
   }
 
-  /* --- Fullscreen Search Overlay --- */
   .search-overlay {
     position: fixed;
     inset: 0;
@@ -1032,7 +1006,6 @@
     cursor: pointer;
   }
 
-  /* --- Search results: "Found N results" + filter folder --- */
   .search-results-header {
     display: flex;
     align-items: center;
@@ -1086,7 +1059,6 @@
   .search-filter-option + .search-filter-option { border-top: 1px solid rgba(255, 255, 255, 0.1); }
   .search-filter-option.selected { color: var(--accent-yellow); }
 
-  /* --- Kartu hasil pencarian note, gaya Infinix Notes --- */
   .search-note-card {
     padding: 14px 4px;
     border-bottom: 1px solid var(--card-border-dark);
@@ -1117,7 +1089,6 @@
   }
   .search-note-folder-row svg { width: 15px; height: 15px; flex-shrink: 0; }
 
-  /* --- Modal Container for Editor Viewer --- */
   .editor-modal {
     position: fixed;
     inset: 0;
@@ -1130,7 +1101,6 @@
   .editor-modal.open { transform: translateY(0); }
   .editor-frame { width: 100%; height: 100%; border: none; }
 
-  /* --- Auth Guard Loading Screen --- */
   .auth-guard-screen {
     position: fixed;
     inset: 0;
@@ -1157,7 +1127,6 @@
   .logout-row .settings-item-title { color: #F0555C; }
 
 
-  /* ---------- Puzzle verifikasi hapus ---------- */
   .pzv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 0 20px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
   .pzv-overlay.open { opacity: 1; pointer-events: auto; }
   .pzv-card { width: 100%; max-width: 380px; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: 22px; padding: 22px 18px 18px; transform: translateY(14px) scale(.98); transition: transform .2s ease; }
@@ -1187,7 +1156,6 @@
   .pzv-confirm { background: #F0555C; color: #fff; }
   .pzv-confirm:disabled { opacity: .4; filter: grayscale(.4); pointer-events: none; }
 
-  /* ---------- Sampah ---------- */
   .trash-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 260; transform: translateX(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
   .trash-screen.open { transform: translateX(0); }
   .trash-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-shrink: 0; }
@@ -1207,8 +1175,6 @@
   .trash-btn-restore { background: var(--accent-yellow); color: #1C1B19; }
   .trash-btn-purge { background: transparent; border: 1.5px solid rgba(240,85,92,0.6) !important; color: #F0555C; }
 
-  /* ---------- Kelola Karyawan (styling sama persis dgn Kelola Customer,
-       cuma nama class-nya di-alias biar nggak duplikat CSS) ---------- */
   .karyawan-screen, .karyawan-form-overlay, .karyawan-form-sheet { all: unset; }
   .karyawan-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 260; transform: translateX(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
   .karyawan-screen.open { transform: translateX(0); }
@@ -1224,7 +1190,6 @@
   .karyawan-form-sheet.open { transform: translateY(0); }
   .karyawan-form-sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
 
-  /* ---------- Kelola Customer ---------- */
   .customer-screen {
     position: fixed; inset: 0;
     background: var(--bg-dark);
@@ -1311,7 +1276,6 @@
   #btnCustomerSubmit { background: var(--accent-yellow); color: #1C1B19; }
   #btnCustomerSubmit:disabled { opacity: 0.5; pointer-events: none; }
 
-  /* --- New Folder Bottom Sheet --- */
   .new-folder-overlay {
     position: fixed;
     inset: 0;
@@ -1491,7 +1455,6 @@
 
   .btn-new-folder-complete:active { transform: scale(0.97); }
 
-  /* --- Selection Mode: hold tabel/note manapun --- */
   .selection-header {
     display: none;
     align-items: center;
@@ -1555,7 +1518,6 @@
   }
   .note-pin-badge svg { width: 12px; height: 12px; color: var(--accent-yellow); }
 
-  /* --- Bottom bar mode seleksi (Pin / Pindah Folder / Hapus) --- */
   .selection-bottom-bar {
     display: none;
     position: absolute;
@@ -1596,7 +1558,6 @@
   .sel-bar-btn svg { width: 21px; height: 21px; }
   .sel-bar-btn.danger { color: #F0555C; }
 
-  /* --- Note Action Sheet: liquid glass popup dari bawah --- */
   .note-action-overlay {
     position: fixed;
     inset: 0;
@@ -1673,7 +1634,6 @@
   .nas-folder-row:active { background: rgba(255, 255, 255, 0.06); }
   .nas-folder-row svg { width: 19px; height: 19px; flex-shrink: 0; }
 
-  /* --- Mini Toast: notifikasi singkat auto-hilang (buat aksi ringan kayak Pin) --- */
   .mini-toast {
     position: fixed;
     left: 50%;
@@ -1700,7 +1660,6 @@
   .mini-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .mini-toast svg { width: 15px; height: 15px; color: var(--accent-yellow); flex-shrink: 0; }
 
-  /* --- Settings Top Header (dipakai overlay Detail Note) --- */
   .settings-top {
     display: flex;
     align-items: center;
@@ -1710,7 +1669,6 @@
   }
   .settings-top h2 { font-size: 25px; font-weight: 800; color: var(--text-primary); }
 
-  /* --- Liquid Glass Alert (dipakai Sync/User Agreement/Privacy Policy) --- */
   .liquid-alert-backdrop {
     position: fixed;
     inset: 0;
@@ -1763,11 +1721,6 @@
   }
   .liquid-alert-btn:active { opacity: 0.85; }
 
-  /* =====================================================================
-     --- Note Detail (Preview): tampil dulu sebelum masuk editor. Klik kartu
-     note di dashboard sekarang buka preview read-only ini (sama seperti
-     viewer publik), lalu tombol pensil di sini yang membuka editor.
-     ===================================================================== */
   .note-detail-overlay {
     position: fixed;
     inset: 0;
@@ -1846,7 +1799,6 @@
 
   .note-detail-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
-  /* --- Tombol Share (liquid glass, beranimasi pulse) --- */
   .btn-share-note { position: relative; }
   .btn-share-note::after {
     content: '';
@@ -1864,11 +1816,9 @@
   }
   .btn-share-note:active { transform: scale(0.9); }
 
-  /* --- Tombol Pensil: masuk ke editor (perilaku "klik note" yang lama) --- */
   .btn-edit-note { background: var(--accent-yellow); color: #1C1B19; }
   .btn-edit-note:active { transform: scale(0.9); }
 
-  /* --- Lightbox: tap thumbnail gambar buat lihat ukuran penuh --- */
   .image-lightbox-overlay {
     position: fixed;
     inset: 0;
@@ -1933,7 +1883,6 @@
     cursor: pointer;
   }
 
-  /* --- Share Sheet: liquid glass popup dari bawah --- */
   .share-sheet-overlay {
     position: fixed;
     inset: 0;
@@ -2006,7 +1955,6 @@
   }
   .share-sheet-cancel:active { background: rgba(255, 255, 255, 0.14); }
 
-  /* --- Loading overlay ringan saat lagi generate PDF/Gambar --- */
   .share-loading-overlay {
     position: fixed;
     inset: 0;
@@ -2031,8 +1979,6 @@
     animation: shareSpin 0.7s linear infinite;
   }
   @keyframes shareSpin { to { transform: rotate(360deg); } }
-  /* --- Fix: bayangan pop-up bawah tidak boleh nongol saat pop-up tertutup ---
-     Sheet ditaruh lebih turun dari layar + shadow dimatikan sampai .open. */
   .share-sheet:not(.open),
   .note-action-sheet:not(.open),
   .new-folder-sheet:not(.open),
@@ -2045,7 +1991,6 @@
 </head>
 <body>
 
-<!-- Auth Guard: tampil sebentar saat memverifikasi sesi admin -->
 <div class="auth-guard-screen" id="authGuardScreen">
   <div class="auth-guard-spinner"></div>
   <span>Memverifikasi akses admin...</span>
@@ -2053,7 +1998,6 @@
 
 <div class="screen-container" id="screenContainer" style="display:none;">
 
-  <!-- Top Floating Header -->
   <header class="header">
     <button class="header-btn" id="btnOpenDrawer" aria-label="Menu Folders">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -2079,7 +2023,6 @@
     </button>
   </header>
 
-  <!-- Header Mode Seleksi (muncul saat hold note/tabel manapun) -->
   <header class="header selection-header" id="selectionHeader">
     <button class="header-btn" id="btnSelectionBack">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
@@ -2090,7 +2033,6 @@
     </button>
   </header>
 
-  <!-- View Dropdown Pop-up -->
   <div class="view-popup" id="viewPopup">
     <button class="view-option" data-view="view-list">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
@@ -2106,18 +2048,14 @@
     </button>
   </div>
 
-  <!-- Main Scrollable Feed -->
   <main class="content-scroll">
     <div id="notesSection">
-      <!-- Title Kategori Dinamis -->
       <h1 class="page-title" id="currentCategoryTitle">PILIH KATEGORI</h1>
       <p class="section-label" id="currentCategorySubtitle">Previous 7 Days</p>
 
-      <!-- Supabase Data Feed Container -->
       <div class="notes-container view-grid" id="notesList"></div>
     </div>
 
-    <!-- Tasks Tab Content: daftar baris data yang belum lengkap di semua tabel/folder -->
     <div class="tasks-container" id="tasksSection">
       <div class="tasks-head">
         <div>
@@ -2134,7 +2072,6 @@
     </div>
   </main>
 
-  <!-- Bottom Full-Width Search Bar -->
   <div class="bottom-bar">
     <div class="search-pill" id="btnSearchOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2148,7 +2085,6 @@
     </button>
   </div>
 
-  <!-- Bottom Bar Mode Seleksi: Pin / Pindah Folder / Hapus -->
   <div class="selection-bottom-bar" id="selectionBottomBar">
     <button class="sel-bar-btn" id="btnSelPin">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
@@ -2166,7 +2102,6 @@
 
 </div>
 
-<!-- Drawer Folder Side Sheet -->
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
@@ -2174,7 +2109,6 @@
     <button class="btn-create-category" id="btnCreateCategory">New</button>
   </div>
   
-  <!-- Dynamic Category List from Supabase -->
   <div class="folder-list" id="categoryFolderList"></div>
 
   <div class="drawer-footer">
@@ -2196,7 +2130,6 @@
   </div>
 </aside>
 
-<!-- Settings Screen Overlay -->
 <div class="settings-screen" id="settingsScreen">
   <div class="settings-header">
     <button class="settings-back-btn" id="btnSettingsBack" aria-label="Kembali">
@@ -2282,7 +2215,6 @@
   </div>
 </div>
 
-<!-- Kelola Customer Screen -->
 <div class="customer-screen" id="customerScreen">
   <div class="customer-header">
     <button class="settings-back-btn" id="btnCustomerScreenBack" aria-label="Kembali">
@@ -2299,7 +2231,6 @@
   </div>
 </div>
 
-<!-- Form Tambah Customer -->
 <div class="customer-form-overlay" id="customerFormOverlay"></div>
 <div class="customer-form-sheet" id="customerFormSheet">
   <h3>Tambah Customer Baru</h3>
@@ -2326,7 +2257,6 @@
   </div>
 </div>
 
-<!-- Sampah Screen -->
 <div class="trash-screen" id="trashScreen">
   <div class="trash-header">
     <button class="settings-back-btn" id="btnTrashBack" aria-label="Kembali">
@@ -2344,7 +2274,6 @@
   </div>
 </div>
 
-<!-- Lembar filter Tasks -->
 <div class="tf-overlay" id="tfOverlay">
   <div class="tf-sheet" id="tfSheet">
     <div class="tf-grab"></div>
@@ -2360,7 +2289,6 @@
   </div>
 </div>
 
-<!-- Puzzle verifikasi hapus -->
 <div class="pzv-overlay" id="pzvOverlay">
   <div class="pzv-card" id="pzvCard">
     <h3 id="pzvTitle">Hapus?</h3>
@@ -2382,7 +2310,6 @@
   </div>
 </div>
 
-<!-- Kelola Karyawan Screen -->
 <div class="karyawan-screen" id="karyawanScreen">
   <div class="karyawan-header">
     <button class="settings-back-btn" id="btnKaryawanScreenBack" aria-label="Kembali">
@@ -2399,7 +2326,6 @@
   </div>
 </div>
 
-<!-- Form Tambah Karyawan -->
 <div class="karyawan-form-overlay" id="karyawanFormOverlay"></div>
 <div class="karyawan-form-sheet" id="karyawanFormSheet">
   <h3>Tambah Karyawan Baru</h3>
@@ -2426,7 +2352,6 @@
   </div>
 </div>
 
-<!-- Search Overlay -->
 <div class="search-overlay" id="searchOverlay">
   <div class="search-top">
     <button class="header-btn" id="btnSearchBack">
@@ -2447,7 +2372,6 @@
   <div class="chips-container" id="searchResultsList"></div>
 </div>
 
-<!-- New Folder Bottom Sheet -->
 <div class="new-folder-overlay" id="newFolderOverlay"></div>
 <div class="new-folder-sheet" id="newFolderSheet">
   <div class="new-folder-handle" id="newFolderHandle"></div>
@@ -2483,12 +2407,10 @@
   <button class="btn-new-folder-complete" id="btnNewFolderComplete">Completed</button>
 </div>
 
-<!-- Modal Container for Editor Viewer -->
 <div class="editor-modal" id="editorModal">
   <iframe id="editorFrame" class="editor-frame" src="editor-data-administrator.html"></iframe>
 </div>
 
-<!-- Liquid Glass Alert -->
 <div class="liquid-alert-backdrop" id="liquidAlertBackdrop">
   <div class="liquid-alert-box">
     <p class="liquid-alert-title" id="liquidAlertTitle">Judul</p>
@@ -2497,7 +2419,6 @@
   </div>
 </div>
 
-<!-- Note Detail Overlay: preview read-only dulu sebelum masuk editor -->
 <div class="note-detail-overlay" id="noteDetailOverlay">
   <div class="settings-top">
     <button class="header-btn" id="btnNoteDetailBack">
@@ -2519,7 +2440,6 @@
   </div>
 </div>
 
-<!-- Lightbox: lihat gambar ukuran penuh (tap thumbnail di tabel preview) — geser kalau bukti 2 foto -->
 <div class="image-lightbox-overlay" id="imageLightboxOverlay">
   <button class="image-lightbox-close" id="btnLightboxClose">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -2530,7 +2450,6 @@
   <div class="lightbox-dots" id="lightboxDots"></div>
 </div>
 
-<!-- Share Sheet: pilihan Bagikan Link / Export PDF / Export Gambar / Export Excel (CSV) -->
 <div class="share-sheet-overlay" id="shareSheetOverlay"></div>
 <div class="share-sheet" id="shareSheet">
   <div class="share-sheet-handle"></div>
@@ -2579,26 +2498,22 @@
   <button class="share-sheet-cancel" id="btnShareCancel">Batal</button>
 </div>
 
-<!-- Loading overlay saat generate PDF/Gambar -->
 <div class="share-loading-overlay" id="shareLoadingOverlay">
   <div class="share-loading-spinner"></div>
   <span id="shareLoadingText">Menyiapkan file...</span>
 </div>
 
-<!-- Note Action Sheet: liquid glass popup dari bawah (Pin / Pindah Folder / Hapus) -->
 <div class="note-action-overlay" id="noteActionOverlay"></div>
 <div class="note-action-sheet" id="noteActionSheet">
   <div class="note-action-handle"></div>
   <div id="noteActionContent"></div>
 </div>
 
-<!-- Mini Toast: notifikasi singkat auto-hilang -->
 <div class="mini-toast" id="miniToast">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
   <span id="miniToastText"></span>
 </div>
 
-<!-- Supabase Client SDK -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -2609,16 +2524,15 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
-      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
+      persistSession: true,
+      autoRefreshToken: true,
       storage: window.localStorage,
-      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
+      storageKey: 'bmtech-auth'
     }
   });
 </script>
 
 <script>
-  // --- Auth Guard: cuma admin yang login yang boleh lihat halaman ini ---
   (async function guardAdminAccess() {
     const { data: { session } } = await supabaseClient.auth.getSession();
 
@@ -2630,9 +2544,6 @@
     const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
 
     if (error) {
-      // Error JARINGAN (bukan konfirmasi "bukan admin") — JANGAN paksa
-      // logout/redirect, itu bisa kejadian cuma karena koneksi sempat lag.
-      // Tetap tampilkan halaman; RLS di server tetap jadi penjaga utama.
       console.error('Gagal cek status admin (jaringan?):', error.message);
       document.getElementById('authGuardScreen').style.display = 'none';
       document.getElementById('screenContainer').style.display = 'flex';
@@ -2641,21 +2552,16 @@
     }
 
     if (!isAdmin) {
-      // Ini baru konfirmasi jelas: sesi valid, TAPI email-nya bukan admin.
       await supabaseClient.auth.signOut();
       window.location.href = 'admin-login.html';
       return;
     }
 
-    // Lolos verifikasi: tampilkan halaman & muat data asli
     document.getElementById('authGuardScreen').style.display = 'none';
     document.getElementById('screenContainer').style.display = 'flex';
     await loadCategories();
-    loadAllNotesInDashboard(); // tampilan default: gabungan semua folder
+    loadAllNotesInDashboard();
 
-    // --- Realtime: dashboard otomatis update kalau ada perubahan di tabel
-    // folders/notes dari MANA PUN (editor di tab ini, device lain, admin
-    // lain yang login bareng) — nggak cuma dari postMessage dalam 1 tab.
     let realtimeRefreshTimer = null;
     function scheduleRealtimeRefresh() {
       clearTimeout(realtimeRefreshTimer);
@@ -2667,8 +2573,6 @@
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, scheduleRealtimeRefresh)
       .subscribe();
 
-    // Deep-link dari fitur Tasks di index.html (publik nggak bisa edit,
-    // jadi dilempar ke sini dulu buat login, baru auto-buka baris yang bolong itu)
     const deepLinkParams = new URLSearchParams(window.location.search);
     const deepLinkNoteId = deepLinkParams.get('id');
     if (deepLinkNoteId) {
@@ -2678,10 +2582,6 @@
         focus: deepLinkParams.get('focus')
       });
     } else {
-      // Tidak ada deep-link eksplisit — cek apakah sebelumnya ada editor yang
-      // masih terbuka (tersimpan di localStorage) saat halaman ini di-refresh
-      // (F5) di tengah ngisi data. Kalau ada, buka lagi otomatis alih-alih
-      // diam-diam kembali ke daftar dashboard.
       const resumeState = readOpenEditorState();
       if (resumeState) {
         openEditor(resumeState.noteId, { folder: resumeState.folderId });
@@ -2691,47 +2591,34 @@
 </script>
 
 <script>
-  // --- Supabase Data Stores ---
-  let categoriesData = []; // Daftar folder kategori dari database
-  let notesData = [];      // Daftar tabel/catatan di dalam kategori aktif
+  let categoriesData = [];
+  let notesData = [];
   let activeCategoryId = null;
-  let deleteModeCatId = null; // id folder yang lagi nampilin tombol "Hapus" (habis di-hold)
-  let categoriesLoadFailed = false; // true = gagal fetch (bukan beneran kosong), biar pesannya nggak nyesatin
+  let deleteModeCatId = null;
+  let categoriesLoadFailed = false;
   let notesLoadFailed = false;
-  const LAST_FOLDER_KEY = 'bm-admin-last-folder'; // simpen folder terakhir dibuka, biar kebuka lagi pas reload
+  const LAST_FOLDER_KEY = 'bm-admin-last-folder';
 
-  // --- Folder Year/Month Dropdown ---
   const MONTH_NAMES_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-  let expandedFolderId = null;       // id folder yang lagi kebuka dropdown tahunnya di drawer
-  let expandedYear = null;           // tahun yang lagi kebuka dropdown bulannya
-  let folderYearMonthData = {};      // cache per folder: { [catId]: { years: [2027,2026], monthsByYear: { 2026: [{num,label}] } } }
-  let activeFilterYear = null;       // tahun yang lagi aktif difilter di notesList (null = tidak difilter)
-  let activeFilterMonth = null;      // bulan yang lagi aktif difilter di notesList (null = tidak difilter)
+  let expandedFolderId = null;
+  let expandedYear = null;
+  let folderYearMonthData = {};
+  let activeFilterYear = null;
+  let activeFilterMonth = null;
 
-  // =====================================================================
-  // --- FOLDER KARYAWAN (PJ) ---
-  // Folder VIRTUAL (tidak disimpan di tabel folders): tiap folder = 1 nama PJ.
-  // Isinya dikumpulkan dengan memfilter SEMUA notes buku besar yang punya
-  // baris dengan kolom "PJ" = nama itu. Saat dibuka, tabel hanya menampilkan
-  // baris milik PJ tersebut (data asli di database tidak diubah).
-  // =====================================================================
   const PJ_NAMES = ['Amin', 'BM', 'Mail', 'Kuswanto', 'Yono'];
   const PJ_PREFIX = '__pj__';
   const PJ_COLOR = '#4FB58A';
   let pjNotesSource = [];
   let pjFolders = [];
 
-  // Folder virtual kedua: CUSTOMER — memfilter kolom "Customer" di semua tabel
-  // buku besar (tanpa peduli huruf besar/kecil & spasi), sama seperti folder PJ.
   const CU_PREFIX = '__cu__';
-  const CUSTOMER_NAMES = ['Puji Bengkel']; // tambah nama di sini kalau perlu customer lain
+  const CUSTOMER_NAMES = ['Puji Bengkel'];
   let customerFolders = [];
 
-  // Semua folder virtual (PJ + Customer) dianggap 'isPjId' supaya perilakunya seragam
   function isPjId(id) {
     return typeof id === 'string' && (id.indexOf(PJ_PREFIX) === 0 || id.indexOf(CU_PREFIX) === 0);
   }
-  // Ubah id folder virtual -> { field: 'PJ'|'Customer', key, name }
   function vfParse(id) {
     if (typeof id !== 'string') return null;
     if (id.indexOf(PJ_PREFIX) === 0) {
@@ -2746,12 +2633,9 @@
   }
   function pjNameFromId(id) { const v = vfParse(id); return v ? v.name : null; }
 
-  // f = { field: 'PJ'|'Customer', key: nilai ternormalisasi }
   function rowVfMatches(columns, row, f) {
     const v = getRowValueByLabel(columns, row, f.field);
     if (isEmptyValue(v)) return false;
-    // PJ boleh berisi beberapa nama sekaligus ("Yono x Mail", "Yono & Mail", "Yono/Mail", "Yono, Mail"):
-    // baris ikut masuk folder tiap nama yang disebut. Dicocokkan per kata utuh, jadi "Mail" tidak nyangkut ke kata lain.
     if (f.field === 'PJ') {
       return String(v).split(/[^A-Za-z0-9]+/).some(tok => tok && normalizeKey(tok) === f.key);
     }
@@ -2776,7 +2660,6 @@
       count: pjNotesSource.filter(n => noteHasVf(n, { field: 'PJ', key: normalizeKey(name) })).length
     }));
 
-    // Folder Customer: hanya nama yang terdaftar di CUSTOMER_NAMES
     customerFolders = CUSTOMER_NAMES.map(name => {
       const f = { field: 'Customer', key: normalizeKey(name) };
       return {
@@ -2838,8 +2721,6 @@
     loadPjNotes(catId, year, month);
   }
 
-  // Tap di MANA PUN di luar folder yang lagi nampilin popup Edit/Delete = auto tutup.
-  // Pola "click outside to close" standar, biar popup nggak nyangkut kebuka terus.
   document.addEventListener('click', (e) => {
     if (!deleteModeCatId) return;
     if (e.target.closest(`.folder-item[data-cat-id="${deleteModeCatId}"]`)) return;
@@ -2847,13 +2728,6 @@
     renderCategories();
   });
 
-  // Ambil semua folder kategori + jumlah note di masing-masing folder
-  // =====================================================================
-  // --- FOLDER PERMANEN ---
-  // 5 folder utama di bawah ini bersifat tetap: dibuat otomatis kalau belum ada,
-  // dan TIDAK bisa di-Edit / di-Delete / di-rename (sama seperti folder Karyawan).
-  // Isinya tetap folder asli di database, jadi semua catatan lama tetap aman.
-  // =====================================================================
   const PERMANENT_FOLDERS = ['BUKU BESAR', 'BUKU HUTANG PIUTANG', 'BUKU WARUNG', 'BUKU OPERASIONAL', 'BUKU KASBON'];
   const PERMANENT_FOLDER_COLOR = '#D9A536';
   let ensuringPermanentFolders = false;
@@ -2862,7 +2736,6 @@
     const k = normalizeKey(name || '');
     return PERMANENT_FOLDERS.some(n => normalizeKey(n) === k);
   }
-  // Folder admin (bukan akun customer) yang namanya termasuk daftar permanen
   function isPermanentFolder(cat) {
     return !!cat && !cat.ownerUsername && isPermanentName(cat.name);
   }
@@ -2873,7 +2746,6 @@
       .select('*')
       .order('created_at', { ascending: true });
 
-    // Pastikan 5 folder permanen selalu ada (buat otomatis yang belum ada)
     if (!folderError && !ensuringPermanentFolders) {
       const have = new Set((folders || [])
         .filter(f => f && !f.owner_username && typeof f.name === 'string')
@@ -2917,12 +2789,9 @@
       });
     }
 
-    // Folder virtual karyawan (PJ): dihitung dari semua notes buku besar
     pjNotesSource = (!notesError && allNotes) ? allNotes : [];
     rebuildPjFolders();
 
-    // Filter folder yang datanya nggak valid (mis. insert gagal separuh jalan, nama kosong/null)
-    // biar nggak ada folder "hantu" yang sebenarnya nggak ke-save dengan benar di database
     categoriesData = (folders || [])
       .filter(f => f && f.id && typeof f.name === 'string' && f.name.trim() !== '')
       .map(f => ({
@@ -2934,9 +2803,6 @@
         ownerUsername: f.owner_username || null
       }));
 
-    // Restore folder terakhir dari localStorage — CUMA di load pertama kali
-    // (activeCategoryId masih kosong), biar refresh realtime nggak maksa balik
-    // ke situ terus kalau admin lagi buka folder lain pas ada perubahan data.
     if (!activeCategoryId) {
       const savedFolderId = localStorage.getItem(LAST_FOLDER_KEY);
       if (savedFolderId === '__all__') {
@@ -2948,7 +2814,6 @@
 
     renderCategories();
 
-    // Kalau ada kategori aktif sebelumnya, muat ulang notes-nya juga
     if (activeCategoryId === '__all__') {
       loadAllNotesInDashboard();
     } else if (isPjId(activeCategoryId)) {
@@ -2958,10 +2823,6 @@
     }
   }
 
-  // Ambil semua notes milik satu folder kategori
-  // Tombol pensil (buat tabel/note baru) cuma masuk akal kalau lagi di DALAM
-  // 1 folder tertentu — di folder "All" (gabungan semua folder) disembunyikan,
-  // karena note baru butuh folder_id yang jelas mau masuk ke folder mana.
   function updateComposeButtonVisibility() {
     const btn = document.getElementById('btnComposePencil');
     if (!btn) return;
@@ -2986,14 +2847,12 @@
       notesLoadFailed = true;
     } else {
       notesLoadFailed = false;
-      // Note yang di-pin selalu tampil paling atas
       notesData = (data || []).sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0));
     }
 
     renderNotes();
   }
 
-  // Render Kategori di Drawer
   function renderCategories() {
     const container = document.getElementById('categoryFolderList');
 
@@ -3032,8 +2891,6 @@
       return;
     }
 
-    // Template 1 baris folder — dipakai sama persis untuk folder admin maupun folder customer,
-    // jadi tampilan & interaksinya (tap buka, long-press edit/delete) identik.
     function folderItemHtml(cat) {
       return `
       <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
@@ -3059,11 +2916,6 @@
     `;
     }
 
-    // Folder admin (owner_username kosong) dan folder customer (owner_username terisi,
-    // dibuat otomatis lewat menu "Tambah Customer") DIPISAH secara tampilan — customer
-    // selalu di bawah, dikasih pembatas + label, biar nggak ketuker. Isi datanya sendiri
-    // memang sudah terpisah total sejak awal (tiap folder = folder_id sendiri di database,
-    // notes customer TIDAK PERNAH digabung ke folder admin manapun).
     const adminCats = categoriesData.filter(c => !c.ownerUsername);
     const customerCats = categoriesData.filter(c => c.ownerUsername);
 
@@ -3074,7 +2926,6 @@
       ${customerCats.map(folderItemHtml).join('')}
     ` : '';
 
-    // Folder karyawan (virtual, filter kolom PJ) — tampilan sama, tanpa menu Edit/Delete
     function pjItemHtml(cat) {
       return `
       <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''}" data-cat-id="${cat.id}">
@@ -3104,17 +2955,14 @@
 
     wireAllFolderRow(container);
 
-    // Tap biasa = buka folder. Tekan & tahan (long-press) = munculin popup Edit/Delete di bawah row itu.
-    // Row 'All' dikecualikan — itu sintetis (gabungan semua folder), bukan folder asli di database.
     container.querySelectorAll('.folder-item[data-cat-id]:not([data-cat-id="__all__"])').forEach(item => {
       let pressTimer = null;
       let longPressed = false;
 
       item.addEventListener('click', (e) => {
-        if (e.target.closest('.folder-menu-popup')) return; // biar nggak ke-handle dua kali sama listener popup
+        if (e.target.closest('.folder-menu-popup')) return;
         if (longPressed) { longPressed = false; return; }
         if (deleteModeCatId && deleteModeCatId !== item.dataset.catId) {
-          // Lagi ada folder LAIN yang nampilin popup — tutup itu, lalu tetap buka dropdown folder yang ditap
           deleteModeCatId = null;
           renderCategories();
           toggleFolderAccordion(item.dataset.catId);
@@ -3126,9 +2974,9 @@
 
       item.addEventListener('touchstart', () => {
         longPressed = false;
-        if (isPjId(item.dataset.catId)) return; // folder karyawan virtual: tidak ada Edit/Delete
+        if (isPjId(item.dataset.catId)) return;
         const pressedCat = categoriesData.find(c => c.id === item.dataset.catId);
-        if (isPermanentFolder(pressedCat)) return; // folder permanen: tidak ada Edit/Delete
+        if (isPermanentFolder(pressedCat)) return;
         pressTimer = setTimeout(() => {
           longPressed = true;
           deleteModeCatId = item.dataset.catId;
@@ -3152,7 +3000,6 @@
       });
     });
 
-    // Dropdown tahun → klik tahun buka/tutup daftar bulan di tahun itu
     container.querySelectorAll('.folder-year-item').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3160,7 +3007,6 @@
       });
     });
 
-    // Dropdown bulan → klik bulan = tutup drawer, tampilkan tabel terfilter tahun+bulan itu
     container.querySelectorAll('.folder-month-item').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3168,7 +3014,6 @@
       });
     });
 
-    // Folder kosong (belum ada data bertanggal) → tombol "Buat Data"
     container.querySelectorAll('.folder-empty-create-btn').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3177,9 +3022,6 @@
     });
   }
 
-  // Buka editor catatan baru langsung di folder tertentu (dipakai dari tombol
-  // "Buat Data" pas folder itu masih kosong) — set folder aktif dulu supaya
-  // konsisten sama alur compose pensil biasa, lalu tutup drawer.
   function startNewNoteInFolder(catId) {
     const cat = categoriesData.find(c => c.id === catId);
     if (!cat) return;
@@ -3197,7 +3039,6 @@
     openEditor(null, { folder: catId });
   }
 
-  // Render dropdown tahun (dan bulan, kalau tahunnya lagi kebuka) untuk 1 folder
   function renderFolderYearAccordion(catId) {
     const meta = folderYearMonthData[catId];
 
@@ -3241,8 +3082,6 @@
     }).join('') + `</div>`;
   }
 
-  // Klik folder: buka/tutup dropdown tahun. Kalau data tahun folder ini belum pernah
-  // diambil, fetch dulu ke Supabase (cukup kolom created_at, biar ringan).
   async function toggleFolderAccordion(catId) {
     if (expandedFolderId === catId) {
       expandedFolderId = null;
@@ -3253,17 +3092,14 @@
 
     expandedFolderId = catId;
     expandedYear = null;
-    renderCategories(); // langsung kasih lihat state "Memuat tahun..."
+    renderCategories();
 
     if (!folderYearMonthData[catId]) {
       await loadFolderYearMonths(catId);
-      // User bisa aja udah pindah ke folder lain sebelum fetch ini selesai
       if (expandedFolderId === catId) renderCategories();
     }
   }
 
-  // Ambil notes di folder ini, kelompokkan jadi tahun → daftar bulan berdasarkan
-  // TANGGAL EFEKTIF-nya (judul/isi tabel, bukan cuma created_at — lihat getNoteEffectiveDate)
   async function loadFolderYearMonths(catId) {
     let yearQuery = supabaseClient.from('notes').select('id, title, content, created_at');
     if (!isPjId(catId)) yearQuery = yearQuery.eq('folder_id', catId);
@@ -3277,7 +3113,7 @@
       return;
     }
 
-    const map = {}; // { tahun: Set(bulan) }
+    const map = {};
     (data || []).forEach(row => {
       const d = getNoteEffectiveDate(row);
       if (!d || isNaN(d)) return;
@@ -3287,7 +3123,7 @@
       map[y].add(m);
     });
 
-    const years = Object.keys(map).map(Number).sort((a, b) => b - a); // terbaru dulu
+    const years = Object.keys(map).map(Number).sort((a, b) => b - a);
     const monthsByYear = {};
     years.forEach(y => {
       monthsByYear[y] = Array.from(map[y]).sort((a, b) => b - a).map(num => ({ num, label: MONTH_NAMES_ID[num - 1] }));
@@ -3296,13 +3132,11 @@
     folderYearMonthData[catId] = { years, monthsByYear };
   }
 
-  // Klik tahun: buka/tutup daftar bulan di tahun itu (tahun lain otomatis ketutup)
   function toggleYearAccordion(catId, year) {
     expandedYear = (expandedYear === year) ? null : year;
     renderCategories();
   }
 
-  // Klik bulan: tutup drawer, tampilkan tabel folder ini yang terfilter tahun+bulan itu
   function selectFolderMonth(catId, year, month) {
     if (isPjId(catId)) { selectPjMonth(catId, year, month); return; }
     const selected = categoriesData.find(c => c.id === catId);
@@ -3320,10 +3154,6 @@
     localStorage.setItem(LAST_FOLDER_KEY, catId);
   }
 
-  // Sama seperti loadNotesForCategory, tapi hasilnya difilter cuma yang tanggal
-  // EFEKTIF-nya (getNoteEffectiveDate — judul/isi tabel, bukan created_at mentah)
-  // jatuh di tahun+bulan yang dipilih dari dropdown folder, lalu diurutkan
-  // dari yang paling baru berdasarkan tanggal efektif itu juga.
   async function loadNotesForCategoryFiltered(catId, year, month) {
     activeCategoryId = catId;
     activeFilterYear = year;
@@ -3350,14 +3180,13 @@
         .sort((a, b) => {
           const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
           if (pinDiff !== 0) return pinDiff;
-          return getNoteEffectiveDate(b) - getNoteEffectiveDate(a); // terbaru dulu
+          return getNoteEffectiveDate(b) - getNoteEffectiveDate(a);
         });
     }
 
     renderNotes();
   }
 
-  // Row 'All' di drawer: klik = tampilkan semua notes lintas folder
   function wireAllFolderRow(container) {
     const allRow = container.querySelector('.folder-item[data-cat-id="__all__"]');
     if (!allRow) return;
@@ -3369,7 +3198,6 @@
     });
   }
 
-  // Ambil SEMUA notes lintas folder (buat tampilan 'All')
   async function loadAllNotesInDashboard() {
     activeCategoryId = '__all__';
     activeFilterYear = null;
@@ -3391,7 +3219,7 @@
       notesData = (data || []).sort((a, b) => {
         const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
         if (pinDiff !== 0) return pinDiff;
-        return getNoteEffectiveDate(b) - getNoteEffectiveDate(a); // terbaru dulu
+        return getNoteEffectiveDate(b) - getNoteEffectiveDate(a);
       });
     }
 
@@ -3399,9 +3227,8 @@
     renderNotes();
   }
 
-  // Hapus folder + seluruh notes di dalamnya (dipicu tombol Hapus yang muncul saat di-hold)
   async function handleDeleteCategory(catId, catName) {
-    if (isPermanentFolder(categoriesData.find(c => c.id === catId))) return; // folder permanen tidak bisa dihapus
+    if (isPermanentFolder(categoriesData.find(c => c.id === catId))) return;
     const confirmDelete = await askDeleteVerification({
       title: 'Hapus Folder?',
       text: 'Folder "' + catName + '" dan semua catatan di dalamnya akan dipindahkan ke Sampah (bisa dipulihkan ' + TRASH_DAYS + ' hari).',
@@ -3444,9 +3271,6 @@
     localStorage.setItem(LAST_FOLDER_KEY, catId);
   }
 
-  // Selalu format jam (HH:MM AM/PM), beda sama formatNoteTimestamp yang fallback
-  // ke tanggal kalau bukan hari ini — dipakai di kartu hasil search, karena
-  // tanggalnya udah ditampilin terpisah sebagai judul besar di atasnya.
   function formatTimeOnly(iso) {
     const d = new Date(iso);
     if (isNaN(d)) return '';
@@ -3457,10 +3281,6 @@
     return `${String(h).padStart(2, '0')}:${m} ${ampm}`;
   }
 
-  // Format badge waktu dari created_at ASLI (timestamp database, tidak pernah
-  // berubah walau note-nya di-edit berkali-kali) — bukan dari date_tag yang
-  // di-generate ULANG tiap autosave (jadi nunjukin waktu edit terakhir,
-  // bukan kapan note itu pertama kali dibuat).
   function formatNoteTimestamp(createdAtIso) {
     if (!createdAtIso) return 'Recent';
     const d = new Date(createdAtIso);
@@ -3481,22 +3301,16 @@
     return `${dd}/${mm}/${d.getFullYear()}`;
   }
 
-  // Cari tanggal Kamis yang mengawali "pekan" (Kamis→Rabu) dari sebuah tanggal.
-  // Contoh: Senin 21/09 ada di pekan yang dimulai Kamis 17/09.
   function getWeekAnchorThursday(date) {
     const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const day = d.getDay(); // 0=Minggu ... 4=Kamis ... 6=Sabtu
-    const diffFromThursday = (day - 4 + 7) % 7; // berapa hari sejak Kamis terakhir
+    const day = d.getDay();
+    const diffFromThursday = (day - 4 + 7) % 7;
     d.setDate(d.getDate() - diffFromThursday);
     return d;
   }
 
-  // Kelompokkan notes (yang sudah difilter 1 bulan) jadi array pekan berurutan:
-  // [{ label: 'Pekan 1', anchor: Date, notes: [...] }, ...], diurutkan dari pekan
-  // TERLAMA ke TERBARU (kayak kalender biasa) — minggu paling awal di bulan itu
-  // selalu jadi "Pekan 1", minggu paling baru dapet nomor pekan paling besar.
   function groupNotesByWeek(notes) {
-    const buckets = {}; // key: timestamp anchor Kamis -> { anchor, notes: [] }
+    const buckets = {};
     notes.forEach(n => {
       const d = getNoteEffectiveDate(n);
       if (!d || isNaN(d)) return;
@@ -3506,7 +3320,7 @@
       buckets[key].notes.push(n);
     });
 
-    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b)); // paling awal dulu = Pekan 1
+    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b));
     return sortedKeys.map((key, idx) => ({
       label: `Pekan ${idx + 1}`,
       anchor: buckets[key].anchor,
@@ -3514,11 +3328,8 @@
     }));
   }
 
-  // Kelompokkan notes jadi per Bulan+Tahun (dipakai di folder "All", karena di
-  // situ notes-nya campuran dari banyak folder — pekan kurang relevan, cukup
-  // header "September 2026" dst). Urut dari bulan TERBARU ke TERLAMA (dari atas).
   function groupNotesByMonth(notes) {
-    const buckets = {}; // key: 'YYYY-MM' -> { year, month, notes: [] }
+    const buckets = {};
     notes.forEach(n => {
       const d = getNoteEffectiveDate(n);
       if (!d || isNaN(d)) return;
@@ -3529,15 +3340,13 @@
       buckets[key].notes.push(n);
     });
 
-    const sortedKeys = Object.keys(buckets).sort((a, b) => b.localeCompare(a)); // terbaru dulu
+    const sortedKeys = Object.keys(buckets).sort((a, b) => b.localeCompare(a));
     return sortedKeys.map(key => {
       const b = buckets[key];
       return { label: `${MONTH_NAMES_ID[b.month - 1]} ${b.year}`, notes: b.notes };
     });
   }
 
-  // Label pengelompokan dinamis berdasarkan umur note TERTUA yang lagi
-  // ditampilkan — bukan teks mati "Previous 7 Days".
   function computeSubtitleLabel(notes) {
     if (!notes || notes.length === 0) return '';
     const now = new Date();
@@ -3556,13 +3365,11 @@
     return 'Semua Waktu';
   }
 
-  // Render Catatan / Tabel
   function renderNotes() {
     const container = document.getElementById('notesList');
     const subtitleEl = document.getElementById('currentCategorySubtitle');
 
     if (!notesData || notesData.length === 0) {
-      // Belum ada data asli dari Supabase — jangan tampilkan label seolah-olah ada isinya
       if (subtitleEl) subtitleEl.style.display = 'none';
       container.style.display = 'block';
       if (notesLoadFailed) {
@@ -3597,8 +3404,6 @@
       return;
     }
 
-  // Markup 1 kartu note — dipisah jadi fungsi sendiri biar bisa dipakai ulang
-  // baik di tampilan flat maupun tampilan yang dikelompokkan per pekan.
   function noteCardHtml(note, idx) {
     return `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
@@ -3619,11 +3424,9 @@
     `;
   }
 
-  if (subtitleEl) subtitleEl.style.display = 'none'; // dipakai lagi di bawah kalau bukan mode pekan
+  if (subtitleEl) subtitleEl.style.display = 'none';
 
   if (activeCategoryId === '__all__') {
-    // Folder "All": campuran banyak folder, jadi dikelompokkan per Bulan+Tahun
-    // aja (bukan per-pekan) — header "September 2026" dst, terbaru di atas.
     const months = groupNotesByMonth(notesData);
     let idxCounter = 0;
     container.style.display = 'grid';
@@ -3632,10 +3435,6 @@
       return `<div class="week-group-header">${group.label}</div>${cardsHtml}`;
     }).join('');
   } else if (activeFilterYear && activeFilterMonth) {
-    // Mode filter bulan aktif: subtitle "Bulan Ini" diganti header per-pekan (Kamis→Rabu).
-    // Nomor pekan tetap urut kalender (Pekan 1 = minggu paling awal), TAPI posisi
-    // tampilannya dibalik: pekan paling baru di ATAS, biar pas dibuka data terbaru
-    // langsung kelihatan duluan seperti tampilan biasa (bukan malah discroll ke bawah).
     const weeks = groupNotesByWeek(notesData);
     const displayWeeks = [...weeks].reverse();
     let idxCounter = 0;
@@ -3653,8 +3452,6 @@
     container.innerHTML = notesData.map((note, idx) => noteCardHtml(note, idx)).join('');
   }
 
-    // Tap biasa = buka note. Kalau lagi mode seleksi, tap = toggle checkbox.
-    // Tekan & tahan (long-press) di note manapun = masuk mode seleksi.
     container.querySelectorAll('.note-card').forEach(card => {
       let pressTimer = null;
       let longPressed = false;
@@ -3679,10 +3476,9 @@
       card.addEventListener('touchmove', () => clearTimeout(pressTimer));
     });
 
-    updateSelectionUI(); // biar checkbox tercentang lagi kalau notesData baru saja di-render ulang
+    updateSelectionUI();
   }
 
-  // --- View Mode Selector ---
   const btnToggleViewMenu = document.getElementById('btnToggleViewMenu');
   const viewPopup = document.getElementById('viewPopup');
   const viewOptions = document.querySelectorAll('.view-option');
@@ -3706,7 +3502,6 @@
     });
   });
 
-  // --- Tab Switcher (Notes vs Tasks) ---
   const tabNotes = document.getElementById('tabNotes');
   const tabTasks = document.getElementById('tabTasks');
   const notesSection = document.getElementById('notesSection');
@@ -3724,26 +3519,16 @@
     tabNotes.classList.remove('active');
     notesSection.style.display = 'none';
     tasksSection.style.display = 'block';
-    await loadAllNotesData(); // SEMUA notes lintas folder
+    await loadAllNotesData();
     renderTasks();
   });
 
-  // =====================================================================
-  // --- FITUR TASKS: deteksi baris data yang belum lengkap di semua tabel ---
-  // Struktur asli dari editor-data-administrator.html:
-  //   note.content = { columns: [{id, label, type}], rows: [{cells: {[colId]: value}}] }
-  // Kolom itu DINAMIS — id-nya acak (col_xxxxx), jadi wajib dicocokin lewat
-  // 'label' dulu (mis. label "PJ"/"Customer") baru ambil value dari cells[col.id].
-  // Kolom yang WAJIB diisi tiap baris (di luar ini: No/Tanggal/Jam/Gambar TIDAK dicek):
-  // =====================================================================
   const TASK_REQUIRED_FIELDS = ['PJ', 'Customer', 'Barang', 'Barang Keluar', 'Stok Barang', 'Keterangan', 'Harga'];
 
   function normalizeKey(str) {
     return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
-  // Cari value satu baris berdasarkan LABEL kolom (bukan id kolom, karena id-nya acak)
-  // biar nggak peduli beda gaya penulisan (mis. "Barang Keluar" vs "barang keluar").
   function getRowValueByLabel(columns, row, label) {
     const target = normalizeKey(label);
     const col = (columns || []).find(c => normalizeKey(c.label) === target);
@@ -3757,18 +3542,6 @@
     return s === '' || s === '-' || s === '--' || s === '--------';
   }
 
-  // =====================================================================
-  // NORMALISASI SKEMA BARU (admin-data-v1) dari editor-data-administrator.html
-  // Editor sekarang menyimpan content = { schema:'admin-data-v1', records:[...] }
-  // alih-alih format tabel bebas { columns, rows } yang lama dipakai di
-  // seluruh dashboard ini (Tasks, Search, Detail Preview, Export PDF/Gambar,
-  // Analytics). Supaya semua kode itu TIDAK perlu diubah satu-satu, kita
-  // selalu konversi lewat getNoteTable() dulu — note lama (columns/rows)
-  // maupun note baru (records) sama-sama keluar dalam bentuk {columns, rows}.
-  // Label kolom di bawah SENGAJA disamakan persis dengan TASK_REQUIRED_FIELDS
-  // & seluruh pemanggilan getRowValueByLabel yang sudah ada (PJ, Customer,
-  // Barang, Barang Keluar, Stok Barang, Keterangan, Harga, Tanggal, Jam).
-  // =====================================================================
   const NEW_SCHEMA_COLUMNS = [
     { id: 'no', label: 'No' },
     { id: 'tanggal', label: 'Tanggal' },
@@ -3783,8 +3556,6 @@
     { id: 'bukti', label: 'Bukti', type: 'image' }
   ];
 
-  // Tampilan kolom Harga: angka murni diformat id-ID, teks/simbol (mis. "√", "Rp 50.000 √")
-  // ditampilkan apa adanya. Tidak pernah menghasilkan "NaN".
   function formatHargaCell(v) {
     if (v === undefined || v === null) return '';
     if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v).toLocaleString('id-ID') : '';
@@ -3824,19 +3595,11 @@
       return { columns: NEW_SCHEMA_COLUMNS, rows };
     }
 
-    // Note lama (format tabel bebas) — dipakai apa adanya, tidak diarsipkan ulang.
     if (Array.isArray(content.columns) && Array.isArray(content.rows)) return content;
 
     return null;
   }
 
-  // =====================================================================
-  // BUKU WARUNG — data terpisah dari buku besar
-  // Note warung disimpan dengan schema 'warung-data-v1' (field harga-nya
-  // bernama 'nominal', BUKAN 'harga'). getNoteTable() SENGAJA mengembalikan
-  // null untuk schema ini, jadi Tasks, Search, dan Analisa buku besar tidak
-  // pernah menyentuh data warung. Preview & export memakai getDisplayTable().
-  // =====================================================================
   const WARUNG_SCHEMA = 'warung-data-v1';
   const WARUNG_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-warung.html';
   const LEDGER_EDITOR_FILE = 'editor-data-administrator.html';
@@ -3844,26 +3607,17 @@
   function isWarungNote(note) {
     return !!(note && note.content && note.content.schema === WARUNG_SCHEMA);
   }
-  // Folder dianggap folder warung kalau namanya mengandung kata "warung".
   function isWarungFolderId(folderId) {
     const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
     return !!(cat && /warung/i.test(cat.name || ''));
   }
 
-  // =====================================================================
-  // BUKU KASBON — data terpisah dari buku besar & warung
-  // Note kasbon disimpan dengan schema 'kasbon-data-v1' (field: nama, total,
-  // dibayar, keterangan; sisa tagihan dihitung total - dibayar). Sama seperti
-  // warung, getNoteTable() mengembalikan null untuk schema ini sehingga Tasks,
-  // Search, dan Analisa buku besar tidak menyentuhnya.
-  // =====================================================================
   const KASBON_SCHEMA = 'kasbon-data-v1';
   const KASBON_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-kasbon.html';
 
   function isKasbonNote(note) {
     return !!(note && note.content && note.content.schema === KASBON_SCHEMA);
   }
-  // Folder dianggap folder kasbon kalau namanya mengandung kata "kasbon".
   function isKasbonFolderId(folderId) {
     const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
     return !!(cat && /kasbon/i.test(cat.name || ''));
@@ -3890,9 +3644,7 @@
     { id: 'nominal', label: 'Harga' }
   ];
 
-  // Khusus tampilan (preview detail + export PDF/Gambar). Data buku besar tetap lewat getNoteTable().
   function getDisplayTable(note) {
-    // Tampilan dari folder karyawan: cuma baris milik PJ tsb (data asli tak diubah)
     if (note && note._vfFilter) return filterTableByVf(getNoteTable(note), note._vfFilter);
     if (isWarungNote(note) && Array.isArray(note.content.records)) {
       const pad2 = n => String(n).padStart(2, '0');
@@ -3938,8 +3690,6 @@
     return getNoteTable(note);
   }
 
-  // Baca tanggal dari sel tabel (dd/mm/yyyy, dd-mm-yy, atau format yang dikenali Date).
-  // Dipakai getNoteEffectiveDate() untuk mengurutkan note di ALL / daftar folder.
   function parseRowDate(val, fallbackISO) {
     if (val) {
       const s = String(val).trim();
@@ -3956,12 +3706,6 @@
     return fallbackISO ? new Date(fallbackISO) : null;
   }
 
-  // Tanggal "asli" sebuah note buat dikelompokkan/diurutkan (bukan created_at
-  // baris DB-nya, karena note bisa aja BARU diinput hari ini padahal isinya
-  // catatan transaksi tanggal lain). Prioritas:
-  //   1) Tanggal yang ketulis di judul note, misal "24/09/2026 . KAMIS"
-  //   2) Kolom "Tanggal" di baris tabel isinya (kalau ada)
-  //   3) created_at note itu sendiri (fallback terakhir)
   function getNoteEffectiveDate(note) {
     if (note && note.title) {
       const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
@@ -3987,27 +3731,17 @@
     return note && note.created_at ? new Date(note.created_at) : null;
   }
 
-  // =====================================================================
-  // --- FITUR TASKS (dirombak): kotak masuk "yang perlu ditindaklanjuti" ---
-  // Tiga jenis tugas, semuanya hilang sendiri begitu masalahnya beres:
-  //   1. Kasbon belum lunas     -> sisa tagihan (Total - Dibayar) masih > 0
-  //   2. Barang masih ditinggal -> kolom Stok Barang terisi selain "Tidak ada"
-  //                                (stok "B&J" = semua barang & jumlah masih ditinggal)
-  //   3. Data belum lengkap     -> Customer / Barang / Harga masih kosong
-  // Filter: jenis tugas + folder (BUKU BESAR s/d BUKU KASBON). Pilihan filter diingat.
-  // =====================================================================
   const TASK_TYPES = {
     kasbon:    { badge: 'Kasbon belum lunas',     group: 'Kasbon belum lunas',     short: 'Kasbon',        sub: '',               color: '#F0555C' },
     ditinggal: { badge: 'Barang ditinggal',       group: 'Barang masih ditinggal', short: 'Ditinggal',     sub: 'di bengkel',     color: '#4C9EFF' },
     lengkap:   { badge: 'Data belum lengkap',     group: 'Data belum lengkap',     short: 'Belum lengkap', sub: 'perlu dilengkapi', color: '#FF8A4C' }
   };
   const TASK_TYPE_ORDER = ['kasbon', 'ditinggal', 'lengkap'];
-  // Kolom yang dianggap WAJIB untuk "Data belum lengkap". Ubah daftar ini kalau mau diperketat/dilonggarkan.
   const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];
   const TASKS_FILTER_KEY = 'bmtech_tasks_filter_v1';
 
-  let allKasbonNotes = []; // note kasbon (diisi loadAllNotesData), dipakai tugas "Kasbon belum lunas"
-  let tasksFilter = { types: new Set(), folders: new Set() }; // kosong = semua
+  let allKasbonNotes = [];
+  let tasksFilter = { types: new Set(), folders: new Set() };
   try {
     const saved = JSON.parse(localStorage.getItem(TASKS_FILTER_KEY) || 'null');
     if (saved) tasksFilter = { types: new Set(saved.types || []), folders: new Set(saved.folders || []) };
@@ -4017,7 +3751,7 @@
   }
 
   function isStokNone(v) { return normalizeKey(v) === 'tidakada'; }
-  function isStokBJ(v) { return normalizeKey(v) === 'bj'; } // "B&J" = Barang dan Jumlah
+  function isStokBJ(v) { return normalizeKey(v) === 'bj'; }
   function isHargaEmpty(v) { return isEmptyValue(v) || /^0+$/.test(String(v).trim()); }
   function taskRp(n) { return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
   function taskAgeDays(d) {
@@ -4037,7 +3771,6 @@
     return p(d.getDate()) + '-' + p(d.getMonth() + 1) + '-' + d.getFullYear();
   }
 
-  // Folder admin (BUKU BESAR s/d BUKU KASBON): folder asli tanpa pemilik, bukan folder virtual PJ/Customer
   function getTaskFolders() {
     return categoriesData.filter(c => !c.ownerUsername && !isPjId(c.id));
   }
@@ -4045,7 +3778,6 @@
   function computeTasks() {
     const tasks = [];
 
-    // --- Buku besar: barang ditinggal + data belum lengkap ---
     allNotesData.forEach(note => {
       const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
@@ -4077,10 +3809,9 @@
       });
     });
 
-    // --- Buku kasbon: sisa tagihan masih ada ---
     allKasbonNotes.forEach(note => {
       const recs = Array.isArray(note.content && note.content.records) ? note.content.records : [];
-      const sorted = [...recs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)); // urutan sama dgn nomor di editor
+      const sorted = [...recs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
       sorted.forEach((r, rowIndex) => {
         const total = Number(r.total) || 0;
         const dibayar = Number(r.dibayar) || 0;
@@ -4106,7 +3837,6 @@
     return tasks;
   }
 
-  // Kasbon: sisa terbesar dulu. Lainnya: yang paling lama di atas.
   function sortTasksInType(type, arr) {
     const t = d => (d && !isNaN(d.getTime())) ? d.getTime() : Infinity;
     return arr.slice().sort((a, b) => type === 'kasbon' ? (b.sisa - a.sisa) || (t(a.when) - t(b.when)) : (t(a.when) - t(b.when)));
@@ -4153,7 +3883,6 @@
     const summaryEl = document.getElementById('tasksSummary');
     const subtitleEl = document.getElementById('tasksPageSubtitle');
 
-    // buang pilihan folder yang sudah tidak ada
     const folders = getTaskFolders();
     const validFolderIds = new Set(folders.map(f => f.id));
     [...tasksFilter.folders].forEach(id => { if (!validFolderIds.has(id)) tasksFilter.folders.delete(id); });
@@ -4162,7 +3891,6 @@
     const folderScoped = all.filter(t => tasksFilter.folders.size === 0 || tasksFilter.folders.has(t.folderId));
     const shown = folderScoped.filter(t => tasksFilter.types.size === 0 || tasksFilter.types.has(t.type));
 
-    // --- tombol filter + subjudul ---
     const activeCount = tasksFilter.types.size + tasksFilter.folders.size;
     const badgeEl = document.getElementById('tasksFilterBadge');
     badgeEl.textContent = activeCount;
@@ -4172,7 +3900,6 @@
       ? shown.length + ' perlu tindakan' + (activeCount ? ' · filter aktif' : '')
       : (activeCount ? 'Tidak ada tugas untuk filter ini' : 'Semua beres');
 
-    // --- ringkasan 3 kotak (ikut filter folder, tap = filter cepat per jenis) ---
     summaryEl.innerHTML = TASK_TYPE_ORDER.map(type => {
       const items = folderScoped.filter(t => t.type === type);
       const meta = TASK_TYPES[type];
@@ -4185,7 +3912,6 @@
       </div>`;
     }).join('');
 
-    // --- daftar, dikelompokkan per jenis ---
     currentShownTasks = [];
     if (shown.length === 0) {
       list.innerHTML = `
@@ -4218,7 +3944,6 @@
     openEditor(t.noteId, { folder: t.folderId, row: t.rowIndex, focus: t.missing ? t.missing[0] : undefined });
   });
 
-  // Ringkasan: tap kotak = tampilkan hanya jenis itu (tap lagi = semua)
   document.getElementById('tasksSummary').addEventListener('click', (e) => {
     const tile = e.target.closest('.tk-tile');
     if (!tile) return;
@@ -4229,7 +3954,6 @@
     renderTasks();
   });
 
-  // --- Lembar filter (ikon filter di pojok kanan atas Tasks) ---
   const tfOverlay = document.getElementById('tfOverlay');
   function renderTasksFilterSheet() {
     const all = computeTasks();
@@ -4270,10 +3994,6 @@
   });
 
 
-  // =====================================================================
-  // --- SELECTION MODE: hold note/tabel manapun buat pilih banyak sekaligus
-  // (Pin / Pindah Folder / Hapus), gaya Infinix Notes.
-  // =====================================================================
   let noteSelectionMode = false;
   let selectedNoteIds = new Set();
 
@@ -4338,7 +4058,6 @@
     }
   });
 
-  // --- Note Action Sheet: liquid glass popup dari bawah ---
   const noteActionOverlay = document.getElementById('noteActionOverlay');
   const noteActionSheet = document.getElementById('noteActionSheet');
   const noteActionContent = document.getElementById('noteActionContent');
@@ -4356,7 +4075,6 @@
 
   noteActionOverlay.addEventListener('click', closeActionSheet);
 
-  // --- Mini Toast ---
   let miniToastTimer = null;
   function showMiniToast(message) {
     const toast = document.getElementById('miniToast');
@@ -4366,7 +4084,6 @@
     miniToastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
   }
 
-  // --- Pin: langsung jalan, nggak perlu konfirmasi (beda sama Hapus yang destruktif) ---
   document.getElementById('btnSelPin').addEventListener('click', handlePinSelected);
 
   async function handlePinSelected() {
@@ -4384,7 +4101,6 @@
     showMiniToast(`${count} note dipin`);
   }
 
-  // --- Pindah Folder ---
   document.getElementById('btnSelMove').addEventListener('click', () => {
     const count = selectedNoteIds.size;
     const otherFolders = categoriesData.filter(c => c.id !== activeCategoryId);
@@ -4427,7 +4143,6 @@
     showMiniToast(`${count} note dipindahkan`);
   }
 
-  // --- Hapus ---
   document.getElementById('btnSelDelete').addEventListener('click', () => {
     const count = selectedNoteIds.size;
     openActionSheet(`
@@ -4465,7 +4180,6 @@
     showMiniToast(`${count} note dipindahkan ke Sampah`);
   }
 
-  // --- Drawer Folder Navigation ---
   const btnOpenDrawer = document.getElementById('btnOpenDrawer');
   const drawer = document.getElementById('drawer');
   const drawerOverlay = document.getElementById('drawerOverlay');
@@ -4480,22 +4194,17 @@
     drawerOverlay.classList.remove('open');
   });
 
-  // --- Settings Screen Navigation ---
   const btnOpenSettings = document.getElementById('btnOpenSettings');
   const settingsScreen = document.getElementById('settingsScreen');
   const btnSettingsBack = document.getElementById('btnSettingsBack');
   const themeCheckbox = document.getElementById('themeCheckbox');
 
-  // Terapkan tema tersimpan (kalau ada) — sama seperti viewer publik, key 'bm-theme'
   const savedTheme = localStorage.getItem('bm-theme');
   if (savedTheme === 'light') {
     document.body.classList.add('theme-light');
     themeCheckbox.checked = false;
   }
 
-  // Terapkan pilihan Font & Bold yang tersimpan dari Settings index.html —
-  // halaman ini tidak punya UI pilihannya sendiri, cuma ikut nerapin biar
-  // konsisten di semua halaman.
   const FONT_CLASS_BY_ID = {
     serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis',
     kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded'
@@ -4518,11 +4227,6 @@
     settingsScreen.classList.remove('open');
   });
 
-  // =====================================================================
-  // PUZZLE VERIFIKASI HAPUS — dipakai semua tombol hapus di dashboard.
-  // askDeleteVerification({title,text,confirmLabel}) -> Promise<boolean>
-  // Tombol hapus baru aktif setelah potongan gambar digeser ke lubang yang pas.
-  // =====================================================================
   const pzv = (function(){
     const overlay = document.getElementById('pzvOverlay');
     const card = document.getElementById('pzvCard');
@@ -4660,7 +4364,7 @@
     }
     btnCancel.addEventListener('click', () => finish(false));
     overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(false); });
-    btnOk.addEventListener('click', () => { if (solved) finish(true); }); // puzzle wajib selesai dulu
+    btnOk.addEventListener('click', () => { if (solved) finish(true); });
 
     return {
       ask: function(opts){
@@ -4676,10 +4380,6 @@
   })();
   function askDeleteVerification(opts){ return pzv.ask(opts); }
 
-  // =====================================================================
-  // SAMPAH — catatan & folder yang dihapus disalin ke tabel trash_items dulu.
-  // Hilang permanen setelah TRASH_DAYS hari, atau lewat "Hapus Permanen" / "Kosongkan".
-  // =====================================================================
   const TRASH_DAYS = 30;
   const BUKTI_BUCKET = 'bukti';
 
@@ -4689,7 +4389,6 @@
     return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
   }
 
-  // Kumpulkan path foto bukti (Supabase Storage) dari isi catatan buku besar (data aktif + Sampah editor)
   function collectBuktiPathsFromNotes(notes){
     const marker = '/' + BUKTI_BUCKET + '/';
     const paths = [];
@@ -4717,7 +4416,6 @@
     catch (err) { console.warn('Gagal hapus file bukti:', err && err.message); }
   }
 
-  // Pindahkan catatan ke Sampah: salin ke trash_items dulu, baru hapus dari notes (gagal -> salinan dibatalkan)
   async function moveNotesToTrash(ids){
     const { data: rows, error: readErr } = await supabaseClient.from('notes').select('*').in('id', ids);
     if (readErr) return { error: readErr };
@@ -4733,7 +4431,6 @@
     return { error: null, count: rows.length };
   }
 
-  // Pindahkan folder + seluruh catatannya ke Sampah (1 item di Sampah)
   async function moveFolderToTrash(folderId, folderName){
     const [{ data: folder, error: fErr }, { data: notes, error: nErr }] = await Promise.all([
       supabaseClient.from('folders').select('*').eq('id', folderId).single(),
@@ -4751,7 +4448,6 @@
     if (notesDelErr) { await rollback(); return { error: notesDelErr }; }
     const { error: folderDelErr } = await supabaseClient.from('folders').delete().eq('id', folderId);
     if (folderDelErr) {
-      // folder gagal dihapus -> kembalikan catatan yang sudah terhapus, lalu batalkan salinan sampah
       if (notes && notes.length) await supabaseClient.from('notes').insert(notes);
       await rollback();
       return { error: folderDelErr };
@@ -4895,7 +4591,6 @@
   refreshTrashCount();
   purgeExpiredTrash().then(refreshTrashCount);
 
-  // --- Kelola Customer ---
   const CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/create-customer';
   const DELETE_CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/delete-customer';
   const customerScreen = document.getElementById('customerScreen');
@@ -4942,7 +4637,6 @@
   }
   btnCustomerAddOpen.addEventListener('click', openCustomerForm);
 
-  // Auto-isi username dari Nama Customer (selama user belum ngetik manual di kolom username)
   inpCustDisplayName.addEventListener('input', () => {
     if (inpCustUsername.dataset.autoFilled !== 'false') {
       inpCustUsername.value = inpCustDisplayName.value
@@ -5122,7 +4816,7 @@
       closeCustomerForm();
       showMiniToast('Customer "' + displayName + '" berhasil dibuat');
       loadCustomerList();
-      loadCategories(); // biar folder baru customer langsung muncul di drawer
+      loadCategories();
 
     } catch (err) {
       customerFormError.textContent = 'Gagal terhubung ke server: ' + err.message;
@@ -5133,8 +4827,6 @@
   });
 
 
-  // --- Kelola Karyawan (pola identik Kelola Customer, dicek langsung dari
-  //     source function create-customer/delete-customer yang sudah live) ---
   const KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/create-karyawan';
   const DELETE_KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/delete-karyawan';
   const karyawanScreen = document.getElementById('karyawanScreen');
@@ -5181,7 +4873,6 @@
   }
   btnKaryawanAddOpen.addEventListener('click', openKaryawanForm);
 
-  // Auto-isi username dari Nama PJ (selama user belum ngetik manual di kolom username)
   inpKwDisplayName.addEventListener('input', () => {
     if (inpKwUsername.dataset.autoFilled !== 'false') {
       inpKwUsername.value = inpKwDisplayName.value
@@ -5380,14 +5071,12 @@
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
   });
 
-  // --- Logout ---
   document.getElementById('settingLogout').addEventListener('click', async () => {
     if (!confirm('Yakin mau logout?')) return;
     await supabaseClient.auth.signOut();
     window.location.href = 'admin-login.html';
   });
 
-  // --- Search Overlay ---
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
   const btnSearchBack = document.getElementById('btnSearchBack');
@@ -5399,7 +5088,7 @@
     document.getElementById('searchInputField').value = '';
     renderSearchResults('');
     setTimeout(() => document.getElementById('searchInputField').focus(), 250);
-    await loadAllNotesData(); // biar search bisa nyari isi tabel juga, bukan cuma nama folder
+    await loadAllNotesData();
   });
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
@@ -5411,7 +5100,6 @@
     return safe.slice(0, idx) + '<mark>' + safe.slice(idx, idx + query.length) + '</mark>' + safe.slice(idx + query.length);
   }
 
-  // Cari kata kunci di dalam ISI TABEL sungguhan (content.rows), sama kayak search publik
   function findMatchInContent(content, q) {
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return null;
     for (const row of content.rows) {
@@ -5425,9 +5113,8 @@
     return null;
   }
 
-  let searchFolderFilter = null; // null = semua folder, atau id folder spesifik
+  let searchFolderFilter = null;
 
-  // --- Filter folder di search: All + daftar folder yang ada ---
   const btnSearchFilter = document.getElementById('btnSearchFilter');
   const searchFilterPopup = document.getElementById('searchFilterPopup');
 
@@ -5466,8 +5153,6 @@
     searchFilterPopup.classList.remove('open');
   });
 
-  // Search folder (nama) DAN note (judul + isi tabel) — dua-duanya data asli,
-  // bukan hardcode. Folder ke-tap buka folder-nya, note ke-tap buka editor-nya.
   function renderSearchResults(term) {
     const list = document.getElementById('searchResultsList');
     const headerEl = document.getElementById('searchResultsHeader');
@@ -5494,8 +5179,6 @@
 
     headerEl.style.display = 'flex';
 
-    // Kalau lagi filter ke folder tertentu, jangan tampilin hasil folder-name-match —
-    // fokus nyari NOTE di dalam folder itu doang.
     const folderMatches = searchFolderFilter
       ? []
       : categoriesData.filter(c => c.name.toLowerCase().includes(q));
@@ -5527,8 +5210,6 @@
       </div>
     `).join('');
 
-    // Kartu note, gaya Infinix Notes: judul besar (tanggal/nama tabel), baris jam
-    // + kata yang ke-match (kalau ketemunya dari isi sel tabel), lalu nama folder.
     const noteHtml = noteMatches.map(({ note: n, cellMatch }) => `
       <div class="search-note-card" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}">
         <p class="search-note-title">${highlightMatch(n.title || 'Untitled', term.trim())}</p>
@@ -5566,7 +5247,6 @@
     renderSearchResults(e.target.value);
   });
 
-  // --- New Folder Bottom Sheet (ganti prompt() lama) — dipakai juga buat mode Edit Folder ---
   const newFolderOverlay = document.getElementById('newFolderOverlay');
   const newFolderSheet = document.getElementById('newFolderSheet');
   const newFolderPreview = document.getElementById('newFolderPreview');
@@ -5574,10 +5254,10 @@
   const newFolderModalTitle = document.getElementById('newFolderModalTitle');
   const btnNewFolderComplete = document.getElementById('btnNewFolderComplete');
   let selectedFolderColor = '#D9A536';
-  let editingFolderId = null; // null = mode bikin folder baru, ada isinya = lagi edit folder ini
+  let editingFolderId = null;
 
   function openNewFolderModal(catId = null) {
-    if (catId && isPermanentFolder(categoriesData.find(c => c.id === catId))) return; // folder permanen tidak bisa diedit
+    if (catId && isPermanentFolder(categoriesData.find(c => c.id === catId))) return;
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
     editingFolderId = catId;
@@ -5610,7 +5290,6 @@
   newFolderOverlay.addEventListener('click', closeNewFolderModal);
   document.getElementById('newFolderHandle').addEventListener('click', closeNewFolderModal);
 
-  // Pilih warna cover folder — beneran kesimpen ke Supabase (kolom folders.color)
   document.querySelectorAll('.nf-swatch').forEach(swatch => {
     swatch.addEventListener('click', () => {
       document.querySelectorAll('.nf-swatch').forEach(s => s.classList.remove('selected'));
@@ -5620,24 +5299,21 @@
     });
   });
 
-  // Tab "Gradation / Graphics / Culture" baru UI, isi variasinya menyusul
   document.querySelectorAll('.nf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.nf-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      // TODO: swatch untuk tab Gradation/Graphics/Culture belum dibuat, tinggal tambahkan nanti
     });
   });
 
-  let isSavingFolder = false; // guard: cegah tap dobel pas request masih jalan
+  let isSavingFolder = false;
 
   async function handleCreateCategory() {
-    if (isSavingFolder) return; // udah ada request jalan, abaikan tap kedua
+    if (isSavingFolder) return;
 
     const name = newFolderNameInput.value.trim() || 'Unnamed Folder';
     const isEditing = !!editingFolderId;
 
-    // Nama folder permanen sudah dipakai & dikunci — jangan bikin duplikat
     if (isPermanentName(name)) {
       alert('Folder "' + name + '" sudah ada dan bersifat permanen.');
       return;
@@ -5648,7 +5324,6 @@
     btnNewFolderComplete.textContent = isEditing ? 'Menyimpan...' : 'Membuat...';
 
     if (isEditing) {
-      // Mode edit: update folder yang sudah ada
       const { error } = await supabaseClient
         .from('folders')
         .update({ name, color: selectedFolderColor })
@@ -5662,7 +5337,6 @@
         return;
       }
     } else {
-      // Mode baru: insert folder
       const { error } = await supabaseClient
         .from('folders')
         .insert({ name, color: selectedFolderColor });
@@ -5684,7 +5358,6 @@
   document.getElementById('btnCreateCategory').addEventListener('click', () => openNewFolderModal());
   btnNewFolderComplete.addEventListener('click', handleCreateCategory);
 
-  // --- Tombol Pensil (compose) di bottom bar: buat catatan baru di folder aktif ---
   document.getElementById('btnComposePencil').addEventListener('click', () => {
     if (!activeCategoryId || activeCategoryId === '__all__' || isPjId(activeCategoryId)) {
       alert('Pilih folder dulu sebelum bikin catatan baru.');
@@ -5693,19 +5366,15 @@
     openEditor();
   });
 
-  // --- Open & Close Editor Modal ---
   const editorModal = document.getElementById('editorModal');
   const editorFrame = document.getElementById('editorFrame');
 
-  // Key localStorage buat menyimpan editor mana yang sedang terbuka, supaya
-  // kalau halaman ini di-refresh (F5) di tengah ngisi data, editor otomatis
-  // kebuka lagi ke note yang sama alih-alih kembali ke daftar dashboard.
   const OPEN_EDITOR_STORAGE_KEY = 'bmtech_open_editor';
 
   function saveOpenEditorState(noteId, folderId) {
     try {
       localStorage.setItem(OPEN_EDITOR_STORAGE_KEY, JSON.stringify({ noteId: noteId || null, folderId: folderId || null }));
-    } catch (e) { /* localStorage penuh/diblokir — abaikan, bukan fatal */ }
+    } catch (e) { }
   }
   function clearOpenEditorState() {
     try { localStorage.removeItem(OPEN_EDITOR_STORAGE_KEY); } catch (e) {}
@@ -5731,10 +5400,7 @@
     }
     if (folderId) params.set('folder', folderId);
 
-    // Pilih editor: kasbon -> editor kasbon, warung -> editor warung, selain itu buku besar.
-    // (Kalau salah pilih, ketiga editor otomatis mengalihkan diri — data tidak akan tertimpa.)
     const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
-    // Jenis note (schema) menang atas nama folder; kalau note baru/lama tanpa schema, nama folder yang menentukan.
     const editorFile = isKasbonNote(noteObj) ? KASBON_EDITOR_FILE
                      : isWarungNote(noteObj) ? WARUNG_EDITOR_FILE
                      : isKasbonFolderId(folderId) ? KASBON_EDITOR_FILE
@@ -5743,13 +5409,10 @@
 
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);
-    params.set('_t', Date.now()); // cache-buster: paksa iframe selalu reload fresh, tidak reuse instance/JS lama
+    params.set('_t', Date.now());
 
     saveOpenEditorState(noteId, folderId);
 
-    // Kosongkan dulu ke about:blank sebelum set src baru — memastikan browser
-    // benar-benar membuang state/session editor sebelumnya, bukan diam-diam
-    // memakai ulang dokumen iframe yang sama kalau kebetulan URL-nya identik.
     editorFrame.src = 'about:blank';
     requestAnimationFrame(() => {
       editorFrame.src = editorFile + '?' + params.toString();
@@ -5762,15 +5425,9 @@
     if (e.data === 'close-editor') {
       clearOpenEditorState();
       editorModal.classList.remove('open');
-      loadCategories(); // refresh jumlah note per folder + isi tabel aktif saat editor ditutup
+      loadCategories();
     }
     if (e.data === 'note-autosaved' || (e.data && e.data.type === 'note-autosaved')) {
-      // Autosave real-time dari editor — cukup refresh data di background,
-      // JANGAN menutup modal editor (user masih lagi ngetik).
-      // Kalau ini note BARU (baru saja dapat id pertama kalinya dari
-      // Supabase), simpan id-nya ke localStorage juga — supaya kalau
-      // halaman di-refresh persis setelah ini, editor kebuka lagi ke note
-      // yang sama, bukan mulai dari form kosong lagi.
       if (e.data && e.data.noteId) saveOpenEditorState(e.data.noteId, e.data.folder);
       loadCategories();
     }
@@ -5778,13 +5435,8 @@
 
 
 
-  // =====================================================================
-  // --- NOTE DETAIL (PREVIEW): klik kartu note sekarang buka preview
-  // read-only dulu (sama seperti viewer publik), BUKAN langsung ke editor.
-  // Tombol pensil di preview inilah yang membuka editor.
-  // =====================================================================
   const noteDetailOverlay = document.getElementById('noteDetailOverlay');
-  let currentDetailNote = null; // note yang lagi dibuka di preview, dipakai fitur Share & tombol Edit
+  let currentDetailNote = null;
 
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId);
@@ -5826,14 +5478,12 @@
 
   document.getElementById('btnNoteDetailBack').addEventListener('click', () => noteDetailOverlay.classList.remove('open'));
 
-  // Tombol pensil: tutup preview, lanjut ke editor seperti perilaku lama
   document.getElementById('btnNoteDetailEdit').addEventListener('click', () => {
     if (!currentDetailNote) return;
     noteDetailOverlay.classList.remove('open');
     openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });
   });
 
-  // --- Lightbox: tap thumbnail gambar buat lihat ukuran penuh ---
   const imageLightboxOverlay = document.getElementById('imageLightboxOverlay');
   const lightboxImage = document.getElementById('lightboxImage');
 
@@ -5846,7 +5496,6 @@
     document.getElementById('btnLightboxPrev').style.display = (lightboxUrls.length > 1 && lightboxIndex > 0) ? 'flex' : 'none';
     document.getElementById('btnLightboxNext').style.display = (lightboxUrls.length > 1 && lightboxIndex < lightboxUrls.length - 1) ? 'flex' : 'none';
   }
-  // src bisa 1 URL string (kolom gambar format lama) atau array URL (kolom "Bukti", maks 2 -> bisa digeser)
   function openLightbox(src, startIdx) {
     lightboxUrls = Array.isArray(src) ? src : [src];
     lightboxIndex = Math.max(0, Math.min(startIdx || 0, lightboxUrls.length - 1));
@@ -5872,8 +5521,6 @@
     });
   })();
 
-  // Delegasi klik: tabel di-render ulang tiap buka note, jadi listener dipasang
-  // di container-nya (noteDetailTable), bukan per-<img> yang keburu hilang
   document.getElementById('noteDetailTable').addEventListener('click', (e) => {
     const img = e.target.closest('.note-detail-img');
     if (!img) return;
@@ -5884,10 +5531,6 @@
     }
   });
 
-  // =====================================================================
-  // --- FITUR SHARE: Bagikan Link, Export ke PDF (teks asli) & Export ke
-  // Gambar (screenshot tabel), sama seperti di viewer publik.
-  // =====================================================================
   const shareSheetOverlay = document.getElementById('shareSheetOverlay');
   const shareSheet = document.getElementById('shareSheet');
   const shareLoadingOverlay = document.getElementById('shareLoadingOverlay');
@@ -5913,11 +5556,10 @@
   shareSheetOverlay.addEventListener('click', closeShareSheet);
   document.getElementById('btnShareCancel').addEventListener('click', closeShareSheet);
 
-  // Ubah teks jadi slug URL yang rapi: huruf kecil, spasi/simbol jadi strip
   function slugify(str) {
     return String(str || '')
       .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // buang aksen kalau ada
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'folder';
   }
@@ -5930,9 +5572,6 @@
     return `${dd}-${mm}-${d.getFullYear()}`;
   }
 
-  // --- Bagikan Link Tabel: link-nya berbentuk nama-folder-tanggal-<id asli>,
-  // sama seperti di viewer publik — nama foldernya diambil dari categoriesData
-  // karena notes di admin tidak menyimpan nama folder secara langsung.
   document.getElementById('btnShareCopyLink').addEventListener('click', async () => {
     if (!currentDetailNote) return;
     closeShareSheet();
@@ -5948,7 +5587,6 @@
       await navigator.clipboard.writeText(link);
       showLiquidAlert('Link Disalin!', 'Link tabel ini sudah disalin. Tinggal tempel (paste) di WhatsApp atau sosmed buat dibagikan.');
     } catch (err) {
-      // Fallback kalau navigator.clipboard nggak didukung (browser lama / bukan HTTPS)
       showLiquidAlert('Link Tabel Ini', link);
     }
   });
@@ -5957,7 +5595,6 @@
     return String(str || 'tabel').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'tabel';
   }
 
-  // --- Export ke PDF: bikin tabel PDF asli dari data (bukan gambar), pakai jsPDF + autoTable ---
   async function urlToBase64(url) {
     try {
       const resp = await fetch(url);
@@ -5981,20 +5618,16 @@
     return fmt === 'JPG' ? 'JPEG' : fmt;
   }
 
-  // Kolom "Bukti" di-export sebagai QR code (bukan foto asli) -- foto aslinya kekecilan kalau
-  // dikecilin jadi thumbnail di tabel PDF/PNG, jadi nggak kebaca apa isinya. QR tetap bisa
-  // di-scan HP buat buka fotonya ukuran penuh. Bonus: nggak perlu fetch byte fotonya sama
-  // sekali (beda dari urlToBase64 di atas), jadi lebih cepat & nggak kena masalah CORS.
   async function buktiUrlToQrDataUrl(url) {
     if (typeof qrcode === 'undefined') {
       console.error('Library QR (cdnjs.cloudflare.com/qrcode-generator) belum termuat -- cek koneksi internet.');
       return null;
     }
     try {
-      const qr = qrcode(0, 'M'); // 0 = ukuran auto sesuai panjang link, M = koreksi error tingkat sedang
+      const qr = qrcode(0, 'M');
       qr.addData(url);
       qr.make();
-      return qr.createDataURL(6, 4); // 6px per kotak, margin 4 kotak -- hasilnya hitam di atas putih
+      return qr.createDataURL(6, 4);
     } catch (err) {
       console.error('Gagal bikin QR buat bukti:', url, err);
       return null;
@@ -6015,7 +5648,7 @@
     try {
       const imageColIds = content.columns.filter(c => c.type === 'image').map(c => c.id);
       const buktiColId = (content.columns.find(c => c.id === 'bukti') || {}).id;
-      const imageCache = {}; // key: "rowIndex-colId" -> base64 data URL (foto asli) ATAU array data URL QR (khusus kolom bukti)
+      const imageCache = {};
 
       let buktiUrlTotal = 0, buktiQrSukses = 0;
       if (imageColIds.length > 0) {
@@ -6040,7 +5673,6 @@
           }
         }
       }
-      // Ada bukti yang seharusnya jadi QR tapi semuanya gagal dibuat -> kasih tau, jangan diam-diam kosong
       if (buktiUrlTotal > 0 && buktiQrSukses === 0) {
         alert('QR untuk kolom Bukti gagal dibuat (kemungkinan koneksi internet terputus saat memuat library QR). PDF tetap dibuat, tapi kolom Bukti akan kosong.');
       }
@@ -6064,7 +5696,6 @@
         })
       );
 
-      // Kolom bukti dilebarin dikit -- biar muat 2 QR bersisian kalau ada 2 foto
       const buktiColIndex = content.columns.findIndex(c => c.id === 'bukti');
       const columnStyles = buktiColIndex !== -1 ? { [buktiColIndex]: { cellWidth: 52 } } : {};
 
@@ -6084,7 +5715,6 @@
           const cached = imageCache[`${data.row.index}-${col.id}`];
           if (!cached) return;
           if (col.id === buktiColId) {
-            // 1-2 QR code kecil bersisian (masing-masing link ke 1 foto bukti)
             const qrs = cached;
             const size = Math.min(data.cell.height - 6, 22);
             qrs.forEach((qr, i) => {
@@ -6115,7 +5745,6 @@
     }
   });
 
-  // --- Download file dari browser (dipakai CSV & backup). BOM dipasang supaya Excel membaca UTF-8 dengan benar ---
   function downloadTextFile(filename, text, mime, withBom) {
     const blob = new Blob([withBom ? '\uFEFF' + text : text], { type: mime });
     const url = URL.createObjectURL(blob);
@@ -6128,14 +5757,12 @@
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  // Sel CSV: pakai tanda kutip jika perlu, dan netralkan awalan = + @ (mencegah formula injection di Excel)
   function csvCell(val) {
     let v = val == null ? '' : String(val);
     if (/^[=+@]/.test(v)) v = "'" + v;
     if (/[";\n\r]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
     return v;
   }
-  // Pemisah titik koma (;) supaya langsung rapi di Excel berbahasa Indonesia
   function tableToCsv(content) {
     const lines = [content.columns.map(c => csvCell(c.label || '')).join(';')];
     content.rows.forEach(row => {
@@ -6156,7 +5783,6 @@
     downloadTextFile(`${safeFileName(title)}.csv`, tableToCsv(content), 'text/csv;charset=utf-8;', true);
   });
 
-  // --- Backup semua data: seluruh notes (semua folder, semua jenis buku) + Sampah ikut tersimpan di content ---
   let backupRunning = false;
   document.getElementById('rowBackupAll').addEventListener('click', async () => {
     if (backupRunning) return;
@@ -6194,7 +5820,6 @@
     }
   });
 
-  // --- Export ke Gambar: screenshot tabel yang lagi ditampilkan, jadi PNG ---
   function buildExportTableEl(note, buktiQrCache) {
     const content = getDisplayTable(note);
 
@@ -6235,7 +5860,7 @@
             group.style.cssText = 'display:flex; gap:6px;';
             qrs.forEach(qr => {
               const img = document.createElement('img');
-              img.src = qr; // data URL lokal -> nggak butuh crossOrigin, nggak kena CORS
+              img.src = qr;
               img.style.cssText = 'width:40px; height:40px; border-radius:4px; display:block;';
               group.appendChild(img);
             });
@@ -6284,7 +5909,7 @@
     showShareLoading('Membuat gambar...');
 
     const buktiColIndex = content.columns.findIndex(c => c.id === 'bukti');
-    const buktiQrCache = {}; // key: rowIndex -> array data URL QR (1-2)
+    const buktiQrCache = {};
     if (buktiColIndex !== -1) {
       showShareLoading('Membuat QR bukti...');
       let buktiUrlTotal = 0, buktiQrSukses = 0;
@@ -6338,20 +5963,14 @@
     }
   });
 
-  // =====================================================================
-  // --- DATA SEMUA NOTES (dipakai Tasks & Search) ---
-  // Fitur Analisa & Laporan sudah dipisah ke analisa.html.
-  // =====================================================================
-
   function escapeHtml(str) {
     return String(str).replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
   }
 
-  let allNotesData = []; // seluruh notes dari semua folder, dipakai Tasks & Search
+  let allNotesData = [];
 
-  // Ambil semua notes dari semua folder + tempel nama foldernya masing-masing
   async function loadAllNotesData() {
     const { data, error } = await supabaseClient
       .from('notes')
@@ -6368,19 +5987,16 @@
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
 
-    // Note warung & kasbon TIDAK ikut Search/tugas buku besar
     allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
-    // Note kasbon disimpan terpisah: dipakai tugas "Kasbon belum lunas" di Tasks
     allKasbonNotes = (data || []).filter(n => isKasbonNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
   }
 
-  // --- Liquid Glass Alert ---
   const liquidAlertBackdrop = document.getElementById('liquidAlertBackdrop');
   const liquidAlertTitle = document.getElementById('liquidAlertTitle');
   const liquidAlertText = document.getElementById('liquidAlertText');
@@ -6417,26 +6033,17 @@
     );
   });
 
-  // --- Analisa: dipindah ke halaman sendiri (analisa.html) biar dashboard ini ringan ---
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => {
     window.location.href = 'analisa.html';
   });
 
-  // Data awal dimuat otomatis oleh guardAdminAccess() setelah verifikasi admin berhasil
 </script>
 <script>
-  // Minta browser TIDAK menghapus localStorage (sesi login) saat perangkat
-  // kekurangan memori. Penting khusus untuk PWA iOS yang di-"Add to Home
-  // Screen" — tanpa ini, iOS kadang membersihkan local storage app yang
-  // jarang dibuka dan memaksa login ulang. Aman dipanggil berkali-kali,
-  // dan tidak memunculkan dialog izin apapun ke pengguna.
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(() => {});
   }
 </script>
 <script>
-  // Daftarkan Service Worker — WAJIB supaya app-shell tersedia offline dan
-  // supaya iOS mengenali halaman ini sebagai PWA yang bisa di-cache.
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch((err) => {
