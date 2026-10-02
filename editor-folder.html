@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Editor Folder</title>
+<style>
+  :root{--paper:#F6F1E7;--card:#FBF8F2;--ink:#1C1B19;--soft:#6B6459;--line:#E4DDCC;--accent:#C9932F;--accent-ink:#fff;--danger:#C24444;--r:16px}
+  body.dark{--paper:#15140F;--card:#1E1D17;--ink:#EDEAE2;--soft:#9B948A;--line:#332F27;--accent:#D9A536;--accent-ink:#1C1B19}
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+  html,body{margin:0;background:var(--paper);color:var(--ink)}
+  .top{display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 8px}
+  .back{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:22px;cursor:pointer;flex-shrink:0}
+  .top h2{margin:0;font-size:20px;font-weight:800}.top span{font-size:13px;color:var(--soft)}
+  main{padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 100px);max-width:560px;margin:0 auto}
+  .rec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;margin-bottom:10px;cursor:pointer}
+  .rec b{display:block;font-size:16px;margin-bottom:6px;word-break:break-word}
+  .rec p{margin:2px 0;font-size:13.5px;color:var(--soft);word-break:break-word}.rec p em{font-style:normal;color:var(--ink);font-weight:600}
+  .rec small{display:block;margin-top:8px;font-size:12px;color:var(--soft)}
+  .empty{text-align:center;color:var(--soft);padding:50px 10px;font-size:14px}
+  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:calc(100% - 32px);max-width:528px;padding:16px;border:0;border-radius:var(--r);background:var(--accent);color:var(--accent-ink);font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  .f{margin-top:16px}.f>label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}.f>label i{font-style:normal;font-weight:500;color:var(--soft);font-size:12.5px}
+  input[type=text],input[type=date],input[type=time],select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);font-size:16px;outline:none}
+  textarea{min-height:90px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  .auto{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:11px 14px;font-size:13.5px;color:var(--soft);line-height:1.5}
+  .rp{display:flex;align-items:center;gap:8px}.rp span{font-weight:700;color:var(--soft)}
+  .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .th{position:relative;width:84px;height:84px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+  .th img{width:100%;height:100%;object-fit:cover}.th.up{opacity:.5}
+  .th button{position:absolute;top:3px;right:3px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:15px;cursor:pointer}
+  .pick{padding:10px 14px;border-radius:12px;border:1.5px dashed var(--accent);background:transparent;color:var(--ink);font-weight:700;font-size:13.5px;cursor:pointer}
+  .btns{display:flex;gap:10px;margin-top:26px}
+  .btns button{flex:1;padding:15px;border-radius:var(--r);font-size:16px;font-weight:800;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+  .btns .pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.btns .del{color:var(--danger)}
+  .btns button:disabled{opacity:.55}
+  .err{display:none;margin-top:14px;padding:12px 14px;border-radius:var(--r);background:rgba(194,68,68,.12);color:var(--danger);font-size:14px;font-weight:600}
+  .msg{padding:50px 16px;text-align:center;color:var(--soft)}
+</style>
+</head>
+<body>
+<div class="top">
+  <button class="back" id="btnBack" aria-label="Kembali">&#8249;</button>
+  <div><h2 id="ttl">...</h2><span id="sub">&nbsp;</span></div>
+</div>
+<main id="app"><div class="msg">Memuat...</div></main>
+<button class="fab" id="fab" style="display:none">+ Tambah Data</button>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const sb = supabase.createClient('https://zgzmbneqqzxnptbmlhsz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E', {
+    auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' }
+  });
+  if (localStorage.getItem('bm-theme') !== 'light') document.body.classList.add('dark');
+
+  (async function guard() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { window.top.location.href = 'admin-login.html'; return; }
+    const { data: ok, error } = await sb.rpc('is_admin');
+    if (error) return;
+    if (!ok) { await sb.auth.signOut(); window.top.location.href = 'admin-login.html'; }
+  })();
+
+  const SCHEMA = 'custom-data-v1', BUCKET = 'bukti';
+  const qs = new URLSearchParams(location.search);
+  let noteId = qs.get('id'), folderId = qs.get('folder');
+  let folder = null, cols = [], auto = { no: true, tanggal: true, jam: true };
+  let records = [], editing = null, form = null, uploading = 0, saving = false;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const pad = n => String(n).padStart(2, '0');
+  const uid = () => 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const hm = d => pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const dmy = d => pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear();
+  const byDate = (a, b) => new Date(a.created_at) - new Date(b.created_at);
+
+  function close() { if (window.parent !== window) window.parent.postMessage('close-editor', '*'); else location.href = 'dashboard-admin.html'; }
+
+  function fmt(c, v) {
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '';
+    if (c.type === 'image') return v.length + ' foto';
+    if (c.type === 'money') return 'Rp ' + Number(v).toLocaleString('id-ID');
+    if (c.type === 'date') { const d = new Date(v + 'T00:00:00'); return isNaN(d) ? v : dmy(d); }
+    return v;
+  }
+  function numberOf(r, i) { return auto.no ? pad(i + 1).padStart(3, '0') : (r.no || '-'); }
+
+  /* ---------------- DAFTAR ---------------- */
+  function renderList() {
+    editing = null; form = null;
+    $('fab').style.display = 'block';
+    $('ttl').textContent = folder.name; $('sub').textContent = records.length + ' data';
+    const sorted = [...records].sort(byDate).map((r, i) => ({ r, i }));
+    $('app').innerHTML = sorted.length ? sorted.slice().reverse().map(({ r, i }) => {
+      const vals = cols.map(c => ({ c, t: fmt(c, r.v && r.v[c.id]) })).filter(x => x.t && x.c.type !== 'image');
+      const d = new Date(r.created_at);
+      return `<div class="rec" data-id="${r.id}"><b>${esc(vals.length ? vals[0].t : '(kosong)')}</b>
+        ${vals.slice(1, 4).map(x => `<p>${esc(x.c.label)}: <em>${esc(x.t)}</em></p>`).join('')}
+        <small>No ${esc(numberOf(r, i))} &middot; ${dmy(d)} ${hm(d)}</small></div>`;
+    }).join('') : '<div class="empty">Belum ada data.<br>Ketuk tombol di bawah untuk menambah.</div>';
+  }
+  $('app').addEventListener('click', e => { const el = e.target.closest('.rec'); if (el) openForm(el.dataset.id); });
+  $('fab').onclick = () => openForm(null);
+  $('btnBack').onclick = () => { if (form && !confirm('Batalkan isian ini?')) return; if (form) renderList(); else close(); };
+
+  /* ---------------- FORM ---------------- */
+  function openForm(id) {
+    const rec = id ? records.find(r => r.id === id) : null;
+    editing = rec; $('fab').style.display = 'none';
+    const base = rec ? new Date(rec.created_at) : new Date();
+    form = { vals: JSON.parse(JSON.stringify(rec && rec.v || {})), no: rec ? (rec.no || '') : '', tanggal: ymd(base), jam: hm(base) };
+    $('ttl').textContent = rec ? 'Edit Data' : 'Tambah Data'; $('sub').textContent = folder.name;
+    const autoTxt = [!auto.no && 'Nomor', !auto.tanggal && 'Tanggal', !auto.jam && 'Jam'];
+    const autoList = ['Nomor', 'Tanggal', 'Jam'].filter((_, i) => [auto.no, auto.tanggal, auto.jam][i]);
+    let h = autoList.length ? `<div class="auto">${autoList.join(', ')} terisi otomatis.</div>` : '';
+    if (!auto.no) h += `<div class="f"><label>Nomor</label><input type="text" data-sys="no" value="${esc(form.no)}" placeholder="Contoh: 001"></div>`;
+    if (!auto.tanggal) h += `<div class="f"><label>Tanggal</label><input type="date" data-sys="tanggal" value="${form.tanggal}"></div>`;
+    if (!auto.jam) h += `<div class="f"><label>Jam</label><input type="time" data-sys="jam" value="${form.jam}"></div>`;
+    h += cols.map(c => {
+      const v = form.vals[c.id], lab = `<label>${esc(c.label)}${c.required ? '' : ' <i>(opsional)</i>'}</label>`;
+      let inp;
+      if (c.type === 'long') inp = `<textarea data-col="${c.id}">${esc(v || '')}</textarea>`;
+      else if (c.type === 'select') inp = `<select data-col="${c.id}"><option value="">Pilih...</option>${(c.options || []).map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+      else if (c.type === 'date') inp = `<input type="date" data-col="${c.id}" value="${esc(v || '')}">`;
+      else if (c.type === 'money') inp = `<div class="rp"><span>Rp</span><input type="text" inputmode="numeric" data-col="${c.id}" data-money="1" value="${v ? Number(v).toLocaleString('id-ID') : ''}" placeholder="0"></div>`;
+      else if (c.type === 'number') inp = `<input type="text" inputmode="decimal" data-col="${c.id}" value="${esc(v || '')}">`;
+      else if (c.type === 'image') inp = `<div class="thumbs" id="th_${c.id}"></div><div style="margin-top:8px"><button type="button" class="pick" data-pick="${c.id}">Tambah foto (maks. 2)</button><input type="file" accept="image/*" multiple hidden data-file="${c.id}"></div>`;
+      else inp = `<input type="text" data-col="${c.id}" value="${esc(v || '')}" autocomplete="off">`;
+      return `<div class="f">${lab}${inp}</div>`;
+    }).join('');
+    h += `<div class="err" id="err"></div><div class="btns">${rec ? '<button class="del" id="bDel">Hapus</button>' : '<button id="bCancel">Batal</button>'}<button class="pri" id="bSave">Simpan</button></div>`;
+    $('app').innerHTML = h;
+    cols.filter(c => c.type === 'image').forEach(c => renderThumbs(c.id));
+    scrollTo(0, 0);
+  }
+
+  function renderThumbs(cid) {
+    const arr = form.vals[cid] || [];
+    $('th_' + cid).innerHTML = arr.map((it, i) => `<div class="th ${it.u ? 'up' : ''}"><img src="${esc(it.url || it.pv)}"><button data-rm="${cid}:${i}">&times;</button></div>`).join('');
+  }
+  function toBlob(file) {
+    return new Promise((res, rej) => {
+      const img = new Image(), rd = new FileReader();
+      rd.onload = e => { img.src = e.target.result; };
+      img.onload = () => {
+        let w = img.naturalWidth, h = img.naturalHeight; const m = 1280;
+        if (w > m || h > m) { if (w > h) { h = Math.round(h * m / w); w = m; } else { w = Math.round(w * m / h); h = m; } }
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        cv.toBlob(b => b ? res(b) : rej(new Error('gagal')), 'image/jpeg', 0.8);
+      };
+      img.onerror = rd.onerror = () => rej(new Error('File bukan gambar'));
+      rd.readAsDataURL(file);
+    });
+  }
+  async function addImages(cid, files) {
+    const arr = form.vals[cid] = form.vals[cid] || [];
+    for (const f of Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, 2 - arr.length)) {
+      const it = { url: '', pv: URL.createObjectURL(f), u: true }; arr.push(it); renderThumbs(cid); uploading++;
+      try {
+        const blob = await toBlob(f), path = ymd(new Date()) + '/' + uid() + '.jpg';
+        const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+        if (error) throw error;
+        it.url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; it.u = false;
+      } catch (e) { arr.splice(arr.indexOf(it), 1); showErr('Foto gagal diunggah, coba lagi.'); }
+      uploading--; renderThumbs(cid);
+    }
+  }
+  const imgUrls = arr => (arr || []).filter(x => x.url).map(x => x.url);
+
+  function showErr(m) { const el = $('err'); if (!el) return; el.textContent = m; el.style.display = m ? 'block' : 'none'; if (m) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+
+  $('app').addEventListener('input', e => {
+    const t = e.target;
+    if (!form) return;
+    if (t.dataset.sys) form[t.dataset.sys] = t.value;
+    else if (t.dataset.col) {
+      if (t.dataset.money) { const d = t.value.replace(/\D/g, ''); t.value = d ? Number(d).toLocaleString('id-ID') : ''; form.vals[t.dataset.col] = d; }
+      else form.vals[t.dataset.col] = t.value;
+    }
+  });
+  $('app').addEventListener('change', e => { const t = e.target; if (t.dataset && t.dataset.file) { addImages(t.dataset.file, t.files); t.value = ''; } });
+  $('app').addEventListener('click', e => {
+    const t = e.target;
+    if (t.dataset.pick) t.parentElement.querySelector('input[type=file]').click();
+    else if (t.dataset.rm) { const [cid, i] = t.dataset.rm.split(':'); form.vals[cid].splice(+i, 1); renderThumbs(cid); }
+    else if (t.id === 'bCancel') renderList();
+    else if (t.id === 'bSave') save();
+    else if (t.id === 'bDel') remove();
+  });
+
+  /* ---------------- SIMPAN ---------------- */
+  async function persist(mutate) {
+    let cur = records;
+    if (noteId) {
+      const { data, error } = await sb.from('notes').select('content').eq('id', noteId).single();
+      if (error) throw error;
+      cur = data.content && Array.isArray(data.content.records) ? data.content.records : [];
+    }
+    mutate(cur);
+    const last = [...cur].sort(byDate).pop(), firstVal = last && cols.map(c => fmt(c, last.v && last.v[c.id])).find(x => x && !/ foto$/.test(x));
+    const d = new Date();
+    const payload = {
+      content: { schema: SCHEMA, records: cur, columns: cols.map(c => ({ id: c.id, label: c.label, type: c.type })), auto },
+      preview: firstVal || '',
+      date_tag: pad(d.getHours() % 12 || 12) + ':' + pad(d.getMinutes()) + (d.getHours() >= 12 ? ' PM' : ' AM')
+    };
+    if (noteId) {
+      const { error } = await sb.from('notes').update(payload).eq('id', noteId);
+      if (error) throw error;
+    } else {
+      const first = [...cur].sort(byDate)[0];
+      const { data, error } = await sb.from('notes').insert({ ...payload, title: folder.name + ' ' + dmy(new Date(first ? first.created_at : Date.now())), folder_id: folderId }).select().single();
+      if (error) throw error;
+      noteId = data.id;
+    }
+    records = cur;
+    window.parent.postMessage({ type: 'note-autosaved', noteId, folder: folderId }, '*');
+  }
+
+  async function save() {
+    if (saving) return;
+    if (uploading) return showErr('Tunggu foto selesai diunggah dulu.');
+    for (const c of cols) {
+      const v = form.vals[c.id];
+      if (c.required && (c.type === 'image' ? !imgUrls(v).length : !String(v == null ? '' : v).trim())) return showErr('"' + c.label + '" wajib diisi.');
+    }
+    if (!auto.tanggal && !form.tanggal) return showErr('Tanggal wajib diisi.');
+    if (!auto.jam && !form.jam) return showErr('Jam wajib diisi.');
+    const v = {};
+    cols.forEach(c => {
+      const x = form.vals[c.id];
+      if (c.type === 'image') { const u = imgUrls(x); if (u.length) v[c.id] = u; }
+      else if (x != null && String(x).trim() !== '') v[c.id] = String(x).trim();
+    });
+    const base = editing ? new Date(editing.created_at) : new Date();
+    const created = new Date((auto.tanggal ? ymd(base) : form.tanggal) + 'T' + (auto.jam ? hm(base) : form.jam) + ':00').toISOString();
+    const rec = { id: editing ? editing.id : uid(), created_at: created, v };
+    if (!auto.no) rec.no = (form.no || '').trim();
+    saving = true; $('bSave').disabled = true; $('bSave').textContent = 'Menyimpan...';
+    try {
+      await persist(cur => { const i = cur.findIndex(r => r.id === rec.id); if (i >= 0) cur[i] = rec; else cur.push(rec); });
+      saving = false; renderList();
+    } catch (e) {
+      saving = false; $('bSave').disabled = false; $('bSave').textContent = 'Simpan'; showErr('Gagal menyimpan: ' + (e.message || e));
+    }
+  }
+
+  async function remove() {
+    if (!confirm('Hapus data ini?')) return;
+    const id = editing.id, gone = form.vals;
+    try {
+      await persist(cur => { const i = cur.findIndex(r => r.id === id); if (i >= 0) cur.splice(i, 1); });
+      const paths = []; cols.filter(c => c.type === 'image').forEach(c => (editing.v[c.id] || []).forEach(u => { const k = u.indexOf('/' + BUCKET + '/'); if (k > -1) paths.push(u.slice(k + BUCKET.length + 2)); }));
+      if (paths.length) sb.storage.from(BUCKET).remove(paths);
+      renderList();
+    } catch (e) { showErr('Gagal menghapus: ' + (e.message || e)); }
+  }
+
+  /* ---------------- MUAT ---------------- */
+  (async function init() {
+    try {
+      if (noteId) {
+        const { data: n, error } = await sb.from('notes').select('*').eq('id', noteId).single();
+        if (error || !n) throw new Error('Data tidak ditemukan.');
+        if (n.content && n.content.schema && n.content.schema !== SCHEMA) throw new Error('Data ini bukan milik folder custom.');
+        folderId = n.folder_id; records = n.content && Array.isArray(n.content.records) ? n.content.records : [];
+      }
+      if (!folderId) throw new Error('Folder tidak ditemukan.');
+      const { data: f, error: e2 } = await sb.from('folders').select('*').eq('id', folderId).single();
+      if (e2 || !f) throw new Error('Folder tidak ditemukan.');
+      if (!f.schema || !Array.isArray(f.schema.columns)) throw new Error('Folder ini bukan folder custom.');
+      folder = f; cols = f.schema.columns.filter(c => !c.hidden);
+      const a = f.schema.auto || {}; auto = { no: a.no !== false, tanggal: a.tanggal !== false, jam: a.jam !== false };
+      renderList();
+    } catch (e) { $('app').innerHTML = '<div class="msg">' + esc(e.message || 'Gagal memuat — cek koneksi lalu buka ulang.') + '</div>'; $('ttl').textContent = 'Editor'; }
+  })();
+</script>
+</body>
+</html>
