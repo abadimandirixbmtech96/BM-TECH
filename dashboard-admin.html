@@ -2800,8 +2800,10 @@
         color: f.color || '#D9A536',
         count: countByFolder[f.id] || 0,
         active: f.id === activeCategoryId,
-        ownerUsername: f.owner_username || null
+        ownerUsername: f.owner_username || null,
+        schema: (f.schema && Array.isArray(f.schema.columns)) ? f.schema : null
       }));
+    rebuildPjFolders();
 
     if (!activeCategoryId) {
       const savedFolderId = localStorage.getItem(LAST_FOLDER_KEY);
@@ -2896,7 +2898,7 @@
       <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span>${cat.name}</span>
+          <span>${escapeHtml(cat.name)}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
         ${deleteModeCatId === cat.id ? `
@@ -2905,7 +2907,7 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
               Edit
             </div>
-            <div class="folder-menu-item danger" data-menu-action="delete" data-menu-id="${cat.id}" data-menu-name="${cat.name}">
+            <div class="folder-menu-item danger" data-menu-action="delete" data-menu-id="${cat.id}" data-menu-name="${escapeHtml(cat.name)}">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Delete
             </div>
@@ -2916,7 +2918,8 @@
     `;
     }
 
-    const adminCats = categoriesData.filter(c => !c.ownerUsername);
+    const adminCats = categoriesData.filter(c => !c.ownerUsername && !c.schema);
+    const customCats = categoriesData.filter(c => !c.ownerUsername && c.schema);
     const customerCats = categoriesData.filter(c => c.ownerUsername);
 
     const customerSectionHtml = customerCats.length ? `
@@ -2951,7 +2954,14 @@
       ${pjFolders.map(pjItemHtml).join('')}
     ` : '';
 
-    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml + pjSectionHtml + customerVfSectionHtml;
+    const customSectionHtml = customCats.length ? `
+      <div class="folder-section-divider">
+        <span>Folder Custom</span>
+      </div>
+      ${customCats.map(folderItemHtml).join('')}
+    ` : '';
+
+    container.innerHTML = allRowHtml + adminCats.map(folderItemHtml).join('') + customerSectionHtml + pjSectionHtml + customSectionHtml + customerVfSectionHtml;
 
     wireAllFolderRow(container);
 
@@ -3565,9 +3575,49 @@
     return str;
   }
 
+  const CUSTOM_SCHEMA = 'custom-data-v1';
+  const CUSTOM_EDITOR_FILE = 'editor-folder.html';
+  const CUSTOM_BUILDER_FILE = 'folder-baru.html';
+  function isCustomNote(note) { return !!(note && note.content && note.content.schema === CUSTOM_SCHEMA); }
+  function isCustomFolderId(folderId) {
+    const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
+    return !!(cat && cat.schema);
+  }
+
+  function customTable(note) {
+    const content = note.content;
+    const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === note.folder_id);
+    const userCols = (cat && cat.schema ? cat.schema.columns.filter(c => !c.hidden) : (content.columns || []))
+      .map(c => ({ id: c.id, label: c.label, type: c.type }));
+    const pad2 = n => String(n).padStart(2, '0');
+    const sorted = [...(content.records || [])].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const autoNo = !(content.auto && content.auto.no === false) && !(cat && cat.schema && cat.schema.auto && cat.schema.auto.no === false);
+    const dmy = d => `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}`;
+    const fmt = (c, v) => {
+      if (v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length)) return '';
+      if (c.type === 'image') return v[0] || '';
+      if (c.type === 'money') return Math.round(Number(v) || 0).toLocaleString('id-ID');
+      if (c.type === 'date') { const d = new Date(v + 'T00:00:00'); return isNaN(d) ? String(v) : dmy(d); }
+      return String(v);
+    };
+    const rows = sorted.map((r, i) => {
+      const d = r.created_at ? new Date(r.created_at) : null;
+      const cells = {
+        no: autoNo ? String(i + 1).padStart(3, '0') : (r.no || ''),
+        tanggal: d ? dmy(d) : '',
+        jam: d ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : ''
+      };
+      userCols.forEach(c => { cells[c.id] = fmt(c, r.v && r.v[c.id]); });
+      return { cells };
+    });
+    return { columns: [{ id: 'no', label: 'No' }, { id: 'tanggal', label: 'Tanggal' }, { id: 'jam', label: 'Jam' }, ...userCols.map(c => c.type === 'image' ? c : { id: c.id, label: c.label })], rows };
+  }
+
   function getNoteTable(note) {
     const content = note && note.content;
     if (!content) return null;
+
+    if (content.schema === CUSTOM_SCHEMA && Array.isArray(content.records)) return customTable(note);
 
     if (content.schema === 'admin-data-v1' && Array.isArray(content.records)) {
       const pad2 = n => String(n).padStart(2, '0');
@@ -3772,13 +3822,14 @@
   }
 
   function getTaskFolders() {
-    return categoriesData.filter(c => !c.ownerUsername && !isPjId(c.id));
+    return categoriesData.filter(c => !c.ownerUsername && !c.schema && !isPjId(c.id));
   }
 
   function computeTasks() {
     const tasks = [];
 
     allNotesData.forEach(note => {
+      if (isCustomNote(note)) return;
       const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
       const columns = content.columns;
@@ -5256,8 +5307,19 @@
   let selectedFolderColor = '#D9A536';
   let editingFolderId = null;
 
+  function openFolderBuilder(catId = null) {
+    drawer.classList.remove('open');
+    drawerOverlay.classList.remove('open');
+    editorFrame.src = 'about:blank';
+    requestAnimationFrame(() => {
+      editorFrame.src = CUSTOM_BUILDER_FILE + (catId ? '?id=' + encodeURIComponent(catId) + '&' : '?') + '_t=' + Date.now();
+    });
+    editorModal.classList.add('open');
+  }
+
   function openNewFolderModal(catId = null) {
     if (catId && isPermanentFolder(categoriesData.find(c => c.id === catId))) return;
+    if (catId && isCustomFolderId(catId)) { openFolderBuilder(catId); return; }
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
     editingFolderId = catId;
@@ -5355,7 +5417,7 @@
     loadCategories();
   }
 
-  document.getElementById('btnCreateCategory').addEventListener('click', () => openNewFolderModal());
+  document.getElementById('btnCreateCategory').addEventListener('click', () => openFolderBuilder());
   btnNewFolderComplete.addEventListener('click', handleCreateCategory);
 
   document.getElementById('btnComposePencil').addEventListener('click', () => {
@@ -5401,7 +5463,8 @@
     if (folderId) params.set('folder', folderId);
 
     const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
-    const editorFile = isKasbonNote(noteObj) ? KASBON_EDITOR_FILE
+    const editorFile = (isCustomNote(noteObj) || isCustomFolderId(folderId)) ? CUSTOM_EDITOR_FILE
+                     : isKasbonNote(noteObj) ? KASBON_EDITOR_FILE
                      : isWarungNote(noteObj) ? WARUNG_EDITOR_FILE
                      : isKasbonFolderId(folderId) ? KASBON_EDITOR_FILE
                      : isWarungFolderId(folderId) ? WARUNG_EDITOR_FILE
