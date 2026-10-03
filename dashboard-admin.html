@@ -3811,7 +3811,7 @@
         };
 
         const stok = String(val('Stok Barang') || '').trim();
-        if (!isEmptyValue(stok) && !isStokNone(stok) && !isHargaCentang(val('Harga'))) {
+        if (!isEmptyValue(stok) && !isStokNone(stok) && isHargaEmpty(val('Harga')) && !isHargaCentang(val('Harga')) && !isHargaCentang(stok)) {
           const allLeft = isStokBJ(stok);
           tasks.push({ ...base, type: 'ditinggal', allLeft, what: allLeft ? base.barang : stok });
         }
