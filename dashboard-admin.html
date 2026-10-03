@@ -2031,8 +2031,7 @@
 
   <main class="content-scroll">
     <div id="notesSection">
-      <h1 class="page-title" id="currentCategoryTitle">PILIH KATEGORI</h1>
-      <p class="section-label" id="currentCategorySubtitle">Previous 7 Days</p>
+      <h1 class="page-title" id="currentCategoryTitle">ALL</h1>
 
       <div class="notes-container view-grid" id="notesList"></div>
     </div>
@@ -3194,7 +3193,7 @@
     activeFilterYear = null;
     activeFilterMonth = null;
     updateComposeButtonVisibility();
-    document.getElementById('currentCategoryTitle').innerText = 'PILIH KATEGORI';
+    document.getElementById('currentCategoryTitle').innerText = 'ALL';
 
     const { data, error } = await supabaseClient
       .from('notes')
@@ -3241,7 +3240,7 @@
       activeCategoryId = null;
       activeFilterYear = null;
       activeFilterMonth = null;
-      document.getElementById('currentCategoryTitle').innerText = 'PILIH KATEGORI';
+      document.getElementById('currentCategoryTitle').innerText = 'ALL';
       notesData = [];
       renderNotes();
     }
@@ -3338,31 +3337,11 @@
     });
   }
 
-  function computeSubtitleLabel(notes) {
-    if (!notes || notes.length === 0) return '';
-    const now = new Date();
-    let oldest = null;
-    notes.forEach(n => {
-      const d = new Date(n.created_at);
-      if (!isNaN(d) && (!oldest || d < oldest)) oldest = d;
-    });
-    if (!oldest) return '';
-
-    const diffDays = (now - oldest) / (1000 * 60 * 60 * 24);
-    if (diffDays < 1) return 'Hari Ini';
-    if (diffDays <= 7) return '7 Hari Terakhir';
-    if (diffDays <= 31) return 'Bulan Ini';
-    if (diffDays <= 366) return 'Tahun Ini';
-    return 'Semua Waktu';
-  }
-
   function renderNotes() {
     const container = document.getElementById('notesList');
-    const subtitleEl = document.getElementById('currentCategorySubtitle');
 
     if (!notesData || notesData.length === 0) {
-      if (subtitleEl) subtitleEl.style.display = 'none';
-      container.style.display = 'block';
+            container.style.display = 'block';
       if (notesLoadFailed) {
         container.innerHTML = `
           <div class="empty-state">
@@ -3415,8 +3394,7 @@
     `;
   }
 
-  if (subtitleEl) subtitleEl.style.display = 'none';
-
+  
   if (activeCategoryId === '__all__') {
     const months = groupNotesByMonth(notesData);
     let idxCounter = 0;
@@ -3435,10 +3413,6 @@
       return `<div class="week-group-header">${week.label}</div>${cardsHtml}`;
     }).join('');
   } else {
-    if (subtitleEl) {
-      subtitleEl.style.display = 'block';
-      subtitleEl.textContent = computeSubtitleLabel(notesData);
-    }
     container.style.display = 'grid';
     container.innerHTML = notesData.map((note, idx) => noteCardHtml(note, idx)).join('');
   }
