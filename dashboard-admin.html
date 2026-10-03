@@ -1457,20 +1457,26 @@
   }
   .selection-header .selection-title { font-size: 15px; font-weight: 800; color: var(--text-primary); }
   .btn-select-all {
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    border: 2px solid var(--text-secondary);
-    background: transparent;
+    width: 26px;
+    height: 26px;
+    margin-right: 4px;
+    padding: 0;
+    border-radius: 8px;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   }
-  .btn-select-all svg { width: 13px; height: 13px; color: transparent; transition: color 0.15s ease; }
-  .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); }
+  .btn-select-all svg { width: 14px; height: 14px; color: transparent; transition: color 0.15s ease; }
+  .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); box-shadow: 0 0 0 3px var(--accent-yellow-glow); }
   .btn-select-all.all-checked svg { color: #1C1B19; }
+  body.theme-light .btn-select-all { border-color: rgba(0, 0, 0, 0.4); background: rgba(0, 0, 0, 0.06); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
+  body.theme-light .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); box-shadow: 0 0 0 3px var(--accent-yellow-glow); }
 
   .note-card { position: relative; }
   .note-checkbox {
@@ -1497,20 +1503,21 @@
 
   .note-pin-badge {
     position: absolute;
-    left: 10px;
+    right: 10px;
     top: 10px;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(6px);
+    background: var(--accent-yellow);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 5;
-    transform: rotate(-40deg);
+    pointer-events: none;
   }
-  .note-pin-badge svg { width: 12px; height: 12px; color: var(--accent-yellow); }
+  .note-pin-badge svg { width: 14px; height: 14px; color: #1C1B19; transform: rotate(45deg); }
+  .note-card.pinned .note-title { padding-right: 30px; }
 
   .selection-bottom-bar {
     display: none;
@@ -3452,10 +3459,10 @@
 
   function noteCardHtml(note, idx) {
     return `
-      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
         ${note.pinned ? `
           <div class="note-pin-badge">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 2a5 5 0 0 0-5 5c0 1.86.9 3.4 2.19 4.42L7 16h4v6h2v-6h4l-2.19-4.58A5.99 5.99 0 0 0 17 7a5 5 0 0 0-5-5z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
           </div>
         ` : ''}
         <div class="note-content-layer">
