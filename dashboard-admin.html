@@ -496,8 +496,8 @@
   .tk-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--card-border-dark); font-size: 11.5px; color: var(--text-secondary); }
   .tk-age { font-weight: 800; color: var(--tc); }
 
-  .tf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); z-index: 350; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-  .tf-overlay.open { opacity: 1; pointer-events: auto; }
+  .tf-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 350; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+  .tf-overlay.open { opacity: 1; pointer-events: auto; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
   .tf-sheet { width: 100%; max-height: 82vh; overflow-y: auto; background: var(--card-surface-dark); border-radius: 26px 26px 0 0; padding: 10px 18px calc(var(--safe-bottom) + 18px); transform: translateY(100%); transition: transform .26s cubic-bezier(.32,.72,0,1); }
   .tf-overlay.open .tf-sheet { transform: none; }
   .tf-grab { width: 40px; height: 5px; border-radius: 3px; background: var(--card-border-dark); margin: 0 auto 14px; }
@@ -1105,8 +1105,8 @@
 
 
 
-  .pzv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 0 20px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
-  .pzv-overlay.open { opacity: 1; pointer-events: auto; }
+  .pzv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 0 20px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
+  .pzv-overlay.open { opacity: 1; pointer-events: auto; -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); }
   .pzv-card { width: 100%; max-width: 380px; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: 22px; padding: 22px 18px 18px; transform: translateY(14px) scale(.98); transition: transform .2s ease; }
   .pzv-overlay.open .pzv-card { transform: none; }
   .pzv-card h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; color: var(--text-primary); text-align: center; }
@@ -3644,6 +3644,33 @@
     { id: 'keterangan', label: 'Keterangan' }
   ];
 
+  // =====================================================================
+  // BUKU HUTANG PIUTANG — data terpisah dari buku besar, warung & kasbon
+  // schema 'hutangpiutang-data-v1': { jenis('hutang'|'piutang'), nama, total, dibayar, keterangan }
+  // =====================================================================
+  const HUTANG_SCHEMA = 'hutangpiutang-data-v1';
+  const HUTANG_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-hutang-piutang.html';
+
+  function isHutangNote(note) {
+    return !!(note && note.content && note.content.schema === HUTANG_SCHEMA);
+  }
+  function isHutangFolderId(folderId) {
+    const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
+    return !!(cat && /hutang|piutang/i.test(cat.name || ''));
+  }
+
+  const HUTANG_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Tanggal' },
+    { id: 'jam', label: 'Jam' },
+    { id: 'jenis', label: 'Jenis' },
+    { id: 'nama', label: 'Nama' },
+    { id: 'total', label: 'Total' },
+    { id: 'dibayar', label: 'Dibayar' },
+    { id: 'sisa', label: 'Sisa' },
+    { id: 'keterangan', label: 'Keterangan' }
+  ];
+
   const WARUNG_COLUMNS = [
     { id: 'no', label: 'No' },
     { id: 'tanggal', label: 'Tanggal' },
@@ -3696,6 +3723,29 @@
         };
       });
       return { columns: KASBON_COLUMNS, rows };
+    }
+    if (isHutangNote(note) && Array.isArray(note.content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const fmtUang = v => { const n = Number(v) || 0; return n ? Math.round(n).toLocaleString('id-ID') : '0'; };
+      const sorted = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const dt = r.created_at ? new Date(r.created_at) : null;
+        const total = Number(r.total) || 0, dibayar = Number(r.dibayar) || 0;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal: dt ? `${pad2(dt.getDate())}-${pad2(dt.getMonth() + 1)}-${dt.getFullYear()}` : '',
+            jam: dt ? `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}` : '',
+            jenis: r.jenis === 'hutang' ? 'Hutang' : r.jenis === 'piutang' ? 'Piutang' : '',
+            nama: r.nama || '',
+            total: fmtUang(total),
+            dibayar: fmtUang(dibayar),
+            sisa: (total > 0 && total - dibayar <= 0) ? '0 (Lunas)' : fmtUang(Math.max(0, total - dibayar)),
+            keterangan: r.keterangan || ''
+          }
+        };
+      });
+      return { columns: HUTANG_COLUMNS, rows };
     }
     return getNoteTable(note);
   }
@@ -5435,8 +5485,10 @@
 
     const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
     const editorFile = (isCustomNote(noteObj) || isCustomFolderId(folderId)) ? CUSTOM_EDITOR_FILE
+                     : isHutangNote(noteObj) ? HUTANG_EDITOR_FILE
                      : isKasbonNote(noteObj) ? KASBON_EDITOR_FILE
                      : isWarungNote(noteObj) ? WARUNG_EDITOR_FILE
+                     : isHutangFolderId(folderId) ? HUTANG_EDITOR_FILE
                      : isKasbonFolderId(folderId) ? KASBON_EDITOR_FILE
                      : isWarungFolderId(folderId) ? WARUNG_EDITOR_FILE
                      : LEDGER_EDITOR_FILE;
@@ -6021,7 +6073,7 @@
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
 
-    allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n)).map(n => ({
+    allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n) && !isHutangNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
