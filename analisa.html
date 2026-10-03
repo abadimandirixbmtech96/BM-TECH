@@ -422,7 +422,7 @@
   .income-mini-stat-label { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
   .income-unit-note { font-size: 10.5px; color: var(--text-muted); text-align: center; margin-top: 10px; }
 
-  .export-row { display: flex; gap: 8px; margin-top: 14px; }
+  .export-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
   .export-btn {
     flex: 1;
     display: flex;
@@ -440,6 +440,9 @@
   }
   .export-btn svg { width: 15px; height: 15px; }
   .export-btn:active { background: rgba(255, 255, 255, 0.12); }
+  .share-btn { flex: 1 1 100%; background: var(--accent-yellow); border-color: transparent; color: #1C1B19; }
+  .share-btn:active { background: #D9921F; }
+  .income-best { font-size: 11.5px; color: var(--text-secondary); text-align: center; margin-top: 6px; line-height: 1.4; }
 
   /* --- Kartu statistik --- */
   .stat-cards-row { display: flex; gap: 10px; }
@@ -482,7 +485,9 @@
     background: var(--accent-yellow);
     transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .bar-note { font-size: 11.5px; color: var(--text-muted); margin-top: 14px; }
+  .bar-note { font-size: 11.5px; color: var(--text-muted); margin-top: 14px; line-height: 1.5; }
+  .bar-note + .bar-note { margin-top: 6px; }
+  .bar-note strong { color: var(--text-primary); font-weight: 700; }
 
   /* --- Pencarian riwayat --- */
   .analytics-search-box {
@@ -505,6 +510,66 @@
     min-width: 0;
   }
   .history-meta { margin: 0 2px 10px; font-size: 11.5px; color: var(--text-secondary); }
+
+  /* --- Target omzet bulanan --- */
+  .target-card {
+    background: var(--card-surface-dark);
+    border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+  }
+  .target-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+  .target-amount { font-size: 16px; font-weight: 800; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .target-amount span { color: var(--text-secondary); font-weight: 600; font-size: 12px; }
+  .target-pct { font-size: 14px; font-weight: 800; color: var(--accent-yellow); flex-shrink: 0; }
+  .target-pct.done { color: var(--accent-green); }
+  .bar-fill.done { background: var(--accent-green); }
+  .target-lines { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .target-line { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+  .target-line strong { color: var(--text-primary); font-weight: 700; }
+  .target-empty { text-align: center; font-size: 13px; color: var(--text-muted); line-height: 1.5; padding: 4px 4px 2px; }
+  .target-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .target-edit-row { display: none; gap: 8px; margin-top: 14px; }
+  .target-edit-row.show { display: flex; }
+  .target-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--glass-pill-bg);
+    border: 1px solid var(--glass-pill-border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+  }
+
+  /* --- Pelanggan baru vs langganan --- */
+  .split-row { display: flex; gap: 10px; }
+  .split-item { flex: 1; min-width: 0; text-align: center; }
+  .split-value { font-size: clamp(18px, 6vw, 24px); font-weight: 800; color: var(--text-primary); }
+  .split-label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; margin-top: 3px; }
+  .split-label .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: baseline; }
+  .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; margin-top: 14px; background: var(--glass-pill-bg); }
+  .split-bar i { display: block; height: 100%; transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+  /* --- Waktu ramai --- */
+  .busy-card {
+    background: var(--card-surface-dark);
+    border: 1px solid var(--card-border-dark);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+  }
+  .busy-block + .busy-block { margin-top: 20px; }
+  .busy-title { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
+  .busy-title span { color: var(--text-primary); font-weight: 700; font-size: 11.5px; text-align: right; min-width: 0; }
+  .busy-bars { display: grid; align-items: end; height: 64px; gap: 3px; }
+  .busy-bars.hours { grid-template-columns: repeat(24, minmax(0, 1fr)); }
+  .busy-bars.days { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+  .busy-bar { background: rgba(240, 165, 41, 0.38); border-radius: 3px 3px 0 0; }
+  .busy-bar.peak { background: var(--accent-yellow); }
+  .busy-bar.zero { background: var(--glass-pill-bg); }
+  .busy-axis { display: flex; justify-content: space-between; margin-top: 6px; font-size: 10px; color: var(--text-muted); }
+  .busy-axis.days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; text-align: center; }
+  .busy-axis .peak { color: var(--accent-yellow); font-weight: 700; }
 
   /* Cetak / PDF: paksa tampilan terang & biarkan halaman mengalir penuh
      (body aslinya overflow:hidden setinggi layar, jadi tanpa ini hasil cetak terpotong) */
@@ -535,9 +600,12 @@
     .custom-range-row,
     .export-row,
     .load-more-btn,
+    .target-actions,
+    .target-edit-row,
+    .share-btn,
     .chart-tip,
     .analytics-search-box { display: none !important; }
-    .panel, .income-card, .bar-list, .recent-activity-list { break-inside: avoid; }
+    .panel, .income-card, .bar-list, .recent-activity-list, .target-card, .busy-card { break-inside: avoid; }
   }
 </style>
 </head>
@@ -631,8 +699,13 @@
         </div>
       </div>
       <p class="income-unit-note" id="incomeUnitNote"></p>
+      <p class="income-best" id="incomeBest"></p>
 
       <div class="export-row">
+        <button class="export-btn share-btn" id="btnShare">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+          Bagikan Laporan (WhatsApp)
+        </button>
         <button class="export-btn" id="btnExportCSV">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export CSV
@@ -641,6 +714,21 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Cetak / PDF
         </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Target Omzet <span class="section-period" id="targetMonthLabel"></span></p>
+    <div class="target-card">
+      <div id="targetSummary"></div>
+      <div class="target-edit-row" id="targetEditRow">
+        <input type="text" inputmode="numeric" class="target-input" id="targetInput" placeholder="Contoh: 15.000.000" autocomplete="off">
+        <button class="apply-range-btn" id="btnSaveTarget">Simpan</button>
+      </div>
+      <div class="target-actions">
+        <button class="export-btn" id="btnEditTarget">Atur Target</button>
+        <button class="export-btn" id="btnClearTarget" style="display:none;">Hapus Target</button>
       </div>
     </div>
   </section>
@@ -673,6 +761,27 @@
     <p class="analytics-section-title">Performa PJ <span class="section-period" data-period-label></span></p>
     <div class="bar-list" id="pjBarList">
       <p class="bar-empty">Belum ada data PJ</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Pelanggan <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="customerSplitCard">
+      <p class="bar-empty">Belum ada data customer</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Perlu Di-follow Up <span class="section-period">· 30+ hari tidak transaksi</span></p>
+    <div class="recent-activity-list" id="followUpList">
+      <p class="recent-activity-empty">Belum ada data customer</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Waktu Ramai <span class="section-period" data-period-label></span></p>
+    <div class="busy-card" id="busyCard">
+      <p class="bar-empty">Belum ada data transaksi</p>
     </div>
   </section>
 
@@ -860,6 +969,10 @@
 
   // --- Data Analisa ---
   const LEDGER_NAME_RE = /buku\s*besar/i;
+  // Customer yang tidak ditulis namanya biasanya diisi "Iklan" (juga "Iklan 2", "IKLAN FB", dst).
+  // Baris seperti ini tetap dihitung sebagai transaksi, tapi dianggap TANPA NAMA untuk Top Customer,
+  // Pelanggan, Follow Up, dan Customer Aktif. Ubah pola ini kalau ada kata lain yang dipakai.
+  const UNNAMED_CUSTOMER_RE = /^iklan\b/i;
   const NOTES_PAGE_SIZE = 1000; // batas default Supabase per request
 
   let ledgerFolders = [];   // folder BUKU BESAR saja
@@ -1026,6 +1139,12 @@
     return (s && !/^-+$/.test(s)) ? s : fallback;
   }
 
+  // Nama untuk tampilan: customer bernama, atau tulisan aslinya ("Iklan") kalau dianggap tanpa nama
+  function displayCustomer(e) {
+    if (e.customer !== 'Tanpa Nama') return e.customer;
+    return e.customerRaw || 'Tanpa Nama';
+  }
+
   // Semua baris bermakna di buku besar (terbaru dulu): transaksi (ada Harga) maupun
   // catatan lain seperti barang keluar. Baris kosong dilewati.
   function extractEntries() {
@@ -1038,10 +1157,11 @@
       const columns = content.columns;
       content.rows.forEach(row => {
         const amount = parseRupiah(getRowValueByLabel(columns, row, 'Harga'));
-        const customer = cellText(columns, row, 'Customer', 'Tanpa Nama');
+        const customerRaw = cellText(columns, row, 'Customer', 'Tanpa Nama');
+        const customer = UNNAMED_CUSTOMER_RE.test(customerRaw) ? 'Tanpa Nama' : customerRaw;
         const barang = cellText(columns, row, 'Barang', 'Lainnya');
         const keluar = cellText(columns, row, 'Barang Keluar', '');
-        if (!amount && customer === 'Tanpa Nama' && barang === 'Lainnya' && !keluar) return;
+        if (!amount && customerRaw === 'Tanpa Nama' && barang === 'Lainnya' && !keluar) return;
 
         const date = parseRowDate(getRowValueByLabel(columns, row, 'Tanggal'), note.created_at);
         if (!date) return;
@@ -1055,7 +1175,7 @@
         }
 
         list.push({
-          amount, date, ts, hasTime, customer, barang, keluar,
+          amount, date, ts, hasTime, customer, customerRaw, barang, keluar,
           pj: cellText(columns, row, 'PJ', 'Tanpa PJ'),
           folder: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled'
@@ -1099,8 +1219,8 @@
     if (period === 'day') {
       const sorted = [...txs].sort((a, b) => a.ts - b.ts);
       const points = sorted.map(t => ({
-        label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + t.customer,
-        short: t.hasTime ? formatTime(t.ts) : t.customer,
+        label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t),
+        short: t.hasTime ? formatTime(t.ts) : displayCustomer(t),
         value: t.amount,
         count: 1
       }));
@@ -1220,14 +1340,16 @@
   const ICONS = {
     tx: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5"/><line x1="12" y1="22" x2="12" y2="12"/></svg>',
-    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>'
+    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>',
+    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>'
   };
 
   function entryRowHtml(e, whenText) {
     const type = e.amount > 0 ? 'tx' : (e.keluar ? 'out' : 'note');
 
     const titleParts = [];
-    if (e.customer !== 'Tanpa Nama') titleParts.push(e.customer);
+    const who = displayCustomer(e);
+    if (who !== 'Tanpa Nama') titleParts.push(who);
     if (e.barang !== 'Lainnya') titleParts.push(e.barang);
     if (titleParts.length === 0) titleParts.push(e.keluar || 'Catatan');
 
@@ -1369,39 +1491,50 @@
     tip.style.left = Math.max(0, Math.min(w - tip.offsetWidth, xs[idx] - half)) + 'px';
   }
 
-  function renderTrendBadge(period, currentTotal) {
-    const badgeEl = $('incomeTrendBadge');
+  function formatPct(n) {
+    return Math.abs(n).toFixed(1).replace('.', ',');
+  }
+
+  // Bandingkan dengan periode sebelumnya pada titik waktu yang sama
+  // (mis. bulan berjalan s/d hari ini vs bulan lalu s/d tanggal yang sama), bukan vs satu bulan penuh
+  function computeTrend(period, currentTotal) {
     const prevRange = getPreviousPeriodRange(period);
+    if (!prevRange) return null;
 
-    if (!prevRange) { badgeEl.className = 'trend-badge'; badgeEl.textContent = ''; return; }
-
-    const prevTotal = sumAmountInRange(prevRange.start, prevRange.end);
-    if (prevTotal === 0 && currentTotal === 0) { badgeEl.className = 'trend-badge'; badgeEl.textContent = ''; return; }
+    const elapsed = Date.now() - getPeriodRange(period).start.getTime();
+    const prevEnd = new Date(Math.min(prevRange.end.getTime(), prevRange.start.getTime() + elapsed));
+    const prevTotal = sumAmountInRange(prevRange.start, prevEnd);
+    if (prevTotal === 0 && currentTotal === 0) return null;
 
     const pct = prevTotal === 0 ? 100 : ((currentTotal - prevTotal) / prevTotal) * 100;
     const dir = pct > 0.5 ? 'up' : (pct < -0.5 ? 'down' : 'flat');
-    const arrow = dir === 'up' ? '▲' : (dir === 'down' ? '▼' : '—');
+    return { prevTotal, pct, dir };
+  }
 
-    badgeEl.className = 'trend-badge ' + dir;
-    badgeEl.textContent = `${arrow} ${Math.abs(pct).toFixed(1)}%`;
+  function renderTrendBadge(trend) {
+    const badgeEl = $('incomeTrendBadge');
+    if (!trend) { badgeEl.className = 'trend-badge'; badgeEl.textContent = ''; return; }
+    const arrow = trend.dir === 'up' ? '▲' : (trend.dir === 'down' ? '▼' : '—');
+    badgeEl.className = 'trend-badge ' + trend.dir;
+    badgeEl.textContent = `${arrow} ${formatPct(trend.pct)}%`;
   }
 
   function renderIncomeCard() {
     const { points, total, unit, txCount } = computeIncomeSeries(currentIncomePeriod);
+    const trend = computeTrend(currentIncomePeriod, total);
 
     $('incomeTotalLabel').textContent = periodLabels[currentIncomePeriod];
     $('incomeTotalValue').textContent = formatRupiah(total);
 
     const active = points.filter(p => p.value > 0);
-    if (points.length === 0) {
-      $('incomeTotalSub').textContent = 'Belum ada data transaksi';
-    } else if (unit === 'transaksi') {
-      $('incomeTotalSub').textContent = `${txCount.toLocaleString('id-ID')} transaksi`;
-    } else {
-      $('incomeTotalSub').textContent = `${txCount.toLocaleString('id-ID')} transaksi · ${active.length} dari ${points.length} ${unit} aktif`;
-    }
+    let sub;
+    if (points.length === 0) sub = 'Belum ada data transaksi';
+    else if (unit === 'transaksi') sub = `${txCount.toLocaleString('id-ID')} transaksi`;
+    else sub = `${txCount.toLocaleString('id-ID')} transaksi · ${active.length} dari ${points.length} ${unit} aktif`;
+    if (trend) sub += ` · periode lalu ${compactRupiah(trend.prevTotal)}`;
+    $('incomeTotalSub').textContent = sub;
 
-    renderTrendBadge(currentIncomePeriod, total);
+    renderTrendBadge(trend);
     renderIncomeChartSVG(points);
 
     $('chartAxisStart').textContent = points.length ? points[0].short : '';
@@ -1415,11 +1548,15 @@
       $('incomeStatAvg').textContent = '-';
       $('incomeStatLowest').textContent = '-';
       $('incomeUnitNote').textContent = '';
+      $('incomeBest').textContent = '';
     } else {
       $('incomeStatHighest').textContent = compactRupiah(Math.max(...values));
       $('incomeStatAvg').textContent = compactRupiah(values.reduce((a, b) => a + b, 0) / values.length);
       $('incomeStatLowest').textContent = compactRupiah(Math.min(...values));
       $('incomeUnitNote').textContent = unit === 'transaksi' ? 'Nilai per transaksi' : `Nilai per ${unit} aktif`;
+      const best = active.reduce((a, b) => (b.value > a.value ? b : a));
+      const bestLabel = unit === 'bulan' ? 'Bulan terbaik' : (unit === 'transaksi' ? 'Transaksi terbesar' : 'Hari terbaik');
+      $('incomeBest').textContent = `🏆 ${bestLabel}: ${best.label} · ${compactRupiah(best.value)}`;
     }
   }
 
@@ -1452,11 +1589,22 @@
     return { groups: [...map.values()].sort((a, b) => b.total - a.total), skipped };
   }
 
+  // Rekap transaksi tanpa nama, dipisah: yang ditulis "Iklan" vs yang benar-benar kosong
+  function unnamedBreakdown(txs) {
+    const total = sumTxs(txs);
+    const unnamed = txs.filter(t => t.customer === 'Tanpa Nama');
+    const part = (list) => ({ count: list.length, sum: sumTxs(list), pct: total ? Math.round((sumTxs(list) / total) * 100) : 0 });
+    return {
+      ads: part(unnamed.filter(t => t.customerRaw !== 'Tanpa Nama')),
+      blank: part(unnamed.filter(t => t.customerRaw === 'Tanpa Nama'))
+    };
+  }
+
   function renderRanking(elId, txs, field, skipLabel, limit, emptyText, skipNote) {
     const el = $(elId);
     const { groups, skipped } = groupTotals(txs, field, skipLabel);
     if (groups.length === 0) {
-      el.innerHTML = `<p class="bar-empty">${emptyText}</p>`;
+      el.innerHTML = `<p class="bar-empty">${emptyText}</p>` + (skipped ? `<p class="bar-note" style="margin-top:0;text-align:center;">${skipped} transaksi ${skipNote}</p>` : '');
       return;
     }
     const periodTotal = sumTxs(txs);
@@ -1489,7 +1637,7 @@
 
     let items = txs;
     if (historyTerm) {
-      items = items.filter(t => [t.customer, t.barang, t.pj, t.folder, t.noteTitle]
+      items = items.filter(t => [t.customer, t.customerRaw, t.barang, t.pj, t.folder, t.noteTitle]
         .some(v => String(v).toLowerCase().includes(historyTerm)));
     }
     items = [...items].sort((a, b) => b.ts - a.ts);
@@ -1515,6 +1663,268 @@
     moreBtn.textContent = `Tampilkan lebih banyak (${remaining.toLocaleString('id-ID')})`;
   }
 
+  // --- Target omzet bulanan (disimpan di perangkat ini) ---
+  const TARGET_KEY = 'bm-analisa-target-bulanan';
+
+  function loadTarget() {
+    try {
+      const v = parseInt(localStorage.getItem(TARGET_KEY), 10);
+      return v > 0 ? v : 0;
+    } catch (e) { return 0; }
+  }
+  function saveTarget(v) {
+    try {
+      if (v > 0) localStorage.setItem(TARGET_KEY, String(v));
+      else localStorage.removeItem(TARGET_KEY);
+    } catch (e) { /* penyimpanan diblokir: target tetap berlaku selama halaman terbuka */ }
+  }
+  let monthlyTarget = loadTarget();
+
+  function renderTarget() {
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    $('targetMonthLabel').textContent = '· ' + now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    $('btnEditTarget').textContent = monthlyTarget ? 'Ubah Target' : 'Atur Target';
+    $('btnClearTarget').style.display = monthlyTarget ? 'block' : 'none';
+
+    const el = $('targetSummary');
+    if (!monthlyTarget) {
+      el.innerHTML = '<p class="target-empty">Belum ada target. Atur target omzet bulanan untuk melihat progres dan proyeksi akhir bulan.</p>';
+      return;
+    }
+
+    const total = sumAmountInRange(monthStart, now);
+    const pct = (total / monthlyTarget) * 100;
+    const done = total >= monthlyTarget;
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const dayOfMonth = now.getDate();
+    const daysLeft = daysInMonth - dayOfMonth;
+    const remaining = Math.max(0, monthlyTarget - total);
+
+    const lines = [];
+    if (done) {
+      lines.push(`<p class="target-line">🎉 <strong>Target tercapai</strong>, lebih ${formatRupiah(total - monthlyTarget)} dari target.</p>`);
+    } else {
+      lines.push(daysLeft > 0
+        ? `<p class="target-line">Sisa <strong>${formatRupiah(remaining)}</strong> · ${daysLeft} hari lagi, butuh rata-rata <strong>${formatRupiah(remaining / daysLeft)}/hari</strong>.</p>`
+        : `<p class="target-line">Hari terakhir bulan ini · sisa <strong>${formatRupiah(remaining)}</strong> lagi.</p>`);
+      if (dayOfMonth >= 3) {
+        const projection = (total / dayOfMonth) * daysInMonth;
+        lines.push(`<p class="target-line">Proyeksi akhir bulan <strong>${formatRupiah(projection)}</strong> (${Math.round((projection / monthlyTarget) * 100)}% dari target).</p>`);
+      } else {
+        lines.push('<p class="target-line">Proyeksi akhir bulan muncul setelah hari ke-3.</p>');
+      }
+    }
+
+    el.innerHTML = `
+      <div class="target-head">
+        <p class="target-amount">${formatRupiah(total)} <span>dari ${compactRupiah(monthlyTarget)}</span></p>
+        <span class="target-pct ${done ? 'done' : ''}">${Math.floor(pct)}%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${done ? 'done' : ''}" style="width:${Math.max(total > 0 ? 2 : 0, Math.min(100, pct))}%"></div></div>
+      <div class="target-lines">${lines.join('')}</div>
+    `;
+  }
+
+  // --- Pelanggan: baru vs langganan, dan yang perlu di-follow up ---
+  const FOLLOWUP_DAYS = 30;     // tidak transaksi selama minimal ini
+  const FOLLOWUP_MIN_TX = 3;    // dan sebelumnya sudah transaksi minimal sebanyak ini
+
+  // Rekap semua customer bernama sepanjang waktu (nama huruf besar/kecil & spasi dianggap sama)
+  function customerStats() {
+    const map = new Map();
+    extractTransactions().forEach(t => {
+      if (t.customer === 'Tanpa Nama') return;
+      const key = normalizeKey(t.customer) || t.customer.toLowerCase();
+      let s = map.get(key);
+      if (!s) { s = { key, name: t.customer, total: 0, count: 0, first: t.date, last: t.date }; map.set(key, s); }
+      s.total += t.amount;
+      s.count += 1;
+      if (t.date < s.first) s.first = t.date;
+      if (t.date > s.last) s.last = t.date;
+    });
+    return map;
+  }
+
+  function renderCustomerSplit(txs) {
+    const el = $('customerSplitCard');
+    const map = customerStats();
+    const { start } = getPeriodRange(currentIncomePeriod);
+
+    const active = new Set();
+    txs.forEach(t => {
+      if (t.customer !== 'Tanpa Nama') active.add(normalizeKey(t.customer) || t.customer.toLowerCase());
+    });
+
+    const { ads, blank } = unnamedBreakdown(txs);
+    const unnamedLine = (label, x) => x.count
+      ? `<p class="bar-note">${label}: <strong>${x.count.toLocaleString('id-ID')} transaksi</strong> · ${formatRupiah(x.sum)} (${x.pct}% omzet)</p>`
+      : '';
+    const unnamedHtml = unnamedLine('Dari Iklan', ads) + unnamedLine('Tanpa nama', blank);
+
+    if (active.size === 0) {
+      el.innerHTML = unnamedHtml
+        ? `<p class="bar-empty">Belum ada customer bernama di periode ini</p>${unnamedHtml}`
+        : '<p class="bar-empty">Belum ada data customer</p>';
+      return;
+    }
+
+    let fresh = 0, returning = 0;
+    active.forEach(k => {
+      const s = map.get(k);
+      if (s && s.first >= start) fresh++; else returning++;
+    });
+    const pctNew = Math.round((fresh / active.size) * 100);
+
+    el.innerHTML = `
+      <div class="split-row">
+        <div class="split-item">
+          <p class="split-value">${fresh.toLocaleString('id-ID')}</p>
+          <p class="split-label"><span class="dot" style="background:var(--accent-yellow)"></span>Customer Baru</p>
+        </div>
+        <div class="split-item">
+          <p class="split-value">${returning.toLocaleString('id-ID')}</p>
+          <p class="split-label"><span class="dot" style="background:var(--accent-green)"></span>Langganan</p>
+        </div>
+      </div>
+      <div class="split-bar">
+        <i style="width:${pctNew}%;background:var(--accent-yellow)"></i><i style="width:${100 - pctNew}%;background:var(--accent-green)"></i>
+      </div>
+      ${currentIncomePeriod === 'all' ? '<p class="bar-note">Semua waktu: semua customer dihitung baru. Pilih periode lain untuk melihat langganan.</p>' : '<p class="bar-note">Baru = transaksi pertamanya terjadi di periode ini.</p>'}
+      ${unnamedHtml}
+    `;
+  }
+
+  function renderFollowUp() {
+    const el = $('followUpList');
+    const map = customerStats();
+    if (map.size === 0) { el.innerHTML = '<p class="recent-activity-empty">Belum ada data customer</p>'; return; }
+
+    const today = startOfDay(new Date());
+    const list = [...map.values()]
+      .map(s => ({ ...s, daysAgo: Math.round((today - startOfDay(s.last)) / 86400000) }))
+      .filter(s => s.count >= FOLLOWUP_MIN_TX && s.daysAgo >= FOLLOWUP_DAYS)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+
+    if (list.length === 0) {
+      el.innerHTML = `<p class="recent-activity-empty">Tidak ada. Semua pelanggan tetap (${FOLLOWUP_MIN_TX}x transaksi atau lebih) masih aktif 👍</p>`;
+      return;
+    }
+    el.innerHTML = list.map(s => `
+      <div class="recent-activity-item">
+        <div class="act-icon out">${ICONS.clock}</div>
+        <div class="act-body">
+          <p class="recent-activity-title">${escapeHtml(s.name)}</p>
+          <p class="recent-activity-sub">Terakhir ${s.daysAgo} hari lalu · ${s.count}x transaksi</p>
+        </div>
+        <span class="recent-activity-amount">${compactRupiah(s.total)}</span>
+      </div>
+    `).join('');
+  }
+
+  // --- Waktu ramai: jumlah transaksi per jam & per hari ---
+  const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+  const DAY_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+
+  function busyBarsHtml(counts, cls) {
+    const max = Math.max(...counts);
+    const peak = counts.indexOf(max);
+    return `<div class="busy-bars ${cls}">` + counts.map((v, i) => {
+      const hgt = v > 0 ? Math.max(5, Math.round((v / max) * 60)) : 3;
+      const kind = v === 0 ? 'zero' : (i === peak ? 'peak' : '');
+      return `<div class="busy-bar ${kind}" style="height:${hgt}px"></div>`;
+    }).join('') + '</div>';
+  }
+
+  function renderBusyTimes(txs, period) {
+    const el = $('busyCard');
+    if (txs.length === 0) { el.innerHTML = '<p class="bar-empty">Belum ada data transaksi</p>'; return; }
+
+    const byDay = new Array(7).fill(0);
+    const byHour = new Array(24).fill(0);
+    let timed = 0;
+    txs.forEach(t => {
+      byDay[t.date.getDay()]++;
+      if (t.hasTime) { byHour[t.ts.getHours()]++; timed++; }
+    });
+
+    let html = '';
+    if (timed > 0) {
+      const maxH = Math.max(...byHour);
+      const pk = byHour.indexOf(maxH);
+      html += `
+        <div class="busy-block">
+          <p class="busy-title">Per Jam<span>Tersibuk ${pad2(pk)}.00–${pad2((pk + 1) % 24)}.00 · ${maxH}x</span></p>
+          ${busyBarsHtml(byHour, 'hours')}
+          <div class="busy-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+        </div>`;
+    } else {
+      html += '<p class="bar-note" style="margin-top:0;">Jam transaksi belum tercatat pada periode ini.</p>';
+    }
+    if (period !== 'day') {
+      const maxD = Math.max(...byDay);
+      const pd = byDay.indexOf(maxD);
+      html += `
+        <div class="busy-block">
+          <p class="busy-title">Per Hari<span>Tersibuk ${DAY_FULL[pd]} · ${maxD}x</span></p>
+          ${busyBarsHtml(byDay, 'days')}
+          <div class="busy-axis days">${DAY_SHORT.map((d, i) => `<span class="${i === pd ? 'peak' : ''}">${d}</span>`).join('')}</div>
+        </div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  // --- Bagikan laporan (teks siap tempel ke WhatsApp) ---
+  function buildReportText(period) {
+    const txs = getPeriodTxs(period);
+    const total = sumTxs(txs);
+    const now = new Date();
+    const range = getPeriodRange(period);
+
+    let rangeText;
+    if (period === 'all') rangeText = 'Semua Waktu';
+    else if (period === 'day') rangeText = `Hari Ini (${formatDateShort(range.start)})`;
+    else rangeText = `${PERIOD_SHORT[period]} (${formatDateShort(range.start)} – ${formatDateShort(range.end > now ? now : range.end)})`;
+
+    const lines = ['*Laporan Buku Besar*', `Periode: ${rangeText}`, ''];
+    if (txs.length === 0) {
+      lines.push('Belum ada transaksi pada periode ini.');
+    } else {
+      const trend = computeTrend(period, total);
+      const arrow = trend ? (trend.dir === 'up' ? '▲' : (trend.dir === 'down' ? '▼' : '—')) : '';
+      lines.push(`*Total pemasukan:* ${formatRupiah(total)}` + (trend ? ` (${arrow} ${formatPct(trend.pct)}% vs periode lalu)` : ''));
+      lines.push(`Transaksi: ${txs.length.toLocaleString('id-ID')} · Rata-rata ${formatRupiah(total / txs.length)}`);
+
+      const ub = unnamedBreakdown(txs);
+      if (ub.ads.count) lines.push(`Dari Iklan: ${ub.ads.count.toLocaleString('id-ID')} transaksi · ${formatRupiah(ub.ads.sum)} (${ub.ads.pct}%)`);
+      if (ub.blank.count) lines.push(`Tanpa nama: ${ub.blank.count.toLocaleString('id-ID')} transaksi · ${formatRupiah(ub.blank.sum)} (${ub.blank.pct}%)`);
+
+      const cust = groupTotals(txs, 'customer', 'Tanpa Nama').groups.slice(0, 5);
+      if (cust.length) {
+        lines.push('', '*Top Customer*');
+        cust.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
+      }
+      const pjs = groupTotals(txs, 'pj', 'Tanpa PJ').groups.slice(0, 5);
+      if (pjs.length) {
+        lines.push('', '*Performa PJ*');
+        pjs.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
+      }
+    }
+    lines.push('', `_Dibuat ${formatDateShort(now)} ${formatTime(now)}_`);
+    return lines.join('\n');
+  }
+
+  async function shareReport() {
+    const text = buildReportText(currentIncomePeriod);
+    try {
+      if (navigator.share) { await navigator.share({ text }); return; }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // pengguna membatalkan
+    }
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  }
+
   // Semua panel yang ikut periode terpilih
   function renderPeriodViews() {
     const txs = getPeriodTxs(currentIncomePeriod);
@@ -1523,8 +1933,10 @@
     });
     renderIncomeCard();
     renderStatCards(txs);
-    renderRanking('topCustomerList', txs, 'customer', 'Tanpa Nama', 5, 'Belum ada data customer', 'tanpa nama customer tidak masuk peringkat');
+    renderRanking('topCustomerList', txs, 'customer', 'Tanpa Nama', 5, 'Belum ada data customer', 'tanpa nama customer / "Iklan" tidak masuk peringkat');
     renderRanking('pjBarList', txs, 'pj', 'Tanpa PJ', 5, 'Belum ada data PJ', 'tanpa PJ tidak masuk peringkat');
+    renderCustomerSplit(txs);
+    renderBusyTimes(txs, currentIncomePeriod);
     historyLimit = HISTORY_PAGE;
     renderHistory(txs);
   }
@@ -1532,6 +1944,8 @@
   function renderAnalytics() {
     renderBanner();
     renderActivity();
+    renderTarget();
+    renderFollowUp();
     renderPeriodViews();
     updateLastUpdated();
   }
@@ -1644,7 +2058,7 @@
     const rows = [...txs].sort((a, b) => a.ts - b.ts);
     const lines = [['Tanggal', 'Jam', 'Customer', 'Barang', 'PJ', 'Harga (Rp)', 'Folder', 'Note'].join(',')];
     rows.forEach(t => {
-      lines.push([toLocalDateStr(t.date), t.hasTime ? formatTime(t.ts) : '', t.customer, t.barang, t.pj, t.amount, t.folder, t.noteTitle].map(csvCell).join(','));
+      lines.push([toLocalDateStr(t.date), t.hasTime ? formatTime(t.ts) : '', t.customerRaw, t.barang, t.pj, t.amount, t.folder, t.noteTitle].map(csvCell).join(','));
     });
     return '\uFEFF' + lines.join('\r\n') + '\r\n'; // BOM supaya Excel membaca UTF-8 dengan benar
   }
@@ -1662,6 +2076,35 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   });
+
+  // Target omzet: atur / simpan / hapus
+  $('btnEditTarget').addEventListener('click', () => {
+    const row = $('targetEditRow');
+    if (row.classList.contains('show')) { row.classList.remove('show'); return; }
+    row.classList.add('show');
+    $('targetInput').value = monthlyTarget ? monthlyTarget.toLocaleString('id-ID') : '';
+    $('targetInput').focus();
+  });
+  $('targetInput').addEventListener('input', (e) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
+    e.target.value = digits ? Number(digits).toLocaleString('id-ID') : '';
+  });
+  $('btnSaveTarget').addEventListener('click', () => {
+    const n = parseInt($('targetInput').value.replace(/\D/g, ''), 10);
+    if (!(n > 0)) return;
+    monthlyTarget = n;
+    saveTarget(n);
+    $('targetEditRow').classList.remove('show');
+    renderTarget();
+  });
+  $('btnClearTarget').addEventListener('click', () => {
+    monthlyTarget = 0;
+    saveTarget(0);
+    $('targetEditRow').classList.remove('show');
+    renderTarget();
+  });
+
+  $('btnShare').addEventListener('click', shareReport);
 
   $('btnExportPDF').addEventListener('click', () => window.print());
 
@@ -1705,6 +2148,7 @@
     setInterval(() => {
       if (document.visibilityState !== 'visible') return;
       renderActivity();
+      renderTarget();
       updateLastUpdated();
     }, 30000);
 
