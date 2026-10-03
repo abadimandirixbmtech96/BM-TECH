@@ -410,11 +410,13 @@
   /* ---------- Modal / sheet ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
-    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
     display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
   .overlay.center{ align-items:center; padding:0 20px; }
   .overlay.show{ opacity:1; pointer-events:auto; }
+  /* Blur ala iOS HANYA saat pop up terbuka. Kalau dipasang di overlay yang tertutup, lapisan layar penuh itu
+     tetap aktif di belakang layar dan bisa membuat sentuhan/scroll tersendat atau macet di WebView/iframe. */
+  .overlay.show{ -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
   .modal-card{
     width:100%; max-width:420px; background:var(--paper); border-radius:24px 24px 0 0;
     padding:22px 20px calc(var(--safe-bottom) + 20px) 20px; transform:translateY(24px); transition:transform .2s ease;
