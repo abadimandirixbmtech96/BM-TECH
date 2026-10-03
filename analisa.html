@@ -392,8 +392,9 @@
     left: 0;
     z-index: 2;
     pointer-events: none;
-    white-space: nowrap;
+    white-space: pre;
     max-width: 100%;
+    line-height: 1.45;
     font-size: 11.5px;
     font-weight: 700;
     padding: 6px 10px;
@@ -401,6 +402,13 @@
     background: var(--text-primary);
     color: var(--bg-dark);
   }
+  .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .chart-title { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chart-mode { display: inline-flex; flex-shrink: 0; background: var(--glass-pill-bg); border-radius: 999px; padding: 3px; }
+  .chart-mode button { border: none; background: transparent; color: var(--text-secondary); font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+  .chart-mode button.active { background: var(--accent-yellow); color: #1C1B19; }
+  .chart-mode button:disabled { opacity: 0.4; }
+  .chart-caption { font-size: 10.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.45; }
   .chart-axis {
     display: flex;
     justify-content: space-between;
@@ -547,6 +555,9 @@
   .split-row { display: flex; gap: 10px; }
   .split-item { flex: 1; min-width: 0; text-align: center; }
   .split-value { font-size: clamp(18px, 6vw, 24px); font-weight: 800; color: var(--text-primary); }
+  .split-value.sm { font-size: clamp(14px, 4.6vw, 19px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .debt-tabs { margin: 16px 0 14px; }
+  .debt-sub { font-size: 11.5px; font-weight: 700; color: var(--text-secondary); margin: 16px 0 10px; }
   .split-label { font-size: 11.5px; color: var(--text-secondary); font-weight: 600; margin-top: 3px; }
   .split-label .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: baseline; }
   .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; margin-top: 14px; background: var(--glass-pill-bg); }
@@ -683,12 +694,21 @@
         <button class="apply-range-btn" id="btnApplyCustomRange">Terapkan</button>
       </div>
 
+      <div class="chart-head">
+        <span class="chart-title" id="chartTitle">Grafik Omzet</span>
+        <div class="chart-mode">
+          <button data-mode="line" class="active">Garis</button>
+          <button data-mode="candle">Candle</button>
+        </div>
+      </div>
+
       <div class="income-chart-wrap" id="incomeChartWrap">
         <svg id="incomeChartSvg" viewBox="0 0 320 150"></svg>
         <div class="income-chart-empty" id="incomeChartEmpty">Belum ada data untuk periode ini</div>
         <div class="chart-tip" id="chartTip"></div>
       </div>
       <div class="chart-axis"><span id="chartAxisStart"></span><span id="chartAxisEnd"></span></div>
+      <p class="chart-caption" id="chartCaption"></p>
 
       <div class="income-mini-stats">
         <div class="income-mini-stat">
@@ -781,6 +801,13 @@
     <p class="analytics-section-title">Perlu Di-follow Up <span class="section-period">· 30+ hari tidak transaksi</span></p>
     <div class="recent-activity-list" id="followUpList">
       <p class="recent-activity-empty">Belum ada data customer</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Posisi Hutang Piutang <span class="section-period" id="debtAsOf"></span></p>
+    <div class="bar-list" id="debtCard">
+      <p class="bar-empty">Memuat...</p>
     </div>
   </section>
 
@@ -1072,6 +1099,9 @@
   let analyticsNotes = [];  // notes di folder BUKU BESAR yang punya tabel valid
   let entryCache = null;    // semua baris bermakna (terbaru dulu), direset tiap data dimuat ulang
   let txCache = null;       // baris yang punya Harga (= transaksi)
+  let folderList = [];      // semua folder (dipakai mencari folder hutang piutang & kasbon)
+  let debtItems = [];       // semua catatan hutang / piutang / kasbon (termasuk yang sudah lunas)
+  let debtLoadError = false;
   let isLoading = false;
   let lastLoadedAt = null;
   let lastLoadError = false;
@@ -1087,6 +1117,8 @@
         console.error('Gagal memuat folder Analisa:', folderError.message);
         return false;
       }
+
+      folderList = folders || [];
 
       // Folder milik customer (owner_username terisi) bukan buku besar admin
       const ledger = (folders || []).filter(f => f && f.id && !f.owner_username && typeof f.name === 'string' && LEDGER_NAME_RE.test(f.name));
@@ -1346,7 +1378,8 @@
         label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t),
         short: t.hasTime ? formatTime(t.ts) : displayCustomer(t),
         value: t.amount,
-        count: 1
+        count: 1,
+        open: t.amount, high: t.amount, low: t.amount, close: t.amount
       }));
       return { points, total, unit: 'transaksi', txCount: txs.length };
     }
@@ -1374,7 +1407,7 @@
         const p = {
           label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }),
           short: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-          value: 0, count: 0
+          value: 0, count: 0, open: null, high: null, low: null, close: null
         };
         buckets.set(toLocalDateStr(d), p);
         points.push(p);
@@ -1387,7 +1420,7 @@
         const p = {
           label: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
           short: d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }),
-          value: 0, count: 0
+          value: 0, count: 0, open: null, high: null, low: null, close: null
         };
         buckets.set(toLocalMonthStr(d), p);
         points.push(p);
@@ -1396,9 +1429,15 @@
       }
     }
 
-    txs.forEach(t => {
+    // Urut waktu naik supaya buka = transaksi pertama & tutup = transaksi terakhir di tiap hari/bulan
+    [...txs].sort((a, b) => a.ts - b.ts).forEach(t => {
       const b = buckets.get(unit === 'hari' ? toLocalDateStr(t.date) : toLocalMonthStr(t.date));
-      if (b) { b.value += t.amount; b.count += 1; }
+      if (!b) return;
+      b.value += t.amount;
+      b.count += 1;
+      if (b.open === null) { b.open = b.high = b.low = t.amount; }
+      else { b.high = Math.max(b.high, t.amount); b.low = Math.min(b.low, t.amount); }
+      b.close = t.amount;
     });
 
     return { points, total, unit, txCount: txs.length };
@@ -1544,37 +1583,55 @@
   }
 
   // --- Render: kartu omzet & grafik ---
-  let chartState = { points: [], xs: [], ys: [], w: 320, h: 150, padX: 6 };
+  const CHART_MODE_KEY = 'bm-analisa-chart-mode';
+  let chartMode = (() => {
+    try { return localStorage.getItem(CHART_MODE_KEY) === 'candle' ? 'candle' : 'line'; } catch (e) { return 'line'; }
+  })();
+
+  function updateChartModeUI(mode, unit) {
+    document.querySelectorAll('.chart-mode button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+      if (btn.dataset.mode === 'candle') btn.disabled = unit === 'transaksi';
+    });
+    $('chartTitle').textContent = mode === 'candle' ? 'Candle Nilai Transaksi' : 'Grafik Omzet';
+    $('chartCaption').textContent = mode === 'candle'
+      ? `Candle = nilai tiap transaksi per ${unit} (buka, tertinggi, terendah, tutup). Hijau = transaksi terakhir ≥ pertama. Batang bawah = omzet per ${unit}.`
+      : '';
+  }
+
+  let chartState = { mode: 'line', points: [], xs: [], ys: [], w: 320, h: 150, padX: 6, cursorBottom: 142 };
   let chartTipTimer = null;
 
-  function renderIncomeChartSVG(points) {
+  function renderIncomeChartSVG(points, mode) {
     const svgEl = $('incomeChartSvg');
     const emptyEl = $('incomeChartEmpty');
     const wrap = $('incomeChartWrap');
     const w = (wrap && wrap.clientWidth) || 320;
     const h = 150, padX = 6, padTop = 12, padBottom = 8;
+    const light = document.body.classList.contains('theme-light');
+    const baseStroke = light ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.10)';
     svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
     hideChartTip();
-    chartState = { points: [], xs: [], ys: [], w, h, padX };
+    chartState = { mode, points: [], xs: [], ys: [], w, h, padX, cursorBottom: h - padBottom };
 
     if (points.length === 0) {
-      const baseStroke = document.body.classList.contains('theme-light') ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.12)';
       svgEl.innerHTML = `<line x1="0" y1="${h - padBottom}" x2="${w}" y2="${h - padBottom}" stroke="${baseStroke}" stroke-width="1.5"/>`;
       emptyEl.style.display = 'flex';
       return;
     }
     emptyEl.style.display = 'none';
 
+    if (mode === 'candle') { renderCandleChart(svgEl, points, w, h, padX, baseStroke); return; }
+
     const max = Math.max(...points.map(p => p.value)) || 1;
     const stepX = points.length > 1 ? (w - padX * 2) / (points.length - 1) : 0;
     const xs = points.map((_, i) => points.length > 1 ? padX + i * stepX : w / 2);
     const ys = points.map(p => h - padBottom - (p.value / max) * (h - padTop - padBottom));
-    chartState = { points, xs, ys, w, h, padX };
+    chartState = { mode, points, xs, ys, w, h, padX, cursorBottom: h - padBottom };
 
     const linePath = xs.map((x, i) => (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + ys[i].toFixed(1)).join(' ');
     const areaPath = `${linePath} L${xs[xs.length - 1].toFixed(1)},${h - padBottom} L${xs[0].toFixed(1)},${h - padBottom} Z`;
-    const baseStroke = document.body.classList.contains('theme-light') ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.10)';
 
     // Titik kecil di setiap hari yang ada transaksinya (kalau tidak terlalu padat)
     const dots = points.length <= 45
@@ -1599,6 +1656,52 @@
     `;
   }
 
+  // Mode candle ala trading: tiap hari/bulan = satu candle dari NILAI tiap transaksi
+  // (buka = transaksi pertama, tutup = terakhir, sumbu = tertinggi & terendah),
+  // dengan batang volume (omzet) di bawahnya. Hari tanpa transaksi dibiarkan kosong.
+  function renderCandleChart(svgEl, points, w, h, padX, baseStroke) {
+    const GREEN = '#3DD68C', RED = '#F0555C';
+    const top = 14, candleBottom = 106, volTop = 118, volBottom = 146;
+    const active = points.filter(p => p.value > 0);
+
+    let hi = Math.max(...active.map(p => p.high));
+    let lo = Math.min(...active.map(p => p.low));
+    if (hi === lo) { const pad = hi * 0.1 || 1; hi += pad; lo -= pad; }   // satu nilai saja -> candle di tengah
+    const yOf = v => candleBottom - ((v - lo) / (hi - lo)) * (candleBottom - top);
+    const maxVol = Math.max(...active.map(p => p.value)) || 1;
+
+    const slot = (w - padX * 2) / points.length;
+    const xs = points.map((_, i) => padX + slot * (i + 0.5));
+    const bodyW = Math.max(2, Math.min(14, slot * 0.62));
+
+    let shapes = '';
+    const ys = points.map((p, i) => {
+      if (p.value <= 0) return null;
+      const x = xs[i];
+      const color = p.close >= p.open ? GREEN : RED;
+      const yo = yOf(p.open), yc = yOf(p.close);
+      const bodyTop = Math.min(yo, yc);
+      const bodyH = Math.max(1.6, Math.abs(yo - yc));
+      const volH = Math.max(2, (p.value / maxVol) * (volBottom - volTop));
+      shapes += `
+        <line x1="${x.toFixed(1)}" y1="${yOf(p.high).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yOf(p.low).toFixed(1)}" stroke="${color}" stroke-width="1.3" stroke-linecap="round"></line>
+        <rect x="${(x - bodyW / 2).toFixed(1)}" y="${bodyTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${bodyH.toFixed(1)}" rx="1" fill="${color}"></rect>
+        <rect x="${(x - bodyW / 2).toFixed(1)}" y="${(volBottom - volH).toFixed(1)}" width="${bodyW.toFixed(1)}" height="${volH.toFixed(1)}" rx="1" fill="${color}" opacity="0.38"></rect>`;
+      return yc;
+    });
+    chartState = { mode: 'candle', points, xs, ys, w, h, padX, cursorBottom: volBottom };
+
+    svgEl.innerHTML = `
+      <line x1="0" y1="${candleBottom + 4}" x2="${w}" y2="${candleBottom + 4}" stroke="${baseStroke}" stroke-width="1"></line>
+      <line x1="0" y1="${volBottom}" x2="${w}" y2="${volBottom}" stroke="${baseStroke}" stroke-width="1"></line>
+      ${shapes}
+      <text x="${padX}" y="9" style="fill:var(--text-muted);font-size:9.5px;">${compactRupiah(Math.max(...active.map(p => p.high)))}</text>
+      <text x="${padX}" y="${candleBottom - 2}" style="fill:var(--text-muted);font-size:9.5px;">${compactRupiah(Math.min(...active.map(p => p.low)))}</text>
+      <line id="chartCursorLine" x1="0" y1="0" x2="0" y2="${volBottom}" stroke="#7C7C82" stroke-width="1" stroke-dasharray="3 3" opacity="0"></line>
+      <circle id="chartCursorDot" cx="0" cy="0" r="4" fill="#FFFFFF" stroke="#7C7C82" stroke-width="1.5" opacity="0"></circle>
+    `;
+  }
+
   function hideChartTip() {
     const tip = $('chartTip');
     if (tip) tip.style.display = 'none';
@@ -1607,27 +1710,34 @@
     if (dot) dot.setAttribute('opacity', '0');
   }
 
-  // Sentuh / geser di grafik untuk lihat nilai tiap titik
+  // Sentuh / geser di grafik untuk lihat nilai tiap titik / candle
   function onChartPointer(e) {
-    const { points, xs, ys, w, padX } = chartState;
+    const { mode, points, xs, ys, w } = chartState;
     if (!points.length) return;
     clearTimeout(chartTipTimer);
 
     const wrap = $('incomeChartWrap');
     const rect = wrap.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    let idx = 0;
-    if (points.length > 1) {
-      const stepX = (w - padX * 2) / (points.length - 1);
-      idx = Math.max(0, Math.min(points.length - 1, Math.round((x - padX) / stepX)));
-    }
+    let idx = 0, best = Infinity;
+    xs.forEach((cx, i) => { const d = Math.abs(cx - x); if (d < best) { best = d; idx = i; } });
 
     const line = $('chartCursorLine'), dot = $('chartCursorDot'), tip = $('chartTip');
     line.setAttribute('x1', xs[idx]); line.setAttribute('x2', xs[idx]); line.setAttribute('opacity', '0.7');
-    dot.setAttribute('cx', xs[idx]); dot.setAttribute('cy', ys[idx]); dot.setAttribute('opacity', '1');
+    if (ys[idx] === null || ys[idx] === undefined) {
+      dot.setAttribute('opacity', '0');
+    } else {
+      dot.setAttribute('cx', xs[idx]); dot.setAttribute('cy', ys[idx]); dot.setAttribute('opacity', '1');
+    }
 
     const p = points[idx];
-    tip.textContent = `${p.label} · ${formatRupiah(p.value)}` + (p.count > 1 ? ` · ${p.count} transaksi` : '');
+    if (mode === 'candle') {
+      tip.textContent = p.value > 0
+        ? `${p.label}\nBuka ${compactRupiah(p.open)} · Tinggi ${compactRupiah(p.high)}\nRendah ${compactRupiah(p.low)} · Tutup ${compactRupiah(p.close)}\nOmzet ${formatRupiah(p.value)} · ${p.count} transaksi`
+        : `${p.label}\nTidak ada transaksi`;
+    } else {
+      tip.textContent = `${p.label} · ${formatRupiah(p.value)}` + (p.count > 1 ? ` · ${p.count} transaksi` : '');
+    }
     tip.style.display = 'block';
     const half = tip.offsetWidth / 2;
     tip.style.left = Math.max(0, Math.min(w - tip.offsetWidth, xs[idx] - half)) + 'px';
@@ -1680,7 +1790,9 @@
     $('incomeTotalSub').textContent = sub;
 
     renderTrendBadge(trend);
-    renderIncomeChartSVG(points);
+    const mode = unit === 'transaksi' ? 'line' : chartMode;   // Hari Ini = per transaksi, tidak ada candle
+    renderIncomeChartSVG(points, mode);
+    updateChartModeUI(mode, unit);
 
     $('chartAxisStart').textContent = points.length ? points[0].short : '';
     $('chartAxisEnd').textContent = points.length > 1 ? points[points.length - 1].short : '';
@@ -2089,6 +2201,14 @@
         pjs.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
       }
     }
+    const openDebt = debtItems.filter(d => d.sisa > 0);
+    if (openDebt.length) {
+      lines.push('', '*Posisi saat ini*');
+      Object.keys(DEBT_TYPES).forEach(k => {
+        const list = openDebt.filter(d => d.type === k);
+        if (list.length) lines.push(`${DEBT_TYPES[k].label} belum lunas: ${formatRupiah(list.reduce((s, d) => s + d.sisa, 0))} (${list.length} tagihan)`);
+      });
+    }
     lines.push('', `_Dibuat ${formatDateShort(now)} ${formatTime(now)}_`);
     return lines.join('\n');
   }
@@ -2125,8 +2245,196 @@
     renderActivity();
     renderTarget();
     renderFollowUp();
+    renderDebt();
     renderPeriodViews();
     updateLastUpdated();
+  }
+
+  // --- Hutang, piutang & kasbon (data terpisah dari omzet, tidak pernah dijumlahkan ke omzet) ---
+  const DEBT_FOLDER_RE = /hutang|piutang|kasbon/i;
+  const DEBT_TYPES = {
+    piutang: { label: 'Piutang', color: '#3DD68C' },
+    hutang: { label: 'Hutang', color: '#F0555C' },
+    kasbon: { label: 'Kasbon', color: '#F0A529' }
+  };
+  const AGE_BUCKETS = [
+    { label: '0–7 hari', max: 7, color: '#3DD68C' },
+    { label: '8–30 hari', max: 30, color: '#F0A529' },
+    { label: '31–60 hari', max: 60, color: '#F07F29' },
+    { label: 'Lebih dari 60 hari', max: Infinity, color: '#F0555C' }
+  ];
+  let debtTab = 'piutang';
+
+  // schema 'hutangpiutang-data-v1': { jenis, nama, total, dibayar, keterangan }
+  // schema 'kasbon-data-v1'      : { nama, total, dibayar, keterangan }
+  function collectDebtItems(note, out) {
+    const c = note && note.content;
+    if (!c || !Array.isArray(c.records)) return;
+    const isKasbon = c.schema === 'kasbon-data-v1';
+    if (!isKasbon && c.schema !== 'hutangpiutang-data-v1') return;
+
+    c.records.forEach(r => {
+      const type = isKasbon ? 'kasbon' : (r.jenis === 'hutang' ? 'hutang' : (r.jenis === 'piutang' ? 'piutang' : null));
+      if (!type) return;
+      const total = Number(r.total) || 0;
+      const dibayar = Number(r.dibayar) || 0;
+      const when = r.created_at ? new Date(r.created_at) : null;
+      out.push({
+        type,
+        nama: String(r.nama || '').trim() || 'Tanpa Nama',
+        total, dibayar,
+        sisa: total - dibayar,
+        when: when && !isNaN(when) ? when : null,
+        keterangan: String(r.keterangan || '').trim(),
+        noteTitle: note.title || 'Untitled'
+      });
+    });
+  }
+
+  // Mengembalikan true kalau sukses; kalau gagal data lama dibiarkan
+  async function loadDebtData() {
+    try {
+      const ids = folderList
+        .filter(f => f && f.id && !f.owner_username && typeof f.name === 'string' && DEBT_FOLDER_RE.test(f.name))
+        .map(f => f.id);
+
+      const items = [];
+      if (ids.length > 0) {
+        for (let from = 0; ; from += NOTES_PAGE_SIZE) {
+          const { data, error } = await supabaseClient
+            .from('notes')
+            .select('id, folder_id, title, content, created_at')
+            .in('folder_id', ids)
+            .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, from + NOTES_PAGE_SIZE - 1);
+
+          if (error) {
+            console.error('Gagal memuat hutang piutang:', error.message);
+            return false;
+          }
+          (data || []).forEach(n => collectDebtItems(n, items));
+          if (!data || data.length < NOTES_PAGE_SIZE) break;
+        }
+      }
+      debtItems = items;
+      return true;
+    } catch (err) {
+      console.error('Gagal memuat hutang piutang:', err && err.message);
+      return false;
+    }
+  }
+
+  function debtDetailHtml(type, list) {
+    const meta = DEBT_TYPES[type];
+    if (list.length === 0) return `<p class="bar-empty">Tidak ada ${meta.label.toLowerCase()} yang belum lunas 🎉</p>`;
+
+    const today = startOfDay(new Date());
+    const items = list.map(d => ({ ...d, age: d.when ? Math.max(0, Math.round((today - startOfDay(d.when)) / 86400000)) : null }));
+
+    const totalAll = items.reduce((s, d) => s + d.total, 0);
+    const paid = items.reduce((s, d) => s + d.dibayar, 0);
+    const sisa = totalAll - paid;
+    const paidPct = totalAll ? Math.round((paid / totalAll) * 100) : 0;
+
+    // Umur tagihan: sudah berapa lama sisa ini menggantung
+    const buckets = AGE_BUCKETS.map(b => ({ ...b, sum: 0, n: 0 }));
+    const noDate = { label: 'Tanpa tanggal', color: '#7C7C82', sum: 0, n: 0 };
+    items.forEach(d => {
+      if (d.age === null) { noDate.sum += d.sisa; noDate.n++; return; }
+      const b = buckets.find(x => d.age <= x.max);
+      b.sum += d.sisa; b.n++;
+    });
+    const ageRows = noDate.n ? [...buckets, noDate] : buckets;
+    const maxAge = Math.max(...ageRows.map(r => r.sum)) || 1;
+    const ageHtml = ageRows.map(r => `
+      <div class="bar-row">
+        <div class="bar-top">
+          <span class="bar-name">${r.label}<span class="bar-meta">${r.n} tagihan</span></span>
+          <span class="bar-count">${formatRupiah(r.sum)}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round((r.sum / maxAge) * 100)}%;background:${r.color}"></div></div>
+      </div>`).join('');
+
+    // Terbesar belum lunas, per nama (huruf besar/kecil & spasi dianggap sama)
+    const map = new Map();
+    items.forEach(d => {
+      const k = normalizeKey(d.nama) || d.nama.toLowerCase();
+      let g = map.get(k);
+      if (!g) { g = { name: d.nama, sisa: 0, count: 0, oldest: null }; map.set(k, g); }
+      g.sisa += d.sisa;
+      g.count += 1;
+      if (d.age !== null && (g.oldest === null || d.age > g.oldest)) g.oldest = d.age;
+    });
+    const top = [...map.values()].sort((a, b) => b.sisa - a.sisa).slice(0, 5);
+    const maxTop = top[0].sisa || 1;
+    const topHtml = top.map(g => `
+      <div class="bar-row">
+        <div class="bar-top">
+          <span class="bar-name">${escapeHtml(g.name)}<span class="bar-meta">${g.count}x${g.oldest !== null ? ' · ' + g.oldest + ' hari' : ''}</span></span>
+          <span class="bar-count">${formatRupiah(g.sisa)}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round((g.sisa / maxTop) * 100)}%;background:${meta.color}"></div></div>
+      </div>`).join('');
+
+    // Perbandingan dengan omzet (hanya sebagai ukuran, tidak digabung ke omzet)
+    let ratioLine = '';
+    if (type === 'piutang') {
+      const now = new Date();
+      const monthTotal = sumAmountInRange(new Date(now.getFullYear(), now.getMonth(), 1), now);
+      if (monthTotal > 0) ratioLine = `<p class="target-line">Piutang belum lunas setara <strong>${Math.round((sisa / monthTotal) * 100)}%</strong> omzet bulan ini.</p>`;
+    }
+
+    return `
+      <div class="target-lines">
+        <p class="target-line">Sisa <strong>${formatRupiah(sisa)}</strong> dari tagihan ${formatRupiah(totalAll)} · terbayar <strong>${paidPct}%</strong>.</p>
+        ${ratioLine}
+      </div>
+      <p class="debt-sub">Umur Tagihan</p>
+      ${ageHtml}
+      <p class="debt-sub">Terbesar Belum Lunas</p>
+      ${topHtml}`;
+  }
+
+  function renderDebt() {
+    const el = $('debtCard');
+    $('debtAsOf').textContent = '· per ' + formatDateShort(new Date());
+
+    if (debtLoadError && debtItems.length === 0) {
+      el.innerHTML = '<p class="bar-empty">Gagal memuat data hutang piutang. Tekan tombol muat ulang.</p>';
+      return;
+    }
+    if (debtItems.length === 0) {
+      el.innerHTML = '<p class="bar-empty">Belum ada data hutang piutang atau kasbon</p>';
+      return;
+    }
+
+    const by = { piutang: [], hutang: [], kasbon: [] };
+    debtItems.filter(d => d.sisa > 0).forEach(d => by[d.type].push(d));
+    const sumSisa = list => list.reduce((s, d) => s + d.sisa, 0);
+    const countPeople = list => new Set(list.map(d => normalizeKey(d.nama) || d.nama.toLowerCase())).size;
+
+    const summary = Object.keys(DEBT_TYPES).map(k => `
+      <div class="split-item">
+        <p class="split-value sm">${compactRupiah(sumSisa(by[k]))}</p>
+        <p class="split-label"><span class="dot" style="background:${DEBT_TYPES[k].color}"></span>${DEBT_TYPES[k].label} · ${countPeople(by[k])} orang</p>
+      </div>`).join('');
+
+    const net = sumSisa(by.piutang) - sumSisa(by.hutang);
+    const netLine = net === 0
+      ? 'Piutang dan hutang seimbang.'
+      : (net > 0 ? `Piutang lebih besar <strong>${formatRupiah(net)}</strong> dari hutang.` : `Hutang lebih besar <strong>${formatRupiah(-net)}</strong> dari piutang.`);
+
+    const tabs = Object.keys(DEBT_TYPES).map(k =>
+      `<button class="period-tab ${k === debtTab ? 'active' : ''}" data-debt="${k}">${DEBT_TYPES[k].label}</button>`).join('');
+
+    el.innerHTML = `
+      <div class="split-row">${summary}</div>
+      <p class="bar-note" style="text-align:center;">${netLine}</p>
+      <div class="period-tabs debt-tabs">${tabs}</div>
+      ${debtDetailHtml(debtTab, by[debtTab])}
+      <p class="bar-note">Dipisah dari omzet Buku Besar supaya tidak terhitung ganda.${debtLoadError ? ' Pembaruan terakhir gagal, menampilkan data sebelumnya.' : ''}</p>
+    `;
   }
 
   // --- Muat / muat ulang data (satu pintu untuk pemuatan awal, tombol, dan saat kembali ke halaman) ---
@@ -2143,6 +2451,7 @@
     updateLastUpdated();
 
     const ok = await loadAnalyticsData();
+    debtLoadError = ok ? !(await loadDebtData()) : true;
 
     isLoading = false;
     setRefreshing(false);
@@ -2209,6 +2518,15 @@
     $('customDateTo').value = toVal;
     customRange = { start: new Date(fromVal + 'T00:00:00'), end: new Date(toVal + 'T23:59:59') };
     renderPeriodViews();
+  });
+
+  // Ganti mode grafik: Garis / Candle (diingat di perangkat)
+  document.querySelectorAll('.chart-mode button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      chartMode = btn.dataset.mode === 'candle' ? 'candle' : 'line';
+      try { localStorage.setItem(CHART_MODE_KEY, chartMode); } catch (e) { /* diabaikan */ }
+      renderIncomeCard();
+    });
   });
 
   // Grafik: sentuh/geser untuk lihat nilai tiap titik
@@ -2292,6 +2610,13 @@
   });
 
   $('btnShare').addEventListener('click', shareReport);
+
+  $('debtCard').addEventListener('click', (e) => {
+    const btn = e.target && e.target.closest ? e.target.closest('[data-debt]') : null;
+    if (!btn || !DEBT_TYPES[btn.dataset.debt]) return;
+    debtTab = btn.dataset.debt;
+    renderDebt();
+  });
 
   $('btnExportPDF').addEventListener('click', () => window.print());
 
