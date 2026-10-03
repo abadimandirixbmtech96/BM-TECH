@@ -3538,9 +3538,16 @@
 
   let tasksTabSeq = 0;
   let tasksDataLoadedOnce = false;
+  let notesRefreshing = false;
+  let tasksRefreshing = false;
 
-  tabNotes.addEventListener('click', () => {
-    if (tabNotes.classList.contains('active')) return;
+  tabNotes.addEventListener('click', async () => {
+    if (tabNotes.classList.contains('active')) {
+      if (notesRefreshing) return;
+      notesRefreshing = true;
+      try { await loadCategories(); } finally { notesRefreshing = false; }
+      return;
+    }
     tasksTabSeq++;
     tabNotes.classList.add('active');
     tabTasks.classList.remove('active');
@@ -3551,7 +3558,15 @@
   });
 
   tabTasks.addEventListener('click', async () => {
-    if (tabTasks.classList.contains('active')) return;
+    if (tabTasks.classList.contains('active')) {
+      if (tasksRefreshing) return;
+      tasksRefreshing = true;
+      try {
+        await loadAllNotesData();
+        renderTasks();
+      } finally { tasksRefreshing = false; }
+      return;
+    }
     const seq = ++tasksTabSeq;
     tabTasks.classList.add('active');
     tabNotes.classList.remove('active');
