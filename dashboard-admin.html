@@ -68,7 +68,6 @@
 
   body.theme-light .drawer { background: #FFFFFF !important; }
   body.theme-light .settings-group,
-  body.theme-light .task-item,
   body.theme-light .search-input-box,
   body.theme-light .chip {
     background: #FFFFFF !important;
@@ -452,25 +451,6 @@
   }
 
   .tasks-container { display: none; }
-  .task-item {
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: 16px;
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-bottom: 12px;
-    cursor: pointer;
-    animation: cardAppear 0.3s ease both;
-    transition: transform 0.15s ease;
-  }
-  .task-item:active { transform: scale(0.98); }
-
-  .task-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-  .task-item-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); }
-  .task-item-loc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
-  .task-item-date { font-size: 11px; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
 
   .task-missing-row { display: flex; flex-wrap: wrap; gap: 6px; }
   .task-missing-chip {
@@ -487,9 +467,8 @@
   .tasks-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .tasks-head .page-title { margin-bottom: 2px; }
   .tasks-head .section-label { margin: 0; }
-  .tasks-filter-btn { position: relative; width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--glass-pill-border); background: var(--glass-pill-bg); color: var(--text-primary); display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 6px; }
-  .tasks-filter-btn svg { width: 22px; height: 22px; }
-  .tasks-filter-btn.active { background: var(--accent-yellow); border-color: transparent; color: #1C1B19; }
+  .hdr-filter-btn { display: none; position: relative; }
+  .hdr-filter-btn.active { background: var(--accent-yellow); border-color: transparent; color: #1C1B19; }
   .tasks-filter-badge { position: absolute; top: -4px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: #F0555C; color: #fff; font-size: 11px; font-weight: 800; display: none; align-items: center; justify-content: center; }
 
   .tk-summary { display: flex; gap: 10px; margin-bottom: 6px; }
@@ -1124,7 +1103,6 @@
   }
   @keyframes authSpin { to { transform: rotate(360deg); } }
 
-  .logout-row .settings-item-title { color: #F0555C; }
 
 
   .pzv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 0 20px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
@@ -1613,7 +1591,6 @@
     transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .nas-btn:active { transform: scale(0.97); }
-  .nas-btn-primary { background: var(--accent-yellow); color: #1C1B19; }
   .nas-btn-danger { background: #F0555C; color: #fff; }
   .nas-btn-cancel { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); margin-bottom: 0; }
 
@@ -2021,6 +1998,10 @@
         <rect x="14" y="14" width="7" height="7" rx="1.5"/>
       </svg>
     </button>
+    <button class="header-btn hdr-filter-btn" id="btnTasksFilter" aria-label="Filter Tasks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+      <span class="tasks-filter-badge" id="tasksFilterBadge"></span>
+    </button>
   </header>
 
   <header class="header selection-header" id="selectionHeader">
@@ -2059,13 +2040,9 @@
     <div class="tasks-container" id="tasksSection">
       <div class="tasks-head">
         <div>
-          <h1 class="page-title" id="tasksPageTitle">Tasks</h1>
+          <h1 class="page-title">Tasks</h1>
           <p class="section-label" id="tasksPageSubtitle">Memuat...</p>
         </div>
-        <button class="tasks-filter-btn" id="btnTasksFilter" aria-label="Filter Tasks">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
-          <span class="tasks-filter-badge" id="tasksFilterBadge"></span>
-        </button>
       </div>
       <div class="tk-summary" id="tasksSummary"></div>
       <div id="tasksList"></div>
@@ -2161,7 +2138,7 @@
   </div>
 
   <div class="settings-group">
-    <div class="settings-item" id="settingThemeToggle">
+    <div class="settings-item">
       <span class="settings-item-title">Dark Theme</span>
       <label class="switch">
         <input type="checkbox" id="themeCheckbox" checked>
@@ -2172,7 +2149,7 @@
     <div class="settings-item">
       <span class="settings-item-title">Haptic Feedback</span>
       <label class="switch">
-        <input type="checkbox" id="hapticCheckbox" checked>
+        <input type="checkbox" checked>
         <span class="slider"></span>
       </label>
     </div>
@@ -2279,7 +2256,7 @@
 </div>
 
 <div class="tf-overlay" id="tfOverlay">
-  <div class="tf-sheet" id="tfSheet">
+  <div class="tf-sheet">
     <div class="tf-grab"></div>
     <h3>Filter Tasks</h3>
     <div class="tf-label">Jenis tugas</div>
@@ -2389,14 +2366,14 @@
     </div>
   </div>
 
-  <div class="new-folder-tabs" id="newFolderTabs">
+  <div class="new-folder-tabs">
     <button class="nf-tab active" data-tab="solid">Solid Color</button>
     <button class="nf-tab" data-tab="gradation">Gradation</button>
     <button class="nf-tab" data-tab="graphics">Graphics</button>
     <button class="nf-tab" data-tab="culture">Culture</button>
   </div>
 
-  <div class="new-folder-swatches" id="newFolderSwatches">
+  <div class="new-folder-swatches">
     <div class="nf-swatch selected" data-color="#D9A536" style="background:#D9A536;"><span>NOTES</span></div>
     <div class="nf-swatch" data-color="#EDE6D8" style="background:#EDE6D8;"><span style="color:#8A8478;">NOTES</span></div>
     <div class="nf-swatch" data-color="#C9A177" style="background:#C9A177;"><span>NOTES</span></div>
@@ -3217,7 +3194,7 @@
     activeFilterYear = null;
     activeFilterMonth = null;
     updateComposeButtonVisibility();
-    document.getElementById('currentCategoryTitle').innerText = 'ALL';
+    document.getElementById('currentCategoryTitle').innerText = 'PILIH KATEGORI';
 
     const { data, error } = await supabaseClient
       .from('notes')
@@ -3520,12 +3497,15 @@
   const tabTasks = document.getElementById('tabTasks');
   const notesSection = document.getElementById('notesSection');
   const tasksSection = document.getElementById('tasksSection');
+  const btnTasksFilterEl = document.getElementById('btnTasksFilter');
 
   tabNotes.addEventListener('click', () => {
     tabNotes.classList.add('active');
     tabTasks.classList.remove('active');
     notesSection.style.display = 'block';
     tasksSection.style.display = 'none';
+    btnToggleViewMenu.style.display = '';
+    btnTasksFilterEl.style.display = 'none';
   });
 
   tabTasks.addEventListener('click', async () => {
@@ -3533,11 +3513,13 @@
     tabNotes.classList.remove('active');
     notesSection.style.display = 'none';
     tasksSection.style.display = 'block';
+    btnToggleViewMenu.style.display = 'none';
+    btnTasksFilterEl.style.display = 'flex';
+    viewPopup.classList.remove('open');
     await loadAllNotesData();
     renderTasks();
   });
 
-  const TASK_REQUIRED_FIELDS = ['PJ', 'Customer', 'Barang', 'Barang Keluar', 'Stok Barang', 'Keterangan', 'Harga'];
 
   function normalizeKey(str) {
     return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
