@@ -482,7 +482,7 @@
   <section class="view active" id="view-home">
     <div class="topbar"><button class="icon-btn" id="btnHomeBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button></div>
     <div class="scroll px">
-      <div class="greet-card"><p>Folder</p><h3 id="gName">...</h3><span>Kelola data dengan mudah dan cepat.</span></div>
+      <div class="greet-card"><p>Selamat datang,</p><h3 id="gName">...</h3><span>Kelola data dengan mudah dan cepat.</span></div>
       <div class="stat-grid" id="stats"></div>
       <div class="section-label">Daftar Data Tersedia</div>
       <div id="recentList"></div>
@@ -515,6 +515,19 @@
     </div>
   </section>
 
+  <section class="view" id="view-settings">
+    <div class="topbar"><button class="icon-btn" id="btnSettingsBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Pengaturan</h2><span>Tema dan judul tabel</span></div></div>
+    <div class="scroll no-nav px">
+      <div class="section-label" style="margin-top:6px;">Judul Tabel</div>
+      <div class="field"><input type="text" id="inputJudulTabel" placeholder="Contoh: Data Servis September"></div>
+      <div class="section-label">Tema Tampilan</div>
+      <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+    </div>
+  </section>
+
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <clipPath id="navNotchClip" clipPathUnits="objectBoundingBox">
@@ -533,7 +546,7 @@
       <div class="bottom-nav-bg"></div>
       <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
       <button class="nav-item nav-item-add" data-nav="add"><span class="nav-add-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><span>ADD DATA</span></button>
-      <button class="nav-item" data-nav="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h12"/></svg><span>Dashboard</span></button>
+      <button class="nav-item" data-nav="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg><span>Settings</span></button>
     </div>
     <div class="bottom-nav-safe"></div>
   </div>
@@ -584,7 +597,7 @@
   const qs = new URLSearchParams(location.search);
   let noteId = qs.get('id'), folderId = qs.get('folder');
   let folder = null, cols = [], auto = { no: true, tanggal: true, jam: true }, records = [];
-  let F = null, detId = null, saving = false, uploading = 0, viewerUrls = [], viewerIndex = 0;
+  let noteTitle = '', F = null, detId = null, saving = false, uploading = 0, viewerUrls = [], viewerIndex = 0;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -601,8 +614,14 @@
   const openOverlay = id => $(id).classList.add('show'), closeOverlay = id => $(id).classList.remove('show');
   document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeOverlay(o.id); }));
 
-  function applyTheme(t) { document.body.classList.toggle('surface-dark', t === 'dark'); }
-  try { applyTheme(localStorage.getItem('admdash_theme') || 'default'); } catch (e) {}
+  const getTheme = () => { try { return localStorage.getItem('admdash_theme') || 'default'; } catch (e) { return 'default'; } };
+  function applyTheme(t) {
+    document.body.classList.toggle('surface-dark', t === 'dark');
+    const m = $('themeColorMeta'); if (m) m.setAttribute('content', t === 'dark' ? '#15140F' : '#F6F1E7');
+    document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
+  }
+  document.querySelectorAll('.theme-opt').forEach(el => el.addEventListener('click', () => { try { localStorage.setItem('admdash_theme', el.dataset.theme); } catch (e) {} applyTheme(el.dataset.theme); }));
+  applyTheme(getTheme());
 
   let toastT;
   function toast(m) { const el = $('migrationToast'); el.textContent = m; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3500); }
@@ -626,14 +645,19 @@
     if (n !== 'add') $('addFields').innerHTML = ''; if (n !== 'detail') $('detRows').innerHTML = '';
     if (n === 'home') renderHome();
     if (n === 'add') prepAdd();
+    if (n === 'settings') $('inputJudulTabel').value = noteTitle || '';
   }
-  document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => b.dataset.nav === 'close' ? close() : goView(b.dataset.nav)));
+  document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => goView(b.dataset.nav)));
   $('btnHomeBack').onclick = close;
-  $('btnAddBack').onclick = $('btnDetailBack').onclick = $('btnDetailClose').onclick = () => goView('home');
+  $('btnAddBack').onclick = $('btnDetailBack').onclick = $('btnDetailClose').onclick = $('btnSettingsBack').onclick = () => goView('home');
+  $('inputJudulTabel').addEventListener('change', async e => {
+    noteTitle = e.target.value.trim();
+    if (noteId && noteTitle) { const { error } = await sb.from('notes').update({ title: noteTitle }).eq('id', noteId); toast(error ? 'Gagal menyimpan judul.' : 'Judul tersimpan.'); window.parent.postMessage({ type: 'note-autosaved', noteId, folder: folderId }, '*'); }
+  });
 
   /* ---------- home ---------- */
   function renderHome() {
-    $('gName').textContent = folder ? folder.name : '...';
+    $('gName').textContent = noteTitle || (folder ? folder.name : '...');
     const today = ymd(new Date()), money = cols.find(c => c.type === 'money');
     const st = [['Total Data', records.length], ['Hari Ini', records.filter(r => ymd(new Date(r.created_at)) === today).length]];
     st.push(money ? ['Total ' + money.label, 'Rp ' + records.reduce((a, r) => a + (Number(r.v && r.v[money.id]) || 0), 0).toLocaleString('id-ID'), 1]
@@ -787,8 +811,8 @@
     if (noteId) { const { error } = await sb.from('notes').update(payload).eq('id', noteId); if (error) throw error; }
     else {
       const f = [...cur].sort(byDate)[0];
-      const { data, error } = await sb.from('notes').insert({ ...payload, title: folder.name + ' ' + dmy(new Date(f ? f.created_at : Date.now())), folder_id: folderId }).select().single();
-      if (error) throw error; noteId = data.id;
+      const { data, error } = await sb.from('notes').insert({ ...payload, title: noteTitle || (folder.name + ' ' + dmy(new Date(f ? f.created_at : Date.now()))), folder_id: folderId }).select().single();
+      if (error) throw error; noteId = data.id; noteTitle = noteTitle || data.title || '';
     }
     records = cur;
     window.parent.postMessage({ type: 'note-autosaved', noteId, folder: folderId }, '*');
@@ -890,7 +914,7 @@
         const { data: n, error } = await sb.from('notes').select('*').eq('id', noteId).single();
         if (error || !n) throw new Error('Data tidak ditemukan.');
         if (n.content && n.content.schema && n.content.schema !== SCHEMA) throw new Error('Data ini bukan milik folder custom.');
-        folderId = n.folder_id; records = n.content && Array.isArray(n.content.records) ? n.content.records : [];
+        folderId = n.folder_id; noteTitle = n.title || ''; records = n.content && Array.isArray(n.content.records) ? n.content.records : [];
       }
       if (!folderId) throw new Error('Folder tidak ditemukan.');
       const { data: f, error: e2 } = await sb.from('folders').select('*').eq('id', folderId).single();
