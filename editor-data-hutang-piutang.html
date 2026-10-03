@@ -175,20 +175,21 @@
   .recent-row .r-right{ text-align:right; flex-shrink:0; font-size:13px; font-weight:800; color:var(--accent-ink); }
   body.surface-dark .recent-row .r-right{ color:var(--accent); }
 
-  /* ---------- Tanpa highlight biru + salin terbatas ---------- */
-  html, body, *{
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;          /* matikan menu tekan-lama (salin/bagikan) di iOS */
-    -webkit-user-select: none; user-select: none;  /* teks tidak bisa diblok */
+  /* ---------- Tanpa highlight biru + salin terbatas (aturan umum/standar) ---------- */
+  *{ -webkit-tap-highlight-color: transparent; }          /* tidak ada kilatan biru saat disentuh */
+  body{
+    -webkit-touch-callout: none;                           /* matikan menu tekan-lama iOS */
+    -webkit-user-select: none; user-select: none;          /* teks tidak bisa diblok (diwariskan ke semua isi) */
   }
   /* Hanya ini yang boleh dipilih & disalin: isian form + nilai di Detail Data */
   input, textarea, .copyable{
     -webkit-user-select: text; user-select: text;
     -webkit-touch-callout: default;
+    touch-action: manipulation;                            /* ketukan langsung terbaca, tidak tertahan/zoom ganda */
   }
   ::selection{ background: var(--accent-soft); color: inherit; }   /* kalaupun memilih teks, warnanya bukan biru */
-  button, input, textarea, select, [role="button"], .tap{ outline: none; }
-  img, canvas, svg{ -webkit-user-drag: none; user-drag: none; pointer-events: auto; }
+  button, input, textarea{ outline: none; }
+  img{ -webkit-user-drag: none; }
 
   /* ---------- Jenis: Hutang / Piutang ---------- */
   .jenis-seg{ display:flex; gap:10px; }
@@ -336,7 +337,7 @@
   /* ---------- Puzzle konfirmasi hapus ---------- */
   .pz-wrap{
     position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
-    background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
+    background:var(--paper-alt); margin-bottom:12px; user-select:none; -webkit-user-select:none;
   }
   .pz-wrap canvas{ display:block; }
   #pzPiece{
@@ -357,7 +358,7 @@
   }
   .pz-track{
     position:relative; height:46px; border-radius:23px; border:1.5px solid var(--line);
-    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:none;
+    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none;
   }
   .pz-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-soft); }
   .pz-label{
@@ -1381,24 +1382,33 @@
     });
   });
 
+  // Saran nama: hanya muncul saat mengetik (bukan saat sekadar menyentuh kolom), maksimal 5 saran,
+  // dan otomatis tertutup begitu menyentuh bagian lain — supaya tidak menutupi kolom di bawahnya.
   function setupSuggestDropdown(inputEl, listEl, getNames){
+    function closeList(){ listEl.classList.remove('open'); }
     function renderList(){
       const q = inputEl.value.trim().toLowerCase();
-      const names = getNames().filter(n => !q || n.toLowerCase().includes(q));
-      if (!names.length) { listEl.classList.remove('open'); listEl.innerHTML = ''; return; }
+      if (!q) { closeList(); listEl.innerHTML = ''; return; }
+      const names = getNames().filter(n => n.toLowerCase().includes(q) && n.toLowerCase() !== q).slice(0, 5);
+      if (!names.length) { closeList(); listEl.innerHTML = ''; return; }
       listEl.innerHTML = names.map(n => `<div class="suggest-item">${escapeHtml(n)}</div>`).join('');
       listEl.classList.add('open');
     }
-    inputEl.addEventListener('focus', renderList);
     inputEl.addEventListener('input', renderList);
-    inputEl.addEventListener('blur', () => { listEl.classList.remove('open'); });
+    inputEl.addEventListener('blur', closeList);
     listEl.addEventListener('mousedown', (e) => {
       const item = e.target.closest('.suggest-item');
       if (!item) return;
       e.preventDefault();
       inputEl.value = item.textContent;
-      listEl.classList.remove('open');
+      closeList();
       setTimeout(() => focusNextField(inputEl), 0);
+    });
+    // menyentuh di luar kolom nama / daftar saran -> tutup
+    document.addEventListener('pointerdown', (e) => {
+      if (!listEl.classList.contains('open')) return;
+      if (e.target === inputEl || listEl.contains(e.target)) return;
+      closeList();
     });
   }
   setupSuggestDropdown(document.getElementById('inputNama'), document.getElementById('namaSuggestList'), getNamaCustomer);
@@ -1417,6 +1427,14 @@
   ['inputNama','inputKeterangan','detNamaEdit','detKetEdit','inputJudulTabel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) autoCapitalizeFirst(el);
+  });
+
+  // Menyentuh bagian mana pun dari kolom (termasuk tulisan "Rp" & tepinya) memfokuskan isiannya.
+  document.querySelectorAll('.price-input-wrap').forEach(wrap => {
+    wrap.addEventListener('click', (e) => {
+      const input = wrap.querySelector('input');
+      if (input && e.target !== input) input.focus();
+    });
   });
 
   // Kolom uang: hanya angka, otomatis diberi pemisah ribuan, sisa ikut terhitung live.
@@ -1566,24 +1584,16 @@
   });
 
   // =====================================================================
-  // PENGAMAN TAMPILAN: klik kanan & tekan-lama dimatikan, teks tidak bisa diblok,
-  // KECUALI di isian form (input/textarea) dan nilai di Detail Data (.copyable).
+  // PENGAMAN TAMPILAN: klik kanan / menu tekan-lama dimatikan, KECUALI di isian form
+  // (input/textarea) dan nilai di Detail Data (.copyable). Pemblokan teks sudah ditangani CSS.
+  // Sengaja HANYA satu pendengar ini, supaya sentuhan dan scroll berjalan normal seperti biasa.
   // =====================================================================
-  (function(){
-    const allowed = (t) => {
-      const el = t && t.nodeType === 3 ? t.parentElement : t;
-      return !!(el && el.closest && el.closest('input, textarea, .copyable'));
-    };
-    document.addEventListener('contextmenu', (e) => { if (!allowed(e.target)) e.preventDefault(); });
-    document.addEventListener('selectstart', (e) => { if (!allowed(e.target)) e.preventDefault(); });
-    document.addEventListener('dragstart', (e) => e.preventDefault());
-    document.addEventListener('copy', (e) => {
-      // salin hanya dari bagian yang diizinkan
-      const sel = window.getSelection && window.getSelection();
-      const node = sel && sel.anchorNode;
-      if (!allowed(node)) e.preventDefault();
-    });
-  })();
+  document.addEventListener('contextmenu', (e) => {
+    const t = e.target;
+    const el = t && t.nodeType === 3 ? t.parentElement : t;
+    if (el && el.closest && el.closest('input, textarea, .copyable')) return;
+    e.preventDefault();
+  });
 
   // =====================================================================
   // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
