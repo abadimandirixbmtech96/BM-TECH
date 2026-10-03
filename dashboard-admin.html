@@ -479,7 +479,9 @@
   .hdr-filter-btn.active { background: var(--accent-yellow); border-color: transparent; color: #1C1B19; }
   .tasks-filter-badge { position: absolute; top: -4px; right: -4px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px; background: #F0555C; color: #fff; font-size: 11px; font-weight: 800; display: none; align-items: center; justify-content: center; }
 
-  .tk-summary { display: flex; gap: 10px; margin-bottom: 6px; }
+  .tk-summary { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 6px; }
+  .tk-summary .tk-tile { grid-column: span 2; }
+  .tk-summary .tk-tile:nth-child(n+4) { grid-column: span 3; }
   .tk-tile { flex: 1; min-width: 0; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-top: 4px solid var(--tc); border-radius: 16px; padding: 11px 12px 10px; cursor: pointer; transition: transform .15s ease; }
   .tk-tile:active { transform: scale(.97); }
   .tk-tile.on { box-shadow: inset 0 0 0 2px var(--tc); }
@@ -3847,15 +3849,19 @@
   }
 
   const TASK_TYPES = {
-    kasbon:    { badge: 'Kasbon belum lunas',     group: 'Kasbon belum lunas',     short: 'Kasbon',        sub: '',               color: '#F0555C' },
+    kasbon:    { badge: 'Kasbon belum lunas',     group: 'Kasbon belum lunas',     short: 'Kasbon',        sub: '',               color: '#F0555C', amountNote: 'sisa tagihan' },
+    hutang:    { badge: 'Hutang belum lunas',     group: 'Hutang belum lunas',     short: 'Hutang',        sub: '',               color: '#D64B4B', amountNote: 'sisa harus dibayar' },
+    piutang:   { badge: 'Piutang belum lunas',    group: 'Piutang belum lunas',    short: 'Piutang',       sub: '',               color: '#3DAA6A', amountNote: 'sisa ditagih' },
     ditinggal: { badge: 'Barang ditinggal',       group: 'Barang masih ditinggal', short: 'Ditinggal',     sub: 'di bengkel',     color: '#4C9EFF' },
     lengkap:   { badge: 'Data belum lengkap',     group: 'Data belum lengkap',     short: 'Belum lengkap', sub: 'perlu dilengkapi', color: '#FF8A4C' }
   };
-  const TASK_TYPE_ORDER = ['kasbon', 'ditinggal', 'lengkap'];
+  const TASK_TYPE_ORDER = ['kasbon', 'hutang', 'piutang', 'ditinggal', 'lengkap'];
+  const TASK_MONEY_TYPES = ['kasbon', 'hutang', 'piutang'];
   const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];
   const TASKS_FILTER_KEY = 'bmtech_tasks_filter_v1';
 
   let allKasbonNotes = [];
+  let allHutangNotes = [];
   let tasksFilter = { types: new Set(), folders: new Set() };
   try {
     const saved = JSON.parse(localStorage.getItem(TASKS_FILTER_KEY) || 'null');
@@ -3951,22 +3957,49 @@
       });
     });
 
+    allHutangNotes.forEach(note => {
+      const recs = Array.isArray(note.content && note.content.records) ? note.content.records : [];
+      const sorted = [...recs].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      sorted.forEach((r, rowIndex) => {
+        if (r.jenis !== 'hutang' && r.jenis !== 'piutang') return;
+        const total = Number(r.total) || 0;
+        const dibayar = Number(r.dibayar) || 0;
+        const sisa = total - dibayar;
+        if (sisa <= 0) return;
+        const when = r.created_at ? new Date(r.created_at) : null;
+        tasks.push({
+          type: r.jenis,
+          noteId: note.id,
+          folderId: note.folder_id,
+          folderName: note.folder || 'Uncategorized',
+          noteTitle: note.title || 'Untitled',
+          rowIndex,
+          when,
+          dateText: taskDateText(when),
+          customer: String(r.nama || '').trim(),
+          total, dibayar, sisa,
+          keterangan: String(r.keterangan || '').trim()
+        });
+      });
+    });
+
     return tasks;
   }
 
   function sortTasksInType(type, arr) {
     const t = d => (d && !isNaN(d.getTime())) ? d.getTime() : Infinity;
-    return arr.slice().sort((a, b) => type === 'kasbon' ? (b.sisa - a.sisa) || (t(a.when) - t(b.when)) : (t(a.when) - t(b.when)));
+    return arr.slice().sort((a, b) => TASK_MONEY_TYPES.includes(type) ? (b.sisa - a.sisa) || (t(a.when) - t(b.when)) : (t(a.when) - t(b.when)));
   }
 
   function taskCardHtml(t, idx) {
     const meta = TASK_TYPES[t.type];
-    const name = escapeHtml(t.customer || (t.type === 'kasbon' ? '(tanpa nama)' : '(tanpa customer)'));
+    const isMoney = TASK_MONEY_TYPES.includes(t.type);
+    const name = escapeHtml(t.customer || (isMoney ? '(tanpa nama)' : '(tanpa customer)'));
     const age = taskAgeText(t.when);
     let right = '';
     let detail = '';
-    if (t.type === 'kasbon') {
-      right = `<div class="tk-amount">${escapeHtml(taskRp(t.sisa))}<small>sisa tagihan</small></div>`;
+    if (isMoney) {
+      right = `<div class="tk-amount">${escapeHtml(taskRp(t.sisa))}<small>${escapeHtml(meta.amountNote || 'sisa')}</small></div>`;
       detail = `Tagihan ${escapeHtml(taskRp(t.total))} &middot; Dibayar ${escapeHtml(taskRp(t.dibayar))}${t.keterangan ? ' &middot; ' + escapeHtml(t.keterangan) : ''}`;
     } else if (t.type === 'ditinggal') {
       detail = t.allLeft
@@ -4020,7 +4053,7 @@
     summaryEl.innerHTML = TASK_TYPE_ORDER.map(type => {
       const items = folderScoped.filter(t => t.type === type);
       const meta = TASK_TYPES[type];
-      const sub = type === 'kasbon' ? taskRp(items.reduce((s, t) => s + t.sisa, 0)) : meta.sub;
+      const sub = TASK_MONEY_TYPES.includes(type) ? taskRp(items.reduce((s, t) => s + t.sisa, 0)) : meta.sub;
       const on = tasksFilter.types.has(type);
       return `<div class="tk-tile${on ? ' on' : ''}" data-type="${type}" style="--tc:${meta.color};">
         <div class="tk-tile-num">${items.length}</div>
@@ -6122,6 +6155,7 @@
       console.error('Gagal memuat semua notes:', error.message);
       allNotesData = [];
       allKasbonNotes = [];
+      allHutangNotes = [];
       return;
     }
 
@@ -6133,6 +6167,10 @@
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
     allKasbonNotes = (data || []).filter(n => isKasbonNote(n)).map(n => ({
+      ...n,
+      folder: folderNameById[n.folder_id] || 'Uncategorized'
+    }));
+    allHutangNotes = (data || []).filter(n => isHutangNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
