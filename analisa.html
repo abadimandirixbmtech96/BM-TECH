@@ -973,6 +973,9 @@
     return formatDateShort(e.date) + (e.hasTime ? ' · ' + formatTime(e.ts) : '');
   }
 
+  // Daftar PJ resmi (salin dari PJ_NAMES di dashboard-admin.html; kalau PJ bertambah, ubah di dua tempat)
+  const PJ_NAMES = ['Amin', 'BM', 'Mail', 'Kuswanto', 'Yono'];
+
   // --- Pekan (Kamis–Rabu) — sama persis dengan pengelompokan "Pekan N" di dashboard-admin.html ---
   const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -1731,6 +1734,36 @@
     return { groups: [...map.values()].sort((a, b) => b.total - a.total), skipped };
   }
 
+  // PJ per transaksi. Satu sel PJ boleh memuat beberapa nama dipisah tanda baca/spasi
+  // ("Amin/BM", "BM & Mail"), sama seperti pencocokan PJ di dashboard-admin.html.
+  // Transaksi bersama dihitung penuh untuk setiap PJ yang tertulis. Semua PJ resmi
+  // selalu tampil walau belum ada transaksinya (Rp 0).
+  function pjTotals(txs) {
+    const known = new Map(PJ_NAMES.map(n => [normalizeKey(n), { name: n, total: 0, count: 0 }]));
+    const other = new Map();
+    let skipped = 0, shared = 0;
+    txs.forEach(t => {
+      if (t.pj === 'Tanpa PJ') { skipped++; return; }
+      const hits = new Set();
+      String(t.pj).split(/[^A-Za-z0-9]+/).forEach(tok => {
+        const k = normalizeKey(tok);
+        if (k && known.has(k)) hits.add(k);
+      });
+      if (hits.size) {
+        if (hits.size > 1) shared++;
+        hits.forEach(k => { const g = known.get(k); g.total += t.amount; g.count += 1; });
+        return;
+      }
+      const key = normalizeKey(t.pj) || t.pj.toLowerCase();   // PJ di luar daftar: kelompokkan apa adanya
+      let g = other.get(key);
+      if (!g) { g = { name: t.pj, total: 0, count: 0 }; other.set(key, g); }
+      g.total += t.amount;
+      g.count += 1;
+    });
+    const groups = [...known.values(), ...other.values()].sort((a, b) => (b.total - a.total) || (b.count - a.count));
+    return { groups, skipped, shared };
+  }
+
   // Rekap transaksi tanpa nama, dipisah: yang ditulis "Iklan" vs yang benar-benar kosong
   function unnamedBreakdown(txs) {
     const total = sumTxs(txs);
@@ -1742,10 +1775,10 @@
     };
   }
 
-  function renderRanking(elId, txs, field, skipLabel, limit, emptyText, skipNote) {
+  function renderRanking(elId, txs, field, skipLabel, limit, emptyText, skipNote, grouper) {
     const el = $(elId);
-    const { groups, skipped } = groupTotals(txs, field, skipLabel);
-    if (groups.length === 0) {
+    const { groups, skipped, shared } = grouper ? grouper(txs) : groupTotals(txs, field, skipLabel);
+    if (groups.length === 0 || groups.every(g => g.count === 0)) {
       el.innerHTML = `<p class="bar-empty">${emptyText}</p>` + (skipped ? `<p class="bar-note" style="margin-top:0;text-align:center;">${skipped} transaksi ${skipNote}</p>` : '');
       return;
     }
@@ -1764,7 +1797,7 @@
           <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
         </div>
       `;
-    }).join('') + (skipped ? `<p class="bar-note">${skipped} transaksi ${skipNote}</p>` : '');
+    }).join('') + (shared ? `<p class="bar-note">${shared} transaksi dikerjakan lebih dari satu PJ, dihitung untuk tiap PJ (jumlah di atas bisa melebihi omzet).</p>` : '') + (skipped ? `<p class="bar-note">${skipped} transaksi ${skipNote}</p>` : '');
   }
 
   // --- Render: Riwayat Transaksi (ikut periode, bisa dicari, dimuat bertahap) ---
@@ -2050,7 +2083,7 @@
         lines.push('', '*Top Customer*');
         cust.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
       }
-      const pjs = groupTotals(txs, 'pj', 'Tanpa PJ').groups.slice(0, 5);
+      const pjs = pjTotals(txs).groups.filter(g => g.count > 0);
       if (pjs.length) {
         lines.push('', '*Performa PJ*');
         pjs.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
@@ -2079,7 +2112,7 @@
     renderIncomeCard();
     renderStatCards(txs);
     renderRanking('topCustomerList', txs, 'customer', 'Tanpa Nama', 5, 'Belum ada data customer', 'tanpa nama customer / "Iklan" tidak masuk peringkat');
-    renderRanking('pjBarList', txs, 'pj', 'Tanpa PJ', 5, 'Belum ada data PJ', 'tanpa PJ tidak masuk peringkat');
+    renderRanking('pjBarList', txs, 'pj', 'Tanpa PJ', PJ_NAMES.length + 3, 'Belum ada data PJ', 'tanpa PJ tidak masuk peringkat', pjTotals);
     renderCustomerSplit(txs);
     renderBusyTimes(txs, currentIncomePeriod);
     historyLimit = HISTORY_PAGE;
