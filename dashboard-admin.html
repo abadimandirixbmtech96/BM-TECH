@@ -3762,6 +3762,7 @@
 
   function isStokNone(v) { return normalizeKey(v) === 'tidakada'; }
   function isStokBJ(v) { return normalizeKey(v) === 'bj'; }
+  function isHargaCentang(v) { return /[√✓✔☑✅]/.test(String(v == null ? '' : v)); }
   function isHargaEmpty(v) { return isEmptyValue(v) || /^0+$/.test(String(v).trim()); }
   function taskRp(n) { return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
   function taskAgeDays(d) {
@@ -3810,7 +3811,7 @@
         };
 
         const stok = String(val('Stok Barang') || '').trim();
-        if (!isEmptyValue(stok) && !isStokNone(stok)) {
+        if (!isEmptyValue(stok) && !isStokNone(stok) && !isHargaCentang(val('Harga'))) {
           const allLeft = isStokBJ(stok);
           tasks.push({ ...base, type: 'ditinggal', allLeft, what: allLeft ? base.barang : stok });
         }
