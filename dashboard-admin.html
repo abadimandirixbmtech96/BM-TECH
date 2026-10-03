@@ -371,6 +371,14 @@
     margin-top: 4px;
   }
   .week-group-header:first-child { margin-top: 0; }
+  .week-group-header .week-range {
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    opacity: 0.65;
+  }
 
 
   .notes-container.view-card .note-card:active,
@@ -2585,6 +2593,7 @@
   let folderYearMonthData = {};
   let activeFilterYear = null;
   let activeFilterMonth = null;
+  let weekEpoch = null;
 
   const PJ_NAMES = ['Amin', 'BM', 'Mail', 'Kuswanto', 'Yono'];
   const PJ_PREFIX = '__pj__';
@@ -2784,6 +2793,7 @@
         schema: (f.schema && Array.isArray(f.schema.columns)) ? f.schema : null
       }));
     rebuildPjFolders();
+    if (!notesError) recomputeWeekEpoch();
 
     if (!activeCategoryId) {
       const savedFolderId = localStorage.getItem(LAST_FOLDER_KEY);
@@ -3291,6 +3301,9 @@
     return `${dd}/${mm}/${d.getFullYear()}`;
   }
 
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const MONTH_SHORT_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+
   function getWeekAnchorThursday(date) {
     const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const day = d.getDay();
@@ -3299,42 +3312,97 @@
     return d;
   }
 
+  function parseStrictDate(val) {
+    const s = String(val || '').trim();
+    let y, mo, d;
+    let m = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
+    if (m) {
+      d = Number(m[1]); mo = Number(m[2]); y = Number(m[3]);
+      if (m[3].length === 2) y += 2000;
+    } else {
+      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!m) return null;
+      y = Number(m[1]); mo = Number(m[2]); d = Number(m[3]);
+    }
+    if (y < 2000 || y > 2100 || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    const dt = new Date(y, mo - 1, d);
+    return isNaN(dt) ? null : dt;
+  }
+
+  function getNoteEarliestDate(note) {
+    let min = null;
+    const consider = dt => { if (dt && !isNaN(dt) && (!min || dt < min)) min = dt; };
+
+    if (note && note.title) {
+      const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
+      if (m) consider(parseStrictDate(m[0]));
+    }
+
+    const table = getNoteTable(note);
+    if (table && Array.isArray(table.rows) && Array.isArray(table.columns)) {
+      table.rows.forEach(r => {
+        const val = getRowValueByLabel(table.columns, r, 'Tanggal');
+        if (!isEmptyValue(val)) consider(parseStrictDate(val));
+      });
+    }
+
+    if (!min && note && note.created_at) consider(new Date(note.created_at));
+    return min;
+  }
+
+  function recomputeWeekEpoch() {
+    const bukuBesar = (categoriesData || []).find(c => !c.ownerUsername && normalizeKey(c.name) === normalizeKey('BUKU BESAR'));
+    if (!bukuBesar) { weekEpoch = null; return; }
+    let min = null;
+    (pjNotesSource || []).forEach(n => {
+      if (n.folder_id !== bukuBesar.id) return;
+      const d = getNoteEarliestDate(n);
+      if (d && !isNaN(d) && (!min || d < min)) min = d;
+    });
+    weekEpoch = min ? getWeekAnchorThursday(min) : null;
+  }
+
+  function weekRangeLabel(anchor) {
+    const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 6);
+    const sameYear = anchor.getFullYear() === end.getFullYear();
+    const a = `${anchor.getDate()} ${MONTH_SHORT_ID[anchor.getMonth()]}${sameYear ? '' : ' ' + anchor.getFullYear()}`;
+    const b = `${end.getDate()} ${MONTH_SHORT_ID[end.getMonth()]} ${end.getFullYear()}`;
+    return `${a} – ${b}`;
+  }
+
   function groupNotesByWeek(notes) {
     const buckets = {};
+    const undated = [];
     notes.forEach(n => {
       const d = getNoteEffectiveDate(n);
-      if (!d || isNaN(d)) return;
+      if (!d || isNaN(d)) { undated.push(n); return; }
       const anchor = getWeekAnchorThursday(d);
       const key = anchor.getTime();
       if (!buckets[key]) buckets[key] = { anchor, notes: [] };
       buckets[key].notes.push(n);
     });
 
-    const sortedKeys = Object.keys(buckets).sort((a, b) => Number(a) - Number(b));
-    return sortedKeys.map((key, idx) => ({
-      label: `Pekan ${idx + 1}`,
-      anchor: buckets[key].anchor,
-      notes: buckets[key].notes
-    }));
-  }
+    const sortedKeys = Object.keys(buckets).map(Number).sort((a, b) => a - b);
+    const epoch = weekEpoch || (sortedKeys.length ? new Date(sortedKeys[0]) : null);
 
-  function groupNotesByMonth(notes) {
-    const buckets = {};
-    notes.forEach(n => {
-      const d = getNoteEffectiveDate(n);
-      if (!d || isNaN(d)) return;
-      const y = d.getFullYear();
-      const m = d.getMonth() + 1;
-      const key = `${y}-${String(m).padStart(2, '0')}`;
-      if (!buckets[key]) buckets[key] = { year: y, month: m, notes: [] };
-      buckets[key].notes.push(n);
-    });
-
-    const sortedKeys = Object.keys(buckets).sort((a, b) => b.localeCompare(a));
-    return sortedKeys.map(key => {
+    const groups = sortedKeys.map(key => {
       const b = buckets[key];
-      return { label: `${MONTH_NAMES_ID[b.month - 1]} ${b.year}`, notes: b.notes };
+      const num = epoch ? Math.round((b.anchor.getTime() - epoch.getTime()) / WEEK_MS) + 1 : 1;
+      b.notes.sort((x, y) => {
+        const pinDiff = (y.pinned ? 1 : 0) - (x.pinned ? 1 : 0);
+        if (pinDiff !== 0) return pinDiff;
+        return getNoteEffectiveDate(y) - getNoteEffectiveDate(x);
+      });
+      return {
+        label: num >= 1 ? `Pekan ${num}` : 'Sebelum Pekan 1',
+        range: weekRangeLabel(b.anchor),
+        anchor: b.anchor,
+        notes: b.notes
+      };
     });
+
+    if (undated.length) groups.unshift({ label: 'Tanpa Tanggal', range: '', anchor: null, notes: undated });
+    return groups;
   }
 
   function renderNotes() {
@@ -3395,27 +3463,14 @@
   }
 
   
-  if (activeCategoryId === '__all__') {
-    const months = groupNotesByMonth(notesData);
-    let idxCounter = 0;
-    container.style.display = 'grid';
-    container.innerHTML = months.map(group => {
-      const cardsHtml = group.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
-      return `<div class="week-group-header">${group.label}</div>${cardsHtml}`;
-    }).join('');
-  } else if (activeFilterYear && activeFilterMonth) {
-    const weeks = groupNotesByWeek(notesData);
-    const displayWeeks = [...weeks].reverse();
-    let idxCounter = 0;
-    container.style.display = 'grid';
-    container.innerHTML = displayWeeks.map(week => {
-      const cardsHtml = week.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
-      return `<div class="week-group-header">${week.label}</div>${cardsHtml}`;
-    }).join('');
-  } else {
-    container.style.display = 'grid';
-    container.innerHTML = notesData.map((note, idx) => noteCardHtml(note, idx)).join('');
-  }
+  const displayWeeks = groupNotesByWeek(notesData).reverse();
+  let idxCounter = 0;
+  container.style.display = 'grid';
+  container.innerHTML = displayWeeks.map(week => {
+    const cardsHtml = week.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
+    const rangeHtml = week.range ? `<span class="week-range">${week.range}</span>` : '';
+    return `<div class="week-group-header">${week.label}${rangeHtml}</div>${cardsHtml}`;
+  }).join('');
 
     container.querySelectorAll('.note-card').forEach(card => {
       let pressTimer = null;
