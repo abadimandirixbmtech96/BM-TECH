@@ -2,70 +2,576 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<link rel="manifest" href="/manifest-admin.json">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<meta name="apple-mobile-web-app-title" content="Data Editor">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" id="themeColorMeta" content="#F6F1E7">
 <title>Editor Folder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
 <style>
-  :root{--paper:#F6F1E7;--card:#FBF8F2;--ink:#1C1B19;--soft:#6B6459;--line:#E4DDCC;--accent:#C9932F;--accent-ink:#fff;--danger:#C24444;--r:16px}
-  html.dark{--paper:#15140F;--card:#1E1D17;--ink:#EDEAE2;--soft:#9B948A;--line:#332F27;--accent:#D9A536;--accent-ink:#1C1B19}
-  *{box-sizing:border-box;font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-  body.font-serif *{font-family:Georgia,'Times New Roman',Times,serif!important}
-  body.font-mono *{font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace!important}
-  body.font-rounded *{font-family:ui-rounded,'SF Pro Rounded','Baloo 2','Segoe UI',sans-serif!important}
-  body.font-klasik *{font-family:'Times New Roman',Times,Georgia,serif!important}
-  body.font-humanis *{font-family:Verdana,Tahoma,Geneva,sans-serif!important}
-  body.font-kompak *{font-family:'Arial Narrow','Segoe UI',Arial,sans-serif!important}
-  body.font-bold-mode *{font-weight:700!important}
-  html,body{margin:0;min-height:100%;background:var(--paper);color:var(--ink)}
-  .top{display:flex;align-items:center;gap:12px;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 8px}
-  .back{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:22px;cursor:pointer;flex-shrink:0}
-  .top h2{margin:0;font-size:20px;font-weight:800}.top span{font-size:13px;color:var(--soft)}
-  main{padding:6px 16px calc(env(safe-area-inset-bottom,0px) + 100px);max-width:560px;margin:0 auto}
-  .rec{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;margin-bottom:10px;cursor:pointer}
-  .rec b{display:block;font-size:16px;margin-bottom:6px;word-break:break-word}
-  .rec p{margin:2px 0;font-size:13.5px;color:var(--soft);word-break:break-word}.rec p em{font-style:normal;color:var(--ink);font-weight:600}
-  .rec small{display:block;margin-top:8px;font-size:12px;color:var(--soft)}
-  .empty{text-align:center;color:var(--soft);padding:50px 10px;font-size:14px}
-  .fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);width:calc(100% - 32px);max-width:528px;padding:16px;border:0;border-radius:var(--r);background:var(--accent);color:var(--accent-ink);font-size:16px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.25)}
-  .f{margin-top:16px}.f>label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}.f>label i{font-style:normal;font-weight:500;color:var(--soft);font-size:12.5px}
-  input[type=text],input[type=date],input[type=time],select,textarea{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:var(--r);background:var(--card);color:var(--ink);font-size:16px;outline:none}
-  textarea{min-height:90px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-  .auto{background:var(--card);border:1px dashed var(--line);border-radius:var(--r);padding:11px 14px;font-size:13.5px;color:var(--soft);line-height:1.5}
-  .rp{display:flex;align-items:center;gap:8px}.rp span{font-weight:700;color:var(--soft)}
-  .thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  .th{position:relative;width:84px;height:84px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-  .th img{width:100%;height:100%;object-fit:cover}.th.up{opacity:.5}
-  .th button{position:absolute;top:3px;right:3px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:15px;cursor:pointer}
-  .pick{padding:10px 14px;border-radius:12px;border:1.5px dashed var(--accent);background:transparent;color:var(--ink);font-weight:700;font-size:13.5px;cursor:pointer}
-  .btns{display:flex;gap:10px;margin-top:26px}
-  .btns button{flex:1;padding:15px;border-radius:var(--r);font-size:16px;font-weight:800;cursor:pointer;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
-  .btns .pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.btns .del{color:var(--danger)}
-  .btns button:disabled{opacity:.55}
-  .err{display:none;margin-top:14px;padding:12px 14px;border-radius:var(--r);background:rgba(194,68,68,.12);color:var(--danger);font-size:14px;font-weight:600}
-  .msg{padding:50px 16px;text-align:center;color:var(--soft)}
+  :root{ --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  *{ font-family:var(--app-font); }
+
+  :root{
+    --paper:#F6F1E7;
+    --paper-alt:#FBF8F2;
+    --ink:#1C1B19;
+    --ink-soft:#6B6459;
+    --line:#E4DDCC;
+    --line-soft:#EDE7D8;
+    --glass-bg:rgba(255,255,255,0.6);
+    --glass-border:rgba(255,255,255,0.7);
+    --glass-shadow:0 8px 32px rgba(80,70,50,0.14);
+    --accent:#C9932F;
+    --accent-ink:#5A430F;
+    --accent-soft:rgba(201,147,47,0.14);
+    --danger:#C24444;
+    --danger-soft:rgba(194,68,68,0.12);
+    --radius-pill:999px;
+    --radius-lg:22px;
+    --radius-md:16px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --safe-left:env(safe-area-inset-left,0px);
+    --safe-right:env(safe-area-inset-right,0px);
+    --skeleton-a:rgba(0,0,0,0.06);
+    --skeleton-b:rgba(0,0,0,0.12);
+
+    /* ---- Tombol ADD DATA di bottom nav — ubah 3 angka ini saja untuk resize ---- */
+    --fab-size:44px;     /* diameter lingkaran tombol */
+    --fab-lift:14px;     /* seberapa tinggi tombol menonjol keluar navbar */
+    --fab-icon-size:18px;/* ukuran ikon "+" di dalamnya */
+  }
+
+  body.surface-dark{
+    --paper:#15140F;
+    --paper-alt:#1B1A15;
+    --ink:#EDEAE2;
+    --ink-soft:#9B948A;
+    --line:#332F27;
+    --line-soft:#26241D;
+    --glass-bg:rgba(30,28,23,0.6);
+    --glass-border:rgba(255,255,255,0.09);
+    --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
+    --accent-soft:rgba(201,147,47,0.18);
+    --danger-soft:rgba(194,68,68,0.18);
+    --skeleton-a:rgba(255,255,255,0.06);
+    --skeleton-b:rgba(255,255,255,0.13);
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
+  button{ font:inherit; }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    overscroll-behavior:none;
+    transition:background .2s ease, color .2s ease;
+  }
+  input,select,textarea{ font:inherit; color:inherit; }
+  button, .tap{ transition:transform .1s ease, background .1s ease, opacity .1s ease; }
+  button:active, .tap:active{ transform:scale(0.96); }
+
+  .app{ position:fixed; inset:0; display:flex; flex-direction:column; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; gap:10px;
+    padding:calc(var(--safe-top) + 12px) calc(var(--safe-left) + 16px) 12px calc(var(--safe-left) + 16px);
+    flex-shrink:0;
+  }
+  .icon-btn{
+    width:40px; height:40px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    border:none; background:var(--glass-bg); border:1px solid var(--glass-border);
+    backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);
+    border-radius:50%; color:var(--ink); cursor:pointer;
+  }
+  .icon-btn svg{ width:18px; height:18px; }
+  .topbar-titles{ display:flex; flex-direction:column; min-width:0; flex:1; }
+  .topbar-titles h2{ margin:0; font-size:17px; font-weight:750; letter-spacing:-0.01em; }
+  .topbar-titles span{ font-size:12.5px; color:var(--ink-soft); font-weight:500; }
+  .topbar-action{
+    flex-shrink:0; padding:9px 16px; border-radius:var(--radius-pill); border:1.5px solid var(--line);
+    background:var(--paper-alt); color:var(--ink); font-size:13.5px; font-weight:750; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+  }
+  .topbar-action svg{ width:15px; height:15px; }
+
+  /* ---------- Scroll area ---------- */
+  .scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(96px + var(--safe-bottom)); }
+  .scroll.no-nav{ padding-bottom:calc(28px + var(--safe-bottom)); }
+  .px{ padding-left:calc(var(--safe-left) + 18px); padding-right:calc(var(--safe-right) + 18px); }
+
+  /* ---------- Views ---------- */
+  .view{ display:none; flex-direction:column; height:100%; }
+  .view.active{ display:flex; }
+
+  /* ---------- Home ---------- */
+  .greet-card{
+    margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
+    background:
+      linear-gradient(135deg, rgba(196,143,31,0.55) 0%, rgba(90,62,15,0.68) 100%),
+      url('background-admin.jpg') center/cover no-repeat, var(--accent);
+    color:#fff; box-shadow:0 10px 26px rgba(180,130,30,0.28);
+  }
+  .greet-card p{ margin:0 0 4px 0; font-size:13px; opacity:0.85; font-weight:600; }
+  .greet-card h3{ margin:0 0 4px 0; font-size:20px; font-weight:800; }
+  .greet-card span{ font-size:12.5px; opacity:0.8; }
+  .stat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px; }
+  .stat-card{
+    padding:14px 16px; border-radius:var(--radius-md);
+    background:rgba(255,255,255,0.28); border:1px solid rgba(255,255,255,0.45);
+    backdrop-filter:blur(24px) saturate(1.6); -webkit-backdrop-filter:blur(24px) saturate(1.6);
+    box-shadow:0 6px 18px rgba(80,70,50,0.08), inset 0 1px 0 rgba(255,255,255,0.5);
+  }
+  body.surface-dark .stat-card{
+    background:rgba(30,28,23,0.32); border-color:rgba(255,255,255,0.08);
+    box-shadow:0 6px 18px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .stat-card .stat-label{ font-size:12px; color:var(--ink-soft); font-weight:600; }
+  .stat-card .stat-value{ font-size:24px; font-weight:800; margin-top:4px; letter-spacing:-0.01em; }
+  .stat-card .stat-value.money{ font-size:18px; }
+  .section-label{ margin:22px 0 10px 0; font-size:13px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.04em; }
+  .menu-card{
+    display:flex; align-items:center; gap:14px; padding:14px 16px; margin-bottom:10px;
+    border-radius:var(--radius-md); background:var(--paper-alt); border:1px solid var(--line-soft);
+    cursor:pointer;
+  }
+  .menu-card .menu-ico{
+    width:42px; height:42px; border-radius:13px; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  body.surface-dark .menu-card .menu-ico{ color:var(--accent); }
+  .menu-card .menu-ico svg{ width:20px; height:20px; }
+  .menu-card .menu-text b{ display:block; font-size:15px; font-weight:700; }
+  .menu-card .menu-text span{ font-size:12.5px; color:var(--ink-soft); }
+  .menu-card .chev{ margin-left:auto; color:var(--ink-soft); flex-shrink:0; }
+  .menu-card .chev svg{ width:16px; height:16px; }
+
+  .recent-row{
+    display:flex; align-items:center; gap:12px; padding:12px 14px; margin-bottom:8px;
+    border-radius:14px; background:var(--paper-alt); border:1px solid var(--line-soft); cursor:pointer;
+  }
+  .recent-row .r-no{
+    width:30px; height:30px; border-radius:10px; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;
+  }
+  body.surface-dark .recent-row .r-no{ color:var(--accent); }
+  .recent-row .r-mid{ flex:1; min-width:0; }
+  .recent-row .r-mid b{ display:block; font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .recent-row .r-mid span{ font-size:11.5px; color:var(--ink-soft); font-weight:500; }
+  .recent-row .r-right{ text-align:right; flex-shrink:0; font-size:13px; font-weight:800; color:var(--accent-ink); }
+  body.surface-dark .recent-row .r-right{ color:var(--accent); }
+  .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
+
+  /* ---------- Bukti (upload gambar, opsional maks. 2) ---------- */
+  .bukti-dropzone{
+    border:1.5px dashed var(--line); border-radius:var(--radius-md); background:var(--paper-alt);
+    padding:14px; transition:border-color .15s ease, background .15s ease;
+  }
+  .bukti-dropzone.dragover{ border-color:var(--accent); background:var(--accent-soft); }
+  .bukti-dropzone.full .bukti-empty-state{ display:none; }
+  .bukti-empty-state{ display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; padding:10px 0; color:var(--ink-soft); }
+  .bukti-empty-state svg{ width:26px; height:26px; opacity:0.6; }
+  .bukti-empty-state span{ font-size:12px; font-weight:600; }
+  .bukti-btn-row{ display:flex; gap:8px; margin-top:2px; }
+  .bukti-pick-btn{
+    padding:8px 14px; border-radius:var(--radius-pill); border:1.5px solid var(--line); background:var(--paper);
+    color:var(--ink); font-size:12.5px; font-weight:700; cursor:pointer;
+  }
+  .bukti-pick-btn:active{ background:var(--accent-soft); border-color:var(--accent); }
+  .bukti-thumbs{ display:flex; gap:10px; flex-wrap:wrap; }
+  .bukti-dropzone.has-items .bukti-thumbs{ margin-top:10px; }
+  .bukti-thumb{ position:relative; width:72px; height:72px; border-radius:12px; overflow:hidden; background:var(--line-soft); flex-shrink:0; cursor:pointer; }
+  .bukti-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .bukti-thumb-remove{
+    position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; border:none;
+    background:rgba(20,16,8,0.65); color:#fff; font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .bukti-thumb-spinner{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(20,16,8,0.35); }
+  .bukti-thumb-spinner::after{
+    content:''; width:18px; height:18px; border-radius:50%; border:2.5px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    animation:bukti-spin .7s linear infinite;
+  }
+  @keyframes bukti-spin{ to{ transform:rotate(360deg); } }
+  .bukti-thumb.error{ outline:2px solid var(--danger); outline-offset:-2px; }
+  .bukti-thumb-error{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(194,68,68,0.55);
+    color:#fff; font-weight:800; font-size:16px;
+  }
+  .bukti-view-thumbs{ display:flex; gap:8px; flex-wrap:wrap; margin-top:2px; }
+  .bukti-view-thumb{ width:56px; height:56px; border-radius:10px; object-fit:cover; cursor:pointer; }
+  .r-photo-badge{ font-size:12px; margin-right:2px; vertical-align:-1px; }
+
+  /* ---------- Viewer bukti: preview geser (swipe) antar gambar ---------- */
+  .bukti-viewer-overlay{
+    position:fixed; inset:0; background:rgba(10,8,4,0.92); z-index:300;
+    display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .bukti-viewer-overlay.show{ opacity:1; pointer-events:auto; }
+  .bukti-viewer-stage{ position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center; touch-action:pan-y; }
+  .bukti-viewer-stage img{ max-width:92%; max-height:80vh; border-radius:14px; object-fit:contain; user-select:none; -webkit-user-drag:none; }
+  .bukti-viewer-close{
+    position:absolute; top:calc(var(--safe-top) + 14px); right:18px; width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,0.14); border:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  }
+  .bukti-viewer-nav{
+    position:absolute; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%;
+    background:rgba(255,255,255,0.14); border:none; color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:2;
+  }
+  .bukti-viewer-nav.prev{ left:12px; }
+  .bukti-viewer-nav.next{ right:12px; }
+  .bukti-viewer-dots{ position:absolute; bottom:calc(var(--safe-bottom) + 20px); left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:2; }
+  .bukti-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all .15s ease; }
+  .bukti-dot.active{ background:#fff; width:16px; border-radius:3px; }
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:60;
+    display:flex; flex-direction:column;
+  }
+  /* Layer background nav dengan cekungan (notch) di tengah, tinggi tetap 64px */
+  .bottom-nav-surface{
+    position:relative; height:64px;
+    display:flex; align-items:center;
+    padding:0 calc(var(--safe-left) + 10px) 0 calc(var(--safe-right) + 10px);
+  }
+  .bottom-nav-bg{
+    position:absolute; inset:0; z-index:0;
+    background:var(--glass-bg);
+    backdrop-filter:blur(24px) saturate(1.4); -webkit-backdrop-filter:blur(24px) saturate(1.4);
+    clip-path:url(#navNotchClip);
+    box-shadow:0 -2px 14px rgba(30,25,15,0.06);
+  }
+  /* Strip pengisi safe-area bawah (mis. home-indicator iPhone), rata & tanpa cekungan */
+  .bottom-nav-safe{
+    height:var(--safe-bottom);
+    background:var(--glass-bg);
+    backdrop-filter:blur(24px) saturate(1.4); -webkit-backdrop-filter:blur(24px) saturate(1.4);
+  }
+  .nav-item{
+    position:relative; z-index:1;
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0;
+    border:none; background:none; color:var(--ink-soft); cursor:pointer;
+  }
+  .nav-item svg{ width:21px; height:21px; }
+  .nav-item span{ font-size:11px; font-weight:600; }
+  .nav-item.active{ color:var(--accent); }
+
+  /* ---------- Tombol ADD DATA di tengah nav: flat, menonjol keluar cekungan ---------- */
+  .nav-item-add{ gap:6px; justify-content:flex-end; }
+  .nav-add-fab{
+    width:var(--fab-size); height:var(--fab-size); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--accent); color:#fff;
+    transform:translateY(calc(-1 * var(--fab-lift)));
+    transition:transform .15s ease, background .15s ease;
+  }
+  .nav-add-fab svg{ width:var(--fab-icon-size); height:var(--fab-icon-size); }
+  .nav-item-add span{
+    font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft);
+    margin-top:calc(-1 * var(--fab-lift) + 4px); /* label tetap rapat di bawah lingkaran meski ukurannya berubah */
+  }
+  .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{
+    background:var(--accent-ink); transform:translateY(calc(-1 * var(--fab-lift))) scale(0.94);
+  }
+
+
+
+  /* ---------- Form ---------- */
+  .field{ margin-bottom:16px; }
+  .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
+  .field label .opt-tag{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-soft); opacity:0.75; }
+  .field .readonly-box{
+    padding:13px 14px; border-radius:14px; background:var(--line-soft); color:var(--ink-soft);
+    font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:space-between;
+  }
+  .field .readonly-box .auto-tag{ font-size:10.5px; font-weight:700; color:var(--accent-ink); background:var(--accent-soft); padding:2px 8px; border-radius:var(--radius-pill); }
+  body.surface-dark .field .readonly-box .auto-tag{ color:var(--accent); }
+  .field input, .field select, .field textarea{
+    width:100%; padding:13px 14px; border-radius:14px; border:1.5px solid var(--line);
+    background:var(--paper-alt); color:var(--ink); font-size:15px; font-weight:600; outline:none;
+    resize:vertical;
+  }
+  .field textarea{ min-height:70px; font-weight:500; }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--accent); }
+  .field .price-input-wrap{ position:relative; }
+  .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
+  .field .price-input-wrap input{ padding-left:38px; }
+
+  /* ---------- Saran nama PJ (dropdown kustom, bukan datalist native) ---------- */
+  .suggest-wrap{ position:relative; }
+  .suggest-list{
+    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
+    max-height:190px; overflow-y:auto; border-radius:14px; border:1.5px solid var(--line);
+    background:var(--paper-alt); box-shadow:0 12px 28px rgba(30,25,15,0.18);
+    -webkit-overflow-scrolling:touch;
+  }
+  .suggest-list.open{ display:block; }
+  .suggest-item{
+    padding:11px 14px; font-size:14.5px; font-weight:600; color:var(--ink); cursor:pointer;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .suggest-item:last-child{ border-bottom:none; }
+  .suggest-item:active{ background:var(--accent-soft); }
+  .detail-row .suggest-list{ border-radius:11px; }
+  .hint-card{
+    display:flex; gap:10px; align-items:flex-start; padding:13px 14px; border-radius:14px;
+    background:var(--accent-soft); color:var(--accent-ink); font-size:12.5px; font-weight:600; line-height:1.4; margin-bottom:18px;
+  }
+  body.surface-dark .hint-card{ color:var(--ink); }
+  .hint-card svg{ width:18px; height:18px; flex-shrink:0; margin-top:1px; }
+
+  .btn-primary{
+    width:100%; padding:15px; border:none; border-radius:16px; background:var(--accent); color:#fff;
+    font-size:15.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+    box-shadow:0 8px 20px rgba(180,130,30,0.28);
+  }
+  .btn-primary svg{ width:18px; height:18px; }
+  .btn-primary:disabled{ opacity:0.55; box-shadow:none; }
+  .btn-secondary{
+    width:100%; padding:15px; border:1.5px solid var(--line); border-radius:16px; background:transparent; color:var(--ink);
+    font-size:15.5px; font-weight:700; cursor:pointer;
+  }
+  .btn-danger-outline{
+    padding:13px; border:1.5px solid var(--danger); border-radius:14px; background:var(--danger-soft); color:var(--danger);
+    font-size:14.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .btn-danger-outline svg{ width:16px; height:16px; }
+  .trash-item{ margin-bottom:14px; }
+  .trash-actions{ display:flex; gap:10px; margin-top:8px; }
+  .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
+  .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
+
+  /* ---------- Puzzle konfirmasi hapus ---------- */
+  .pz-wrap{
+    position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
+    background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  .pz-wrap canvas{ display:block; }
+  #pzPiece{
+    position:absolute; left:0; top:0; will-change:transform;
+    filter:drop-shadow(0 2px 5px rgba(0,0,0,0.4)); pointer-events:none;
+  }
+  .pz-refresh{
+    position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.5); background:rgba(0,0,0,0.28); color:#fff; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+  }
+  .pz-refresh svg{ width:15px; height:15px; }
+  .pz-wrap.fail{ animation:pzShake .4s ease; }
+  @keyframes pzShake{
+    0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-8px); } 40%{ transform:translateX(8px); }
+    60%{ transform:translateX(-5px); } 80%{ transform:translateX(5px); }
+  }
+  .pz-track{
+    position:relative; height:46px; border-radius:23px; border:1.5px solid var(--line);
+    background:var(--paper-alt); overflow:hidden; user-select:none; -webkit-user-select:none; touch-action:none;
+  }
+  .pz-fill{ position:absolute; left:0; top:0; bottom:0; width:0; background:var(--accent-soft); }
+  .pz-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:650; color:var(--ink-soft); pointer-events:none; padding-left:30px;
+  }
+  .pz-handle{
+    position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
+    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
+    cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
+  }
+  .pz-handle svg{ width:18px; height:18px; }
+  .pz-handle:active{ transform:none; }
+  .pz-anim .pz-handle, .pz-anim #pzPiece, .pz-anim .pz-fill{ transition:transform .22s ease, width .22s ease; }
+  .pz-track.ok{ border-color:#3E9B5F; }
+  .pz-track.ok .pz-fill{ background:rgba(62,155,95,0.22); }
+  .pz-track.ok .pz-handle{ background:#3E9B5F; }
+  .pz-track.ok .pz-label{ color:#3E9B5F; }
+  .btn-row{ display:flex; gap:10px; }
+  .btn-row > *{ flex:1; }
+
+  /* ---------- Detail ---------- */
+  .detail-card{
+    border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
+    padding:6px 16px; margin-top:6px;
+  }
+  .detail-row{ padding:13px 0; border-bottom:1px solid var(--line-soft); }
+  .detail-row:last-child{ border-bottom:none; }
+  .detail-row label{ display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft); margin-bottom:3px; text-transform:uppercase; letter-spacing:0.03em; }
+  .detail-row .val{ font-size:15px; font-weight:700; white-space:pre-wrap; }
+  .detail-row .val.empty{ color:var(--ink-soft); font-weight:600; font-style:italic; }
+  .detail-row input, .detail-row textarea{
+    width:100%; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line);
+    background:var(--paper); font-size:15px; font-weight:700; outline:none; color:var(--ink);
+  }
+  .detail-row textarea{ font-weight:500; min-height:64px; resize:vertical; }
+  .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
+  .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
+
+  /* ---------- Settings ---------- */
+  .theme-opt{
+    display:flex; align-items:center; justify-content:space-between; padding:14px 16px; margin-bottom:10px;
+    border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line-soft); cursor:pointer;
+  }
+  .theme-opt.active{ border-color:var(--accent); background:var(--accent-soft); }
+  .theme-opt b{ font-size:14.5px; font-weight:700; }
+  .theme-opt .dot{ width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
+  .theme-opt.active .dot{ border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 3px var(--paper-alt); }
+
+  /* ---------- Modal / sheet ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
+    display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
+  }
+  .overlay.center{ align-items:center; padding:0 20px; }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    width:100%; max-width:420px; background:var(--paper); border-radius:24px 24px 0 0;
+    padding:22px 20px calc(var(--safe-bottom) + 20px) 20px; transform:translateY(24px); transition:transform .2s ease;
+    max-height:85vh; overflow-y:auto;
+  }
+  .overlay.center .modal-card{ border-radius:22px; padding:24px 20px calc(var(--safe-bottom) + 20px) 20px; }
+  .overlay.show .modal-card{ transform:translateY(0); }
+  .modal-icon{
+    width:54px; height:54px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink);
+    display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto;
+  }
+  body.surface-dark .modal-icon{ color:var(--accent); }
+  .modal-icon svg{ width:26px; height:26px; }
+  .modal-icon.danger{ background:var(--danger-soft); color:var(--danger); }
+  .modal-card h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; text-align:center; }
+  .modal-card p.desc{ margin:0 0 16px 0; font-size:13.5px; color:var(--ink-soft); text-align:center; line-height:1.5; }
+  .preview-box{ background:var(--paper-alt); border-radius:16px; padding:4px 14px; margin-bottom:18px; }
+  .preview-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
+  .preview-row:last-child{ border-bottom:none; }
+  .preview-row span:first-child{ color:var(--ink-soft); font-weight:600; flex-shrink:0; }
+  .preview-row span:last-child{ font-weight:750; text-align:right; }
+  .preview-row span.empty-val{ color:var(--ink-soft); font-weight:600; font-style:italic; }
+
+
+  /* ---------- Loading / toast ---------- */
+
+  #saveStatusIndicator{
+    position:fixed; top:calc(var(--safe-top) + 10px); right:14px; z-index:500;
+    font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:var(--radius-pill);
+    background:rgba(0,0,0,0.6); color:#fff; opacity:0; transition:opacity .25s ease; pointer-events:none;
+  }
+  #migrationToast{
+    position:fixed; left:16px; right:16px; bottom:calc(var(--safe-bottom) + 18px); z-index:300;
+    background:var(--ink); color:var(--paper); padding:13px 16px; border-radius:16px; font-size:12.5px; font-weight:600;
+    line-height:1.5; opacity:0; transform:translateY(10px); transition:opacity .25s ease, transform .25s ease; pointer-events:none;
+  }
+  #migrationToast.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
 </style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 </head>
 <body>
-<div class="top">
-  <button class="back" id="btnBack" aria-label="Kembali">&#8249;</button>
-  <div><h2 id="ttl">...</h2><span id="sub">&nbsp;</span></div>
+<div class="app">
+  <section class="view active" id="view-home">
+    <div class="topbar"><button class="icon-btn" id="btnHomeBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button></div>
+    <div class="scroll px">
+      <div class="greet-card"><p>Folder</p><h3 id="gName">...</h3><span>Kelola data dengan mudah dan cepat.</span></div>
+      <div class="stat-grid" id="stats"></div>
+      <div class="section-label">Daftar Data Tersedia</div>
+      <div id="recentList"></div>
+      <p id="recentEmptyHint" style="display:none;font-size:12.5px;color:var(--ink-soft);font-weight:600;text-align:center;padding:18px 0;">Belum ada data. Ketuk tombol "+" di bawah untuk mulai.</p>
+    </div>
+  </section>
+
+  <section class="view" id="view-add">
+    <div class="topbar"><button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Tambah Data</h2><span>Isi data sesuai kebutuhan</span></div></div>
+    <div class="scroll no-nav px">
+      <div class="hint-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span id="addHint"></span></div>
+      <div id="addFields"></div>
+      <button class="btn-primary" id="btnBukaKonfirmasi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12.5 9.5 18 20 6"/></svg> Simpan Data</button>
+    </div>
+  </section>
+
+  <section class="view" id="view-detail">
+    <div class="topbar"><button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <div class="topbar-titles"><h2>Detail Data</h2><span id="detailSubtitle">&nbsp;</span></div></div>
+    <div class="scroll no-nav px">
+      <div class="detail-card" id="detRows"></div>
+      <div class="detail-actions" id="detailActionsView">
+        <div class="btn-row"><button class="btn-secondary" id="btnDetailEdit">Edit</button><button class="btn-danger-outline" id="btnDetailDelete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Hapus</button></div>
+        <button class="btn-secondary" id="btnDetailClose">Tutup</button>
+      </div>
+      <div class="detail-actions" id="detailActionsEdit" style="display:none;">
+        <div class="btn-row"><button class="btn-secondary" id="btnDetailCancelEdit">Batal</button><button class="btn-primary" id="btnDetailSaveEdit">Simpan Perubahan</button></div>
+      </div>
+    </div>
+  </section>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <clipPath id="navNotchClip" clipPathUnits="objectBoundingBox">
+        <path id="navNotchPath" d="M0,0 L0.37,0
+                 C0.415,0 0.435,0.02 0.45,0.09
+                 C0.465,0.17 0.48,0.28 0.5,0.28
+                 C0.52,0.28 0.535,0.17 0.55,0.09
+                 C0.565,0.02 0.585,0 0.63,0
+                 L1,0 L1,1 L0,1 Z"/>
+      </clipPath>
+    </defs>
+  </svg>
+  
+  <div class="bottom-nav" id="bottomNav">
+    <div class="bottom-nav-surface">
+      <div class="bottom-nav-bg"></div>
+      <button class="nav-item active" data-nav="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></button>
+      <button class="nav-item nav-item-add" data-nav="add"><span class="nav-add-fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span><span>ADD DATA</span></button>
+      <button class="nav-item" data-nav="close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l-5-5 5-5M5 12h12"/></svg><span>Dashboard</span></button>
+    </div>
+    <div class="bottom-nav-safe"></div>
+  </div>
+
+  <div class="overlay center" id="overlayConfirm"><div class="modal-card">
+    <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Konfirmasi Data</h3>
+    <p class="desc">Apakah Anda yakin ingin menyimpan data ini?</p>
+    <div class="preview-box" id="cfRows"></div>
+    <div class="btn-row"><button class="btn-secondary" id="btnConfirmBatal">Batal</button><button class="btn-primary" id="btnConfirmSimpan">Simpan</button></div>
+  </div></div>
+
+  <div class="overlay center" id="overlayDelete"><div class="modal-card">
+    <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Hapus Data?</h3>
+    <p class="desc">Data ini akan dihapus dan tidak bisa dikembalikan.</p>
+    <div class="btn-row" style="margin-top:14px;"><button class="btn-secondary" id="btnDeleteBatal">Batal</button><button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin">Ya, Hapus</button></div>
+  </div></div>
+
+  <!-- Viewer bukti: tap thumbnail buat lihat ukuran penuh, geser (swipe) kalau ada 2 gambar -->
+  <div class="bukti-viewer-overlay" id="overlayBuktiViewer">
+    <div class="bukti-viewer-stage" id="buktiViewerStage">
+      <button class="bukti-viewer-close" id="btnBuktiViewerClose" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="bukti-viewer-nav prev" id="buktiViewerPrev" aria-label="Sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <img id="buktiViewerImg" src="" alt="Bukti">
+      <button class="bukti-viewer-nav next" id="buktiViewerNext" aria-label="Berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      <div class="bukti-viewer-dots" id="buktiViewerDots"></div>
+    </div>
+  </div>
+
+  
+  <div id="saveStatusIndicator"></div>
+  <div id="migrationToast"></div>
 </div>
-<main id="app"><div class="msg">Memuat...</div></main>
-<button class="fab" id="fab" style="display:none">+ Tambah Data</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const sb = supabase.createClient('https://zgzmbneqqzxnptbmlhsz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E', {
     auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' }
   });
-  if (localStorage.getItem('bm-theme') !== 'light') document.documentElement.classList.add('dark');
-  const FONTS = { serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis', kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded' };
-  const savedFont = localStorage.getItem('bm-font');
-  if (savedFont && FONTS[savedFont]) document.body.classList.add(FONTS[savedFont]);
-  if (localStorage.getItem('bm-font-bold') === 'on') document.body.classList.add('font-bold-mode');
-
   (async function guard() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { window.top.location.href = 'admin-login.html'; return; }
@@ -77,81 +583,119 @@
   const SCHEMA = 'custom-data-v1', BUCKET = 'bukti';
   const qs = new URLSearchParams(location.search);
   let noteId = qs.get('id'), folderId = qs.get('folder');
-  let folder = null, cols = [], auto = { no: true, tanggal: true, jam: true };
-  let records = [], editing = null, form = null, uploading = 0, saving = false;
+  let folder = null, cols = [], auto = { no: true, tanggal: true, jam: true }, records = [];
+  let F = null, detId = null, saving = false, uploading = 0, viewerUrls = [], viewerIndex = 0;
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const pad = n => String(n).padStart(2, '0');
+  const pad2 = n => String(n).padStart(2, '0'), pad3 = n => String(n).padStart(3, '0');
   const uid = () => 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-  const hm = d => pad(d.getHours()) + ':' + pad(d.getMinutes());
-  const dmy = d => pad(d.getDate()) + '-' + pad(d.getMonth() + 1) + '-' + d.getFullYear();
+  const ymd = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+  const hm = d => pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+  const dmy = d => pad2(d.getDate()) + '-' + pad2(d.getMonth() + 1) + '-' + d.getFullYear();
   const byDate = (a, b) => new Date(a.created_at) - new Date(b.created_at);
+  const sorted = () => [...records].sort(byDate);
+  const isEmpty = v => v == null || v === '' || (Array.isArray(v) && !v.length);
+  const missing = r => cols.some(c => c.required && isEmpty(r.v && r.v[c.id]));
+  const numOf = r => auto.no ? pad3(sorted().findIndex(x => x.id === r.id) + 1) : (r.no || '-');
+  const openOverlay = id => $(id).classList.add('show'), closeOverlay = id => $(id).classList.remove('show');
+  document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeOverlay(o.id); }));
 
+  function applyTheme(t) { document.body.classList.toggle('surface-dark', t === 'dark'); }
+  try { applyTheme(localStorage.getItem('admdash_theme') || 'default'); } catch (e) {}
+
+  let toastT;
+  function toast(m) { const el = $('migrationToast'); el.textContent = m; el.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('show'), 3500); }
   function close() { if (window.parent !== window) window.parent.postMessage('close-editor', '*'); else location.href = 'dashboard-admin.html'; }
 
-  function fmt(c, v) {
-    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '';
+  function txt(c, v) {
+    if (isEmpty(v)) return '';
     if (c.type === 'image') return v.length + ' foto';
     if (c.type === 'money') return 'Rp ' + Number(v).toLocaleString('id-ID');
     if (c.type === 'date') { const d = new Date(v + 'T00:00:00'); return isNaN(d) ? v : dmy(d); }
-    return v;
+    return String(v);
   }
-  function numberOf(r, i) { return auto.no ? pad(i + 1).padStart(3, '0') : (r.no || '-'); }
 
-  /* ---------------- DAFTAR ---------------- */
-  function renderList() {
-    editing = null; form = null;
-    $('fab').style.display = 'block';
-    $('ttl').textContent = folder.name; $('sub').textContent = records.length + ' data';
-    const sorted = [...records].sort(byDate).map((r, i) => ({ r, i }));
-    $('app').innerHTML = sorted.length ? sorted.slice().reverse().map(({ r, i }) => {
-      const vals = cols.map(c => ({ c, t: fmt(c, r.v && r.v[c.id]) })).filter(x => x.t && x.c.type !== 'image');
-      const d = new Date(r.created_at);
-      return `<div class="rec" data-id="${r.id}"><b>${esc(vals.length ? vals[0].t : '(kosong)')}</b>
-        ${vals.slice(1, 4).map(x => `<p>${esc(x.c.label)}: <em>${esc(x.t)}</em></p>`).join('')}
-        <small>No ${esc(numberOf(r, i))} &middot; ${dmy(d)} ${hm(d)}</small></div>`;
-    }).join('') : '<div class="empty">Belum ada data.<br>Ketuk tombol di bawah untuk menambah.</div>';
+  /* ---------- router ---------- */
+  function goView(n) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    $('view-' + n).classList.add('active');
+    $('bottomNav').style.display = n === 'home' ? 'flex' : 'none';
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === n));
+    $('view-' + n).querySelector('.scroll').scrollTop = 0;
+    if (n !== 'add') $('addFields').innerHTML = ''; if (n !== 'detail') $('detRows').innerHTML = '';
+    if (n === 'home') renderHome();
+    if (n === 'add') prepAdd();
   }
-  $('app').addEventListener('click', e => { const el = e.target.closest('.rec'); if (el) openForm(el.dataset.id); });
-  $('fab').onclick = () => openForm(null);
-  $('btnBack').onclick = () => { if (form && !confirm('Batalkan isian ini?')) return; if (form) renderList(); else close(); };
+  document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => b.dataset.nav === 'close' ? close() : goView(b.dataset.nav)));
+  $('btnHomeBack').onclick = close;
+  $('btnAddBack').onclick = $('btnDetailBack').onclick = $('btnDetailClose').onclick = () => goView('home');
 
-  /* ---------------- FORM ---------------- */
-  function openForm(id) {
-    const rec = id ? records.find(r => r.id === id) : null;
-    editing = rec; $('fab').style.display = 'none';
-    const base = rec ? new Date(rec.created_at) : new Date();
-    form = { vals: JSON.parse(JSON.stringify(rec && rec.v || {})), no: rec ? (rec.no || '') : '', tanggal: ymd(base), jam: hm(base) };
-    $('ttl').textContent = rec ? 'Edit Data' : 'Tambah Data'; $('sub').textContent = folder.name;
-    const autoTxt = [!auto.no && 'Nomor', !auto.tanggal && 'Tanggal', !auto.jam && 'Jam'];
-    const autoList = ['Nomor', 'Tanggal', 'Jam'].filter((_, i) => [auto.no, auto.tanggal, auto.jam][i]);
-    let h = autoList.length ? `<div class="auto">${autoList.join(', ')} terisi otomatis.</div>` : '';
-    if (!auto.no) h += `<div class="f"><label>Nomor</label><input type="text" data-sys="no" value="${esc(form.no)}" placeholder="Contoh: 001"></div>`;
-    if (!auto.tanggal) h += `<div class="f"><label>Tanggal</label><input type="date" data-sys="tanggal" value="${form.tanggal}"></div>`;
-    if (!auto.jam) h += `<div class="f"><label>Jam</label><input type="time" data-sys="jam" value="${form.jam}"></div>`;
-    h += cols.map(c => {
-      const v = form.vals[c.id], lab = `<label>${esc(c.label)}${c.required ? '' : ' <i>(opsional)</i>'}</label>`;
-      let inp;
-      if (c.type === 'long') inp = `<textarea data-col="${c.id}">${esc(v || '')}</textarea>`;
-      else if (c.type === 'select') inp = `<select data-col="${c.id}"><option value="">Pilih...</option>${(c.options || []).map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
-      else if (c.type === 'date') inp = `<input type="date" data-col="${c.id}" value="${esc(v || '')}">`;
-      else if (c.type === 'money') inp = `<div class="rp"><span>Rp</span><input type="text" inputmode="numeric" data-col="${c.id}" data-money="1" value="${v ? Number(v).toLocaleString('id-ID') : ''}" placeholder="0"></div>`;
-      else if (c.type === 'number') inp = `<input type="text" inputmode="decimal" data-col="${c.id}" value="${esc(v || '')}">`;
-      else if (c.type === 'image') inp = `<div class="thumbs" id="th_${c.id}"></div><div style="margin-top:8px"><button type="button" class="pick" data-pick="${c.id}">Tambah foto (maks. 2)</button><input type="file" accept="image/*" multiple hidden data-file="${c.id}"></div>`;
-      else inp = `<input type="text" data-col="${c.id}" value="${esc(v || '')}" autocomplete="off">`;
-      return `<div class="f">${lab}${inp}</div>`;
+  /* ---------- home ---------- */
+  function renderHome() {
+    $('gName').textContent = folder ? folder.name : '...';
+    const today = ymd(new Date()), money = cols.find(c => c.type === 'money');
+    const st = [['Total Data', records.length], ['Hari Ini', records.filter(r => ymd(new Date(r.created_at)) === today).length]];
+    st.push(money ? ['Total ' + money.label, 'Rp ' + records.reduce((a, r) => a + (Number(r.v && r.v[money.id]) || 0), 0).toLocaleString('id-ID'), 1]
+                  : ['Bulan Ini', records.filter(r => ymd(new Date(r.created_at)).slice(0, 7) === today.slice(0, 7)).length]);
+    st.push(['Belum Lengkap', records.filter(missing).length]);
+    $('stats').innerHTML = st.map(s => `<div class="stat-card"><div class="stat-label">${esc(s[0])}</div><div class="stat-value ${s[2] ? 'money' : ''}">${esc(s[1])}</div></div>`).join('');
+    const all = sorted().reverse();
+    $('recentEmptyHint').style.display = all.length ? 'none' : 'block';
+    $('recentList').innerHTML = all.map(r => {
+      const v = c => r.v && r.v[c.id], money = cols.find(c => c.type === 'money');
+      const main = cols.find(c => ['text', 'long', 'select'].includes(c.type) && !isEmpty(v(c)));
+      const rest = cols.filter(c => c !== main && !['money', 'image'].includes(c.type) && !isEmpty(v(c))).slice(0, 3).map(c => esc(txt(c, v(c))));
+      const d = new Date(r.created_at), photo = cols.some(c => c.type === 'image' && !isEmpty(v(c))) ? '<span class="r-photo-badge">&#128247;</span>' : '';
+      const right = money && !isEmpty(v(money)) ? `<div class="r-right">${photo}${esc(txt(money, v(money)))}</div>`
+        : missing(r) ? `<div class="r-right pending">${photo}Belum lengkap</div>` : `<div class="r-right">${photo}</div>`;
+      return `<div class="recent-row tap" data-id="${r.id}"><div class="r-no">${esc(numOf(r))}</div><div class="r-mid"><b>${main ? esc(txt(main, v(main))) : '(kosong)'}</b><span>${[...rest, dmy(d) + ' ' + hm(d)].join(' &middot; ')}</span></div>${right}</div>`;
     }).join('');
-    h += `<div class="err" id="err"></div><div class="btns">${rec ? '<button class="del" id="bDel">Hapus</button>' : '<button id="bCancel">Batal</button>'}<button class="pri" id="bSave">Simpan</button></div>`;
-    $('app').innerHTML = h;
-    cols.filter(c => c.type === 'image').forEach(c => renderThumbs(c.id));
-    scrollTo(0, 0);
+  }
+  $('recentList').addEventListener('click', e => { const el = e.target.closest('.recent-row'); if (el) openDetail(el.dataset.id); });
+
+  /* ---------- form (dipakai Tambah & Edit) ---------- */
+  const DZ = cid => `<div class="bukti-dropzone" id="dz_${cid}"><input type="file" accept="image/*" multiple hidden data-file="${cid}"><input type="file" accept="image/*" capture="environment" hidden data-file="${cid}">
+    <div class="bukti-empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Tarik &amp; lepas gambar di sini</span><div class="bukti-btn-row"><button type="button" class="bukti-pick-btn" data-pick="${cid}:0">Galeri</button><button type="button" class="bukti-pick-btn" data-pick="${cid}:1">Kamera</button></div></div><div class="bukti-thumbs" id="th_${cid}"></div></div>`;
+  function ctl(c, v) {
+    const a = `data-col="${c.id}"`;
+    if (c.type === 'long') return `<textarea ${a}>${esc(v || '')}</textarea>`;
+    if (c.type === 'select') return `<select ${a}><option value="">Pilih...</option>${(c.options || []).map(o => `<option ${o === v ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+    if (c.type === 'date') return `<input type="date" ${a} value="${esc(v || '')}">`;
+    if (c.type === 'money') return `<div class="price-input-wrap"><span class="price-prefix">Rp</span><input type="text" inputmode="numeric" ${a} data-money="1" placeholder="0" value="${v ? Number(v).toLocaleString('id-ID') : ''}"></div>`;
+    if (c.type === 'number') return `<input type="text" inputmode="decimal" ${a} placeholder="0" value="${esc(v || '')}">`;
+    if (c.type === 'image') return DZ(c.id);
+    return `<input type="text" ${a} placeholder="${esc(c.label)}" autocomplete="off" value="${esc(v || '')}">`;
+  }
+  function formHtml(mode, rec) {
+    const wrap = (label, inner, opt) => mode === 'add' ? `<div class="field"><label>${esc(label)}${opt ? ' <span class="opt-tag">(opsional)</span>' : ''}</label>${inner}</div>`
+      : `<div class="detail-row"><label>${esc(label)}</label>${inner}</div>`;
+    const ro = t => mode === 'add' ? `<div class="readonly-box"><span>${esc(t)}</span><span class="auto-tag">Auto</span></div>` : `<div class="val">${esc(t)}</div>`;
+    const now = rec ? new Date(rec.created_at) : new Date();
+    return wrap('Nomor', auto.no ? ro(rec ? numOf(rec) : pad3(records.length + 1)) : `<input type="text" data-sys="no" placeholder="Contoh: 001" value="${esc(F.no)}">`)
+      + wrap('Tanggal', auto.tanggal ? ro(dmy(now)) : `<input type="date" data-sys="tanggal" value="${F.tanggal}">`)
+      + wrap('Waktu', auto.jam ? ro(hm(now)) : `<input type="time" data-sys="jam" value="${F.jam}">`)
+      + cols.map(c => wrap(c.label, ctl(c, F.vals[c.id]), !c.required)).join('');
+  }
+  function initForm(rec) {
+    const base = rec ? new Date(rec.created_at) : new Date();
+    F = { vals: JSON.parse(JSON.stringify(rec && rec.v || {})), no: rec ? (rec.no || '') : '', tanggal: ymd(base), jam: hm(base) };
+    cols.filter(c => c.type === 'image').forEach(c => { F.vals[c.id] = (F.vals[c.id] || []).map(u => ({ url: u })); });
+  }
+  function afterForm() { cols.filter(c => c.type === 'image').forEach(c => thumbs(c.id)); }
+
+  function prepAdd() {
+    initForm(null);
+    const req = cols.filter(c => c.required).map(c => c.label);
+    $('addHint').textContent = (req.length ? req.join(' dan ') + ' wajib diisi. ' : '') + 'Isian lain boleh dikosongkan dan dilengkapi nanti lewat Edit.';
+    $('addFields').innerHTML = formHtml('add', null); afterForm();
   }
 
-  function renderThumbs(cid) {
-    const arr = form.vals[cid] || [];
-    $('th_' + cid).innerHTML = arr.map((it, i) => `<div class="th ${it.u ? 'up' : ''}"><img src="${esc(it.url || it.pv)}"><button data-rm="${cid}:${i}">&times;</button></div>`).join('');
+  /* ---------- foto ---------- */
+  function thumbs(cid) {
+    const arr = F.vals[cid] || [], dz = $('dz_' + cid); if (!dz) return;
+    $('th_' + cid).innerHTML = arr.map((it, i) => `<div class="bukti-thumb ${it.st === 'error' ? 'error' : ''}"><img src="${esc(it.pv || it.url)}" alt="Bukti ${i + 1}">${it.st === 'up' ? '<div class="bukti-thumb-spinner"></div>' : ''}<button type="button" class="bukti-thumb-remove" data-rm="${cid}:${i}" aria-label="Hapus gambar">&times;</button></div>`).join('');
+    dz.classList.toggle('has-items', arr.length > 0); dz.classList.toggle('full', arr.length >= 2);
   }
   function toBlob(file) {
     return new Promise((res, rej) => {
@@ -168,42 +712,67 @@
     });
   }
   async function addImages(cid, files) {
-    const arr = form.vals[cid] = form.vals[cid] || [];
+    const arr = F.vals[cid] = F.vals[cid] || [];
+    if (arr.length >= 2) return toast('Maksimal 2 gambar bukti.');
     for (const f of Array.from(files).filter(f => f.type.startsWith('image/')).slice(0, 2 - arr.length)) {
-      const it = { url: '', pv: URL.createObjectURL(f), u: true }; arr.push(it); renderThumbs(cid); uploading++;
+      const it = { url: '', pv: URL.createObjectURL(f), st: 'up' }; arr.push(it); thumbs(cid); uploading++;
       try {
-        const blob = await toBlob(f), path = ymd(new Date()) + '/' + uid() + '.jpg';
-        const { error } = await sb.storage.from(BUCKET).upload(path, blob, { contentType: 'image/jpeg' });
+        const path = ymd(new Date()) + '/' + uid() + '.jpg';
+        const { error } = await sb.storage.from(BUCKET).upload(path, await toBlob(f), { contentType: 'image/jpeg' });
         if (error) throw error;
-        it.url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; it.u = false;
-      } catch (e) { arr.splice(arr.indexOf(it), 1); showErr('Foto gagal diunggah, coba lagi.'); }
-      uploading--; renderThumbs(cid);
+        it.url = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl; it.st = 'done';
+      } catch (e) { arr.splice(arr.indexOf(it), 1); toast('Foto gagal diunggah, coba lagi.'); }
+      uploading--; thumbs(cid);
     }
   }
-  const imgUrls = arr => (arr || []).filter(x => x.url).map(x => x.url);
+  const urls = arr => (arr || []).filter(x => x.url).map(x => x.url);
 
-  function showErr(m) { const el = $('err'); if (!el) return; el.textContent = m; el.style.display = m ? 'block' : 'none'; if (m) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  function openViewer(list, i) {
+    viewerUrls = list; viewerIndex = i; drawViewer(); openOverlay('overlayBuktiViewer');
+  }
+  function drawViewer() {
+    $('buktiViewerImg').src = viewerUrls[viewerIndex] || '';
+    $('buktiViewerDots').innerHTML = viewerUrls.map((_, i) => `<span class="bukti-dot ${i === viewerIndex ? 'active' : ''}"></span>`).join('');
+    $('buktiViewerPrev').style.display = viewerIndex > 0 ? 'flex' : 'none';
+    $('buktiViewerNext').style.display = viewerIndex < viewerUrls.length - 1 ? 'flex' : 'none';
+  }
+  $('buktiViewerPrev').onclick = () => { viewerIndex--; drawViewer(); };
+  $('buktiViewerNext').onclick = () => { viewerIndex++; drawViewer(); };
+  $('btnBuktiViewerClose').onclick = () => closeOverlay('overlayBuktiViewer');
 
-  $('app').addEventListener('input', e => {
-    const t = e.target;
-    if (!form) return;
-    if (t.dataset.sys) form[t.dataset.sys] = t.value;
+  document.addEventListener('input', e => {
+    const t = e.target; if (!F) return;
+    if (t.dataset.sys) F[t.dataset.sys] = t.value;
     else if (t.dataset.col) {
-      if (t.dataset.money) { const d = t.value.replace(/\D/g, ''); t.value = d ? Number(d).toLocaleString('id-ID') : ''; form.vals[t.dataset.col] = d; }
-      else form.vals[t.dataset.col] = t.value;
+      if (t.dataset.money) { const d = t.value.replace(/\D/g, ''); t.value = d ? Number(d).toLocaleString('id-ID') : ''; F.vals[t.dataset.col] = d; }
+      else F.vals[t.dataset.col] = t.value;
     }
   });
-  $('app').addEventListener('change', e => { const t = e.target; if (t.dataset && t.dataset.file) { addImages(t.dataset.file, t.files); t.value = ''; } });
-  $('app').addEventListener('click', e => {
+  document.addEventListener('change', e => {
     const t = e.target;
-    if (t.dataset.pick) t.parentElement.querySelector('input[type=file]').click();
-    else if (t.dataset.rm) { const [cid, i] = t.dataset.rm.split(':'); form.vals[cid].splice(+i, 1); renderThumbs(cid); }
-    else if (t.id === 'bCancel') renderList();
-    else if (t.id === 'bSave') save();
-    else if (t.id === 'bDel') remove();
+    if (t.dataset && t.dataset.col && t.tagName === 'SELECT' && F) F.vals[t.dataset.col] = t.value;
+    if (t.dataset && t.dataset.file) { addImages(t.dataset.file, t.files); t.value = ''; }
+  });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-pick],[data-rm],[data-vw]'); if (!t) return;
+    if (t.dataset.pick) { const [cid, k] = t.dataset.pick.split(':'); $('dz_' + cid).querySelectorAll('input[type=file]')[+k].click(); }
+    else if (t.dataset.rm) { const [cid, i] = t.dataset.rm.split(':'); F.vals[cid].splice(+i, 1); thumbs(cid); }
+    else if (t.dataset.vw) { const [cid, i] = t.dataset.vw.split(':'), r = records.find(x => x.id === detId); openViewer(r.v[cid] || [], +i); }
   });
 
-  /* ---------------- SIMPAN ---------------- */
+  /* ---------- simpan ---------- */
+  function check() {
+    if (uploading) return 'Tunggu foto selesai diunggah dulu.';
+    for (const c of cols) { const v = F.vals[c.id]; if (c.required && (c.type === 'image' ? !urls(v).length : !String(v == null ? '' : v).trim())) return '"' + c.label + '" wajib diisi.'; }
+    if (!auto.tanggal && !F.tanggal) return 'Tanggal wajib diisi.';
+    if (!auto.jam && !F.jam) return 'Waktu wajib diisi.';
+    return '';
+  }
+  function cleanVals() {
+    const v = {};
+    cols.forEach(c => { const x = F.vals[c.id]; if (c.type === 'image') { const u = urls(x); if (u.length) v[c.id] = u; } else if (x != null && String(x).trim() !== '') v[c.id] = String(x).trim(); });
+    return v;
+  }
   async function persist(mutate) {
     let cur = records;
     if (noteId) {
@@ -212,66 +781,109 @@
       cur = data.content && Array.isArray(data.content.records) ? data.content.records : [];
     }
     mutate(cur);
-    const last = [...cur].sort(byDate).pop(), firstVal = last && cols.map(c => fmt(c, last.v && last.v[c.id])).find(x => x && !/ foto$/.test(x));
-    const d = new Date();
-    const payload = {
-      content: { schema: SCHEMA, records: cur, columns: cols.map(c => ({ id: c.id, label: c.label, type: c.type })), auto },
-      preview: firstVal || '',
-      date_tag: pad(d.getHours() % 12 || 12) + ':' + pad(d.getMinutes()) + (d.getHours() >= 12 ? ' PM' : ' AM')
-    };
-    if (noteId) {
-      const { error } = await sb.from('notes').update(payload).eq('id', noteId);
-      if (error) throw error;
-    } else {
-      const first = [...cur].sort(byDate)[0];
-      const { data, error } = await sb.from('notes').insert({ ...payload, title: folder.name + ' ' + dmy(new Date(first ? first.created_at : Date.now())), folder_id: folderId }).select().single();
-      if (error) throw error;
-      noteId = data.id;
+    const last = [...cur].sort(byDate).pop(), d = new Date();
+    const first = last && cols.map(c => txt(c, last.v && last.v[c.id])).find(x => x && !/ foto$/.test(x));
+    const payload = { content: { schema: SCHEMA, records: cur, columns: cols.map(c => ({ id: c.id, label: c.label, type: c.type })), auto }, preview: first || '', date_tag: pad2(d.getHours() % 12 || 12) + ':' + pad2(d.getMinutes()) + (d.getHours() >= 12 ? ' PM' : ' AM') };
+    if (noteId) { const { error } = await sb.from('notes').update(payload).eq('id', noteId); if (error) throw error; }
+    else {
+      const f = [...cur].sort(byDate)[0];
+      const { data, error } = await sb.from('notes').insert({ ...payload, title: folder.name + ' ' + dmy(new Date(f ? f.created_at : Date.now())), folder_id: folderId }).select().single();
+      if (error) throw error; noteId = data.id;
     }
     records = cur;
     window.parent.postMessage({ type: 'note-autosaved', noteId, folder: folderId }, '*');
   }
-
-  async function save() {
-    if (saving) return;
-    if (uploading) return showErr('Tunggu foto selesai diunggah dulu.');
-    for (const c of cols) {
-      const v = form.vals[c.id];
-      if (c.required && (c.type === 'image' ? !imgUrls(v).length : !String(v == null ? '' : v).trim())) return showErr('"' + c.label + '" wajib diisi.');
-    }
-    if (!auto.tanggal && !form.tanggal) return showErr('Tanggal wajib diisi.');
-    if (!auto.jam && !form.jam) return showErr('Jam wajib diisi.');
-    const v = {};
-    cols.forEach(c => {
-      const x = form.vals[c.id];
-      if (c.type === 'image') { const u = imgUrls(x); if (u.length) v[c.id] = u; }
-      else if (x != null && String(x).trim() !== '') v[c.id] = String(x).trim();
-    });
-    const base = editing ? new Date(editing.created_at) : new Date();
-    const created = new Date((auto.tanggal ? ymd(base) : form.tanggal) + 'T' + (auto.jam ? hm(base) : form.jam) + ':00').toISOString();
-    const rec = { id: editing ? editing.id : uid(), created_at: created, v };
-    if (!auto.no) rec.no = (form.no || '').trim();
-    saving = true; $('bSave').disabled = true; $('bSave').textContent = 'Menyimpan...';
+  async function doSave(editId) {
+    if (saving) return; saving = true;
+    const old = editId ? records.find(r => r.id === editId) : null, base = old ? new Date(old.created_at) : new Date();
+    const rec = { id: old ? old.id : uid(), v: cleanVals(), created_at: new Date((auto.tanggal ? ymd(base) : F.tanggal) + 'T' + (auto.jam ? hm(base) : F.jam) + ':00').toISOString() };
+    if (!auto.no) rec.no = (F.no || '').trim();
     try {
       await persist(cur => { const i = cur.findIndex(r => r.id === rec.id); if (i >= 0) cur[i] = rec; else cur.push(rec); });
-      saving = false; renderList();
-    } catch (e) {
-      saving = false; $('bSave').disabled = false; $('bSave').textContent = 'Simpan'; showErr('Gagal menyimpan: ' + (e.message || e));
-    }
+      saving = false; toast('Data tersimpan.'); return rec.id;
+    } catch (e) { saving = false; toast('Gagal menyimpan: ' + (e.message || e)); return null; }
   }
 
-  async function remove() {
-    if (!confirm('Hapus data ini?')) return;
-    const id = editing.id, gone = form.vals;
+  $('btnBukaKonfirmasi').onclick = () => {
+    const bad = check(); if (bad) return toast(bad);
+    const now = new Date();
+    const rows = [['Nomor', auto.no ? pad3(records.length + 1) : (F.no || '-')], ['Tanggal', auto.tanggal ? dmy(now) : dmy(new Date(F.tanggal + 'T00:00:00'))], ['Waktu', auto.jam ? hm(now) : F.jam],
+      ...cols.map(c => [c.label, c.type === 'image' ? (urls(F.vals[c.id]).length ? urls(F.vals[c.id]).length + ' foto' : '') : txt(c, F.vals[c.id])])];
+    $('cfRows').innerHTML = rows.map(r => `<div class="preview-row"><span>${esc(r[0])}</span><span>${esc(r[1] || '—')}</span></div>`).join('');
+    openOverlay('overlayConfirm');
+  };
+  $('btnConfirmBatal').onclick = () => closeOverlay('overlayConfirm');
+  $('btnConfirmSimpan').onclick = async () => { const id = await doSave(null); closeOverlay('overlayConfirm'); if (id) goView('home'); };
+
+  /* ---------- detail ---------- */
+  function openDetail(id) { detId = id; goView('detail'); renderDetail(false); }
+  function renderDetail(edit) {
+    const r = records.find(x => x.id === detId); if (!r) return goView('home');
+    const d = new Date(r.created_at);
+    $('detailSubtitle').textContent = 'No ' + numOf(r) + ' · ' + dmy(d) + ' ' + hm(d);
+    $('detailActionsView').style.display = edit ? 'none' : ''; $('detailActionsEdit').style.display = edit ? '' : 'none';
+    if (edit) { initForm(r); $('detRows').innerHTML = formHtml('edit', r); afterForm(); return; }
+    const row = (l, i) => `<div class="detail-row"><label>${esc(l)}</label>${i}</div>`;
+    $('detRows').innerHTML = row('Nomor', `<div class="val">${esc(numOf(r))}</div>`) + row('Tanggal', `<div class="val">${dmy(d)}</div>`) + row('Waktu', `<div class="val">${hm(d)}</div>`)
+      + cols.map(c => { const v = r.v && r.v[c.id];
+        return row(c.label, c.type === 'image' && !isEmpty(v) ? `<div class="bukti-thumbs">${v.map((u, i) => `<div class="bukti-thumb" data-vw="${c.id}:${i}"><img src="${esc(u)}" alt="Bukti"></div>`).join('')}</div>` : `<div class="val">${esc(txt(c, v) || '—')}</div>`); }).join('');
+  }
+  $('btnDetailEdit').onclick = () => renderDetail(true);
+  $('btnDetailCancelEdit').onclick = () => renderDetail(false);
+  $('btnDetailSaveEdit').onclick = async () => { const bad = check(); if (bad) return toast(bad); if (await doSave(detId)) renderDetail(false); };
+  $('btnDetailDelete').onclick = () => openOverlay('overlayDelete');
+  $('btnDeleteBatal').onclick = () => closeOverlay('overlayDelete');
+  $('btnDeleteYakin').onclick = async () => {
+    const old = records.find(r => r.id === detId); closeOverlay('overlayDelete'); if (!old) return;
     try {
-      await persist(cur => { const i = cur.findIndex(r => r.id === id); if (i >= 0) cur.splice(i, 1); });
-      const paths = []; cols.filter(c => c.type === 'image').forEach(c => (editing.v[c.id] || []).forEach(u => { const k = u.indexOf('/' + BUCKET + '/'); if (k > -1) paths.push(u.slice(k + BUCKET.length + 2)); }));
+      await persist(cur => { const i = cur.findIndex(r => r.id === detId); if (i >= 0) cur.splice(i, 1); });
+      const paths = []; cols.filter(c => c.type === 'image').forEach(c => ((old.v || {})[c.id] || []).forEach(u => { const k = u.indexOf('/' + BUCKET + '/'); if (k > -1) paths.push(u.slice(k + BUCKET.length + 2)); }));
       if (paths.length) sb.storage.from(BUCKET).remove(paths);
-      renderList();
-    } catch (e) { showErr('Gagal menghapus: ' + (e.message || e)); }
-  }
+      toast('Data dihapus.'); goView('home');
+    } catch (e) { toast('Gagal menghapus: ' + (e.message || e)); }
+  };
 
-  /* ---------------- MUAT ---------------- */
+  function updateNavNotch(){
+    var surface = document.querySelector('.bottom-nav-surface');
+    var pathEl  = document.getElementById('navNotchPath');
+    if (!surface || !pathEl) return;
+
+    var fabSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--fab-size')) || 44;
+    var navWidth  = surface.offsetWidth  || 360;
+    var barHeight = surface.offsetHeight || 64;
+    if (!navWidth || !barHeight) return;
+
+    var notchTopWidth = fabSize + 16;                          // ruang 8px kiri-kanan tombol
+    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5); // kedalaman proporsional, dibatasi tinggi bar
+
+    var cx = navWidth / 2;
+    var x1 = cx - notchTopWidth / 2;
+    var w  = cx - x1;
+
+    function pt(tFrac, yFrac){
+      return { x:(x1 + tFrac * w) / navWidth, y:(yFrac * notchDepth) / barHeight };
+    }
+    var cxFrac = cx / navWidth;
+    function mirror(p){ return { x:2 * cxFrac - p.x, y:p.y }; }
+
+    var C1 = pt(0.346, 0), C2 = pt(0.5, 0.071), E1 = pt(0.615, 0.321);
+    var C3 = pt(0.731, 0.607), C4 = pt(0.846, 1.0);
+    var C3m = mirror(C3), C4m = mirror(C4), E1m = mirror(E1), C2m = mirror(C2), C1m = mirror(C1);
+    var x1Frac = x1 / navWidth, x2Frac = mirror({x:x1Frac,y:0}).x, peakY = notchDepth / barHeight;
+
+    var d = 'M0,0 L' + x1Frac + ',0'
+      + ' C' + C1.x + ',' + C1.y + ' ' + C2.x + ',' + C2.y + ' ' + E1.x + ',' + E1.y
+      + ' C' + C3.x + ',' + C3.y + ' ' + C4.x + ',' + C4.y + ' ' + cxFrac + ',' + peakY
+      + ' C' + C4m.x + ',' + C4m.y + ' ' + C3m.x + ',' + C3m.y + ' ' + E1m.x + ',' + E1m.y
+      + ' C' + C2m.x + ',' + C2m.y + ' ' + C1m.x + ',' + C1m.y + ' ' + x2Frac + ',0'
+      + ' L1,0 L1,1 L0,1 Z';
+
+    pathEl.setAttribute('d', d);
+  }
+  window.addEventListener('resize', updateNavNotch);
+  window.addEventListener('load', updateNavNotch);
+  updateNavNotch();
+
   (async function init() {
     try {
       if (noteId) {
@@ -286,8 +898,8 @@
       if (!f.schema || !Array.isArray(f.schema.columns)) throw new Error('Folder ini bukan folder custom.');
       folder = f; cols = f.schema.columns.filter(c => !c.hidden);
       const a = f.schema.auto || {}; auto = { no: a.no !== false, tanggal: a.tanggal !== false, jam: a.jam !== false };
-      renderList();
-    } catch (e) { $('app').innerHTML = '<div class="msg">' + esc(e.message || 'Gagal memuat — cek koneksi lalu buka ulang.') + '</div>'; $('ttl').textContent = 'Editor'; }
+      renderHome();
+    } catch (e) { $('recentList').innerHTML = '<p style="text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:14px;">' + esc(e.message || 'Gagal memuat — cek koneksi lalu buka ulang.') + '</p>'; }
   })();
 </script>
 </body>
