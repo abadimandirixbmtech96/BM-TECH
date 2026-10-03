@@ -360,6 +360,7 @@
     font-size: 12.5px;
     color-scheme: dark;
   }
+  .pekan-select { width: 100%; text-overflow: ellipsis; }
   .apply-range-btn {
     background: var(--accent-yellow);
     color: #1C1B19;
@@ -664,11 +665,16 @@
 
       <div class="period-tabs">
         <button class="period-tab" data-period="day">Hari Ini</button>
-        <button class="period-tab" data-period="week">Minggu Ini</button>
+        <button class="period-tab" data-period="week">Pekan Ini</button>
+        <button class="period-tab" data-period="pekan">Pilih Pekan</button>
         <button class="period-tab active" data-period="month">Bulan Ini</button>
         <button class="period-tab" data-period="year">Tahun Ini</button>
         <button class="period-tab" data-period="all">Semua</button>
         <button class="period-tab" data-period="custom">Kustom</button>
+      </div>
+
+      <div class="custom-range-row" id="pekanRow">
+        <select class="date-input pekan-select" id="pekanSelect" aria-label="Pilih pekan"></select>
       </div>
 
       <div class="custom-range-row" id="customRangeRow">
@@ -967,6 +973,90 @@
     return formatDateShort(e.date) + (e.hasTime ? ' · ' + formatTime(e.ts) : '');
   }
 
+  // --- Pekan (Kamis–Rabu) — sama persis dengan pengelompokan "Pekan N" di dashboard-admin.html ---
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  let weekEpoch = null;     // awal Pekan 1 (hari Kamis), dari tanggal tertua di folder BUKU BESAR
+  let selectedPekan = null; // awal pekan (Date, Kamis) yang dipilih di tab "Pilih Pekan"
+
+  function getWeekAnchorThursday(date) {
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffFromThursday = (d.getDay() - 4 + 7) % 7;
+    d.setDate(d.getDate() - diffFromThursday);
+    return d;
+  }
+
+  function isEmptyValue(val) {
+    if (val === undefined || val === null) return true;
+    const s = String(val).trim();
+    return s === '' || s === '-' || s === '--' || s === '--------';
+  }
+
+  function parseStrictDate(val) {
+    const s = String(val || '').trim();
+    let y, mo, d;
+    let m = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
+    if (m) {
+      d = Number(m[1]); mo = Number(m[2]); y = Number(m[3]);
+      if (m[3].length === 2) y += 2000;
+    } else {
+      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (!m) return null;
+      y = Number(m[1]); mo = Number(m[2]); d = Number(m[3]);
+    }
+    if (y < 2000 || y > 2100 || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+    const dt = new Date(y, mo - 1, d);
+    return isNaN(dt) ? null : dt;
+  }
+
+  // Tanggal tertua sebuah note (judul, lalu kolom Tanggal; created_at hanya cadangan)
+  function getNoteEarliestDate(note) {
+    let min = null;
+    const consider = dt => { if (dt && !isNaN(dt) && (!min || dt < min)) min = dt; };
+
+    if (note && note.title) {
+      const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
+      if (m) consider(parseStrictDate(m[0]));
+    }
+
+    const table = getNoteTable(note);
+    if (table && Array.isArray(table.rows) && Array.isArray(table.columns)) {
+      table.rows.forEach(r => {
+        const val = getRowValueByLabel(table.columns, r, 'Tanggal');
+        if (!isEmptyValue(val)) consider(parseStrictDate(val));
+      });
+    }
+
+    if (!min && note && note.created_at) consider(new Date(note.created_at));
+    return min;
+  }
+
+  function weekRangeLabel(anchor) {
+    const end = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + 6);
+    const sameYear = anchor.getFullYear() === end.getFullYear();
+    const a = `${anchor.getDate()} ${MONTH_SHORT_ID[anchor.getMonth()]}${sameYear ? '' : ' ' + anchor.getFullYear()}`;
+    const b = `${end.getDate()} ${MONTH_SHORT_ID[end.getMonth()]} ${end.getFullYear()}`;
+    return `${a} – ${b}`;
+  }
+
+  // Nomor pekan; null kalau belum ada data untuk menentukan Pekan 1 (atau pekan itu sebelum Pekan 1)
+  function pekanNumber(anchor) {
+    if (!weekEpoch) return null;
+    const num = Math.round((anchor.getTime() - weekEpoch.getTime()) / WEEK_MS) + 1;
+    return num >= 1 ? num : null;
+  }
+
+  // Daftar awal pekan dari yang berjalan mundur sampai Pekan 1 (terbaru dulu)
+  function pekanAnchors() {
+    const cur = getWeekAnchorThursday(new Date());
+    const list = [];
+    const first = weekEpoch || cur;
+    for (let a = new Date(cur); a >= first && list.length < 520; a = new Date(a.getFullYear(), a.getMonth(), a.getDate() - 7)) {
+      list.push(a);
+    }
+    return list.length ? list : [cur];
+  }
+
   // --- Data Analisa ---
   const LEDGER_NAME_RE = /buku\s*besar/i;
   // Customer yang tidak ditulis namanya biasanya diisi "Iklan" (juga "Iklan 2", "IKLAN FB", dst).
@@ -988,14 +1078,15 @@
     try {
       const { data: folders, error: folderError } = await supabaseClient
         .from('folders')
-        .select('id, name');
+        .select('*');
 
       if (folderError) {
         console.error('Gagal memuat folder Analisa:', folderError.message);
         return false;
       }
 
-      const ledger = (folders || []).filter(f => f && f.id && typeof f.name === 'string' && LEDGER_NAME_RE.test(f.name));
+      // Folder milik customer (owner_username terisi) bukan buku besar admin
+      const ledger = (folders || []).filter(f => f && f.id && !f.owner_username && typeof f.name === 'string' && LEDGER_NAME_RE.test(f.name));
       const folderNameById = {};
       ledger.forEach(f => { folderNameById[f.id] = f.name; });
       const ledgerIds = ledger.map(f => f.id);
@@ -1021,7 +1112,17 @@
         }
       }
 
+      // Pekan 1 = Kamis dari tanggal tertua di folder persis "BUKU BESAR" (sama seperti dashboard)
+      const mainFolder = ledger.find(f => normalizeKey(f.name) === 'bukubesar');
+      const epochNotes = mainFolder ? allNotes.filter(n => n.folder_id === mainFolder.id) : allNotes;
+      let epochMin = null;
+      epochNotes.forEach(n => {
+        const d = getNoteEarliestDate(n);
+        if (d && !isNaN(d) && (!epochMin || d < epochMin)) epochMin = d;
+      });
+
       // Semua berhasil: baru ganti data lama
+      weekEpoch = epochMin ? getWeekAnchorThursday(epochMin) : null;
       ledgerFolders = ledger;
       analyticsNotes = allNotes
         .map(n => ({ ...n, folder: folderNameById[n.folder_id] || 'Uncategorized' }))
@@ -1041,23 +1142,38 @@
 
   const periodLabels = {
     day: 'Total Pemasukan Hari Ini',
-    week: 'Total Pemasukan Minggu Ini',
+    week: 'Total Pemasukan Pekan Ini',
+    pekan: 'Total Pemasukan Pekan Dipilih',
     month: 'Total Pemasukan Bulan Ini',
     year: 'Total Pemasukan Tahun Ini',
     all: 'Total Pemasukan Sepanjang Waktu',
     custom: 'Total Pemasukan (Rentang Kustom)'
   };
-  const PERIOD_SHORT = { day: 'Hari Ini', week: 'Minggu Ini', month: 'Bulan Ini', year: 'Tahun Ini', all: 'Semua Waktu', custom: 'Rentang Kustom' };
+  const PERIOD_SHORT = { day: 'Hari Ini', week: 'Pekan Ini', pekan: 'Pekan Dipilih', month: 'Bulan Ini', year: 'Tahun Ini', all: 'Semua Waktu', custom: 'Rentang Kustom' };
+
+  // Pekan memakai nomor yang sama dengan dashboard ("Pekan 12"), bukan "minggu" Senin–Minggu
+  function periodLabelText(period) {
+    if (period === 'week' || period === 'pekan') {
+      const n = pekanNumber(getPeriodStart(period, new Date()));
+      if (period === 'week') return 'Total Pemasukan Pekan Ini' + (n ? ` (Pekan ${n})` : '');
+      return n ? `Total Pemasukan Pekan ${n}` : periodLabels.pekan;
+    }
+    return periodLabels[period];
+  }
+
+  function periodShortText(period) {
+    if (period === 'week' || period === 'pekan') {
+      const n = pekanNumber(getPeriodStart(period, new Date()));
+      if (n) return `Pekan ${n}`;
+    }
+    return PERIOD_SHORT[period];
+  }
 
   function getPeriodStart(period, now) {
     const d = new Date(now);
     if (period === 'day') { d.setHours(0, 0, 0, 0); return d; }
-    if (period === 'week') {
-      const day = d.getDay();
-      d.setDate(d.getDate() - day);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    }
+    if (period === 'week') return getWeekAnchorThursday(now);                       // Kamis pekan berjalan
+    if (period === 'pekan') return selectedPekan ? new Date(selectedPekan) : getWeekAnchorThursday(now);
     if (period === 'month') { return new Date(d.getFullYear(), d.getMonth(), 1); }
     if (period === 'year') { return new Date(d.getFullYear(), 0, 1); }
     return new Date(0); // all
@@ -1066,6 +1182,11 @@
   function getPeriodRange(period) {
     const now = new Date();
     if (period === 'custom' && customRange) return { start: customRange.start, end: customRange.end };
+    if (period === 'pekan') {
+      const s = getPeriodStart('pekan', now);
+      // satu pekan penuh: Kamis 00:00 sampai Rabu 23:59:59
+      return { start: s, end: new Date(new Date(s.getFullYear(), s.getMonth(), s.getDate() + 7).getTime() - 1) };
+    }
     return { start: getPeriodStart(period, now), end: now };
   }
 
@@ -1077,7 +1198,7 @@
       const prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 1);
       return { start: prevStart, end: prevEnd };
     }
-    if (period === 'week') {
+    if (period === 'week' || period === 'pekan') {
       const prevEnd = new Date(start.getTime() - 1);
       const prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 7);
       return { start: prevStart, end: prevEnd };
@@ -1278,6 +1399,24 @@
     });
 
     return { points, total, unit, txCount: txs.length };
+  }
+
+  // --- Pemilih pekan ---
+  function rebuildPekanOptions() {
+    const sel = $('pekanSelect');
+    const anchors = pekanAnchors();
+    const curMs = anchors[0].getTime();
+
+    sel.innerHTML = anchors.map(a => {
+      const n = pekanNumber(a);
+      const label = (n ? `Pekan ${n} · ` : '') + weekRangeLabel(a) + (a.getTime() === curMs ? ' (berjalan)' : '');
+      return `<option value="${a.getTime()}">${escapeHtml(label)}</option>`;
+    }).join('');
+
+    // Pilihan awal = pekan terakhir yang sudah selesai (yang biasa direkap), kalau belum ada ya pekan berjalan
+    const stillValid = selectedPekan && anchors.some(a => a.getTime() === selectedPekan.getTime());
+    if (!stillValid) selectedPekan = new Date((anchors[1] || anchors[0]).getTime());
+    sel.value = String(selectedPekan.getTime());
   }
 
   // --- Render: banner ---
@@ -1523,7 +1662,7 @@
     const { points, total, unit, txCount } = computeIncomeSeries(currentIncomePeriod);
     const trend = computeTrend(currentIncomePeriod, total);
 
-    $('incomeTotalLabel').textContent = periodLabels[currentIncomePeriod];
+    $('incomeTotalLabel').textContent = periodLabelText(currentIncomePeriod);
     $('incomeTotalValue').textContent = formatRupiah(total);
 
     const active = points.filter(p => p.value > 0);
@@ -1532,6 +1671,9 @@
     else if (unit === 'transaksi') sub = `${txCount.toLocaleString('id-ID')} transaksi`;
     else sub = `${txCount.toLocaleString('id-ID')} transaksi · ${active.length} dari ${points.length} ${unit} aktif`;
     if (trend) sub += ` · periode lalu ${compactRupiah(trend.prevTotal)}`;
+    if (currentIncomePeriod === 'week' || currentIncomePeriod === 'pekan') {
+      sub = weekRangeLabel(getPeriodStart(currentIncomePeriod, new Date())) + ' · ' + sub;
+    }
     $('incomeTotalSub').textContent = sub;
 
     renderTrendBadge(trend);
@@ -1826,6 +1968,7 @@
   // --- Waktu ramai: jumlah transaksi per jam & per hari ---
   const DAY_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   const DAY_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  const DAY_ORDER = [4, 5, 6, 0, 1, 2, 3]; // urutan pekan: Kamis sampai Rabu
 
   function busyBarsHtml(counts, cls) {
     const max = Math.max(...counts);
@@ -1863,13 +2006,14 @@
       html += '<p class="bar-note" style="margin-top:0;">Jam transaksi belum tercatat pada periode ini.</p>';
     }
     if (period !== 'day') {
-      const maxD = Math.max(...byDay);
-      const pd = byDay.indexOf(maxD);
+      const dayCounts = DAY_ORDER.map(d => byDay[d]);
+      const maxD = Math.max(...dayCounts);
+      const pdi = dayCounts.indexOf(maxD);
       html += `
         <div class="busy-block">
-          <p class="busy-title">Per Hari<span>Tersibuk ${DAY_FULL[pd]} · ${maxD}x</span></p>
-          ${busyBarsHtml(byDay, 'days')}
-          <div class="busy-axis days">${DAY_SHORT.map((d, i) => `<span class="${i === pd ? 'peak' : ''}">${d}</span>`).join('')}</div>
+          <p class="busy-title">Per Hari<span>Tersibuk ${DAY_FULL[DAY_ORDER[pdi]]} · ${maxD}x</span></p>
+          ${busyBarsHtml(dayCounts, 'days')}
+          <div class="busy-axis days">${DAY_ORDER.map((d, i) => `<span class="${i === pdi ? 'peak' : ''}">${DAY_SHORT[d]}</span>`).join('')}</div>
         </div>`;
     }
     el.innerHTML = html;
@@ -1885,7 +2029,8 @@
     let rangeText;
     if (period === 'all') rangeText = 'Semua Waktu';
     else if (period === 'day') rangeText = `Hari Ini (${formatDateShort(range.start)})`;
-    else rangeText = `${PERIOD_SHORT[period]} (${formatDateShort(range.start)} – ${formatDateShort(range.end > now ? now : range.end)})`;
+    else if (period === 'week' || period === 'pekan') rangeText = `${periodShortText(period)} (${weekRangeLabel(range.start)})`;
+    else rangeText = `${periodShortText(period)} (${formatDateShort(range.start)} – ${formatDateShort(range.end > now ? now : range.end)})`;
 
     const lines = ['*Laporan Buku Besar*', `Periode: ${rangeText}`, ''];
     if (txs.length === 0) {
@@ -1929,7 +2074,7 @@
   function renderPeriodViews() {
     const txs = getPeriodTxs(currentIncomePeriod);
     document.querySelectorAll('[data-period-label]').forEach(el => {
-      el.textContent = '· ' + PERIOD_SHORT[currentIncomePeriod];
+      el.textContent = '· ' + periodShortText(currentIncomePeriod);
     });
     renderIncomeCard();
     renderStatCards(txs);
@@ -1942,6 +2087,7 @@
   }
 
   function renderAnalytics() {
+    rebuildPekanOptions();
     renderBanner();
     renderActivity();
     renderTarget();
@@ -2009,8 +2155,16 @@
       } else {
         customRow.classList.remove('show');
       }
+      $('pekanRow').classList[currentIncomePeriod === 'pekan' ? 'add' : 'remove']('show');
       renderPeriodViews();
     });
+  });
+
+  $('pekanSelect').addEventListener('change', (e) => {
+    const ms = parseInt(e.target.value, 10);
+    if (!ms) return;
+    selectedPekan = new Date(ms);
+    renderPeriodViews();
   });
 
   $('btnApplyCustomRange').addEventListener('click', () => {
