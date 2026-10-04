@@ -2307,9 +2307,12 @@
     `).join('');
 
     const sync = () => {
-      const none = chosenGroups().length === 0;
+      const groups = chosenGroups();
+      const none = groups.length === 0;
+      const allPaid = !none && groups.every(g => g.items.every(i => i.paid));
       gid('btnPickupApply').disabled = none;
-      gid('btnPickupPay').disabled = none;
+      gid('btnPickupPay').disabled = none || allPaid; // sudah dibayar -> tidak perlu bayar lagi
+      gid('btnPickupPay').textContent = allPaid ? 'Sudah dibayar \u2713' : 'Bayar saja';
     };
     gid('pickupList').querySelectorAll('input[type=checkbox]').forEach(cb => {
       cb.addEventListener('change', () => {
@@ -2323,35 +2326,63 @@
     sync();
   }
 
+  // Teks otomatis yang terakhir kita isi (supaya bisa diganti rapi kalau kamu pindah tombol,
+  // tapi tidak menimpa kalau kamu sudah mengetik sendiri)
+  let pickupAutoKet = '';
+  let pickupAutoHarga = false;
+
+  function datesText(groups){ return [...new Set(groups.map(g => g.c.tgl))].join(', '); }
+  function ketText(prefix, names){
+    const list = names.join(', ');
+    return /[()]/.test(list) ? (prefix + ': ' + list) : (prefix + ' (' + list + ')');
+  }
+  function setKeteranganAuto(txt){
+    const el = gid('inputKeterangan');
+    const cur = el.value.trim();
+    if (!cur || cur === pickupAutoKet) { el.value = txt; pickupAutoKet = txt; }
+  }
+  function setHargaAuto(wantCentang){
+    const el = gid('inputHarga');
+    const cur = el.value.trim();
+    if (wantCentang) {
+      if (!cur || (pickupAutoHarga && cur === LABEL_CENTANG_VAL)) { el.value = LABEL_CENTANG_VAL; pickupAutoHarga = true; }
+    } else if (pickupAutoHarga && cur === LABEL_CENTANG_VAL) {
+      el.value = ''; pickupAutoHarga = false;
+    }
+  }
+
   function applyPickupToForm(mode){
-    const groups = chosenGroups();
+    let groups = chosenGroups();
+    // "Bayar saja" hanya untuk barang yang BELUM dibayar
+    if (mode === 'bayar') groups = groups.map(g => ({ c: g.c, items: g.items.filter(i => !i.paid) })).filter(g => g.items.length);
     if (!groups.length) return;
     pickupMode = mode;
     pickupApplied = groups;
-    const txt = groupsText(groups);
     const chosenNames = [].concat(...groups.map(g => g.items.map(i => i.name)));
     const nBarang = chosenNames.length;
 
+    // Barang dan Jumlah = HANYA tanggal barang masuk; nama barang masuk ke Keterangan
+    gid('inputBarang').value = datesText(groups);
+
     if (mode === 'bayar') {
       const stillAll = [].concat(...groups.map(g => g.c.items.map(i => i.name)));
-      gid('inputBarang').value = 'Bayar: ' + txt;
       gid('inputBarangKeluar').value = LABEL_TIDAK_ADA;
       gid('inputStokBarang').value = stillAll.join(', ') || LABEL_TIDAK_ADA;
-      if (!gid('inputKeterangan').value.trim()) gid('inputKeterangan').value = 'Bayar duluan';
+      setKeteranganAuto(ketText('Bayar duluan', chosenNames));
+      setHargaAuto(false);
       gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 isi nominal Harga lalu simpan. Barang tetap tercatat ditinggal.';
     } else {
       // Gaya bengkel: Barang Keluar = yang dibawa, Stok Barang = yang masih tersisa
       const chosenKeys = new Set();
       groups.forEach(g => g.items.forEach(i => chosenKeys.add(g.c.noteId + '|' + g.c.recordId + '|' + i.key)));
       const remain = [].concat(...groups.map(g => g.c.items.filter(i => !chosenKeys.has(g.c.noteId + '|' + g.c.recordId + '|' + i.key)).map(i => i.name)));
-      gid('inputBarang').value = txt;
       gid('inputBarangKeluar').value = remain.length ? chosenNames.join(', ') : LABEL_BJ;
       gid('inputStokBarang').value = remain.length ? remain.join(', ') : LABEL_TIDAK_ADA;
-      if (!gid('inputKeterangan').value.trim()) gid('inputKeterangan').value = 'Ambil barang';
+      setKeteranganAuto(ketText('Ambil barang', chosenNames));
       const allPaid = groups.every(g => g.items.every(i => i.paid));
-      if (allPaid && !gid('inputHarga').value.trim()) gid('inputHarga').value = LABEL_CENTANG_VAL;
+      setHargaAuto(allPaid);
       gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 ' + nBarang + ' barang akan ditandai diambil saat disimpan'
-        + (allPaid ? ' \u00B7 sudah dibayar sebelumnya' : ' \u00B7 isi Harga untuk barang yang dibawa ini saja');
+        + (allPaid ? ' \u00B7 sudah dibayar sebelumnya (Harga cukup \u2713)' : ' \u00B7 isi Harga untuk barang yang dibawa ini saja');
     }
   }
 
@@ -2381,6 +2412,7 @@
 
   function resetPickupForm(){
     pickupCandidates = []; pickupApplied = []; pickupChecked = new Set(); pickupMode = 'ambil';
+    pickupAutoKet = ''; pickupAutoHarga = false;
     pickupLookupSeq++;
     clearTimeout(pickupLookupTimer);
     gid('pickupCard').style.display = 'none';
