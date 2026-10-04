@@ -2086,8 +2086,8 @@
 
   <div class="selection-bottom-bar" id="selectionBottomBar">
     <button class="sel-bar-btn" id="btnSelPin">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-      Pin
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/><line id="selPinSlash" x1="3" y1="3" x2="21" y2="21" style="display:none"/></svg>
+      <span id="btnSelPinLabel">Pin</span>
     </button>
     <button class="sel-bar-btn" id="btnSelMove">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.91 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
@@ -4213,6 +4213,19 @@
     updateSelectionUI();
   }
 
+  function selectedNotesAllPinned() {
+    const sel = notesData.filter(n => selectedNoteIds.has(n.id));
+    return sel.length > 0 && sel.every(n => n.pinned);
+  }
+
+  function refreshPinButton() {
+    const allPinned = selectedNotesAllPinned();
+    const label = document.getElementById('btnSelPinLabel');
+    const slash = document.getElementById('selPinSlash');
+    if (label) label.textContent = allPinned ? 'Unpin' : 'Pin';
+    if (slash) slash.style.display = allPinned ? '' : 'none';
+  }
+
   function updateSelectionUI() {
     normalHeaderEl.style.display = noteSelectionMode ? 'none' : 'flex';
     selectionHeaderEl.style.display = noteSelectionMode ? 'flex' : 'none';
@@ -4221,6 +4234,7 @@
 
     if (noteSelectionMode) {
       selectionCountText.textContent = `${selectedNoteIds.size} Item Selected`;
+      refreshPinButton();
     }
 
     const notesListEl = document.getElementById('notesList');
@@ -4277,16 +4291,17 @@
   async function handlePinSelected() {
     const count = selectedNoteIds.size;
     const ids = [...selectedNoteIds];
-    const { error } = await supabaseClient.from('notes').update({ pinned: true }).in('id', ids);
+    const targetPinned = !selectedNotesAllPinned();
+    const { error } = await supabaseClient.from('notes').update({ pinned: targetPinned }).in('id', ids);
 
     if (error) {
-      alert('Gagal pin note: ' + error.message);
+      alert((targetPinned ? 'Gagal pin note: ' : 'Gagal unpin note: ') + error.message);
       return;
     }
 
     exitSelectionMode();
     loadCategories();
-    showMiniToast(`${count} note dipin`);
+    showMiniToast(targetPinned ? `${count} note dipin` : `${count} note di-unpin`);
   }
 
   document.getElementById('btnSelMove').addEventListener('click', () => {
