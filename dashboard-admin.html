@@ -3703,6 +3703,9 @@
             harga: formatHargaCell(r.harga),
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _paid: !!r.hargaAuto,
+            _linked: !!(Array.isArray(r.ambilDari) && r.ambilDari.length),
+            _payAll: (r.pickups ? Object.values(r.pickups) : []).some(p => p && p.paid && p.payItems == null),
+            _payKeys: (r.pickups ? Object.values(r.pickups) : []).reduce((a, p) => (p && p.paid && Array.isArray(p.payItems)) ? a.concat(p.payItems) : a, []),
             _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
           }
         };
@@ -3929,7 +3932,8 @@
     if (!clean || isStokNone(clean)) return { any: false, whole: false, names: [] };
     if (isStokBJ(clean)) {
       if (isHargaCentang(raw)) return { any: false, whole: true, names: [] };
-      return { any: true, whole: true, names: [String(barang || '').trim()] };
+      const parts = String(barang || '').split(/[,;\n]+/).map(t => t.trim()).filter(Boolean);
+      return { any: true, whole: true, names: parts.length ? parts : [String(barang || '').trim()] };
     }
     const names = raw.split(/[,;\n]+/)
       .map(t => t.trim())
@@ -3985,10 +3989,15 @@
 
         const stok = String(val('Stok Barang') || '').trim();
         const hargaVal = val('Harga');
-        const paidFlag = !!(row && row.cells && row.cells._paid);
+        const cells = (row && row.cells) || {};
+        const paidFlag = !!cells._paid;
         const left = stokRemainingItems(stok, base.barang);
-        if (left.any && ((isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal)) || paidFlag)) {
-          tasks.push({ ...base, type: 'ditinggal', allLeft: left.whole, what: left.names.join(', '), paid: paidFlag });
+        // Baris pengambilan/pembayaran (terhubung ke titipan) bukan titipan: sisa barangnya dilacak di data titip
+        if (!cells._linked && left.any && ((isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal)) || paidFlag)) {
+          const payKeys = new Set((cells._payKeys || []).map(k => normalizeKey(k)));
+          const isPaid = nm => paidFlag || cells._payAll || payKeys.has(normalizeKey(nm));
+          const paidNames = left.names.filter(isPaid);
+          tasks.push({ ...base, type: 'ditinggal', allLeft: left.whole, what: left.names.join(', '), paid: paidNames.length === left.names.length, paidNames });
         }
 
         const missing = TASK_INCOMPLETE_FIELDS.filter(f => (f === 'Harga' ? isHargaEmpty(val(f)) : isEmptyValue(val(f))));
@@ -4069,7 +4078,11 @@
       detail = (t.allLeft
         ? `<b>Semua barang masih di bengkel:</b> ${escapeHtml(t.what || '-')}`
         : `<b>Ditinggal:</b> ${escapeHtml(t.what)}`) +
-        (t.paid ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar &#10003;</span></div>` : '');
+        (t.paid
+          ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar &#10003;</span></div>`
+          : (t.paidNames && t.paidNames.length
+            ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar: ${escapeHtml(t.paidNames.join(', '))}</span></div>`
+            : ''));
     } else {
       detail = (t.barang ? `<div>${escapeHtml(t.barang)}</div>` : '') +
         `<div class="task-missing-row" style="margin-top:6px;"><span style="font-size:12px;color:var(--text-secondary);align-self:center;">Belum diisi:</span>${t.missing.map(f => `<span class="task-missing-chip">${escapeHtml(f)}</span>`).join('')}</div>`;
