@@ -2865,14 +2865,20 @@
     }
 
     renderCategories();
+    reloadActiveNotes();
+  }
 
-    if (activeCategoryId === '__all__') {
-      loadAllNotesInDashboard();
-    } else if (isPjId(activeCategoryId)) {
-      loadPjNotes(activeCategoryId, activeFilterYear, activeFilterMonth);
-    } else if (activeCategoryId) {
-      loadNotesForCategory(activeCategoryId);
+  /* Muat ulang daftar notes sesuai tampilan aktif. Kalau sedang memilih bulan tertentu
+     (mis. Oktober 2026), filter bulannya harus ikut dipertahankan — kalau tidak, notes
+     bulan lain ikut muncul setelah keluar dari editor. */
+  function reloadActiveNotes() {
+    if (activeCategoryId === '__all__') return loadAllNotesInDashboard();
+    if (isPjId(activeCategoryId)) return loadPjNotes(activeCategoryId, activeFilterYear, activeFilterMonth);
+    if (!activeCategoryId) return;
+    if (activeFilterYear && activeFilterMonth) {
+      return loadNotesForCategoryFiltered(activeCategoryId, activeFilterYear, activeFilterMonth);
     }
+    return loadNotesForCategory(activeCategoryId);
   }
 
   function updateComposeButtonVisibility() {
@@ -3480,11 +3486,7 @@
             <button class="btn-retry-load-notes" id="btnRetryNotes">Coba Lagi</button>
           </div>
         `;
-        document.getElementById('btnRetryNotes').addEventListener('click', () => {
-          if (activeCategoryId === '__all__') loadAllNotesInDashboard();
-          else if (isPjId(activeCategoryId)) loadPjNotes(activeCategoryId, activeFilterYear, activeFilterMonth);
-          else if (activeCategoryId) loadNotesForCategory(activeCategoryId);
-        });
+        document.getElementById('btnRetryNotes').addEventListener('click', reloadActiveNotes);
       } else {
         container.innerHTML = `
           <div class="empty-state">
