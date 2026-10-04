@@ -425,6 +425,8 @@
   .pickup-rec-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:2px; }
   .pk-badge{ flex-shrink:0; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(0,0,0,0.08); color:var(--ink-soft); }
   .pk-badge.paid{ background:rgba(61,170,106,0.18); color:#2d8a55; }
+  .pk-badge.part{ background:rgba(240,165,41,0.2); color:var(--accent-ink); }
+  .pk-tag{ margin-left:8px; font-size:11px; font-weight:800; color:#2d8a55; }
   .pickup-item{ display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; }
   .pickup-item input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
   .pickup-item b{ display:block; font-size:14px; font-weight:750; }
@@ -2043,13 +2045,17 @@
   //   4. Setelah disimpan, data lama otomatis berubah:
   //        - barang yang dicentang diberi ✓ di Stok Barang (tulisan lama
   //          dipertahankan: "B&J ✓", "Blok grand ✓, Head grand")
-  //        - Harga terisi di data pengambilan / pembayaran -> Harga data lama ✓
+  //        - STATUS BAYAR DICATAT PER BARANG: Harga yang diisi di data
+  //          pengambilan / pembayaran hanya melunasi barang di baris itu.
+  //          Harga data lama baru ✓ kalau SEMUA barangnya sudah lunas
   //          (nominal tetap hanya di data pengambilan, tidak terhitung dobel)
   //   5. Data pengambilan dihapus -> tanda dibatalkan. Dipulihkan -> dipasang lagi.
   //
   //  Penghubung memakai ID record, disimpan di:
   //    - data pengambilan : ambilDari = [{ noteId, recordId, mode, items, label, tgl, synced }]
-  //    - data lama (titip): pickups   = { [idPengambilan]: { mode, items, names, paid, at, noteId } }
+  //    - data lama (titip): pickups   = { [idPengambilan]: { mode, items, payItems, names, paid, at, noteId } }
+  //        items    = barang yang DIAMBIL di baris itu (null = semua)
+  //        payItems = barang yang LUNAS lewat baris itu (null = semua)
   //                         stokBase  = isi asli Stok Barang sebelum diberi tanda
   //  Stok Barang & Harga data lama SELALU dihitung ulang dari `pickups`
   //  (recomputeOrigin), jadi aman diulang dan tidak bisa "setengah jadi".
@@ -2104,6 +2110,17 @@
     return set;
   }
 
+  function paidKeySet(o, parsed){
+    const set = new Set();
+    let all = false;
+    Object.values(o.pickups || {}).forEach(p => {
+      if (!p || !p.paid) return;
+      if (p.payItems == null) all = true; else p.payItems.forEach(k => set.add(k));
+    });
+    if (all) parsed.items.forEach(i => set.add(i.key));
+    return set;
+  }
+
   function renderStok(o){
     const parsed = parseStokItems(o);
     if (!parsed.items.length) return o.stokBarang;
@@ -2131,7 +2148,7 @@
     if (!o.pickup || o.pickups) return false;
     const lp = o.pickup;
     o.pickups = {};
-    o.pickups[lp.recordId] = { noteId: lp.noteId, at: lp.at, mode: 'ambil', items: null, names: null, paid: !!lp.hargaAuto };
+    o.pickups[lp.recordId] = { noteId: lp.noteId, at: lp.at, mode: 'ambil', items: null, payItems: lp.hargaAuto ? null : [], names: null, paid: !!lp.hargaAuto };
     if (lp.prevStok != null) o.stokBase = lp.prevStok;
     if (lp.hargaAuto) { o.hargaAuto = true; o.hargaBase = lp.prevHarga || 0; }
     delete o.pickup;
@@ -2152,7 +2169,9 @@
     o.stokBarang = renderStok(o);
     o.stokAutoLast = o.stokBarang;
 
-    const paid = ids.some(id => pk[id] && pk[id].paid);
+    const parsedNow = parseStokItems(o);
+    const paidSet = paidKeySet(o, parsedNow);
+    const paid = parsedNow.items.length > 0 && parsedNow.items.every(i => i.done || paidSet.has(i.key));
     if (paid) {
       if (!o.hargaAuto && isHargaKosong(o.harga)) {
         o.hargaBase = o.harga || 0;
@@ -2210,18 +2229,23 @@
     const pushFrom = (noteId, recs) => {
       (recs || []).forEach(r => {
         if (!r || !r.id) return;
+        if (r.ambilDari && r.ambilDari.length) return; // baris pengambilan/pembayaran bukan titipan
         if (normText(r.pj) !== npj || normText(r.customer) !== ncu) return;
         // Harga ✓ yang diketik manual (kebiasaan lama) = urusan sudah beres.
         // Harga ✓ otomatis dari "Bayar saja" (hargaAuto) tetap ditampilkan.
         if (isCentangText(r.harga) && !r.hargaAuto) return;
         const items = remainingItemsOf(r);
         if (!items.length) return;
+        const parsedR = parseStokItems(r);
+        const paidSet = paidKeySet(r, parsedR);
+        const paidCnt = items.filter(i => paidSet.has(i.key)).length;
         out.push({
           noteId, recordId: r.id,
           created_at: r.created_at,
           tgl: fmtTitik(r.created_at),
-          paid: !!r.hargaAuto,
-          items: items.map(i => ({ key: i.key, name: i.name }))
+          paid: paidCnt === items.length,
+          somePaid: paidCnt > 0,
+          items: items.map(i => ({ key: i.key, name: i.name, paid: paidSet.has(i.key) }))
         });
       });
     };
@@ -2270,12 +2294,12 @@
       <div class="pickup-rec">
         <div class="pickup-rec-head">
           <span>Dititip ${escapeHtml(fmtHariLengkap(c.created_at))}</span>
-          <span class="pk-badge ${c.paid ? 'paid' : ''}">${c.paid ? 'Sudah dibayar \u2713' : 'Belum dibayar'}</span>
+          <span class="pk-badge ${c.paid ? 'paid' : (c.somePaid ? 'part' : '')}">${c.paid ? 'Sudah dibayar \u2713' : (c.somePaid ? 'Sebagian dibayar' : 'Belum dibayar')}</span>
         </div>
         ${c.items.map((it, ii) => `
           <label class="pickup-item">
             <input type="checkbox" data-c="${ci}" data-i="${ii}" ${pickupChecked.has(itemCk(c, it)) ? 'checked' : ''}>
-            <div><b>${escapeHtml(it.name)}</b></div>
+            <div><b>${escapeHtml(it.name)}</b>${it.paid ? '<span class="pk-tag">dibayar \u2713</span>' : ''}</div>
           </label>`).join('')}
       </div>
     `).join('');
@@ -2303,22 +2327,29 @@
     pickupMode = mode;
     pickupApplied = groups;
     const txt = groupsText(groups);
-    const nBarang = groups.reduce((n, g) => n + g.items.length, 0);
+    const chosenNames = [].concat(...groups.map(g => g.items.map(i => i.name)));
+    const nBarang = chosenNames.length;
 
     if (mode === 'bayar') {
+      const stillAll = [].concat(...groups.map(g => g.c.items.map(i => i.name)));
       gid('inputBarang').value = 'Bayar: ' + txt;
       gid('inputBarangKeluar').value = LABEL_TIDAK_ADA;
-      gid('inputStokBarang').value = LABEL_TIDAK_ADA;
+      gid('inputStokBarang').value = stillAll.join(', ') || LABEL_TIDAK_ADA;
       if (!gid('inputKeterangan').value.trim()) gid('inputKeterangan').value = 'Bayar duluan';
       gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 isi nominal Harga lalu simpan. Barang tetap tercatat ditinggal.';
     } else {
+      // Gaya bengkel: Barang Keluar = yang dibawa, Stok Barang = yang masih tersisa
+      const chosenKeys = new Set();
+      groups.forEach(g => g.items.forEach(i => chosenKeys.add(g.c.noteId + '|' + g.c.recordId + '|' + i.key)));
+      const remain = [].concat(...groups.map(g => g.c.items.filter(i => !chosenKeys.has(g.c.noteId + '|' + g.c.recordId + '|' + i.key)).map(i => i.name)));
       gid('inputBarang').value = txt;
-      gid('inputBarangKeluar').value = LABEL_BJ;
-      gid('inputStokBarang').value = LABEL_TIDAK_ADA;
+      gid('inputBarangKeluar').value = remain.length ? chosenNames.join(', ') : LABEL_BJ;
+      gid('inputStokBarang').value = remain.length ? remain.join(', ') : LABEL_TIDAK_ADA;
       if (!gid('inputKeterangan').value.trim()) gid('inputKeterangan').value = 'Ambil barang';
-      const allPaid = groups.every(g => g.c.paid);
+      const allPaid = groups.every(g => g.items.every(i => i.paid));
       if (allPaid && !gid('inputHarga').value.trim()) gid('inputHarga').value = LABEL_CENTANG_VAL;
-      gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 ' + nBarang + ' barang akan ditandai diambil saat disimpan' + (allPaid ? ' \u00B7 sudah dibayar sebelumnya' : '');
+      gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 ' + nBarang + ' barang akan ditandai diambil saat disimpan'
+        + (allPaid ? ' \u00B7 sudah dibayar sebelumnya' : ' \u00B7 isi Harga untuk barang yang dibawa ini saja');
     }
   }
 
@@ -2403,12 +2434,14 @@
     const mode = parts[0] === 'bayar' ? 'bayar' : 'ambil';
     const paid = parts[1] === '1';
     const names = (job.link.items && job.link.items.length) ? job.link.items.slice() : null;
+    const keys = names ? names.map(itemKey) : null;
     const entry = {
       noteId: currentNoteId,
       at: job.rec.created_at,
       mode,
-      items: mode === 'bayar' ? [] : (names ? names.map(itemKey) : null),
-      names: mode === 'bayar' ? [] : names,
+      items: mode === 'bayar' ? [] : keys,
+      payItems: paid ? keys : [],
+      names,
       paid
     };
     o.pickups = o.pickups || {};
@@ -2541,7 +2574,7 @@
         .forEach(p => {
           const when = fmtTanggalFromISO(p.at) + ' ' + fmtWaktuFromISO(p.at);
           const what = (p.names && p.names.length) ? ': ' + p.names.join(', ') : '';
-          parts.push((p.mode === 'bayar' ? 'Dibayar ' : 'Diambil ') + when + (p.mode === 'bayar' ? '' : what));
+          parts.push((p.mode === 'bayar' ? 'Dibayar ' : 'Diambil ') + when + what);
         });
     } else if (r.pickup && r.pickup.at) {
       parts.push('Sudah diambil ' + fmtTanggalFromISO(r.pickup.at) + ' ' + fmtWaktuFromISO(r.pickup.at));
