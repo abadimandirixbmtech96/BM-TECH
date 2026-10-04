@@ -23,8 +23,6 @@
     --card-border-dark: rgba(255, 255, 255, 0.08);
     --accent-yellow: #F0A529;
     --accent-yellow-glow: rgba(240, 165, 41, 0.28);
-    --accent-rgb: 240, 165, 41;
-    --on-accent: #1C1B19;
     --text-primary: #FFFFFF;
     --text-secondary: #7C7C82;
     --text-muted: #4A4A4F;
@@ -45,7 +43,6 @@
   body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
   body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
   body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
-  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
   body.font-bold-mode * { font-weight: 700 !important; }
 
   body.theme-light {
@@ -641,7 +638,7 @@
   }
 
   .btn-create-category:active {
-    background: rgba(var(--accent-rgb), 0.15);
+    background: rgba(240, 165, 41, 0.15);
   }
 
   .folder-list { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
@@ -737,10 +734,10 @@
     transition: background 0.15s ease;
   }
   .folder-year-item:active, .folder-month-item:active { background: rgba(255, 255, 255, 0.06); }
-  .folder-year-item.open { color: #EDEAE2; border-left-color: var(--accent-yellow); }
-  .folder-month-item { border-left-color: rgba(var(--accent-rgb), 0.35); }
+  .folder-year-item.open { color: #EDEAE2; border-left-color: #F0A529; }
+  .folder-month-item { border-left-color: rgba(240, 165, 41, 0.35); }
   .folder-year-item svg { width: 15px; height: 15px; color: var(--text-secondary); transition: transform 0.18s ease; }
-  .folder-year-item.open svg { transform: rotate(180deg); color: var(--accent-yellow); }
+  .folder-year-item.open svg { transform: rotate(180deg); color: #F0A529; }
   .folder-year-loading, .folder-year-empty {
     padding: 10px 14px;
     font-size: 12.5px;
@@ -872,7 +869,6 @@
     background: #141416;
     border-radius: 18px;
     overflow: hidden;
-    flex-shrink: 0;
     margin-bottom: 14px;
     border: 1px solid var(--card-border-dark);
   }
@@ -1809,7 +1805,7 @@
     position: absolute;
     inset: -4px;
     border-radius: 50%;
-    border: 1.5px solid rgba(var(--accent-rgb), 0.55);
+    border: 1.5px solid rgba(240, 165, 41, 0.55);
     animation: sharePulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
     pointer-events: none;
   }
@@ -1940,7 +1936,7 @@
   .share-option-icon.pdf { background: rgba(240, 85, 92, 0.15); color: #F0555C; }
   .share-option-icon.img { background: rgba(61, 214, 140, 0.15); color: #3DD68C; }
   .share-option-icon.csv { background: rgba(62, 155, 95, 0.15); color: #3E9B5F; }
-  .share-option-icon.link { background: rgba(var(--accent-rgb), 0.15); color: var(--accent-yellow); }
+  .share-option-icon.link { background: rgba(240, 165, 41, 0.15); color: var(--accent-yellow); }
   .share-option-icon svg { width: 22px; height: 22px; }
   .share-option-title { font-size: 14.5px; font-weight: 700; }
   .share-option-sub { font-size: 11.5px; font-weight: 500; color: rgba(255, 255, 255, 0.55); margin-top: 2px; }
@@ -1992,7 +1988,6 @@
     box-shadow: none !important;
   }
 </style>
-<script src="/bm-theme.js"></script>
 </head>
 <body>
 
@@ -2156,10 +2151,6 @@
     </div>
     <div class="settings-item" id="btnOpenPhones">
       <span class="settings-item-title">Daftar Nomor Customer</span>
-      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-    <div class="settings-item" id="btnOpenSystem">
-      <span class="settings-item-title">System Management</span>
       <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
     <div class="settings-item" id="btnOpenTrash">
@@ -4437,8 +4428,7 @@
 
   const FONT_CLASS_BY_ID = {
     serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis',
-    kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded',
-    custom: 'font-custom'
+    kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded'
   };
   const savedFont = localStorage.getItem('bm-font');
   if (savedFont && FONT_CLASS_BY_ID[savedFont]) {
@@ -4446,10 +4436,6 @@
   }
   if (localStorage.getItem('bm-font-bold') === 'on') {
     document.body.classList.add('font-bold-mode');
-  }
-
-  if (savedFont === 'custom' && window.BMTheme) {
-    window.BMTheme.ensureCustom();
   }
 
   btnOpenSettings.addEventListener('click', () => {
@@ -6299,11 +6285,6 @@
 
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => {
     window.location.href = 'analisa.html';
-  });
-
-  document.getElementById('btnOpenSystem').addEventListener('click', () => {
-    try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
-    window.location.href = 'system-management.html';
   });
 
   document.getElementById('btnOpenPhones').addEventListener('click', () => {
