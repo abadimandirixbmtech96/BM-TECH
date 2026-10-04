@@ -3993,9 +3993,11 @@
         const paidFlag = !!cells._paid;
         const left = stokRemainingItems(stok, base.barang);
         // Baris pengambilan/pembayaran (terhubung ke titipan) bukan titipan: sisa barangnya dilacak di data titip
-        if (!cells._linked && left.any && ((isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal)) || paidFlag)) {
+        // Harga berisi ANGKA = sudah dibayar lunas saat dititip; barangnya tetap harus dilacak sampai diambil
+        const paidAtDrop = !isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal);
+        if (!cells._linked && left.any && ((isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal)) || paidFlag || paidAtDrop)) {
           const payKeys = new Set((cells._payKeys || []).map(k => normalizeKey(k)));
-          const isPaid = nm => paidFlag || cells._payAll || payKeys.has(normalizeKey(nm));
+          const isPaid = nm => paidFlag || paidAtDrop || cells._payAll || payKeys.has(normalizeKey(nm));
           const paidNames = left.names.filter(isPaid);
           tasks.push({ ...base, type: 'ditinggal', allLeft: left.whole, what: left.names.join(', '), paid: paidNames.length === left.names.length, paidNames });
         }
