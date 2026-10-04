@@ -2238,6 +2238,8 @@
         if (!items.length) return;
         const parsedR = parseStokItems(r);
         const paidSet = paidKeySet(r, parsedR);
+        // Harga berisi ANGKA di baris titip = sudah dibayar lunas saat dititip (DP ditulis di Keterangan, Harga dikosongkan)
+        if (!isHargaKosong(r.harga) && !isCentangText(r.harga)) parsedR.items.forEach(i => paidSet.add(i.key));
         const paidCnt = items.filter(i => paidSet.has(i.key)).length;
         out.push({
           noteId, recordId: r.id,
