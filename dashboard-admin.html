@@ -966,6 +966,16 @@
     pointer-events: auto;
     transform: translateY(0);
   }
+  .search-overlay { overflow: hidden; }
+  .search-top, .search-results-header { flex-shrink: 0; }
+  #searchResultsList {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: calc(var(--kb, 0px) + 12px);
+  }
 
   .search-top {
     display: flex;
@@ -5378,6 +5388,18 @@
   });
   btnSearchBack.addEventListener('click', () => searchOverlay.classList.remove('open'));
 
+  (function trackKeyboardHeight() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--kb', kb + 'px');
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+  })();
+
   function highlightMatch(text, query) {
     const safe = escapeHtml(text || '');
     if (!query) return safe;
@@ -5535,6 +5557,7 @@
     `).join('');
 
     list.innerHTML = folderHtml + noteHtml;
+    list.scrollTop = 0;
     wireSearchResultClicks();
   }
 
