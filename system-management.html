@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>System Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+  /* Terapkan warna tersimpan secepat mungkin supaya tidak berkedip */
+  (function () {
+    try {
+      var hex = localStorage.getItem('bm-accent');
+      if (!/^#[0-9a-fA-F]{6}$/.test(hex || '')) return;
+      var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+      var s = document.documentElement.style;
+      s.setProperty('--accent', hex);
+      s.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
+      s.setProperty('--accent-glow', 'rgba(' + r + ', ' + g + ', ' + b + ', 0.28)');
+      s.setProperty('--on-accent', (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1C1B19' : '#FFFFFF');
+    } catch (e) {}
+  })();
+</script>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #121214;
+    --border: rgba(255, 255, 255, 0.08);
+    --text: #FFFFFF;
+    --text-2: #7C7C82;
+    --accent: #F0A529;
+    --accent-rgb: 240, 165, 41;
+    --accent-glow: rgba(240, 165, 41, 0.28);
+    --on-accent: #1C1B19;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  body.theme-light {
+    --bg: #F5F5F7;
+    --surface: #FFFFFF;
+    --border: rgba(0, 0, 0, 0.08);
+    --text: #000000;
+    --text-2: #8E8E93;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  html, body { background: var(--bg); color: var(--text); min-height: 100%; }
+  body {
+    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 32px) 16px;
+    max-width: 560px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, input { font: inherit; color: inherit; }
+  button { background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Header */
+  .top { display: flex; align-items: center; gap: 12px; padding: 4px 0 18px; }
+  .back {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--surface); border: 1px solid var(--border);
+    transition: transform .15s ease;
+  }
+  .back:active { transform: scale(0.88); }
+  .back svg { width: 20px; height: 20px; }
+  .top h1 { font-size: 22px; font-weight: 800; }
+
+  /* Kartu */
+  .group { margin-bottom: 22px; }
+  .group-title { font-size: 15px; font-weight: 700; margin: 0 4px 4px; }
+  .group-hint { font-size: 13px; color: var(--text-2); margin: 0 4px 10px; line-height: 1.45; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 16px;
+  }
+
+  /* Pratinjau */
+  .preview { display: flex; flex-direction: column; gap: 12px; }
+  .pv-title { font-size: 18px; font-weight: 700; }
+  .pv-sub { font-size: 13px; color: var(--text-2); line-height: 1.45; }
+  .pv-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pv-btn {
+    padding: 10px 18px; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent);
+    font-weight: 700; font-size: 14px;
+    box-shadow: 0 6px 18px var(--accent-glow);
+  }
+  .pv-chip {
+    padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+    background: rgba(var(--accent-rgb), 0.15); color: var(--accent);
+    border: 1px solid rgba(var(--accent-rgb), 0.55);
+  }
+  .pv-amount { margin-left: auto; font-weight: 800; font-size: 16px; }
+
+  /* Palet warna */
+  .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .sw {
+    aspect-ratio: 1; border-radius: 50%;
+    background: var(--c);
+    position: relative;
+    border: 2px solid transparent;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+    transition: transform .15s ease;
+  }
+  .sw:active { transform: scale(0.88); }
+  .sw[aria-pressed="true"] { border-color: var(--text); }
+  .sw[aria-pressed="true"]::after {
+    content: ''; position: absolute; inset: 0; margin: auto;
+    width: 38%; height: 20%;
+    border-left: 2.5px solid var(--tick); border-bottom: 2.5px solid var(--tick);
+    transform: translateY(-15%) rotate(-45deg);
+  }
+
+  .custom-row { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .picker {
+    position: relative; width: 46px; height: 46px; border-radius: 50%; flex: none;
+    background: conic-gradient(#ff3b3b, #ffb13b, #f4ff3b, #3bff6e, #3bd9ff, #3b53ff, #c13bff, #ff3b9a, #ff3b3b);
+    overflow: hidden;
+  }
+  .picker input { position: absolute; inset: -8px; width: 70px; height: 70px; opacity: 0; cursor: pointer; }
+  .hex-wrap { flex: 1; min-width: 0; }
+  .hex-label { font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
+  .hex-input {
+    width: 100%; padding: 10px 12px; border-radius: 12px;
+    background: transparent; border: 1px solid var(--border);
+    font-size: 15px; font-weight: 600; letter-spacing: .02em;
+    -webkit-user-select: text; user-select: text;
+  }
+  .hex-input.bad { border-color: #F0555C; }
+  .hex-hint { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+
+  /* Font */
+  .fonts { display: flex; flex-direction: column; }
+  .font-opt {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 14px 4px; text-align: left; width: 100%;
+  }
+  .font-opt:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .fo-name { font-size: 13px; color: var(--text-2); margin-bottom: 3px; }
+  .fo-sample { font-size: 17px; font-weight: 500; }
+  .radio {
+    flex: none; width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--text-2); display: grid; place-items: center;
+  }
+  .font-opt[aria-checked="true"] .radio { border-color: var(--accent); }
+  .font-opt[aria-checked="true"] .radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+
+  /* Font custom */
+  .upload-row { display: flex; flex-direction: column; gap: 10px; }
+  .btn {
+    padding: 13px 18px; border-radius: 999px; font-weight: 700; font-size: 14px;
+    border: 1px solid var(--border); background: transparent; text-align: center;
+  }
+  .btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+  .btn.danger { color: #F0555C; }
+  .btn:active { transform: scale(0.97); }
+  .btn[disabled] { opacity: .5; }
+  .msg { font-size: 13px; line-height: 1.45; color: var(--text-2); }
+  .msg.err { color: #F0555C; }
+  .msg.ok { color: var(--accent); }
+  .file-name { font-size: 15px; font-weight: 600; word-break: break-all; }
+
+  /* Toggle tebal */
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .row-title { font-size: 15px; font-weight: 500; }
+  .switch { position: relative; display: inline-block; width: 51px; height: 31px; flex: none; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; border-radius: 999px; background: rgba(120,120,128,.36); transition: background .2s ease; cursor: pointer; }
+  .slider::before {
+    content: ''; position: absolute; width: 27px; height: 27px; left: 2px; top: 2px;
+    border-radius: 50%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    transition: transform .2s ease;
+  }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(20px); }
+  .switch input:focus-visible + .slider { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .foot-note { font-size: 13px; color: var(--text-2); line-height: 1.5; text-align: center; margin: 4px 8px 14px; }
+
+  /* Font yang sedang dipilih diterapkan ke seluruh halaman ini */
+  body.bold-mode * { font-weight: 700 !important; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <button class="back" id="btnBack" aria-label="Kembali">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+  </button>
+  <h1>System Management</h1>
+</div>
+
+<div class="group">
+  <div class="card preview" id="preview">
+    <div class="pv-title">Pratinjau tampilan</div>
+    <div class="pv-sub">Warna dan font yang kamu pilih langsung terlihat di sini.</div>
+    <div class="pv-row">
+      <span class="pv-btn">Simpan</span>
+      <span class="pv-chip">BUKU BESAR</span>
+      <span class="pv-amount">Rp1.250.000</span>
+    </div>
+  </div>
+</div>
+
+<div class="group">
+  <div class="group-title">Warna sistem</div>
+  <div class="group-hint">Dipakai untuk tombol, penanda, dan aksen di dashboard admin.</div>
+  <div class="card">
+    <div class="swatches" id="swatches"></div>
+    <div class="custom-row">
+      <label class="picker" aria-label="Pilih warna custom">
+        <input type="color" id="colorPicker" value="#F0A529">
+      </label>
+      <div class="hex-wrap">
+        <div class="hex-label">Warna custom</div>
+        <input class="hex-input" id="hexInput" type="text" inputmode="text" maxlength="7" autocomplete="off" spellcheck="false" placeholder="#FF5C9D">
+        <div class="hex-hint" id="hexHint">Ketuk lingkaran warna atau ketik kode hex.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="group">
+  <div class="group-title">Font</div>
+  <div class="group-hint">Berlaku untuk semua teks di dashboard admin.</div>
+  <div class="card">
+    <div class="fonts" id="fonts" role="radiogroup" aria-label="Pilihan font"></div>
+  </div>
+</div>
+
+<div class="group">
+  <div class="group-title">Font custom</div>
+  <div class="group-hint">Pilih file font dari penyimpanan HP (.ttf, .otf, .woff, .woff2). Ukuran maksimal 10 MB.</div>
+  <div class="card upload-row">
+    <div id="customInfo" class="msg">Belum ada font custom.</div>
+    <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
+    <button class="btn primary" id="btnPickFont">Pilih file font</button>
+    <button class="btn danger" id="btnRemoveFont" hidden>Hapus font custom</button>
+    <div id="fontMsg" class="msg" role="status" aria-live="polite"></div>
+  </div>
+</div>
+
+<div class="group">
+  <div class="card">
+    <div class="row">
+      <span class="row-title">Teks tebal</span>
+      <label class="switch">
+        <input type="checkbox" id="boldToggle" aria-label="Teks tebal">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<div class="foot-note">Pengaturan ini tersimpan di perangkat ini saja. Perangkat lain tidak ikut berubah.</div>
+<button class="btn danger" id="btnReset" style="width:100%;">Kembalikan ke bawaan</button>
+
+<script>
+(function () {
+  'use strict';
+
+  var DEFAULT_ACCENT = '#F0A529';
+  var PALETTE = [
+    ['Pink', '#FF5C9D'], ['Pink muda', '#FF8FB8'], ['Magenta', '#E0409A'], ['Merah', '#F0555C'],
+    ['Peach', '#FFA98A'], ['Oranye', '#FF7A3D'], ['Kuning', '#F0A529'], ['Emas', '#E8C23A'],
+    ['Lime', '#A3DB3D'], ['Hijau', '#34C77B'], ['Tosca', '#1FC8B0'], ['Cyan', '#2BC4E8'],
+    ['Biru', '#3D8BFF'], ['Indigo', '#5B6CFF'], ['Ungu', '#9B6BFF'], ['Lavender', '#B79CFF'],
+    ['Coklat', '#B07A4F'], ['Abu-abu', '#9AA0A6']
+  ];
+
+  var FONTS = [
+    { id: 'default', label: 'Bawaan (Inter)', stack: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" },
+    { id: 'rounded', label: 'Membulat', stack: "ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif" },
+    { id: 'humanis', label: 'Humanis', stack: "Verdana, Tahoma, Geneva, sans-serif" },
+    { id: 'kompak', label: 'Kompak', stack: "'Arial Narrow', 'Segoe UI', Arial, sans-serif" },
+    { id: 'serif', label: 'Serif', stack: "Georgia, 'Times New Roman', Times, serif" },
+    { id: 'klasik', label: 'Klasik', stack: "'Times New Roman', Times, Georgia, serif" },
+    { id: 'mono', label: 'Monospace', stack: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace" }
+  ];
+  var CUSTOM_STACK = "'BMCustom', 'Inter', sans-serif";
+  var MAX_FONT_BYTES = 10 * 1024 * 1024;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  /* ---------- IndexedDB untuk file font ---------- */
+  function idbOpen() {
+    return new Promise(function (resolve, reject) {
+      var req = indexedDB.open('bm-fonts', 1);
+      req.onupgradeneeded = function () { req.result.createObjectStore('fonts'); };
+      req.onsuccess = function () { resolve(req.result); };
+      req.onerror = function () { reject(req.error); };
+    });
+  }
+  function idbRun(mode, fn) {
+    return idbOpen().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction('fonts', mode);
+        var result = fn(tx.objectStore('fonts'));
+        tx.oncomplete = function () { resolve(result && result.result); };
+        tx.onerror = function () { reject(tx.error); };
+        tx.onabort = function () { reject(tx.error); };
+      });
+    });
+  }
+  var idbPut = function (key, val) { return idbRun('readwrite', function (s) { return s.put(val, key); }); };
+  var idbGet = function (key) { return idbRun('readonly', function (s) { return s.get(key); }); };
+  var idbDel = function (key) { return idbRun('readwrite', function (s) { return s.delete(key); }); };
+
+  /* ---------- Warna ---------- */
+  function normalizeHex(v) {
+    v = (v || '').trim();
+    if (v.charAt(0) !== '#') v = '#' + v;
+    if (/^#[0-9a-fA-F]{3}$/.test(v)) v = '#' + v[1] + v[1] + v[2] + v[2] + v[3] + v[3];
+    return /^#[0-9a-fA-F]{6}$/.test(v) ? v.toUpperCase() : null;
+  }
+  function rgbOf(hex) {
+    return [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16)];
+  }
+  function isLight(hex) {
+    var c = rgbOf(hex);
+    return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) > 150;
+  }
+
+  var accent = normalizeHex(lsGet('bm-accent')) || DEFAULT_ACCENT;
+
+  function applyAccent(hex) {
+    var c = rgbOf(hex), s = document.documentElement.style;
+    s.setProperty('--accent', hex);
+    s.setProperty('--accent-rgb', c.join(', '));
+    s.setProperty('--accent-glow', 'rgba(' + c.join(', ') + ', 0.28)');
+    s.setProperty('--on-accent', isLight(hex) ? '#1C1B19' : '#FFFFFF');
+    $('colorPicker').value = hex.toLowerCase();
+    var btns = $('swatches').children;
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i].dataset.hex === hex ? 'true' : 'false');
+    }
+  }
+  function saveAccent(hex) {
+    accent = hex;
+    if (hex === DEFAULT_ACCENT) lsDel('bm-accent'); else lsSet('bm-accent', hex);
+    applyAccent(hex);
+  }
+
+  function buildSwatches() {
+    var wrap = $('swatches');
+    PALETTE.forEach(function (p) {
+      var b = document.createElement('button');
+      b.className = 'sw';
+      b.type = 'button';
+      b.style.setProperty('--c', p[1]);
+      b.style.setProperty('--tick', isLight(p[1]) ? '#1C1B19' : '#FFFFFF');
+      b.dataset.hex = p[1];
+      b.setAttribute('aria-label', p[0]);
+      b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', function () {
+        saveAccent(p[1]);
+        $('hexInput').value = p[1];
+        $('hexInput').classList.remove('bad');
+      });
+      wrap.appendChild(b);
+    });
+  }
+
+  $('colorPicker').addEventListener('input', function (e) {
+    var hex = normalizeHex(e.target.value);
+    if (!hex) return;
+    saveAccent(hex);
+    $('hexInput').value = hex;
+    $('hexInput').classList.remove('bad');
+  });
+  $('hexInput').addEventListener('input', function (e) {
+    var raw = e.target.value;
+    var hex = normalizeHex(raw);
+    if (hex && raw.replace('#', '').length >= 3) {
+      e.target.classList.remove('bad');
+      saveAccent(hex);
+    } else {
+      e.target.classList.toggle('bad', raw.replace('#', '').length > 0);
+    }
+  });
+
+  /* ---------- Font ---------- */
+  var fontId = lsGet('bm-font') || 'default';
+  var customName = lsGet('bm-font-custom-name') || '';
+  var customReady = false;
+
+  function stackFor(id) {
+    if (id === 'custom') return CUSTOM_STACK;
+    for (var i = 0; i < FONTS.length; i++) if (FONTS[i].id === id) return FONTS[i].stack;
+    return FONTS[0].stack;
+  }
+
+  function applyFont(id) {
+    var stack = stackFor(id);
+    var pv = $('preview');
+    var all = pv.querySelectorAll('*');
+    pv.style.fontFamily = stack;
+    for (var i = 0; i < all.length; i++) all[i].style.fontFamily = stack;
+    var opts = $('fonts').querySelectorAll('.font-opt');
+    for (var j = 0; j < opts.length; j++) {
+      opts[j].setAttribute('aria-checked', opts[j].dataset.id === id ? 'true' : 'false');
+    }
+  }
+  function saveFont(id) {
+    fontId = id;
+    if (id === 'default') lsDel('bm-font'); else lsSet('bm-font', id);
+    applyFont(id);
+  }
+
+  function addFontOption(id, label, stack) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'font-opt';
+    b.dataset.id = id;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', 'false');
+    b.innerHTML = '<span><div class="fo-name"></div><div class="fo-sample"></div></span><span class="radio"></span>';
+    b.querySelector('.fo-name').textContent = label;
+    var s = b.querySelector('.fo-sample');
+    s.textContent = 'Catatan transaksi 1.250.000';
+    s.style.fontFamily = stack;
+    b.addEventListener('click', function () { saveFont(id); });
+    $('fonts').appendChild(b);
+    return b;
+  }
+
+  function buildFontList() {
+    FONTS.forEach(function (f) { addFontOption(f.id, f.label, f.stack); });
+  }
+  function refreshCustomOption() {
+    var existing = $('fonts').querySelector('[data-id="custom"]');
+    if (existing) existing.remove();
+    if (customName) addFontOption('custom', 'Custom: ' + customName, CUSTOM_STACK);
+  }
+
+  function loadCustomFont(buffer) {
+    var face = new FontFace('BMCustom', buffer);
+    return face.load().then(function (loaded) {
+      document.fonts.add(loaded);
+      customReady = true;
+    });
+  }
+
+  function renderCustomInfo() {
+    var info = $('customInfo');
+    if (customName) {
+      info.className = 'file-name';
+      info.textContent = customName;
+      $('btnPickFont').textContent = 'Ganti file font';
+      $('btnRemoveFont').hidden = false;
+    } else {
+      info.className = 'msg';
+      info.textContent = 'Belum ada font custom.';
+      $('btnPickFont').textContent = 'Pilih file font';
+      $('btnRemoveFont').hidden = true;
+    }
+  }
+  function setMsg(text, kind) {
+    var m = $('fontMsg');
+    m.textContent = text || '';
+    m.className = 'msg' + (kind ? ' ' + kind : '');
+  }
+
+  $('btnPickFont').addEventListener('click', function () { $('fontFile').click(); });
+
+  $('fontFile').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!/\.(ttf|otf|woff2?)$/i.test(file.name)) {
+      setMsg('Format file tidak didukung. Pilih file .ttf, .otf, .woff, atau .woff2.', 'err');
+      return;
+    }
+    if (file.size > MAX_FONT_BYTES) {
+      setMsg('File terlalu besar (maksimal 10 MB).', 'err');
+      return;
+    }
+    setMsg('Memuat font…');
+    var reader = new FileReader();
+    reader.onerror = function () { setMsg('File tidak bisa dibaca. Coba pilih ulang.', 'err'); };
+    reader.onload = function () {
+      var buffer = reader.result;
+      loadCustomFont(buffer.slice(0)).then(function () {
+        return idbPut('custom', { name: file.name, data: buffer });
+      }).then(function () {
+        customName = file.name;
+        lsSet('bm-font-custom-name', customName);
+        refreshCustomOption();
+        renderCustomInfo();
+        saveFont('custom');
+        setMsg('Font custom dipasang dan dipakai.', 'ok');
+      }).catch(function () {
+        setMsg('File ini bukan font yang valid atau gagal disimpan. Coba file font lain.', 'err');
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  $('btnRemoveFont').addEventListener('click', function () {
+    idbDel('custom').catch(function () {});
+    customName = '';
+    customReady = false;
+    lsDel('bm-font-custom-name');
+    refreshCustomOption();
+    renderCustomInfo();
+    if (fontId === 'custom') saveFont('default');
+    setMsg('Font custom dihapus.', 'ok');
+  });
+
+  /* ---------- Teks tebal ---------- */
+  $('boldToggle').checked = lsGet('bm-font-bold') === 'on';
+  document.body.classList.toggle('bold-mode', $('boldToggle').checked);
+  $('boldToggle').addEventListener('change', function (e) {
+    if (e.target.checked) lsSet('bm-font-bold', 'on'); else lsDel('bm-font-bold');
+    document.body.classList.toggle('bold-mode', e.target.checked);
+  });
+
+  /* ---------- Reset ---------- */
+  $('btnReset').addEventListener('click', function () {
+    if (!confirm('Kembalikan warna dan font ke bawaan di perangkat ini?')) return;
+    lsDel('bm-accent'); lsDel('bm-font'); lsDel('bm-font-bold'); lsDel('bm-font-custom-name');
+    idbDel('custom').catch(function () {});
+    accent = DEFAULT_ACCENT; fontId = 'default'; customName = ''; customReady = false;
+    $('boldToggle').checked = false;
+    document.body.classList.remove('bold-mode');
+    $('hexInput').value = '';
+    $('hexInput').classList.remove('bad');
+    refreshCustomOption();
+    renderCustomInfo();
+    applyAccent(accent);
+    applyFont(fontId);
+    setMsg('Semua pengaturan dikembalikan ke bawaan.', 'ok');
+  });
+
+  /* ---------- Kembali ke dashboard (buka lagi layar Settings) ---------- */
+  $('btnBack').addEventListener('click', function () {
+    try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
+    window.location.href = 'dashboard-admin.html';
+  });
+
+  /* ---------- Init ---------- */
+  if (lsGet('bm-theme') === 'light') document.body.classList.add('theme-light');
+
+  buildSwatches();
+  buildFontList();
+  refreshCustomOption();
+  renderCustomInfo();
+  applyAccent(accent);
+  $('hexInput').value = accent === DEFAULT_ACCENT && !lsGet('bm-accent') ? '' : accent;
+
+  if (customName) {
+    idbGet('custom').then(function (rec) {
+      if (rec && rec.data) return loadCustomFont(rec.data.slice(0));
+      customName = '';
+      lsDel('bm-font-custom-name');
+      if (fontId === 'custom') saveFont('default');
+      refreshCustomOption();
+      renderCustomInfo();
+    }).then(function () { applyFont(fontId); }).catch(function () {
+      setMsg('Font custom gagal dimuat. Pilih ulang file font-nya.', 'err');
+    });
+  }
+  applyFont(fontId);
+})();
+</script>
+</body>
+</html>
