@@ -2019,7 +2019,7 @@
   //      Barang dan Jumlah = tanggal titip, Barang Keluar = B&J,
   //      Stok = Tidak ada, Keterangan = Ambil barang (kalau masih kosong).
   //   4. Setelah data disimpan, data lama otomatis berubah:
-  //      Stok Barang -> ✓. Kalau Harga di data pengambilan terisi,
+  //      Stok Barang -> tulisan lama + centang (mis. "B&J ✓"). Kalau Harga di data pengambilan terisi,
   //      Harga data lama -> ✓ juga (nominal tetap hanya di data pengambilan,
   //      jadi tidak terhitung dua kali).
   //   5. Kalau data pengambilan dihapus (masuk Sampah), tanda ✓ di data lama
@@ -2044,6 +2044,12 @@
   function stokStillLeft(v){
     const t = String(v == null ? '' : v).trim();
     return !!t && !isTidakAdaText(t) && !isCentangText(t);
+  }
+  // Tulisan asli Stok Barang (mis. "B&J") DIPERTAHANKAN, cukup ditambah centang di belakangnya
+  function stokWithCentang(prev){
+    const t = String(prev == null ? '' : prev).trim();
+    if (!t) return LABEL_CENTANG_VAL;
+    return isCentangText(t) ? t : (t + ' ' + LABEL_CENTANG_VAL);
   }
   function itemLabelOf(r){
     return isBJText(r.stokBarang) ? (r.barang || '') : (r.stokBarang || r.barang || '');
@@ -2256,7 +2262,10 @@
       };
       changed = true;
     }
-    if (!isCentangText(o.stokBarang)) { o.stokBarang = LABEL_CENTANG_VAL; changed = true; }
+    if (!isCentangText(o.stokBarang)) { o.stokBarang = stokWithCentang(o.stokBarang); changed = true; }
+    else if (String(o.stokBarang).trim() === LABEL_CENTANG_VAL && o.pickup.prevStok && !isCentangText(o.pickup.prevStok)) {
+      o.stokBarang = stokWithCentang(o.pickup.prevStok); changed = true; // perbaiki data lama yang hanya "✓"
+    }
 
     if (job.want === 'stok+harga') {
       if (!o.pickup.hargaAuto && isHargaKosong(o.harga)) {
