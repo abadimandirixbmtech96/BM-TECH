@@ -51,9 +51,14 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     outline: none;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
+  input { -webkit-user-select: text; user-select: text; }
+  ::selection { background: rgba(var(--accent-rgb), 0.35); color: inherit; }
 
   html, body { background: var(--bg); color: var(--text); min-height: 100%; }
   body {
@@ -62,6 +67,7 @@
     margin: 0 auto;
     -webkit-font-smoothing: antialiased;
   }
+  body.sheet-open { overflow: hidden; }
 
   button, input { font: inherit; color: inherit; }
   button { background: none; border: 0; cursor: pointer; }
@@ -78,6 +84,7 @@
   .back:active { transform: scale(0.88); }
   .back svg { width: 20px; height: 20px; }
   .top h1 { font-size: 22px; font-weight: 800; }
+  [dir="rtl"] .back svg, [dir="rtl"] .chev { transform: scaleX(-1); }
 
   /* Kartu */
   .group { margin-bottom: 22px; }
@@ -106,7 +113,17 @@
     background: rgba(var(--accent-rgb), 0.15); color: var(--accent);
     border: 1px solid rgba(var(--accent-rgb), 0.55);
   }
-  .pv-amount { margin-left: auto; font-weight: 800; font-size: 16px; }
+  .pv-amount { margin-inline-start: auto; font-weight: 800; font-size: 16px; }
+
+  /* Baris bahasa */
+  .lang-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; text-align: start;
+    padding: 16px;
+  }
+  .lang-row:active { transform: scale(0.99); }
+  .lang-value { font-size: 15px; font-weight: 600; }
+  .chev { width: 18px; height: 18px; color: var(--text-2); flex: none; }
 
   /* Palet warna */
   .swatches { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
@@ -140,7 +157,6 @@
     width: 100%; padding: 10px 12px; border-radius: 12px;
     background: transparent; border: 1px solid var(--border);
     font-size: 15px; font-weight: 600; letter-spacing: .02em;
-    -webkit-user-select: text; user-select: text;
   }
   .hex-input.bad { border-color: #F0555C; }
   .hex-hint { font-size: 12px; color: var(--text-2); margin-top: 4px; }
@@ -149,7 +165,7 @@
   .fonts { display: flex; flex-direction: column; }
   .font-opt {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 14px 4px; text-align: left; width: 100%;
+    padding: 14px 4px; text-align: start; width: 100%;
   }
   .font-opt:not(:last-child) { border-bottom: 1px solid var(--border); }
   .fo-name { font-size: 13px; color: var(--text-2); margin-bottom: 3px; }
@@ -158,8 +174,10 @@
     flex: none; width: 22px; height: 22px; border-radius: 50%;
     border: 2px solid var(--text-2); display: grid; place-items: center;
   }
-  .font-opt[aria-checked="true"] .radio { border-color: var(--accent); }
-  .font-opt[aria-checked="true"] .radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .font-opt[aria-checked="true"] .radio,
+  .lang-opt[aria-checked="true"] .radio { border-color: var(--accent); }
+  .font-opt[aria-checked="true"] .radio::after,
+  .lang-opt[aria-checked="true"] .radio::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
 
   /* Font custom */
   .upload-row { display: flex; flex-direction: column; gap: 10px; }
@@ -189,12 +207,58 @@
   }
   .switch input:checked + .slider { background: var(--accent); }
   .switch input:checked + .slider::before { transform: translateX(20px); }
+  [dir="rtl"] .slider::before { left: auto; right: 2px; }
+  [dir="rtl"] .switch input:checked + .slider::before { transform: translateX(-20px); }
   .switch input:focus-visible + .slider { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .foot-note { font-size: 13px; color: var(--text-2); line-height: 1.5; text-align: center; margin: 4px 8px 14px; }
 
-  /* Font yang sedang dipilih diterapkan ke seluruh halaman ini */
   body.bold-mode * { font-weight: 700 !important; }
+
+  /* Bottom sheet bahasa */
+  .sheet-overlay {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0; pointer-events: none;
+    transition: opacity .28s ease;
+  }
+  .sheet-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 100;
+    width: 100%; max-width: 560px; margin: 0 auto;
+    max-height: 80vh; max-height: 80dvh;
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border); border-bottom: 0;
+    border-radius: 26px 26px 0 0;
+    padding-bottom: var(--safe-bottom);
+    transform: translateY(100%);
+    visibility: hidden;
+    transition: transform .32s cubic-bezier(0.18, 0.85, 0.3, 1), visibility 0s linear .32s;
+  }
+  .sheet.open {
+    transform: translateY(0);
+    visibility: visible;
+    transition: transform .32s cubic-bezier(0.18, 0.85, 0.3, 1), visibility 0s;
+  }
+  .sheet-handle { flex: none; padding: 12px 0 8px; display: grid; place-items: center; cursor: grab; touch-action: none; }
+  .sheet-handle span { width: 40px; height: 5px; border-radius: 999px; background: var(--text-2); opacity: .5; }
+  .sheet-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 20px 8px; }
+  .sheet-head h2 { font-size: 18px; font-weight: 800; }
+  .sheet-close {
+    width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: rgba(120,120,128,.2);
+  }
+  .sheet-close svg { width: 16px; height: 16px; }
+  .sheet-list { overflow-y: auto; overscroll-behavior: contain; padding: 4px 20px 16px; -webkit-overflow-scrolling: touch; }
+  .lang-opt {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    width: 100%; text-align: start; padding: 15px 2px;
+  }
+  .lang-opt:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .lo-name { font-size: 16px; font-weight: 600; }
+  .lo-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
@@ -204,7 +268,7 @@
 <body>
 
 <div class="top">
-  <button class="back" id="btnBack" aria-label="Kembali">
+  <button class="back" id="btnBack" data-i18n-aria="back">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
   </button>
   <h1>System Management</h1>
@@ -212,10 +276,10 @@
 
 <div class="group">
   <div class="card preview" id="preview">
-    <div class="pv-title">Pratinjau tampilan</div>
-    <div class="pv-sub">Warna dan font yang kamu pilih langsung terlihat di sini.</div>
+    <div class="pv-title" data-i18n="preview_title"></div>
+    <div class="pv-sub" data-i18n="preview_sub"></div>
     <div class="pv-row">
-      <span class="pv-btn">Simpan</span>
+      <span class="pv-btn" data-i18n="pv_btn"></span>
       <span class="pv-chip">BUKU BESAR</span>
       <span class="pv-amount">Rp1.250.000</span>
     </div>
@@ -223,39 +287,48 @@
 </div>
 
 <div class="group">
-  <div class="group-title">Warna sistem</div>
-  <div class="group-hint">Dipakai untuk tombol, penanda, dan aksen di dashboard admin.</div>
+  <div class="group-title" data-i18n="lang_title"></div>
+  <div class="group-hint" data-i18n="lang_hint"></div>
+  <button class="card lang-row" id="btnLang" aria-haspopup="dialog" aria-controls="langSheet">
+    <span class="lang-value" id="langValue"></span>
+    <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </button>
+</div>
+
+<div class="group">
+  <div class="group-title" data-i18n="color_title"></div>
+  <div class="group-hint" data-i18n="color_hint"></div>
   <div class="card">
     <div class="swatches" id="swatches"></div>
     <div class="custom-row">
-      <label class="picker" aria-label="Pilih warna custom">
+      <label class="picker" data-i18n-aria="pick_aria">
         <input type="color" id="colorPicker" value="#F0A529">
       </label>
       <div class="hex-wrap">
-        <div class="hex-label">Warna custom</div>
+        <div class="hex-label" data-i18n="color_custom"></div>
         <input class="hex-input" id="hexInput" type="text" inputmode="text" maxlength="7" autocomplete="off" spellcheck="false" placeholder="#FF5C9D">
-        <div class="hex-hint" id="hexHint">Ketuk lingkaran warna atau ketik kode hex.</div>
+        <div class="hex-hint" data-i18n="color_hint2"></div>
       </div>
     </div>
   </div>
 </div>
 
 <div class="group">
-  <div class="group-title">Font</div>
-  <div class="group-hint">Berlaku untuk semua teks di dashboard admin.</div>
+  <div class="group-title" data-i18n="font_title"></div>
+  <div class="group-hint" data-i18n="font_hint"></div>
   <div class="card">
-    <div class="fonts" id="fonts" role="radiogroup" aria-label="Pilihan font"></div>
+    <div class="fonts" id="fonts" role="radiogroup" data-i18n-aria="font_title"></div>
   </div>
 </div>
 
 <div class="group">
-  <div class="group-title">Font custom</div>
-  <div class="group-hint">Pilih file font dari penyimpanan HP (.ttf, .otf, .woff, .woff2). Ukuran maksimal 10 MB.</div>
+  <div class="group-title" data-i18n="cf_title"></div>
+  <div class="group-hint" data-i18n="cf_hint"></div>
   <div class="card upload-row">
-    <div id="customInfo" class="msg">Belum ada font custom.</div>
+    <div id="customInfo" class="msg"></div>
     <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
-    <button class="btn primary" id="btnPickFont">Pilih file font</button>
-    <button class="btn danger" id="btnRemoveFont" hidden>Hapus font custom</button>
+    <button class="btn primary" id="btnPickFont"></button>
+    <button class="btn danger" id="btnRemoveFont" data-i18n="cf_remove" hidden></button>
     <div id="fontMsg" class="msg" role="status" aria-live="polite"></div>
   </div>
 </div>
@@ -263,48 +336,290 @@
 <div class="group">
   <div class="card">
     <div class="row">
-      <span class="row-title">Teks tebal</span>
+      <span class="row-title" data-i18n="bold"></span>
       <label class="switch">
-        <input type="checkbox" id="boldToggle" aria-label="Teks tebal">
+        <input type="checkbox" id="boldToggle" data-i18n-aria="bold">
         <span class="slider"></span>
       </label>
     </div>
   </div>
 </div>
 
-<div class="foot-note">Pengaturan ini tersimpan di perangkat ini saja. Perangkat lain tidak ikut berubah.</div>
-<button class="btn danger" id="btnReset" style="width:100%;">Kembalikan ke bawaan</button>
+<div class="foot-note" data-i18n="foot"></div>
+<button class="btn danger" id="btnReset" style="width:100%;" data-i18n="reset"></button>
+
+<!-- Bottom sheet pilih bahasa -->
+<div class="sheet-overlay" id="sheetOverlay"></div>
+<div class="sheet" id="langSheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" aria-hidden="true">
+  <div class="sheet-handle" id="sheetHandle"><span></span></div>
+  <div class="sheet-head">
+    <h2 id="sheetTitle" data-i18n="lang_sheet"></h2>
+    <button class="sheet-close" id="sheetClose" data-i18n-aria="close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+    </button>
+  </div>
+  <div class="sheet-list" id="langList" role="radiogroup" data-i18n-aria="lang_sheet"></div>
+</div>
 
 <script>
 (function () {
   'use strict';
 
-  var DEFAULT_ACCENT = '#F0A529';
-  var PALETTE = [
-    ['Pink', '#FF5C9D'], ['Pink muda', '#FF8FB8'], ['Magenta', '#E0409A'], ['Merah', '#F0555C'],
-    ['Peach', '#FFA98A'], ['Oranye', '#FF7A3D'], ['Kuning', '#F0A529'], ['Emas', '#E8C23A'],
-    ['Lime', '#A3DB3D'], ['Hijau', '#34C77B'], ['Tosca', '#1FC8B0'], ['Cyan', '#2BC4E8'],
-    ['Biru', '#3D8BFF'], ['Indigo', '#5B6CFF'], ['Ungu', '#9B6BFF'], ['Lavender', '#B79CFF'],
-    ['Coklat', '#B07A4F'], ['Abu-abu', '#9AA0A6']
+  /* ---------- Terjemahan ---------- */
+  var LANGS = [
+    { code: 'id', name: 'Bahasa Indonesia' },
+    { code: 'en', name: 'English' },
+    { code: 'ms', name: 'Bahasa Melayu' },
+    { code: 'zh', name: '中文 (简体)' },
+    { code: 'hi', name: 'हिन्दी' },
+    { code: 'es', name: 'Español' },
+    { code: 'ar', name: 'العربية' },
+    { code: 'fr', name: 'Français' },
+    { code: 'pt', name: 'Português' },
+    { code: 'ru', name: 'Русский' },
+    { code: 'ja', name: '日本語' }
   ];
 
-  var FONTS = [
-    { id: 'default', label: 'Bawaan (Inter)', stack: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" },
-    { id: 'rounded', label: 'Membulat', stack: "ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif" },
-    { id: 'humanis', label: 'Humanis', stack: "Verdana, Tahoma, Geneva, sans-serif" },
-    { id: 'kompak', label: 'Kompak', stack: "'Arial Narrow', 'Segoe UI', Arial, sans-serif" },
-    { id: 'serif', label: 'Serif', stack: "Georgia, 'Times New Roman', Times, serif" },
-    { id: 'klasik', label: 'Klasik', stack: "'Times New Roman', Times, Georgia, serif" },
-    { id: 'mono', label: 'Monospace', stack: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace" }
-  ];
-  var CUSTOM_STACK = "'BMCustom', 'Inter', sans-serif";
-  var MAX_FONT_BYTES = 10 * 1024 * 1024;
+  var T = {};
+  T.id = {
+    back: "Kembali", close: "Tutup",
+    preview_title: "Pratinjau tampilan", preview_sub: "Warna dan font yang kamu pilih langsung terlihat di sini.", pv_btn: "Simpan",
+    lang_title: "Bahasa", lang_hint: "Bahasa tampilan halaman ini.", lang_sheet: "Pilih bahasa", lang_default: "Default perangkat",
+    color_title: "Warna sistem", color_hint: "Dipakai untuk tombol, penanda, dan aksen di dashboard admin.", color_custom: "Warna custom",
+    color_hint2: "Ketuk lingkaran warna atau ketik kode hex.", pick_aria: "Pilih warna custom",
+    font_title: "Font", font_hint: "Berlaku untuk semua teks di dashboard admin.",
+    f_default: "Bawaan (Inter)", f_rounded: "Membulat", f_humanis: "Humanis", f_kompak: "Kompak", f_klasik: "Klasik",
+    sample: "Catatan transaksi 1.250.000",
+    cf_title: "Font custom", cf_hint: "Pilih file font dari penyimpanan HP (.ttf, .otf, .woff, .woff2). Ukuran maksimal 10 MB.",
+    cf_none: "Belum ada font custom.", cf_pick: "Pilih file font", cf_change: "Ganti file font", cf_remove: "Hapus font custom", cf_prefix: "Custom: ",
+    bold: "Teks tebal",
+    foot: "Pengaturan ini tersimpan di perangkat ini saja. Perangkat lain tidak ikut berubah.", reset: "Kembalikan ke bawaan",
+    m_loading: "Memuat font…", m_badfmt: "Format file tidak didukung. Pilih file .ttf, .otf, .woff, atau .woff2.",
+    m_big: "File terlalu besar (maksimal 10 MB).", m_read: "File tidak bisa dibaca. Coba pilih ulang.",
+    m_ok: "Font custom dipasang dan dipakai.", m_invalid: "File ini bukan font yang valid atau gagal disimpan. Coba file font lain.",
+    m_removed: "Font custom dihapus.", m_resetdone: "Semua pengaturan dikembalikan ke bawaan.",
+    m_loadfail: "Font custom gagal dimuat. Pilih ulang file font-nya.", confirm_reset: "Kembalikan warna dan font ke bawaan di perangkat ini?"
+  };
+  T.en = {
+    back: "Back", close: "Close",
+    preview_title: "Appearance preview", preview_sub: "The color and font you choose show up here right away.", pv_btn: "Save",
+    lang_title: "Language", lang_hint: "Display language for this page.", lang_sheet: "Choose language", lang_default: "Device default",
+    color_title: "System color", color_hint: "Used for buttons, markers, and accents in the admin dashboard.", color_custom: "Custom color",
+    color_hint2: "Tap the color circle or type a hex code.", pick_aria: "Pick a custom color",
+    font_title: "Font", font_hint: "Applies to all text in the admin dashboard.",
+    f_default: "Default (Inter)", f_rounded: "Rounded", f_humanis: "Humanist", f_kompak: "Compact", f_klasik: "Classic",
+    sample: "Transaction notes 1,250,000",
+    cf_title: "Custom font", cf_hint: "Choose a font file from your phone storage (.ttf, .otf, .woff, .woff2). Max 10 MB.",
+    cf_none: "No custom font yet.", cf_pick: "Choose font file", cf_change: "Change font file", cf_remove: "Remove custom font", cf_prefix: "Custom: ",
+    bold: "Bold text",
+    foot: "These settings are saved on this device only. Other devices won't change.", reset: "Reset to default",
+    m_loading: "Loading font…", m_badfmt: "Unsupported file format. Choose a .ttf, .otf, .woff, or .woff2 file.",
+    m_big: "File is too large (max 10 MB).", m_read: "Couldn't read the file. Try choosing it again.",
+    m_ok: "Custom font installed and in use.", m_invalid: "This isn't a valid font or it couldn't be saved. Try another font file.",
+    m_removed: "Custom font removed.", m_resetdone: "All settings were reset to default.",
+    m_loadfail: "Couldn't load the custom font. Choose the font file again.", confirm_reset: "Reset color and font to default on this device?"
+  };
+  T.ms = {
+    back: "Kembali", close: "Tutup",
+    preview_title: "Pratonton paparan", preview_sub: "Warna dan fon yang anda pilih terus kelihatan di sini.", pv_btn: "Simpan",
+    lang_title: "Bahasa", lang_hint: "Bahasa paparan halaman ini.", lang_sheet: "Pilih bahasa", lang_default: "Lalai peranti",
+    color_title: "Warna sistem", color_hint: "Digunakan untuk butang, penanda dan aksen dalam papan pemuka admin.", color_custom: "Warna tersuai",
+    color_hint2: "Ketik bulatan warna atau taip kod hex.", pick_aria: "Pilih warna tersuai",
+    font_title: "Fon", font_hint: "Terpakai pada semua teks dalam papan pemuka admin.",
+    f_default: "Lalai (Inter)", f_rounded: "Bulat", f_humanis: "Humanis", f_kompak: "Padat", f_klasik: "Klasik",
+    sample: "Nota transaksi 1,250,000",
+    cf_title: "Fon tersuai", cf_hint: "Pilih fail fon daripada storan telefon (.ttf, .otf, .woff, .woff2). Maksimum 10 MB.",
+    cf_none: "Belum ada fon tersuai.", cf_pick: "Pilih fail fon", cf_change: "Tukar fail fon", cf_remove: "Padam fon tersuai", cf_prefix: "Tersuai: ",
+    bold: "Teks tebal",
+    foot: "Tetapan ini disimpan pada peranti ini sahaja. Peranti lain tidak berubah.", reset: "Set semula kepada lalai",
+    m_loading: "Memuatkan fon…", m_badfmt: "Format fail tidak disokong. Pilih fail .ttf, .otf, .woff atau .woff2.",
+    m_big: "Fail terlalu besar (maksimum 10 MB).", m_read: "Fail tidak dapat dibaca. Cuba pilih semula.",
+    m_ok: "Fon tersuai dipasang dan digunakan.", m_invalid: "Ini bukan fon yang sah atau gagal disimpan. Cuba fail fon lain.",
+    m_removed: "Fon tersuai dipadam.", m_resetdone: "Semua tetapan dikembalikan kepada lalai.",
+    m_loadfail: "Fon tersuai gagal dimuatkan. Pilih semula fail fon.", confirm_reset: "Set semula warna dan fon kepada lalai pada peranti ini?"
+  };
+  T.zh = {
+    back: "返回", close: "关闭",
+    preview_title: "外观预览", preview_sub: "你选择的颜色和字体会立即显示在这里。", pv_btn: "保存",
+    lang_title: "语言", lang_hint: "此页面的显示语言。", lang_sheet: "选择语言", lang_default: "跟随设备",
+    color_title: "系统颜色", color_hint: "用于管理后台的按钮、标记和强调色。", color_custom: "自定义颜色",
+    color_hint2: "点按色圈或输入十六进制代码。", pick_aria: "选择自定义颜色",
+    font_title: "字体", font_hint: "应用于管理后台的所有文字。",
+    f_default: "默认 (Inter)", f_rounded: "圆体", f_humanis: "人文体", f_kompak: "紧凑体", f_klasik: "经典体",
+    sample: "交易备注 1,250,000",
+    cf_title: "自定义字体", cf_hint: "从手机存储中选择字体文件（.ttf、.otf、.woff、.woff2），最大 10 MB。",
+    cf_none: "尚未设置自定义字体。", cf_pick: "选择字体文件", cf_change: "更换字体文件", cf_remove: "删除自定义字体", cf_prefix: "自定义：",
+    bold: "粗体文字",
+    foot: "这些设置仅保存在此设备上，其他设备不会改变。", reset: "恢复默认",
+    m_loading: "正在加载字体…", m_badfmt: "不支持该文件格式。请选择 .ttf、.otf、.woff 或 .woff2 文件。",
+    m_big: "文件过大（最大 10 MB）。", m_read: "无法读取文件，请重新选择。",
+    m_ok: "自定义字体已安装并启用。", m_invalid: "这不是有效的字体，或保存失败。请换一个字体文件。",
+    m_removed: "已删除自定义字体。", m_resetdone: "所有设置已恢复默认。",
+    m_loadfail: "自定义字体加载失败，请重新选择字体文件。", confirm_reset: "要在此设备上将颜色和字体恢复默认吗？"
+  };
+  T.hi = {
+    back: "वापस", close: "बंद करें",
+    preview_title: "दिखावट का पूर्वावलोकन", preview_sub: "आप जो रंग और फ़ॉन्ट चुनते हैं, वे तुरंत यहाँ दिखते हैं।", pv_btn: "सहेजें",
+    lang_title: "भाषा", lang_hint: "इस पेज की प्रदर्शन भाषा।", lang_sheet: "भाषा चुनें", lang_default: "डिवाइस डिफ़ॉल्ट",
+    color_title: "सिस्टम का रंग", color_hint: "एडमिन डैशबोर्ड में बटन, मार्कर और एक्सेंट के लिए उपयोग होता है।", color_custom: "कस्टम रंग",
+    color_hint2: "रंग के गोले पर टैप करें या हेक्स कोड लिखें।", pick_aria: "कस्टम रंग चुनें",
+    font_title: "फ़ॉन्ट", font_hint: "एडमिन डैशबोर्ड के सभी टेक्स्ट पर लागू होता है।",
+    f_default: "डिफ़ॉल्ट (Inter)", f_rounded: "गोलाकार", f_humanis: "ह्यूमनिस्ट", f_kompak: "कॉम्पैक्ट", f_klasik: "क्लासिक",
+    sample: "लेन-देन नोट 1,250,000",
+    cf_title: "कस्टम फ़ॉन्ट", cf_hint: "फ़ोन स्टोरेज से फ़ॉन्ट फ़ाइल चुनें (.ttf, .otf, .woff, .woff2)। अधिकतम 10 MB।",
+    cf_none: "अभी कोई कस्टम फ़ॉन्ट नहीं है।", cf_pick: "फ़ॉन्ट फ़ाइल चुनें", cf_change: "फ़ॉन्ट फ़ाइल बदलें", cf_remove: "कस्टम फ़ॉन्ट हटाएँ", cf_prefix: "कस्टम: ",
+    bold: "बोल्ड टेक्स्ट",
+    foot: "ये सेटिंग्स केवल इसी डिवाइस पर सहेजी जाती हैं। दूसरे डिवाइस नहीं बदलेंगे।", reset: "डिफ़ॉल्ट पर रीसेट करें",
+    m_loading: "फ़ॉन्ट लोड हो रहा है…", m_badfmt: "फ़ाइल फ़ॉर्मेट समर्थित नहीं है। .ttf, .otf, .woff या .woff2 फ़ाइल चुनें।",
+    m_big: "फ़ाइल बहुत बड़ी है (अधिकतम 10 MB)।", m_read: "फ़ाइल पढ़ी नहीं जा सकी। फिर से चुनकर देखें।",
+    m_ok: "कस्टम फ़ॉन्ट जोड़ा गया और उपयोग में है।", m_invalid: "यह मान्य फ़ॉन्ट नहीं है या सहेजा नहीं जा सका। दूसरी फ़ॉन्ट फ़ाइल आज़माएँ।",
+    m_removed: "कस्टम फ़ॉन्ट हटाया गया।", m_resetdone: "सभी सेटिंग्स डिफ़ॉल्ट पर रीसेट हो गईं।",
+    m_loadfail: "कस्टम फ़ॉन्ट लोड नहीं हुआ। फ़ॉन्ट फ़ाइल फिर से चुनें।", confirm_reset: "इस डिवाइस पर रंग और फ़ॉन्ट डिफ़ॉल्ट पर रीसेट करें?"
+  };
+  T.es = {
+    back: "Atrás", close: "Cerrar",
+    preview_title: "Vista previa", preview_sub: "El color y la fuente que elijas se ven aquí al instante.", pv_btn: "Guardar",
+    lang_title: "Idioma", lang_hint: "Idioma de esta página.", lang_sheet: "Elegir idioma", lang_default: "Predeterminado del dispositivo",
+    color_title: "Color del sistema", color_hint: "Se usa en botones, marcadores y acentos del panel de administración.", color_custom: "Color personalizado",
+    color_hint2: "Toca el círculo de color o escribe un código hex.", pick_aria: "Elegir color personalizado",
+    font_title: "Fuente", font_hint: "Se aplica a todo el texto del panel de administración.",
+    f_default: "Predeterminada (Inter)", f_rounded: "Redondeada", f_humanis: "Humanista", f_kompak: "Compacta", f_klasik: "Clásica",
+    sample: "Notas de transacción 1.250.000",
+    cf_title: "Fuente personalizada", cf_hint: "Elige un archivo de fuente del almacenamiento del teléfono (.ttf, .otf, .woff, .woff2). Máximo 10 MB.",
+    cf_none: "Aún no hay fuente personalizada.", cf_pick: "Elegir archivo de fuente", cf_change: "Cambiar archivo de fuente", cf_remove: "Quitar fuente personalizada", cf_prefix: "Personalizada: ",
+    bold: "Texto en negrita",
+    foot: "Estos ajustes se guardan solo en este dispositivo. Los demás no cambian.", reset: "Restablecer valores",
+    m_loading: "Cargando fuente…", m_badfmt: "Formato no compatible. Elige un archivo .ttf, .otf, .woff o .woff2.",
+    m_big: "El archivo es demasiado grande (máx. 10 MB).", m_read: "No se pudo leer el archivo. Vuelve a elegirlo.",
+    m_ok: "Fuente personalizada instalada y en uso.", m_invalid: "No es una fuente válida o no se pudo guardar. Prueba con otro archivo.",
+    m_removed: "Fuente personalizada eliminada.", m_resetdone: "Todos los ajustes se restablecieron.",
+    m_loadfail: "No se pudo cargar la fuente personalizada. Elige el archivo otra vez.", confirm_reset: "¿Restablecer el color y la fuente en este dispositivo?"
+  };
+  T.ar = {
+    back: "رجوع", close: "إغلاق",
+    preview_title: "معاينة المظهر", preview_sub: "يظهر اللون والخط الذي تختاره هنا فورًا.", pv_btn: "حفظ",
+    lang_title: "اللغة", lang_hint: "لغة عرض هذه الصفحة.", lang_sheet: "اختر اللغة", lang_default: "افتراضي الجهاز",
+    color_title: "لون النظام", color_hint: "يُستخدم للأزرار والعلامات والتمييز في لوحة الإدارة.", color_custom: "لون مخصص",
+    color_hint2: "المس دائرة اللون أو اكتب رمز hex.", pick_aria: "اختيار لون مخصص",
+    font_title: "الخط", font_hint: "ينطبق على كل النصوص في لوحة الإدارة.",
+    f_default: "افتراضي (Inter)", f_rounded: "مستدير", f_humanis: "إنساني", f_kompak: "مضغوط", f_klasik: "كلاسيكي",
+    sample: "ملاحظات المعاملة 1,250,000",
+    cf_title: "خط مخصص", cf_hint: "اختر ملف خط من مساحة تخزين هاتفك (.ttf أو .otf أو .woff أو .woff2). الحد الأقصى 10 ميغابايت.",
+    cf_none: "لا يوجد خط مخصص بعد.", cf_pick: "اختيار ملف الخط", cf_change: "تغيير ملف الخط", cf_remove: "إزالة الخط المخصص", cf_prefix: "مخصص: ",
+    bold: "نص عريض",
+    foot: "تُحفظ هذه الإعدادات على هذا الجهاز فقط. لن تتغير الأجهزة الأخرى.", reset: "إعادة الضبط إلى الافتراضي",
+    m_loading: "جارٍ تحميل الخط…", m_badfmt: "تنسيق الملف غير مدعوم. اختر ملف .ttf أو .otf أو .woff أو .woff2.",
+    m_big: "الملف كبير جدًا (الحد الأقصى 10 ميغابايت).", m_read: "تعذّرت قراءة الملف. حاول اختياره مرة أخرى.",
+    m_ok: "تم تثبيت الخط المخصص وهو قيد الاستخدام.", m_invalid: "هذا ليس خطًا صالحًا أو تعذّر حفظه. جرّب ملف خط آخر.",
+    m_removed: "تمت إزالة الخط المخصص.", m_resetdone: "تمت إعادة كل الإعدادات إلى الافتراضي.",
+    m_loadfail: "تعذّر تحميل الخط المخصص. اختر ملف الخط مرة أخرى.", confirm_reset: "هل تريد إعادة اللون والخط إلى الافتراضي على هذا الجهاز؟"
+  };
+  T.fr = {
+    back: "Retour", close: "Fermer",
+    preview_title: "Aperçu de l'apparence", preview_sub: "La couleur et la police choisies s'affichent ici immédiatement.", pv_btn: "Enregistrer",
+    lang_title: "Langue", lang_hint: "Langue d'affichage de cette page.", lang_sheet: "Choisir la langue", lang_default: "Par défaut de l'appareil",
+    color_title: "Couleur du système", color_hint: "Utilisée pour les boutons, repères et accents du tableau de bord admin.", color_custom: "Couleur personnalisée",
+    color_hint2: "Touchez le cercle de couleur ou saisissez un code hex.", pick_aria: "Choisir une couleur personnalisée",
+    font_title: "Police", font_hint: "S'applique à tout le texte du tableau de bord admin.",
+    f_default: "Par défaut (Inter)", f_rounded: "Arrondie", f_humanis: "Humaniste", f_kompak: "Compacte", f_klasik: "Classique",
+    sample: "Notes de transaction 1 250 000",
+    cf_title: "Police personnalisée", cf_hint: "Choisissez un fichier de police dans le stockage du téléphone (.ttf, .otf, .woff, .woff2). 10 Mo maximum.",
+    cf_none: "Aucune police personnalisée pour l'instant.", cf_pick: "Choisir un fichier de police", cf_change: "Changer de fichier de police", cf_remove: "Supprimer la police personnalisée", cf_prefix: "Personnalisée : ",
+    bold: "Texte en gras",
+    foot: "Ces réglages sont enregistrés sur cet appareil uniquement. Les autres appareils ne changent pas.", reset: "Rétablir les valeurs par défaut",
+    m_loading: "Chargement de la police…", m_badfmt: "Format non pris en charge. Choisissez un fichier .ttf, .otf, .woff ou .woff2.",
+    m_big: "Fichier trop volumineux (10 Mo maximum).", m_read: "Impossible de lire le fichier. Sélectionnez-le à nouveau.",
+    m_ok: "Police personnalisée installée et activée.", m_invalid: "Police invalide ou enregistrement impossible. Essayez un autre fichier.",
+    m_removed: "Police personnalisée supprimée.", m_resetdone: "Tous les réglages ont été rétablis.",
+    m_loadfail: "Impossible de charger la police personnalisée. Choisissez à nouveau le fichier.", confirm_reset: "Rétablir la couleur et la police par défaut sur cet appareil ?"
+  };
+  T.pt = {
+    back: "Voltar", close: "Fechar",
+    preview_title: "Pré-visualização", preview_sub: "A cor e a fonte que você escolher aparecem aqui na hora.", pv_btn: "Salvar",
+    lang_title: "Idioma", lang_hint: "Idioma de exibição desta página.", lang_sheet: "Escolher idioma", lang_default: "Padrão do dispositivo",
+    color_title: "Cor do sistema", color_hint: "Usada em botões, marcadores e destaques do painel de administração.", color_custom: "Cor personalizada",
+    color_hint2: "Toque no círculo de cor ou digite um código hex.", pick_aria: "Escolher cor personalizada",
+    font_title: "Fonte", font_hint: "Aplica-se a todo o texto do painel de administração.",
+    f_default: "Padrão (Inter)", f_rounded: "Arredondada", f_humanis: "Humanista", f_kompak: "Compacta", f_klasik: "Clássica",
+    sample: "Notas de transação 1.250.000",
+    cf_title: "Fonte personalizada", cf_hint: "Escolha um arquivo de fonte do armazenamento do celular (.ttf, .otf, .woff, .woff2). Máximo de 10 MB.",
+    cf_none: "Nenhuma fonte personalizada ainda.", cf_pick: "Escolher arquivo de fonte", cf_change: "Trocar arquivo de fonte", cf_remove: "Remover fonte personalizada", cf_prefix: "Personalizada: ",
+    bold: "Texto em negrito",
+    foot: "Estas configurações ficam salvas só neste dispositivo. Os outros não mudam.", reset: "Restaurar padrão",
+    m_loading: "Carregando fonte…", m_badfmt: "Formato não suportado. Escolha um arquivo .ttf, .otf, .woff ou .woff2.",
+    m_big: "Arquivo grande demais (máx. 10 MB).", m_read: "Não foi possível ler o arquivo. Tente escolher de novo.",
+    m_ok: "Fonte personalizada instalada e em uso.", m_invalid: "Fonte inválida ou não foi possível salvar. Tente outro arquivo.",
+    m_removed: "Fonte personalizada removida.", m_resetdone: "Todas as configurações foram restauradas.",
+    m_loadfail: "Não foi possível carregar a fonte personalizada. Escolha o arquivo de novo.", confirm_reset: "Restaurar cor e fonte padrão neste dispositivo?"
+  };
+  T.ru = {
+    back: "Назад", close: "Закрыть",
+    preview_title: "Предпросмотр", preview_sub: "Выбранные цвет и шрифт сразу отображаются здесь.", pv_btn: "Сохранить",
+    lang_title: "Язык", lang_hint: "Язык интерфейса этой страницы.", lang_sheet: "Выберите язык", lang_default: "Как на устройстве",
+    color_title: "Цвет системы", color_hint: "Применяется к кнопкам, меткам и акцентам в панели администратора.", color_custom: "Свой цвет",
+    color_hint2: "Нажмите на цветной круг или введите hex-код.", pick_aria: "Выбрать свой цвет",
+    font_title: "Шрифт", font_hint: "Применяется ко всему тексту в панели администратора.",
+    f_default: "По умолчанию (Inter)", f_rounded: "Округлый", f_humanis: "Гуманистический", f_kompak: "Узкий", f_klasik: "Классический",
+    sample: "Заметки о транзакциях 1 250 000",
+    cf_title: "Свой шрифт", cf_hint: "Выберите файл шрифта в памяти телефона (.ttf, .otf, .woff, .woff2). Максимум 10 МБ.",
+    cf_none: "Своего шрифта пока нет.", cf_pick: "Выбрать файл шрифта", cf_change: "Заменить файл шрифта", cf_remove: "Удалить свой шрифт", cf_prefix: "Свой: ",
+    bold: "Жирный текст",
+    foot: "Эти настройки сохраняются только на этом устройстве. На других устройствах ничего не изменится.", reset: "Сбросить по умолчанию",
+    m_loading: "Загрузка шрифта…", m_badfmt: "Формат файла не поддерживается. Выберите файл .ttf, .otf, .woff или .woff2.",
+    m_big: "Файл слишком большой (максимум 10 МБ).", m_read: "Не удалось прочитать файл. Выберите его ещё раз.",
+    m_ok: "Свой шрифт установлен и используется.", m_invalid: "Это не шрифт или его не удалось сохранить. Попробуйте другой файл.",
+    m_removed: "Свой шрифт удалён.", m_resetdone: "Все настройки сброшены.",
+    m_loadfail: "Не удалось загрузить свой шрифт. Выберите файл ещё раз.", confirm_reset: "Сбросить цвет и шрифт на этом устройстве?"
+  };
+  T.ja = {
+    back: "戻る", close: "閉じる",
+    preview_title: "表示プレビュー", preview_sub: "選んだ色とフォントがここにすぐ反映されます。", pv_btn: "保存",
+    lang_title: "言語", lang_hint: "このページの表示言語です。", lang_sheet: "言語を選択", lang_default: "端末の設定に合わせる",
+    color_title: "システムカラー", color_hint: "管理ダッシュボードのボタン、マーカー、アクセントに使われます。", color_custom: "カスタムカラー",
+    color_hint2: "色の円をタップするか、16進コードを入力してください。", pick_aria: "カスタムカラーを選ぶ",
+    font_title: "フォント", font_hint: "管理ダッシュボードのすべての文字に適用されます。",
+    f_default: "標準 (Inter)", f_rounded: "丸ゴシック", f_humanis: "ヒューマニスト", f_kompak: "コンパクト", f_klasik: "クラシック",
+    sample: "取引メモ 1,250,000",
+    cf_title: "カスタムフォント", cf_hint: "スマホのストレージからフォントファイル（.ttf、.otf、.woff、.woff2）を選びます。最大10MB。",
+    cf_none: "カスタムフォントはまだありません。", cf_pick: "フォントファイルを選ぶ", cf_change: "フォントファイルを変更", cf_remove: "カスタムフォントを削除", cf_prefix: "カスタム：",
+    bold: "太字",
+    foot: "この設定はこの端末にだけ保存されます。他の端末は変わりません。", reset: "初期設定に戻す",
+    m_loading: "フォントを読み込み中…", m_badfmt: "このファイル形式には対応していません。.ttf、.otf、.woff、.woff2 のいずれかを選んでください。",
+    m_big: "ファイルが大きすぎます（最大10MB）。", m_read: "ファイルを読み込めませんでした。もう一度選んでください。",
+    m_ok: "カスタムフォントを設定しました。", m_invalid: "有効なフォントではないか、保存できませんでした。別のファイルを試してください。",
+    m_removed: "カスタムフォントを削除しました。", m_resetdone: "すべての設定を初期状態に戻しました。",
+    m_loadfail: "カスタムフォントを読み込めませんでした。ファイルをもう一度選んでください。", confirm_reset: "この端末の色とフォントを初期状態に戻しますか？"
+  };
 
+  var RTL = { ar: true };
+
+  /* ---------- Util ---------- */
   var $ = function (id) { return document.getElementById(id); };
-
   function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  function langExists(code) {
+    for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return true;
+    return false;
+  }
+  function detectLang() {
+    var list = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'id'];
+    for (var i = 0; i < list.length; i++) {
+      var c = String(list[i]).toLowerCase().split('-')[0];
+      if (c === 'in') c = 'id';
+      if (langExists(c)) return c;
+    }
+    return 'id';
+  }
+
+  var langPref = lsGet('bm-lang');
+  if (langPref !== 'default' && !langExists(langPref)) langPref = 'default';
+  function curLang() { return langPref === 'default' ? detectLang() : langPref; }
+  function t(key) {
+    var d = T[curLang()] || T.id;
+    return d[key] != null ? d[key] : T.id[key];
+  }
 
   /* ---------- IndexedDB untuk file font ---------- */
   function idbOpen() {
@@ -331,6 +646,15 @@
   var idbDel = function (key) { return idbRun('readwrite', function (s) { return s.delete(key); }); };
 
   /* ---------- Warna ---------- */
+  var DEFAULT_ACCENT = '#F0A529';
+  var PALETTE = [
+    ['Pink', '#FF5C9D'], ['Pink muda', '#FF8FB8'], ['Magenta', '#E0409A'], ['Merah', '#F0555C'],
+    ['Peach', '#FFA98A'], ['Oranye', '#FF7A3D'], ['Kuning', '#F0A529'], ['Emas', '#E8C23A'],
+    ['Lime', '#A3DB3D'], ['Hijau', '#34C77B'], ['Tosca', '#1FC8B0'], ['Cyan', '#2BC4E8'],
+    ['Biru', '#3D8BFF'], ['Indigo', '#5B6CFF'], ['Ungu', '#9B6BFF'], ['Lavender', '#B79CFF'],
+    ['Coklat', '#B07A4F'], ['Abu-abu', '#9AA0A6']
+  ];
+
   function normalizeHex(v) {
     v = (v || '').trim();
     if (v.charAt(0) !== '#') v = '#' + v;
@@ -374,7 +698,7 @@
       b.style.setProperty('--c', p[1]);
       b.style.setProperty('--tick', isLight(p[1]) ? '#1C1B19' : '#FFFFFF');
       b.dataset.hex = p[1];
-      b.setAttribute('aria-label', p[0]);
+      b.setAttribute('aria-label', p[1]);
       b.setAttribute('aria-pressed', 'false');
       b.addEventListener('click', function () {
         saveAccent(p[1]);
@@ -404,9 +728,20 @@
   });
 
   /* ---------- Font ---------- */
+  var FONTS = [
+    { id: 'default', k: 'f_default', stack: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" },
+    { id: 'rounded', k: 'f_rounded', stack: "ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif" },
+    { id: 'humanis', k: 'f_humanis', stack: "Verdana, Tahoma, Geneva, sans-serif" },
+    { id: 'kompak', k: 'f_kompak', stack: "'Arial Narrow', 'Segoe UI', Arial, sans-serif" },
+    { id: 'serif', label: 'Serif', stack: "Georgia, 'Times New Roman', Times, serif" },
+    { id: 'klasik', k: 'f_klasik', stack: "'Times New Roman', Times, Georgia, serif" },
+    { id: 'mono', label: 'Monospace', stack: "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace" }
+  ];
+  var CUSTOM_STACK = "'BMCustom', 'Inter', sans-serif";
+  var MAX_FONT_BYTES = 10 * 1024 * 1024;
+
   var fontId = lsGet('bm-font') || 'default';
   var customName = lsGet('bm-font-custom-name') || '';
-  var customReady = false;
 
   function stackFor(id) {
     if (id === 'custom') return CUSTOM_STACK;
@@ -441,7 +776,7 @@
     b.innerHTML = '<span><div class="fo-name"></div><div class="fo-sample"></div></span><span class="radio"></span>';
     b.querySelector('.fo-name').textContent = label;
     var s = b.querySelector('.fo-sample');
-    s.textContent = 'Catatan transaksi 1.250.000';
+    s.textContent = t('sample');
     s.style.fontFamily = stack;
     b.addEventListener('click', function () { saveFont(id); });
     $('fonts').appendChild(b);
@@ -449,20 +784,14 @@
   }
 
   function buildFontList() {
-    FONTS.forEach(function (f) { addFontOption(f.id, f.label, f.stack); });
-  }
-  function refreshCustomOption() {
-    var existing = $('fonts').querySelector('[data-id="custom"]');
-    if (existing) existing.remove();
-    if (customName) addFontOption('custom', 'Custom: ' + customName, CUSTOM_STACK);
+    $('fonts').innerHTML = '';
+    FONTS.forEach(function (f) { addFontOption(f.id, f.k ? t(f.k) : f.label, f.stack); });
+    if (customName) addFontOption('custom', t('cf_prefix') + customName, CUSTOM_STACK);
   }
 
   function loadCustomFont(buffer) {
     var face = new FontFace('BMCustom', buffer);
-    return face.load().then(function (loaded) {
-      document.fonts.add(loaded);
-      customReady = true;
-    });
+    return face.load().then(function (loaded) { document.fonts.add(loaded); });
   }
 
   function renderCustomInfo() {
@@ -470,12 +799,12 @@
     if (customName) {
       info.className = 'file-name';
       info.textContent = customName;
-      $('btnPickFont').textContent = 'Ganti file font';
+      $('btnPickFont').textContent = t('cf_change');
       $('btnRemoveFont').hidden = false;
     } else {
       info.className = 'msg';
-      info.textContent = 'Belum ada font custom.';
-      $('btnPickFont').textContent = 'Pilih file font';
+      info.textContent = t('cf_none');
+      $('btnPickFont').textContent = t('cf_pick');
       $('btnRemoveFont').hidden = true;
     }
   }
@@ -491,17 +820,11 @@
     var file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    if (!/\.(ttf|otf|woff2?)$/i.test(file.name)) {
-      setMsg('Format file tidak didukung. Pilih file .ttf, .otf, .woff, atau .woff2.', 'err');
-      return;
-    }
-    if (file.size > MAX_FONT_BYTES) {
-      setMsg('File terlalu besar (maksimal 10 MB).', 'err');
-      return;
-    }
-    setMsg('Memuat font…');
+    if (!/\.(ttf|otf|woff2?)$/i.test(file.name)) { setMsg(t('m_badfmt'), 'err'); return; }
+    if (file.size > MAX_FONT_BYTES) { setMsg(t('m_big'), 'err'); return; }
+    setMsg(t('m_loading'));
     var reader = new FileReader();
-    reader.onerror = function () { setMsg('File tidak bisa dibaca. Coba pilih ulang.', 'err'); };
+    reader.onerror = function () { setMsg(t('m_read'), 'err'); };
     reader.onload = function () {
       var buffer = reader.result;
       loadCustomFont(buffer.slice(0)).then(function () {
@@ -509,12 +832,12 @@
       }).then(function () {
         customName = file.name;
         lsSet('bm-font-custom-name', customName);
-        refreshCustomOption();
+        buildFontList();
         renderCustomInfo();
         saveFont('custom');
-        setMsg('Font custom dipasang dan dipakai.', 'ok');
+        setMsg(t('m_ok'), 'ok');
       }).catch(function () {
-        setMsg('File ini bukan font yang valid atau gagal disimpan. Coba file font lain.', 'err');
+        setMsg(t('m_invalid'), 'err');
       });
     };
     reader.readAsArrayBuffer(file);
@@ -523,12 +846,12 @@
   $('btnRemoveFont').addEventListener('click', function () {
     idbDel('custom').catch(function () {});
     customName = '';
-    customReady = false;
     lsDel('bm-font-custom-name');
-    refreshCustomOption();
+    if (fontId === 'custom') { fontId = 'default'; lsDel('bm-font'); }
+    buildFontList();
     renderCustomInfo();
-    if (fontId === 'custom') saveFont('default');
-    setMsg('Font custom dihapus.', 'ok');
+    applyFont(fontId);
+    setMsg(t('m_removed'), 'ok');
   });
 
   /* ---------- Teks tebal ---------- */
@@ -539,21 +862,139 @@
     document.body.classList.toggle('bold-mode', e.target.checked);
   });
 
+  /* ---------- Bahasa ---------- */
+  function langLabel() {
+    if (langPref === 'default') return t('lang_default');
+    for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === langPref) return LANGS[i].name;
+    return '';
+  }
+
+  function applyI18n() {
+    var code = curLang();
+    var root = document.documentElement;
+    root.lang = code;
+    root.dir = RTL[code] ? 'rtl' : 'ltr';
+
+    var nodes = document.querySelectorAll('[data-i18n]');
+    for (var i = 0; i < nodes.length; i++) nodes[i].textContent = t(nodes[i].getAttribute('data-i18n'));
+    var aria = document.querySelectorAll('[data-i18n-aria]');
+    for (var j = 0; j < aria.length; j++) aria[j].setAttribute('aria-label', t(aria[j].getAttribute('data-i18n-aria')));
+
+    $('langValue').textContent = langLabel();
+    buildFontList();
+    renderCustomInfo();
+    applyFont(fontId);
+    buildLangList();
+  }
+
+  function addLangOption(value, name, sub) {
+    var checked = langPref === value;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'lang-opt';
+    b.dataset.value = value;
+    b.setAttribute('role', 'radio');
+    b.setAttribute('aria-checked', checked ? 'true' : 'false');
+    b.innerHTML = '<span><div class="lo-name"></div><div class="lo-sub"></div></span><span class="radio"></span>';
+    b.querySelector('.lo-name').textContent = name;
+    var subEl = b.querySelector('.lo-sub');
+    if (sub) subEl.textContent = sub; else subEl.remove();
+    b.addEventListener('click', function () { chooseLang(value); });
+    $('langList').appendChild(b);
+  }
+
+  function nativeNameOf(code) {
+    for (var i = 0; i < LANGS.length; i++) if (LANGS[i].code === code) return LANGS[i].name;
+    return '';
+  }
+
+  function buildLangList() {
+    $('langList').innerHTML = '';
+    addLangOption('default', t('lang_default'), nativeNameOf(detectLang()));
+    LANGS.forEach(function (l) { addLangOption(l.code, l.name, ''); });
+  }
+
+  function chooseLang(value) {
+    langPref = value;
+    if (value === 'default') lsDel('bm-lang'); else lsSet('bm-lang', value);
+    setMsg('');
+    applyI18n();
+    setTimeout(closeSheet, 160);
+  }
+
+  /* ---------- Bottom sheet ---------- */
+  var sheet = $('langSheet'), overlay = $('sheetOverlay');
+  var sheetOpen = false;
+
+  function openSheet() {
+    if (sheetOpen) return;
+    sheetOpen = true;
+    sheet.style.transform = '';
+    sheet.classList.add('open');
+    sheet.setAttribute('aria-hidden', 'false');
+    overlay.classList.add('open');
+    document.body.classList.add('sheet-open');
+    var sel = $('langList').querySelector('[aria-checked="true"]');
+    if (sel) {
+      try { sel.scrollIntoView({ block: 'center' }); } catch (e) {}
+      setTimeout(function () { sel.focus({ preventScroll: true }); }, 340);
+    }
+  }
+  function closeSheet() {
+    if (!sheetOpen) return;
+    sheetOpen = false;
+    sheet.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+    overlay.classList.remove('open');
+    document.body.classList.remove('sheet-open');
+    $('btnLang').focus({ preventScroll: true });
+  }
+
+  $('btnLang').addEventListener('click', openSheet);
+  $('sheetClose').addEventListener('click', closeSheet);
+  overlay.addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+
+  /* geser ke bawah pada handle untuk menutup */
+  (function () {
+    var h = $('sheetHandle'), drag = null;
+    h.addEventListener('pointerdown', function (e) {
+      drag = { y: e.clientY, dy: 0 };
+      sheet.style.transition = 'none';
+      try { h.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    h.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      drag.dy = Math.max(0, e.clientY - drag.y);
+      sheet.style.transform = 'translateY(' + drag.dy + 'px)';
+    });
+    function end() {
+      if (!drag) return;
+      var dy = drag.dy;
+      drag = null;
+      sheet.style.transition = '';
+      sheet.style.transform = '';
+      if (dy > 90) closeSheet();
+    }
+    h.addEventListener('pointerup', end);
+    h.addEventListener('pointercancel', end);
+  })();
+
   /* ---------- Reset ---------- */
   $('btnReset').addEventListener('click', function () {
-    if (!confirm('Kembalikan warna dan font ke bawaan di perangkat ini?')) return;
+    if (!confirm(t('confirm_reset'))) return;
     lsDel('bm-accent'); lsDel('bm-font'); lsDel('bm-font-bold'); lsDel('bm-font-custom-name');
     idbDel('custom').catch(function () {});
-    accent = DEFAULT_ACCENT; fontId = 'default'; customName = ''; customReady = false;
+    accent = DEFAULT_ACCENT; fontId = 'default'; customName = '';
     $('boldToggle').checked = false;
     document.body.classList.remove('bold-mode');
     $('hexInput').value = '';
     $('hexInput').classList.remove('bad');
-    refreshCustomOption();
+    buildFontList();
     renderCustomInfo();
     applyAccent(accent);
     applyFont(fontId);
-    setMsg('Semua pengaturan dikembalikan ke bawaan.', 'ok');
+    setMsg(t('m_resetdone'), 'ok');
   });
 
   /* ---------- Kembali ke dashboard (buka lagi layar Settings) ---------- */
@@ -566,25 +1007,22 @@
   if (lsGet('bm-theme') === 'light') document.body.classList.add('theme-light');
 
   buildSwatches();
-  buildFontList();
-  refreshCustomOption();
-  renderCustomInfo();
   applyAccent(accent);
-  $('hexInput').value = accent === DEFAULT_ACCENT && !lsGet('bm-accent') ? '' : accent;
+  $('hexInput').value = lsGet('bm-accent') ? accent : '';
+  applyI18n();
 
   if (customName) {
     idbGet('custom').then(function (rec) {
       if (rec && rec.data) return loadCustomFont(rec.data.slice(0));
       customName = '';
       lsDel('bm-font-custom-name');
-      if (fontId === 'custom') saveFont('default');
-      refreshCustomOption();
+      if (fontId === 'custom') { fontId = 'default'; lsDel('bm-font'); }
+      buildFontList();
       renderCustomInfo();
     }).then(function () { applyFont(fontId); }).catch(function () {
-      setMsg('Font custom gagal dimuat. Pilih ulang file font-nya.', 'err');
+      setMsg(t('m_loadfail'), 'err');
     });
   }
-  applyFont(fontId);
 })();
 </script>
 </body>
