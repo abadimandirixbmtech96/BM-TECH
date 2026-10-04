@@ -822,7 +822,8 @@
   function goView(n) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $('view-' + n).classList.add('active');
-    $('bottomNav').style.display = n === 'home' ? 'flex' : 'none';
+    // sama seperti empat editor lain: nav terlihat di Home & Pengaturan, tersembunyi di Tambah / Detail / Sampah
+    $('bottomNav').style.display = (n === 'add' || n === 'detail' || n === 'trash') ? 'none' : 'flex';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === n));
     const sc = $('view-' + n).querySelector('.scroll'); if (sc) sc.scrollTop = 0;
     if (n !== 'add') $('addFields').innerHTML = '';
