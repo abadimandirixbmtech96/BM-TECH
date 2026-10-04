@@ -438,6 +438,12 @@
   .pickup-done{ font-size:12.5px; font-weight:700; color:var(--accent-ink); margin-top:8px; }
   body.surface-dark .pickup-done{ color:var(--accent); }
   .pickup-done:empty{ display:none; }
+  .pager{ display:flex; gap:8px; flex-shrink:0; }
+  .pager .icon-btn{ width:38px; height:38px; }
+  .pager .icon-btn:disabled{ opacity:0.35; cursor:default; }
+  .draft-bar{ display:none; align-items:center; justify-content:space-between; gap:10px; margin:0 0 14px; padding:10px 14px; border-radius:14px; background:var(--accent-soft); border:1.5px dashed var(--accent); font-size:12.5px; font-weight:700; color:var(--accent-ink); }
+  body.surface-dark .draft-bar{ color:var(--accent); }
+  .draft-bar button{ border:none; background:transparent; color:inherit; font-size:12.5px; font-weight:800; text-decoration:underline; cursor:pointer; padding:4px 6px; flex-shrink:0; }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
 
   /* ---------- Settings ---------- */
@@ -581,8 +587,10 @@
     <div class="topbar">
       <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="topbar-titles"><h2>Tambah Data</h2><span>Isi data sesuai kebutuhan</span></div>
+      <div class="pager"><button class="icon-btn" id="btnAddPrev" aria-label="Data sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><button class="icon-btn" id="btnAddNext" aria-label="Data berikutnya" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
     </div>
     <div class="scroll no-nav px">
+      <div class="draft-bar" id="draftBar"><span>Draft dipulihkan dari perangkat ini</span><button type="button" id="btnDraftDiscard">Buang draft</button></div>
       <div class="hint-card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         <span>PJ dan Barang wajib diisi. Barang Keluar, Stok Barang, Keterangan, dan Harga boleh menyusul lewat Edit — cocok kalau harga masih menunggu pengerjaan selesai.</span>
@@ -681,6 +689,7 @@
     <div class="topbar">
       <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="topbar-titles"><h2>Detail Data</h2><span id="detailSubtitle">&nbsp;</span></div>
+      <div class="pager"><button class="icon-btn" id="btnDetPrev" aria-label="Data sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><button class="icon-btn" id="btnDetNext" aria-label="Data berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
     </div>
     <div class="scroll no-nav px">
       <div class="detail-card">
@@ -1630,6 +1639,7 @@
     if (name === 'settings') renderSettings();
     if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
+    refreshPager();
   }
 
   document.getElementById('btnHomeBack').addEventListener('click', () => {
@@ -1726,6 +1736,7 @@
     document.getElementById('inputHarga').value = '';
     addBukti.reset();
     resetPickupForm();
+    restoreFormDraft();
   }
 
   // Saran nama PJ: dropdown kustom yang rapi (bukan <datalist> native — di
@@ -1898,6 +1909,7 @@
     const now = new Date().toISOString();
     records.push({ id: uid(), ...pendingNewRecord, created_at: now });
     pendingNewRecord = null;
+    clearFormDraft();
     closeOverlay('overlayConfirm');
     scheduleAutosave();
     goView('home');
@@ -2330,6 +2342,7 @@
   // tapi tidak menimpa kalau kamu sudah mengetik sendiri)
   let pickupAutoKet = '';
   let pickupAutoHarga = false;
+  let pendingPickupRestore = null; // pilihan barang dari draft, dipasang setelah kartu saran terisi
 
   function datesText(groups){ return [...new Set(groups.map(g => g.c.tgl))].join(', '); }
   function ketText(prefix, names){
@@ -2400,6 +2413,29 @@
     try { found = await findPickupCandidates(pj, cu); } catch (e) { console.warn('[pickup] pencarian gagal:', e); }
     if (seq !== pickupLookupSeq) return; // ada pencarian yang lebih baru
     setPickupCandidates(found);
+    applyPendingPickupRestore();
+  }
+
+  // Pulihkan pilihan "Ambil barang / Bayar saja" dari draft (hanya barang yang masih ditinggal)
+  function applyPendingPickupRestore(){
+    const pend = pendingPickupRestore;
+    pendingPickupRestore = null;
+    if (!pend || !pend.length) return;
+    const groups = [];
+    const checked = new Set();
+    pend.forEach(p => {
+      const c = pickupCandidates.find(x => x.noteId === p.noteId && x.recordId === p.recordId);
+      if (!c) return;
+      const items = c.items.filter(i => (p.keys || []).includes(i.key));
+      if (!items.length) return;
+      groups.push({ c, items });
+      items.forEach(i => checked.add(itemCk(c, i)));
+    });
+    if (!groups.length) return;
+    pickupChecked = checked;
+    pickupApplied = groups;
+    renderPickupCard();
+    gid('pickupDone').textContent = '\u2713 Pilihan dari draft dipulihkan';
   }
   ['inputPJ', 'inputCustomer'].forEach(id => {
     const el = gid(id);
@@ -2617,6 +2653,161 @@
     row.style.display = '';
     val.textContent = parts.join('\n');
   }
+
+  // =====================================================================
+  // PINDAH NOMOR (panah kiri/kanan) + DRAFT FORM TAMBAH DATA
+  //
+  //  Nomor data = urutan waktu (001, 002, ... N). Nomor N+1 = form "Tambah Data".
+  //  Panah kiri/kanan berpindah antar nomor itu:
+  //    - dari Tambah Data  : kiri -> data terakhir (N)
+  //    - dari Detail nomor p: kiri -> p-1, kanan -> p+1 (dari N, kanan = Tambah Data)
+  //
+  //  Isi form Tambah Data yang belum disimpan otomatis jadi DRAFT yang tersimpan
+  //  di perangkat ini (localStorage — tidak dikirim ke server dan tidak
+  //  terlihat di HP lain). Draft dipulihkan setiap kali Tambah Data dibuka lagi,
+  //  dan dihapus setelah datanya benar-benar tersimpan atau draft dibuang.
+  // =====================================================================
+  const FORM_FIELD_IDS = ['inputPJ', 'inputCustomer', 'inputBarang', 'inputBarangKeluar', 'inputStokBarang', 'inputKeterangan', 'inputHarga'];
+  let lastDraftJson = '';
+
+  function formDraftKey(){ return 'admdash_formdraft_' + (currentNoteId || 'new'); }
+
+  function readFormDraft(){
+    try {
+      const raw = localStorage.getItem(formDraftKey());
+      if (!raw) return null;
+      const d = JSON.parse(raw);
+      return (d && d.fields) ? d : null;
+    } catch (e) { return null; }
+  }
+
+  function formHasContent(){
+    return FORM_FIELD_IDS.some(id => String(gid(id).value || '').trim()) || addBukti.getUrls().length > 0;
+  }
+
+  function pickupDraftState(){
+    return {
+      mode: pickupMode,
+      autoKet: pickupAutoKet,
+      autoHarga: pickupAutoHarga,
+      applied: pickupApplied.map(g => ({ noteId: g.c.noteId, recordId: g.c.recordId, keys: g.items.map(i => i.key) }))
+    };
+  }
+
+  // Simpan isi form ke perangkat. Mengembalikan true kalau ada draft yang tersimpan.
+  function writeFormDraft(){
+    try {
+      if (!formHasContent()) {
+        localStorage.removeItem(formDraftKey());
+        lastDraftJson = '';
+        return false;
+      }
+      const d = { v: 1, fields: {}, bukti: addBukti.getUrls(), pickup: pickupDraftState() };
+      FORM_FIELD_IDS.forEach(id => { d.fields[id] = gid(id).value; });
+      const json = JSON.stringify(d);
+      if (json !== lastDraftJson) {
+        localStorage.setItem(formDraftKey(), JSON.stringify({ ...d, at: Date.now() }));
+        lastDraftJson = json;
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function clearFormDraft(){
+    try { localStorage.removeItem(formDraftKey()); } catch (e) {}
+    lastDraftJson = '';
+    const bar = gid('draftBar');
+    if (bar) bar.style.display = 'none';
+  }
+
+  // Dipanggil dari prepareAddForm() setelah form dikosongkan
+  function restoreFormDraft(){
+    const bar = gid('draftBar');
+    const d = readFormDraft();
+    if (!d) { bar.style.display = 'none'; lastDraftJson = ''; return false; }
+    FORM_FIELD_IDS.forEach(id => { gid(id).value = (d.fields && d.fields[id]) || ''; });
+    addBukti.setUrls(Array.isArray(d.bukti) ? d.bukti : []);
+    if (d.pickup) {
+      pickupMode = d.pickup.mode === 'bayar' ? 'bayar' : 'ambil';
+      pickupAutoKet = d.pickup.autoKet || '';
+      pickupAutoHarga = !!d.pickup.autoHarga;
+      pendingPickupRestore = Array.isArray(d.pickup.applied) ? d.pickup.applied : null;
+    }
+    bar.style.display = 'flex';
+    lastDraftJson = '';
+    if (typeof schedulePickupLookup === 'function') schedulePickupLookup(); // segarkan kartu "barang masih ditinggal"
+    return true;
+  }
+
+  function discardFormDraft(){
+    const urls = addBukti.getUrls();
+    if (urls.length) { try { deleteBuktiFromSupabase(urls.map(buktiPathFromUrl)); } catch (e) {} } // foto draft ikut dibuang
+    clearFormDraft();
+    prepareAddForm();
+  }
+
+  // ---------- panah pindah nomor ----------
+  function currentPosition(){
+    const all = sortedRecords();
+    if (currentView === 'detail') {
+      const idx = all.findIndex(r => r.id === editingRecordId);
+      return idx >= 0 ? idx + 1 : all.length + 1;
+    }
+    return all.length + 1; // form Tambah Data
+  }
+
+  function isDetailEditing(){
+    const el = gid('detailActionsEdit');
+    return !!el && el.style.display === 'flex';
+  }
+
+  function goPosition(pos){
+    const all = sortedRecords();
+    const n = all.length;
+    if (pos < 1 || pos > n + 1) return;
+    if (currentView === 'add') {
+      if (writeFormDraft() && pos !== n + 1) showMigrationToast('Draft tersimpan di perangkat ini.');
+    }
+    if (pos === n + 1) { goView('add'); return; }
+    openDetail(all[pos - 1].id);
+  }
+
+  function refreshPager(){
+    const n = sortedRecords().length;
+    const pos = currentPosition();
+    const editing = currentView === 'detail' && isDetailEditing();
+    const set = (id, disabled) => { const el = gid(id); if (el) el.disabled = !!disabled; };
+    set('btnAddPrev', n < 1);
+    set('btnAddNext', true);
+    set('btnDetPrev', editing || pos <= 1);
+    set('btnDetNext', editing || pos > n);
+  }
+
+  function bindPager(){
+    gid('btnAddPrev').addEventListener('click', () => goPosition(currentPosition() - 1));
+    gid('btnDetPrev').addEventListener('click', () => { if (!isDetailEditing()) goPosition(currentPosition() - 1); });
+    gid('btnDetNext').addEventListener('click', () => { if (!isDetailEditing()) goPosition(currentPosition() + 1); });
+    gid('btnDraftDiscard').addEventListener('click', () => {
+      if (window.confirm('Buang draft ini? Isi form akan dikosongkan.')) discardFormDraft();
+    });
+    // tombol panah ikut nonaktif saat Detail sedang diedit (supaya perubahan tidak hilang)
+    try {
+      new MutationObserver(refreshPager).observe(gid('detailActionsEdit'), { attributes: true, attributeFilter: ['style'] });
+    } catch (e) { /* tanpa observer, panah tetap di-refresh setiap pindah halaman */ }
+
+    // simpan draft otomatis: saat mengetik, berkala, dan saat aplikasi ditutup/disembunyikan
+    let draftTimer = null;
+    FORM_FIELD_IDS.forEach(id => {
+      gid(id).addEventListener('input', () => {
+        clearTimeout(draftTimer);
+        draftTimer = setTimeout(() => { if (currentView === 'add') writeFormDraft(); }, 500);
+      });
+    });
+    setInterval(() => { if (currentView === 'add') writeFormDraft(); }, 4000);
+    document.addEventListener('visibilitychange', () => { if (document.hidden && currentView === 'add') writeFormDraft(); });
+    window.addEventListener('pagehide', () => { if (currentView === 'add') writeFormDraft(); });
+  }
+  bindPager();
 
   // =====================================================================
   // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
