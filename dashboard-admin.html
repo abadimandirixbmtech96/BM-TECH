@@ -1085,8 +1085,34 @@
     letter-spacing: 0.03em;
     color: var(--text-secondary);
     text-transform: uppercase;
+    flex-wrap: wrap;
+    row-gap: 6px;
   }
   .search-note-folder-row svg { width: 15px; height: 15px; flex-shrink: 0; }
+  .search-note-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--glass-pill-bg);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-primary);
+  }
+  .search-note-tag i {
+    font-style: normal;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .search-note-tag span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .editor-modal {
     position: fixed;
@@ -5366,11 +5392,34 @@
       for (const col of content.columns) {
         const val = row.cells ? row.cells[col.id] : '';
         if (val && col.type !== 'image' && String(val).toLowerCase().includes(q)) {
-          return { label: col.label || 'Kolom', value: String(val) };
+          return { label: col.label || 'Kolom', value: String(val), row, col, columns: content.columns };
         }
       }
     }
     return null;
+  }
+
+  const SEARCH_TAG_FIELDS = [
+    { title: 'PJ', ids: ['pj'], labels: ['pj'] },
+    { title: 'Customer', ids: ['customer'], labels: ['customer', 'cust'] },
+    { title: 'Barang', ids: ['barang'], labels: ['barang', 'namabarang'] }
+  ];
+
+  function findFieldColumn(columns, f) {
+    return (columns || []).find(c => f.ids.includes(c.id) || f.labels.includes(normalizeKey(c.label || ''))) || null;
+  }
+
+  /* Nama PJ / Customer / Barang dari baris yang cocok. Kolom yang cocok dengan kata kunci
+     sudah tampil di atas, jadi tidak diulang di samping nama folder. */
+  function buildSearchRowTags(cellMatch, q) {
+    if (!cellMatch || !cellMatch.row) return '';
+    return SEARCH_TAG_FIELDS.map(f => {
+      const col = findFieldColumn(cellMatch.columns, f);
+      if (!col || col.id === cellMatch.col.id) return '';
+      const v = cellMatch.row.cells ? cellMatch.row.cells[col.id] : '';
+      if (isEmptyValue(v)) return '';
+      return `<span class="search-note-tag"><i>${f.title}</i><span>${highlightMatch(String(v), q)}</span></span>`;
+    }).join('');
   }
 
   let searchFolderFilter = null;
@@ -5480,6 +5529,7 @@
         <div class="search-note-folder-row">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <span>${escapeHtml((n.folder || 'Uncategorized').toUpperCase())}</span>
+          ${buildSearchRowTags(cellMatch, term.trim())}
         </div>
       </div>
     `).join('');
