@@ -20,6 +20,14 @@
 <style>
   :root{ --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
   *{ font-family:var(--app-font); }
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
+  body.font-bold-mode * { font-weight: 700 !important; }
 
   :root{
     --paper:#F6F1E7;
@@ -31,9 +39,12 @@
     --glass-bg:rgba(255,255,255,0.6);
     --glass-border:rgba(255,255,255,0.7);
     --glass-shadow:0 8px 32px rgba(80,70,50,0.14);
-    --accent:#C9932F;
-    --accent-ink:#5A430F;
-    --accent-soft:rgba(201,147,47,0.14);
+    --accent:#F0A529;
+    --accent-rgb:240, 165, 41;
+    --accent-ink:#6C4A12;
+    --accent-ink-rgb:108, 74, 18;
+    --on-accent:#1C1B19;
+    --accent-soft:rgba(var(--accent-rgb),0.14);
     --danger:#C24444;
     --danger-soft:rgba(194,68,68,0.12);
     --radius-pill:999px;
@@ -62,14 +73,14 @@
     --glass-bg:rgba(30,28,23,0.6);
     --glass-border:rgba(255,255,255,0.09);
     --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
-    --accent-soft:rgba(201,147,47,0.18);
+    --accent-soft:rgba(var(--accent-rgb),0.18);
     --danger-soft:rgba(194,68,68,0.18);
     --skeleton-a:rgba(255,255,255,0.06);
     --skeleton-b:rgba(255,255,255,0.13);
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
+  ::selection{ background:rgba(var(--accent-rgb),0.35); color:inherit; }
   button{ font:inherit; }
   html,body{height:100%;}
   body{
@@ -122,9 +133,9 @@
   .greet-card{
     margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
     background:
-      linear-gradient(135deg, rgba(196,143,31,0.55) 0%, rgba(90,62,15,0.68) 100%),
+      linear-gradient(135deg, rgba(var(--accent-rgb),0.55) 0%, rgba(var(--accent-ink-rgb),0.68) 100%),
       url('background-admin.jpg') center/cover no-repeat, var(--accent);
-    color:#fff; box-shadow:0 10px 26px rgba(180,130,30,0.28);
+    color:#fff; box-shadow:0 10px 26px rgba(var(--accent-rgb),0.28);
   }
   .greet-card p{ margin:0 0 4px 0; font-size:13px; opacity:0.85; font-weight:600; }
   .greet-card h3{ margin:0 0 4px 0; font-size:20px; font-weight:800; }
@@ -275,7 +286,7 @@
   .nav-add-fab{
     width:var(--fab-size); height:var(--fab-size); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    background:var(--accent); color:#fff;
+    background:var(--accent); color:var(--on-accent);
     transform:translateY(calc(-1 * var(--fab-lift)));
     transition:transform .15s ease, background .15s ease;
   }
@@ -335,9 +346,9 @@
   .hint-card svg{ width:18px; height:18px; flex-shrink:0; margin-top:1px; }
 
   .btn-primary{
-    width:100%; padding:15px; border:none; border-radius:16px; background:var(--accent); color:#fff;
+    width:100%; padding:15px; border:none; border-radius:16px; background:var(--accent); color:var(--on-accent);
     font-size:15.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-    box-shadow:0 8px 20px rgba(180,130,30,0.28);
+    box-shadow:0 8px 20px rgba(var(--accent-rgb),0.28);
   }
   .btn-primary svg{ width:18px; height:18px; }
   .btn-primary:disabled{ opacity:0.55; box-shadow:none; }
@@ -388,7 +399,7 @@
   }
   .pz-handle{
     position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
-    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
+    background:var(--accent); color:var(--on-accent); display:flex; align-items:center; justify-content:center;
     cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
   }
   .pz-handle svg{ width:18px; height:18px; }
@@ -417,33 +428,6 @@
   }
   .detail-row textarea{ font-weight:500; min-height:64px; resize:vertical; }
   .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
-  .pickup-card{ margin:-4px 0 18px; padding:12px 14px; border-radius:16px; background:var(--accent-soft); border:1.5px solid var(--accent); }
-  .pickup-head{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; color:var(--accent-ink); margin-bottom:6px; }
-  body.surface-dark .pickup-head{ color:var(--accent); }
-  .pickup-rec{ padding:8px 0; border-top:1px solid var(--line-soft); }
-  .pickup-rec:first-child{ border-top:none; }
-  .pickup-rec-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:2px; }
-  .pk-badge{ flex-shrink:0; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(0,0,0,0.08); color:var(--ink-soft); }
-  .pk-badge.paid{ background:rgba(61,170,106,0.18); color:#2d8a55; }
-  .pk-badge.part{ background:rgba(240,165,41,0.2); color:var(--accent-ink); }
-  .pk-tag{ margin-left:8px; font-size:11px; font-weight:800; color:#2d8a55; }
-  .pickup-item{ display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; }
-  .pickup-item input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
-  .pickup-item b{ display:block; font-size:14px; font-weight:750; }
-  .pickup-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-  .pickup-apply{ padding:12px 8px; border:none; border-radius:13px; background:var(--accent); color:#fff; font-size:14px; font-weight:800; cursor:pointer; }
-  .pickup-apply.alt{ background:transparent; color:var(--accent-ink); border:1.5px solid var(--accent); }
-  body.surface-dark .pickup-apply.alt{ color:var(--accent); }
-  .pickup-apply:disabled{ opacity:0.45; }
-  .pickup-done{ font-size:12.5px; font-weight:700; color:var(--accent-ink); margin-top:8px; }
-  body.surface-dark .pickup-done{ color:var(--accent); }
-  .pickup-done:empty{ display:none; }
-  .pager{ display:flex; gap:8px; flex-shrink:0; }
-  .pager .icon-btn{ width:38px; height:38px; }
-  .pager .icon-btn:disabled{ opacity:0.35; cursor:default; }
-  .draft-bar{ display:none; align-items:center; justify-content:space-between; gap:10px; margin:0 0 14px; padding:10px 14px; border-radius:14px; background:var(--accent-soft); border:1.5px dashed var(--accent); font-size:12.5px; font-weight:700; color:var(--accent-ink); }
-  body.surface-dark .draft-bar{ color:var(--accent); }
-  .draft-bar button{ border:none; background:transparent; color:inherit; font-size:12.5px; font-weight:800; text-decoration:underline; cursor:pointer; padding:4px 6px; flex-shrink:0; }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
 
   /* ---------- Settings ---------- */
@@ -502,6 +486,7 @@
   }
   #migrationToast.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
 </style>
+<script src="/bm-theme.js"></script>
 
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -555,6 +540,53 @@
 
 </head>
 <body>
+<script>
+  /* Sinkron dengan System Management & dashboard-admin: tema, warna sistem, font, teks tebal */
+  (function () {
+    var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
+    function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+    function applyAccent() {
+      var B = window.BMTheme, hex;
+      if (!B || !B.getAccent) return;
+      try { hex = B.getAccent(); } catch (e) { return; }
+      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return;
+      var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+      var ir = Math.round(r * 0.45), ig = Math.round(g * 0.45), ib = Math.round(b * 0.45);
+      var st = document.documentElement.style;
+      st.setProperty('--accent', hex);
+      st.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
+      st.setProperty('--accent-ink', 'rgb(' + ir + ', ' + ig + ', ' + ib + ')');
+      st.setProperty('--accent-ink-rgb', ir + ', ' + ig + ', ' + ib);
+      var dark = '#1C1B19';
+      var onA = (B.contrast && B.contrast(hex, dark) < B.contrast(hex, '#FFFFFF')) ? '#FFFFFF' : dark;
+      st.setProperty('--on-accent', onA);
+    }
+
+    function applyAppearance() {
+      var cl = document.body.classList;
+      var isDark = ls('bm-theme') !== 'light';
+      cl.toggle('surface-dark', isDark);
+      var meta = document.getElementById('themeColorMeta');
+      if (meta) meta.setAttribute('content', isDark ? '#15140F' : '#F6F1E7');
+
+      Object.keys(FONT_CLASS).forEach(function (k) { cl.remove(FONT_CLASS[k]); });
+      var f = ls('bm-font');
+      if (f && FONT_CLASS[f]) cl.add(FONT_CLASS[f]);
+      cl.toggle('font-bold-mode', ls('bm-font-bold') === 'on');
+
+      applyAccent();
+      if (f === 'custom' && window.BMTheme && window.BMTheme.ensureCustom) {
+        try { window.BMTheme.ensureCustom(); } catch (e) {}
+      }
+    }
+
+    window.bmApplyAppearance = applyAppearance;
+    applyAppearance();
+    window.addEventListener('storage', function (e) { if (!e.key || e.key.indexOf('bm-') === 0) applyAppearance(); });
+    window.addEventListener('pageshow', applyAppearance);
+  })();
+</script>
 <div class="app">
 
   <!-- ============ HOME ============ -->
@@ -587,10 +619,8 @@
     <div class="topbar">
       <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="topbar-titles"><h2>Tambah Data</h2><span>Isi data sesuai kebutuhan</span></div>
-      <div class="pager"><button class="icon-btn" id="btnAddPrev" aria-label="Data sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><button class="icon-btn" id="btnAddNext" aria-label="Data berikutnya" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
     </div>
     <div class="scroll no-nav px">
-      <div class="draft-bar" id="draftBar"><span>Draft dipulihkan dari perangkat ini</span><button type="button" id="btnDraftDiscard">Buang draft</button></div>
       <div class="hint-card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         <span>PJ dan Barang wajib diisi. Barang Keluar, Stok Barang, Keterangan, dan Harga boleh menyusul lewat Edit — cocok kalau harga masih menunggu pengerjaan selesai.</span>
@@ -620,16 +650,6 @@
       <div class="field">
         <label>Customer <span class="opt-tag">(opsional)</span></label>
         <input type="text" id="inputCustomer" placeholder="Nama customer" autocomplete="off">
-      </div>
-
-      <div class="pickup-card" id="pickupCard" style="display:none;">
-        <div class="pickup-head"><span>📦</span><span id="pickupTitle">Barang masih ditinggal</span></div>
-        <div id="pickupList"></div>
-        <div class="pickup-actions">
-          <button type="button" class="pickup-apply" id="btnPickupApply">Ambil barang</button>
-          <button type="button" class="pickup-apply alt" id="btnPickupPay">Bayar saja</button>
-        </div>
-        <div class="pickup-done" id="pickupDone"></div>
       </div>
 
       <div class="field">
@@ -689,7 +709,6 @@
     <div class="topbar">
       <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
       <div class="topbar-titles"><h2>Detail Data</h2><span id="detailSubtitle">&nbsp;</span></div>
-      <div class="pager"><button class="icon-btn" id="btnDetPrev" aria-label="Data sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><button class="icon-btn" id="btnDetNext" aria-label="Data berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
     </div>
     <div class="scroll no-nav px">
       <div class="detail-card">
@@ -734,10 +753,6 @@
           <label>Harga</label>
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
-        </div>
-        <div class="detail-row" id="detLinkRow" style="display:none;">
-          <label>Terhubung</label>
-          <div class="val" id="detLinkView"></div>
         </div>
         <div class="detail-row">
           <label>Bukti</label>
@@ -791,9 +806,8 @@
       <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
 
       <div class="section-label">Tema Tampilan</div>
-      <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
-      <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
-      <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="light"><b>Terang</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="dark"><b>Gelap</b><div class="dot"></div></div>
     </div>
   </section>
 
@@ -854,7 +868,6 @@
         <div class="preview-row"><span>Keterangan</span><span id="cfKet">—</span></div>
         <div class="preview-row"><span>Harga</span><span id="cfHarga">—</span></div>
         <div class="preview-row"><span>Bukti</span><span id="cfBukti">—</span></div>
-        <div class="preview-row" id="cfLinkRow" style="display:none;"><span>Menandai selesai</span><span id="cfLink">—</span></div>
       </div>
       <div class="btn-row">
         <button class="btn-secondary" id="btnConfirmBatal">Batal</button>
@@ -924,17 +937,6 @@
   let currentView = 'home';
   let editingRecordId = null;
   let deletingRecordId = null;
-
-  // --- state fitur auto-link pengambilan barang ---
-  let noteFolderId = targetFolderId;
-  let pickupCandidates = [];
-  let pickupApplied = [];
-  let pickupChecked = new Set();
-  let pickupMode = 'ambil';
-  let pickupLookupSeq = 0;
-  let folderNotesCache = { at: 0, folder: null, notes: null };
-  let reconciling = false;
-  let reconcileAgain = false;
 
   // =====================================================================
   // HELPERS
@@ -1396,7 +1398,6 @@
 
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
-    noteFolderId = note.folder_id || targetFolderId || null;
     noteTitle = note.title || '';
 
     let needsMigrationSave = false;
@@ -1451,7 +1452,6 @@
     }
     const purgedCount = purgeExpiredTrash();
     if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
-    setTimeout(() => { try { reconcileLinks(); } catch (e) {} }, 800);
   }
 
   // =====================================================================
@@ -1584,7 +1584,6 @@
     } catch (e) { console.error(e); }
 
     if (autosavePending) { autosavePending = false; if (success) scheduleAutosave(); }
-    if (success) { try { reconcileLinks(); } catch (e) { console.warn(e); } }
   }
 
   window.addEventListener('online', () => {
@@ -1639,7 +1638,6 @@
     if (name === 'settings') renderSettings();
     if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
-    refreshPager();
   }
 
   document.getElementById('btnHomeBack').addEventListener('click', () => {
@@ -1735,8 +1733,6 @@
     document.getElementById('inputKeterangan').value = '';
     document.getElementById('inputHarga').value = '';
     addBukti.reset();
-    resetPickupForm();
-    restoreFormDraft();
   }
 
   // Saran nama PJ: dropdown kustom yang rapi (bukan <datalist> native — di
@@ -1889,10 +1885,6 @@
     setPreviewOptional('cfBukti', bukti.length ? bukti.length + ' gambar dilampirkan' : '');
 
     pendingNewRecord = { pj, customer, barang, barangKeluar, stokBarang, keterangan, harga, bukti };
-    const pickupLinks = resolvePickupLinks(barang);
-    if (pickupLinks.length) pendingNewRecord.ambilDari = pickupLinks;
-    document.getElementById('cfLinkRow').style.display = pickupLinks.length ? '' : 'none';
-    document.getElementById('cfLink').textContent = pickupLinks.map(l => (l.mode === 'bayar' ? 'Bayar: ' : 'Ambil: ') + (l.label || 'barang') + ' (' + l.tgl + ')').join('; ');
     openOverlay('overlayConfirm');
   });
 
@@ -1909,7 +1901,6 @@
     const now = new Date().toISOString();
     records.push({ id: uid(), ...pendingNewRecord, created_at: now });
     pendingNewRecord = null;
-    clearFormDraft();
     closeOverlay('overlayConfirm');
     scheduleAutosave();
     goView('home');
@@ -1943,7 +1934,6 @@
     setDetailView('detKetView', r.keterangan);
     setDetailView('detHargaView', r.harga ? rupiah(r.harga) : '');
     renderDetailBuktiView(r.bukti);
-    renderLinkInfo(r);
 
     exitEditMode();
     goView('detail');
@@ -2021,793 +2011,9 @@
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
     r.pj = pj; r.customer = customer; r.barang = barang; r.barangKeluar = barangKeluar;
     r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga; r.bukti = bukti;
-    // Kalau tanda otomatis diubah manual, hormati pilihan manual (jangan ditimpa lagi)
-    if (r.pickups) {
-      if (r.stokAutoLast != null && stokBarang !== r.stokAutoLast) {
-        r.stokBase = stokBarang; r.stokAutoLast = stokBarang;
-        Object.values(r.pickups).forEach(p => { p.items = []; p.names = []; });
-      }
-      if (r.hargaAuto && !isCentangText(harga)) { delete r.hargaAuto; delete r.hargaBase; }
-    } else if (r.pickup) {
-      if (!isCentangText(stokBarang)) delete r.pickup;
-      else if (r.pickup.hargaAuto && !isCentangText(harga)) r.pickup.hargaAuto = false;
-    }
     scheduleAutosave();
     openDetail(editingRecordId);
   });
-
-  // =====================================================================
-  // OTOMATIS: BARANG DITINGGAL -> DIAMBIL / DIBAYAR (auto-link antar hari)
-  //
-  //  Dua jalur status yang berjalan sendiri-sendiri:
-  //    BARANG : Dititip -> diambil sebagian -> diambil semua   (kolom Stok Barang)
-  //    UANG   : Belum bayar -> bayar / lunas                    (kolom Harga)
-  //
-  //  Alur:
-  //   1. Hari 1: barang ditinggal -> Stok Barang = "B&J" (artinya semua barang
-  //      di kolom "Barang dan Jumlah") atau daftar barang dipisah koma.
-  //   2. Hari berikutnya, di Tambah Data, setelah PJ + Customer terisi, editor
-  //      mencari barang yang MASIH ditinggal atas nama itu (semua catatan di
-  //      folder yang sama) dan menampilkannya per barang dengan kotak centang.
-  //   3. Dua tombol:
-  //        "Ambil barang" -> mengisi form pengambilan (Barang Keluar = B&J,
-  //                          Stok = Tidak ada, Keterangan = Ambil barang).
-  //        "Bayar saja"   -> mengisi form pembayaran duluan (barang TETAP
-  //                          tercatat ditinggal).
-  //   4. Setelah disimpan, data lama otomatis berubah:
-  //        - barang yang dicentang diberi ✓ di Stok Barang (tulisan lama
-  //          dipertahankan: "B&J ✓", "Blok grand ✓, Head grand")
-  //        - STATUS BAYAR DICATAT PER BARANG: Harga yang diisi di data
-  //          pengambilan / pembayaran hanya melunasi barang di baris itu.
-  //          Harga data lama baru ✓ kalau SEMUA barangnya sudah lunas
-  //          (nominal tetap hanya di data pengambilan, tidak terhitung dobel)
-  //   5. Data pengambilan dihapus -> tanda dibatalkan. Dipulihkan -> dipasang lagi.
-  //
-  //  Penghubung memakai ID record, disimpan di:
-  //    - data pengambilan : ambilDari = [{ noteId, recordId, mode, items, label, tgl, synced }]
-  //    - data lama (titip): pickups   = { [idPengambilan]: { mode, items, payItems, names, paid, at, noteId } }
-  //        items    = barang yang DIAMBIL di baris itu (null = semua)
-  //        payItems = barang yang LUNAS lewat baris itu (null = semua)
-  //                         stokBase  = isi asli Stok Barang sebelum diberi tanda
-  //  Stok Barang & Harga data lama SELALU dihitung ulang dari `pickups`
-  //  (recomputeOrigin), jadi aman diulang dan tidak bisa "setengah jadi".
-  // =====================================================================
-  const gid = (id) => document.getElementById(id);
-  const LABEL_CENTANG_VAL = '\u2713';
-  const CENT_G = /[\u221A\u2713\u2714\u2611\u2705]/g;
-
-  function normText(s){ return String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toLowerCase(); }
-  function isCentangText(v){ return /[\u221A\u2713\u2714\u2611\u2705]/.test(String(v == null ? '' : v)); }
-  function stripCentang(s){ return String(s == null ? '' : s).replace(CENT_G, '').replace(/\s+/g, ' ').trim(); }
-  function isHargaKosong(h){ return h == null || h === '' || h === 0 || /^0+$/.test(String(h).trim()); }
-  function isBJWhole(v){ return normText(stripCentang(v)).replace(/[^a-z0-9]/g, '') === 'bj'; }
-  function isTidakAdaText(v){ return normText(v).replace(/\s/g, '') === 'tidakada'; }
-  function splitList(s){ return String(s == null ? '' : s).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean); }
-  function itemKey(name){ return normText(stripCentang(name)); }
-
-  function fmtTitik(iso){
-    const d = new Date(iso);
-    return pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.' + String(d.getFullYear()).slice(-2);
-  }
-  function fmtHariLengkap(iso){
-    const d = new Date(iso);
-    return NAMA_HARI[d.getDay()] + ' ' + pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2) + ' \u00B7 ' + fmtWaktu(d);
-  }
-
-  // ---------- membaca isi Stok Barang menjadi daftar barang ----------
-  function parseStokItems(o){
-    const text = String(o.stokBase != null ? o.stokBase : (o.stokBarang == null ? '' : o.stokBarang)).trim();
-    if (!text || isTidakAdaText(stripCentang(text))) return { whole: false, text, items: [] };
-    if (isBJWhole(text)) {
-      const allDone = isCentangText(text);
-      let names = splitList(o.barang).map(stripCentang).filter(Boolean);
-      if (!names.length) names = ['B&J'];
-      return { whole: true, text, items: names.map(n => ({ key: itemKey(n), name: n, done: allDone })) };
-    }
-    const items = splitList(text)
-      .map(tok => ({ name: stripCentang(tok), done: isCentangText(tok) }))
-      .filter(i => i.name && !isTidakAdaText(i.name))
-      .map(i => ({ key: itemKey(i.name), name: i.name, done: i.done }));
-    return { whole: false, text, items };
-  }
-
-  function takenKeys(o, parsed){
-    const set = new Set();
-    let all = false;
-    Object.values(o.pickups || {}).forEach(p => {
-      if (!p || p.mode === 'bayar') return;
-      if (p.items == null) all = true; else p.items.forEach(k => set.add(k));
-    });
-    if (all) parsed.items.forEach(i => set.add(i.key));
-    return set;
-  }
-
-  function paidKeySet(o, parsed){
-    const set = new Set();
-    let all = false;
-    Object.values(o.pickups || {}).forEach(p => {
-      if (!p || !p.paid) return;
-      if (p.payItems == null) all = true; else p.payItems.forEach(k => set.add(k));
-    });
-    if (all) parsed.items.forEach(i => set.add(i.key));
-    return set;
-  }
-
-  function renderStok(o){
-    const parsed = parseStokItems(o);
-    if (!parsed.items.length) return o.stokBarang;
-    const taken = takenKeys(o, parsed);
-    const isDone = i => i.done || taken.has(i.key);
-    const doneCount = parsed.items.filter(isDone).length;
-    if (parsed.whole) {
-      const base = stripCentang(parsed.text) || 'B&J';
-      if (doneCount === 0) return base;
-      if (doneCount === parsed.items.length) return base + ' ' + LABEL_CENTANG_VAL;
-    }
-    return parsed.items.map(i => isDone(i) ? (i.name + ' ' + LABEL_CENTANG_VAL) : i.name).join(', ');
-  }
-
-  // Barang yang MASIH ditinggal pada satu record titipan
-  function remainingItemsOf(o){
-    if (o.pickup && !o.pickups) return []; // format lama = sudah diambil semua
-    const parsed = parseStokItems(o);
-    const taken = takenKeys(o, parsed);
-    return parsed.items.filter(i => !i.done && !taken.has(i.key));
-  }
-
-  // Format versi lama (satu `pickup`) -> format baru (`pickups`)
-  function migrateLegacy(o){
-    if (!o.pickup || o.pickups) return false;
-    const lp = o.pickup;
-    o.pickups = {};
-    o.pickups[lp.recordId] = { noteId: lp.noteId, at: lp.at, mode: 'ambil', items: null, payItems: lp.hargaAuto ? null : [], names: null, paid: !!lp.hargaAuto };
-    if (lp.prevStok != null) o.stokBase = lp.prevStok;
-    if (lp.hargaAuto) { o.hargaAuto = true; o.hargaBase = lp.prevHarga || 0; }
-    delete o.pickup;
-    return true;
-  }
-
-  // Hitung ulang Stok Barang & Harga data titip dari daftar `pickups`
-  function recomputeOrigin(o){
-    const pk = o.pickups || {};
-    const ids = Object.keys(pk);
-    if (!ids.length) {
-      if (o.stokBase != null) o.stokBarang = o.stokBase;
-      if (o.hargaAuto && isCentangText(o.harga)) o.harga = o.hargaBase || 0;
-      delete o.stokBase; delete o.pickups; delete o.stokAutoLast; delete o.hargaAuto; delete o.hargaBase;
-      return;
-    }
-    if (o.stokBase == null) o.stokBase = o.stokBarang;
-    o.stokBarang = renderStok(o);
-    o.stokAutoLast = o.stokBarang;
-
-    const parsedNow = parseStokItems(o);
-    const paidSet = paidKeySet(o, parsedNow);
-    const paid = parsedNow.items.length > 0 && parsedNow.items.every(i => i.done || paidSet.has(i.key));
-    if (paid) {
-      if (!o.hargaAuto && isHargaKosong(o.harga)) {
-        o.hargaBase = o.harga || 0;
-        o.hargaAuto = true;
-        o.harga = LABEL_CENTANG_VAL;
-      } else if (o.hargaAuto && !isCentangText(o.harga)) {
-        o.harga = LABEL_CENTANG_VAL;
-      }
-    } else if (o.hargaAuto) {
-      if (isCentangText(o.harga)) o.harga = o.hargaBase || 0;
-      delete o.hargaAuto; delete o.hargaBase;
-    }
-  }
-
-  // ---------- ambil catatan lain di folder yang sama (ringan: hanya records) ----------
-  async function fetchFolderNotesLight(force){
-    if (!noteFolderId || !navigator.onLine) return [];
-    const c = folderNotesCache;
-    if (!force && c.notes && c.folder === noteFolderId && (Date.now() - c.at) < 30000) return c.notes;
-
-    let notes = null;
-    try {
-      const { data, error } = await supabaseClient
-        .from('notes')
-        .select('id,title,created_at,updated_at,sch:content->>schema,recs:content->records')
-        .eq('folder_id', noteFolderId);
-      if (!error && Array.isArray(data)) {
-        notes = data
-          .filter(n => n.sch === SCHEMA_VERSION && Array.isArray(n.recs))
-          .map(n => ({ id: n.id, title: n.title, records: n.recs }));
-      }
-    } catch (e) { /* lanjut ke cadangan */ }
-
-    if (!notes) {
-      try {
-        const { data, error } = await supabaseClient
-          .from('notes')
-          .select('id,title,content')
-          .eq('folder_id', noteFolderId);
-        if (error || !Array.isArray(data)) return [];
-        notes = data
-          .filter(n => n.content && n.content.schema === SCHEMA_VERSION && Array.isArray(n.content.records))
-          .map(n => ({ id: n.id, title: n.title, records: n.content.records }));
-      } catch (e) { return []; }
-    }
-    folderNotesCache = { at: Date.now(), folder: noteFolderId, notes };
-    return notes;
-  }
-
-  // ---------- cari barang yang masih ditinggal untuk PJ + Customer ----------
-  async function findPickupCandidates(pj, customer){
-    const npj = normText(pj), ncu = normText(customer);
-    if (!npj || !ncu) return [];
-    const out = [];
-    const pushFrom = (noteId, recs) => {
-      (recs || []).forEach(r => {
-        if (!r || !r.id) return;
-        if (r.ambilDari && r.ambilDari.length) return; // baris pengambilan/pembayaran bukan titipan
-        if (normText(r.pj) !== npj || normText(r.customer) !== ncu) return;
-        // Harga ✓ yang diketik manual (kebiasaan lama) = urusan sudah beres.
-        // Harga ✓ otomatis dari "Bayar saja" (hargaAuto) tetap ditampilkan.
-        if (isCentangText(r.harga) && !r.hargaAuto) return;
-        const items = remainingItemsOf(r);
-        if (!items.length) return;
-        const parsedR = parseStokItems(r);
-        const paidSet = paidKeySet(r, parsedR);
-        // Harga berisi ANGKA di baris titip = sudah dibayar lunas saat dititip (DP ditulis di Keterangan, Harga dikosongkan)
-        if (!isHargaKosong(r.harga) && !isCentangText(r.harga)) parsedR.items.forEach(i => paidSet.add(i.key));
-        const paidCnt = items.filter(i => paidSet.has(i.key)).length;
-        out.push({
-          noteId, recordId: r.id,
-          created_at: r.created_at,
-          tgl: fmtTitik(r.created_at),
-          paid: paidCnt === items.length,
-          somePaid: paidCnt > 0,
-          items: items.map(i => ({ key: i.key, name: i.name, paid: paidSet.has(i.key) }))
-        });
-      });
-    };
-    pushFrom('self', records);
-    const notes = await fetchFolderNotesLight(false);
-    notes.forEach(n => { if (n.id !== currentNoteId) pushFrom(n.id, n.records); });
-    out.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-    return out;
-  }
-
-  // ---------- kartu saran di form Tambah Data ----------
-  function candKey(c){ return c.noteId + '|' + c.recordId + '|' + c.items.map(i => i.key).join(','); }
-  function itemCk(c, it){ return c.noteId + '|' + c.recordId + '|' + it.key; }
-
-  function setPickupCandidates(found){
-    const oldKeys = pickupCandidates.map(candKey).join(';');
-    const newKeys = found.map(candKey).join(';');
-    pickupCandidates = found;
-    if (oldKeys !== newKeys) {
-      pickupChecked = new Set();
-      if (found.length === 1) found[0].items.forEach(it => pickupChecked.add(itemCk(found[0], it)));
-      const still = new Set(found.map(c => c.noteId + '|' + c.recordId));
-      pickupApplied = pickupApplied.filter(g => still.has(g.c.noteId + '|' + g.c.recordId));
-      if (!pickupApplied.length) gid('pickupDone').textContent = '';
-    }
-    renderPickupCard();
-  }
-
-  function chosenGroups(){
-    return pickupCandidates
-      .map(c => ({ c, items: c.items.filter(it => pickupChecked.has(itemCk(c, it))) }))
-      .filter(g => g.items.length);
-  }
-  function groupsText(groups){
-    return groups.map(g => g.items.map(i => i.name).join(', ') + ' (' + g.c.tgl + ')').join('; ');
-  }
-
-  function renderPickupCard(){
-    const card = gid('pickupCard');
-    if (!pickupCandidates.length) { card.style.display = 'none'; return; }
-    card.style.display = 'block';
-    const cust = gid('inputCustomer').value.trim();
-    gid('pickupTitle').textContent = 'Barang masih ditinggal' + (cust ? ' \u2014 ' + cust : '');
-
-    gid('pickupList').innerHTML = pickupCandidates.map((c, ci) => `
-      <div class="pickup-rec">
-        <div class="pickup-rec-head">
-          <span>Dititip ${escapeHtml(fmtHariLengkap(c.created_at))}</span>
-          <span class="pk-badge ${c.paid ? 'paid' : (c.somePaid ? 'part' : '')}">${c.paid ? 'Sudah dibayar \u2713' : (c.somePaid ? 'Sebagian dibayar' : 'Belum dibayar')}</span>
-        </div>
-        ${c.items.map((it, ii) => `
-          <label class="pickup-item">
-            <input type="checkbox" data-c="${ci}" data-i="${ii}" ${pickupChecked.has(itemCk(c, it)) ? 'checked' : ''}>
-            <div><b>${escapeHtml(it.name)}</b>${it.paid ? '<span class="pk-tag">dibayar \u2713</span>' : ''}</div>
-          </label>`).join('')}
-      </div>
-    `).join('');
-
-    const sync = () => {
-      const groups = chosenGroups();
-      const none = groups.length === 0;
-      const allPaid = !none && groups.every(g => g.items.every(i => i.paid));
-      gid('btnPickupApply').disabled = none;
-      gid('btnPickupPay').disabled = none || allPaid; // sudah dibayar -> tidak perlu bayar lagi
-      gid('btnPickupPay').textContent = allPaid ? 'Sudah dibayar \u2713' : 'Bayar saja';
-    };
-    gid('pickupList').querySelectorAll('input[type=checkbox]').forEach(cb => {
-      cb.addEventListener('change', () => {
-        const c = pickupCandidates[Number(cb.dataset.c)];
-        const it = c && c.items[Number(cb.dataset.i)];
-        if (!it) return;
-        if (cb.checked) pickupChecked.add(itemCk(c, it)); else pickupChecked.delete(itemCk(c, it));
-        sync();
-      });
-    });
-    sync();
-  }
-
-  // Teks otomatis yang terakhir kita isi (supaya bisa diganti rapi kalau kamu pindah tombol,
-  // tapi tidak menimpa kalau kamu sudah mengetik sendiri)
-  let pickupAutoKet = '';
-  let pickupAutoHarga = false;
-  let pendingPickupRestore = null; // pilihan barang dari draft, dipasang setelah kartu saran terisi
-
-  function datesText(groups){ return [...new Set(groups.map(g => g.c.tgl))].join(', '); }
-  function ketText(prefix, names){
-    const list = names.join(', ');
-    return /[()]/.test(list) ? (prefix + ': ' + list) : (prefix + ' (' + list + ')');
-  }
-  function setKeteranganAuto(txt){
-    const el = gid('inputKeterangan');
-    const cur = el.value.trim();
-    if (!cur || cur === pickupAutoKet) { el.value = txt; pickupAutoKet = txt; }
-  }
-  function setHargaAuto(wantCentang){
-    const el = gid('inputHarga');
-    const cur = el.value.trim();
-    if (wantCentang) {
-      if (!cur || (pickupAutoHarga && cur === LABEL_CENTANG_VAL)) { el.value = LABEL_CENTANG_VAL; pickupAutoHarga = true; }
-    } else if (pickupAutoHarga && cur === LABEL_CENTANG_VAL) {
-      el.value = ''; pickupAutoHarga = false;
-    }
-  }
-
-  function applyPickupToForm(mode){
-    let groups = chosenGroups();
-    // "Bayar saja" hanya untuk barang yang BELUM dibayar
-    if (mode === 'bayar') groups = groups.map(g => ({ c: g.c, items: g.items.filter(i => !i.paid) })).filter(g => g.items.length);
-    if (!groups.length) return;
-    pickupMode = mode;
-    pickupApplied = groups;
-    const chosenNames = [].concat(...groups.map(g => g.items.map(i => i.name)));
-    const nBarang = chosenNames.length;
-
-    // Barang dan Jumlah = HANYA tanggal barang masuk; nama barang masuk ke Keterangan
-    gid('inputBarang').value = datesText(groups);
-
-    if (mode === 'bayar') {
-      const stillAll = [].concat(...groups.map(g => g.c.items.map(i => i.name)));
-      gid('inputBarangKeluar').value = LABEL_TIDAK_ADA;
-      gid('inputStokBarang').value = stillAll.join(', ') || LABEL_TIDAK_ADA;
-      setKeteranganAuto(ketText('Bayar duluan', chosenNames));
-      setHargaAuto(false);
-      gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 isi nominal Harga lalu simpan. Barang tetap tercatat ditinggal.';
-    } else {
-      // Gaya bengkel: Barang Keluar = yang dibawa, Stok Barang = yang masih tersisa
-      const chosenKeys = new Set();
-      groups.forEach(g => g.items.forEach(i => chosenKeys.add(g.c.noteId + '|' + g.c.recordId + '|' + i.key)));
-      const remain = [].concat(...groups.map(g => g.c.items.filter(i => !chosenKeys.has(g.c.noteId + '|' + g.c.recordId + '|' + i.key)).map(i => i.name)));
-      gid('inputBarangKeluar').value = remain.length ? chosenNames.join(', ') : LABEL_BJ;
-      gid('inputStokBarang').value = remain.length ? remain.join(', ') : LABEL_TIDAK_ADA;
-      setKeteranganAuto(ketText('Ambil barang', chosenNames));
-      const allPaid = groups.every(g => g.items.every(i => i.paid));
-      setHargaAuto(allPaid);
-      gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 ' + nBarang + ' barang akan ditandai diambil saat disimpan'
-        + (allPaid ? ' \u00B7 sudah dibayar sebelumnya (Harga cukup \u2713)' : ' \u00B7 isi Harga untuk barang yang dibawa ini saja');
-    }
-  }
-
-  let pickupLookupTimer = null;
-  function schedulePickupLookup(){
-    clearTimeout(pickupLookupTimer);
-    pickupLookupTimer = setTimeout(runPickupLookup, 450);
-  }
-  async function runPickupLookup(){
-    const seq = ++pickupLookupSeq;
-    const pj = gid('inputPJ').value.trim();
-    const cu = gid('inputCustomer').value.trim();
-    if (!pj || !cu) { setPickupCandidates([]); return; }
-    let found = [];
-    try { found = await findPickupCandidates(pj, cu); } catch (e) { console.warn('[pickup] pencarian gagal:', e); }
-    if (seq !== pickupLookupSeq) return; // ada pencarian yang lebih baru
-    setPickupCandidates(found);
-    applyPendingPickupRestore();
-  }
-
-  // Pulihkan pilihan "Ambil barang / Bayar saja" dari draft (hanya barang yang masih ditinggal)
-  function applyPendingPickupRestore(){
-    const pend = pendingPickupRestore;
-    pendingPickupRestore = null;
-    if (!pend || !pend.length) return;
-    const groups = [];
-    const checked = new Set();
-    pend.forEach(p => {
-      const c = pickupCandidates.find(x => x.noteId === p.noteId && x.recordId === p.recordId);
-      if (!c) return;
-      const items = c.items.filter(i => (p.keys || []).includes(i.key));
-      if (!items.length) return;
-      groups.push({ c, items });
-      items.forEach(i => checked.add(itemCk(c, i)));
-    });
-    if (!groups.length) return;
-    pickupChecked = checked;
-    pickupApplied = groups;
-    renderPickupCard();
-    gid('pickupDone').textContent = '\u2713 Pilihan dari draft dipulihkan';
-  }
-  ['inputPJ', 'inputCustomer'].forEach(id => {
-    const el = gid(id);
-    if (!el) return;
-    el.addEventListener('input', schedulePickupLookup);
-    el.addEventListener('blur', schedulePickupLookup);
-  });
-  gid('btnPickupApply').addEventListener('click', () => applyPickupToForm('ambil'));
-  gid('btnPickupPay').addEventListener('click', () => applyPickupToForm('bayar'));
-
-  function resetPickupForm(){
-    pickupCandidates = []; pickupApplied = []; pickupChecked = new Set(); pickupMode = 'ambil';
-    pickupAutoKet = ''; pickupAutoHarga = false;
-    pickupLookupSeq++;
-    clearTimeout(pickupLookupTimer);
-    gid('pickupCard').style.display = 'none';
-    gid('pickupList').innerHTML = '';
-    gid('pickupDone').textContent = '';
-    folderNotesCache.at = 0; // paksa baca ulang catatan lain saat form dibuka
-    fetchFolderNotesLight(true).catch(() => {}); // pemanasan, supaya saran cepat muncul
-  }
-
-  function groupToLink(g, mode){
-    const names = g.items.map(i => i.name);
-    return { noteId: g.c.noteId, recordId: g.c.recordId, mode, items: names, label: names.join(', '), tgl: g.c.tgl, synced: false };
-  }
-
-  // Tentukan data titip mana yang terhubung dengan data yang sedang dikonfirmasi
-  function resolvePickupLinks(barangText){
-    const still = new Set(pickupCandidates.map(c => c.noteId + '|' + c.recordId));
-    let links = pickupApplied
-      .filter(g => still.has(g.c.noteId + '|' + g.c.recordId))
-      .map(g => groupToLink(g, pickupMode));
-    if (!links.length) {
-      // Cadangan: tanggal diketik manual di "Barang dan Jumlah" (mis. 03.10.26)
-      const m = String(barangText || '').match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/);
-      if (m) {
-        const typed = pad2(Number(m[1])) + '.' + pad2(Number(m[2])) + '.' + m[3].slice(-2);
-        const matches = pickupCandidates.filter(c => c.tgl === typed);
-        if (matches.length === 1) links = [groupToLink({ c: matches[0], items: matches[0].items }, 'ambil')];
-      }
-    }
-    return links;
-  }
-
-  // ---------- menerapkan / membatalkan tanda di data titip ----------
-  function wantOf(rec, link){
-    return (link.mode === 'bayar' ? 'bayar' : 'ambil') + ':' + (isHargaKosong(rec.harga) ? '0' : '1');
-  }
-
-  // Mengembalikan true kalau ada isi record yang berubah.
-  function applyLinkToOrigin(recs, job){
-    const o = recs.find(r => r && r.id === job.link.recordId);
-    if (!o) return false;
-    const pid = job.rec.id;
-    let changed = migrateLegacy(o);
-
-    if (job.want === 'reverted') {
-      if (!o.pickups || !o.pickups[pid]) { if (changed) recomputeOrigin(o); return changed; }
-      delete o.pickups[pid];
-      recomputeOrigin(o);
-      return true;
-    }
-
-    const parts = String(job.want).split(':');
-    const mode = parts[0] === 'bayar' ? 'bayar' : 'ambil';
-    const paid = parts[1] === '1';
-    const names = (job.link.items && job.link.items.length) ? job.link.items.slice() : null;
-    const keys = names ? names.map(itemKey) : null;
-    const entry = {
-      noteId: currentNoteId,
-      at: job.rec.created_at,
-      mode,
-      items: mode === 'bayar' ? [] : keys,
-      payItems: paid ? keys : [],
-      names,
-      paid
-    };
-    o.pickups = o.pickups || {};
-    if (JSON.stringify(o.pickups[pid]) !== JSON.stringify(entry)) {
-      o.pickups[pid] = entry;
-      changed = true;
-    }
-    if (changed) recomputeOrigin(o);
-    return changed;
-  }
-
-  // Ubah record di catatan LAIN dengan pengaman updated_at (ulang sampai 3x kalau bentrok)
-  async function patchRemoteNoteRecords(noteId, mutate){
-    for (let attempt = 0; attempt < 3; attempt++) {
-      const { data: n, error } = await supabaseClient
-        .from('notes').select('id,content,updated_at').eq('id', noteId).single();
-      if (error || !n) {
-        const gone = !!(error && (error.code === 'PGRST116' || /0 rows|no rows/i.test(error.message || '')));
-        return { ok: false, missing: gone };
-      }
-      const content = n.content;
-      if (!content || content.schema !== SCHEMA_VERSION || !Array.isArray(content.records)) return { ok: true, skipped: true };
-
-      const newRecs = JSON.parse(JSON.stringify(content.records));
-      if (!mutate(newRecs)) return { ok: true, unchanged: true };
-
-      let q = supabaseClient.from('notes').update({ content: { ...content, records: newRecs } }).eq('id', noteId);
-      if (n.updated_at) q = q.eq('updated_at', n.updated_at);
-      const res = await q.select('id,updated_at').single();
-      if (!res.error) return { ok: true };
-      // bentrok / gagal -> baca ulang lalu coba lagi
-    }
-    return { ok: false };
-  }
-
-  async function runLinkJobs(jobs){
-    const groups = new Map();
-    jobs.forEach(j => {
-      const nid = (j.link.noteId === 'self' || j.link.noteId === currentNoteId) ? 'self' : j.link.noteId;
-      if (!groups.has(nid)) groups.set(nid, []);
-      groups.get(nid).push(j);
-    });
-
-    let anyDone = false, anyFail = false, anyApplied = false, anyReverted = false;
-    for (const [nid, list] of groups) {
-      const mutate = (recs) => {
-        let ch = false;
-        list.forEach(j => { if (applyLinkToOrigin(recs, j)) ch = true; });
-        return ch;
-      };
-      if (nid === 'self') {
-        mutate(records);
-        list.forEach(j => { j.link.synced = j.want; if (j.link.noteId === 'self') j.link.noteId = currentNoteId; });
-      } else {
-        let r;
-        try { r = await patchRemoteNoteRecords(nid, mutate); } catch (e) { r = { ok: false }; }
-        if (r.ok || r.missing) list.forEach(j => { j.link.synced = j.want; });
-        else { anyFail = true; continue; }
-      }
-      anyDone = true;
-      list.forEach(j => { if (j.want === 'reverted') anyReverted = true; else anyApplied = true; });
-    }
-
-    if (anyDone) {
-      folderNotesCache.at = 0;
-      scheduleAutosave(); // simpan status `synced` terbaru
-      if (anyApplied) showMigrationToast('Data lama diperbarui \u2713');
-      else if (anyReverted) showMigrationToast('Tanda di data lama dibatalkan.');
-    }
-    return { anyDone, anyFail };
-  }
-
-  function collectLinkJobs(){
-    const jobs = [];
-    records.forEach(rec => {
-      (rec.ambilDari || []).forEach(l => {
-        const want = wantOf(rec, l);
-        if (l.synced !== want) jobs.push({ rec, link: l, want });
-      });
-    });
-    trash.forEach(rec => {
-      (rec.ambilDari || []).forEach(l => {
-        if (l.synced !== 'reverted') jobs.push({ rec, link: l, want: 'reverted' });
-      });
-    });
-    return jobs;
-  }
-
-  let reconcileRetryTimer = null;
-  async function reconcileLinks(){
-    if (!currentNoteId || existingNoteLoadFailed || !navigator.onLine) return;
-    if (reconciling) { reconcileAgain = true; return; }
-    reconciling = true;
-    try {
-      const jobs = collectLinkJobs();
-      if (!jobs.length) return;
-      const res = await runLinkJobs(jobs);
-      if (res.anyFail) {
-        clearTimeout(reconcileRetryTimer);
-        reconcileRetryTimer = setTimeout(reconcileLinks, 20000);
-      }
-    } catch (e) {
-      console.warn('[pickup] sinkron gagal:', e);
-    } finally {
-      reconciling = false;
-      if (reconcileAgain) { reconcileAgain = false; setTimeout(reconcileLinks, 300); }
-    }
-  }
-
-  // Dipakai saat data pengambilan dihapus permanen: batalkan tanda di data titip dulu (best-effort)
-  function revertLinksBestEffort(items){
-    const jobs = [];
-    (items || []).forEach(rec => (rec.ambilDari || []).forEach(l => {
-      if (l.synced !== 'reverted') jobs.push({ rec, link: l, want: 'reverted' });
-    }));
-    if (jobs.length) runLinkJobs(jobs).catch(() => {});
-  }
-
-  // ---------- info keterhubungan di halaman Detail ----------
-  function renderLinkInfo(r){
-    const row = gid('detLinkRow'), val = gid('detLinkView');
-    const parts = [];
-    (r.ambilDari || []).forEach(l => {
-      parts.push((l.mode === 'bayar' ? 'Bayar duluan: ' : 'Mengambil: ') + (l.label || 'barang') + (l.tgl ? ' (' + l.tgl + ')' : ''));
-    });
-    if (r.pickups) {
-      Object.values(r.pickups)
-        .filter(p => p && p.at)
-        .sort((a, b) => new Date(a.at) - new Date(b.at))
-        .forEach(p => {
-          const when = fmtTanggalFromISO(p.at) + ' ' + fmtWaktuFromISO(p.at);
-          const what = (p.names && p.names.length) ? ': ' + p.names.join(', ') : '';
-          parts.push((p.mode === 'bayar' ? 'Dibayar ' : 'Diambil ') + when + what);
-        });
-    } else if (r.pickup && r.pickup.at) {
-      parts.push('Sudah diambil ' + fmtTanggalFromISO(r.pickup.at) + ' ' + fmtWaktuFromISO(r.pickup.at));
-    }
-    if (!parts.length) { row.style.display = 'none'; val.textContent = ''; return; }
-    row.style.display = '';
-    val.textContent = parts.join('\n');
-  }
-
-  // =====================================================================
-  // PINDAH NOMOR (panah kiri/kanan) + DRAFT FORM TAMBAH DATA
-  //
-  //  Nomor data = urutan waktu (001, 002, ... N). Nomor N+1 = form "Tambah Data".
-  //  Panah kiri/kanan berpindah antar nomor itu:
-  //    - dari Tambah Data  : kiri -> data terakhir (N)
-  //    - dari Detail nomor p: kiri -> p-1, kanan -> p+1 (dari N, kanan = Tambah Data)
-  //
-  //  Isi form Tambah Data yang belum disimpan otomatis jadi DRAFT yang tersimpan
-  //  di perangkat ini (localStorage — tidak dikirim ke server dan tidak
-  //  terlihat di HP lain). Draft dipulihkan setiap kali Tambah Data dibuka lagi,
-  //  dan dihapus setelah datanya benar-benar tersimpan atau draft dibuang.
-  // =====================================================================
-  const FORM_FIELD_IDS = ['inputPJ', 'inputCustomer', 'inputBarang', 'inputBarangKeluar', 'inputStokBarang', 'inputKeterangan', 'inputHarga'];
-  let lastDraftJson = '';
-
-  function formDraftKey(){ return 'admdash_formdraft_' + (currentNoteId || 'new'); }
-
-  function readFormDraft(){
-    try {
-      const raw = localStorage.getItem(formDraftKey());
-      if (!raw) return null;
-      const d = JSON.parse(raw);
-      return (d && d.fields) ? d : null;
-    } catch (e) { return null; }
-  }
-
-  function formHasContent(){
-    return FORM_FIELD_IDS.some(id => String(gid(id).value || '').trim()) || addBukti.getUrls().length > 0;
-  }
-
-  function pickupDraftState(){
-    return {
-      mode: pickupMode,
-      autoKet: pickupAutoKet,
-      autoHarga: pickupAutoHarga,
-      applied: pickupApplied.map(g => ({ noteId: g.c.noteId, recordId: g.c.recordId, keys: g.items.map(i => i.key) }))
-    };
-  }
-
-  // Simpan isi form ke perangkat. Mengembalikan true kalau ada draft yang tersimpan.
-  function writeFormDraft(){
-    try {
-      if (!formHasContent()) {
-        localStorage.removeItem(formDraftKey());
-        lastDraftJson = '';
-        return false;
-      }
-      const d = { v: 1, fields: {}, bukti: addBukti.getUrls(), pickup: pickupDraftState() };
-      FORM_FIELD_IDS.forEach(id => { d.fields[id] = gid(id).value; });
-      const json = JSON.stringify(d);
-      if (json !== lastDraftJson) {
-        localStorage.setItem(formDraftKey(), JSON.stringify({ ...d, at: Date.now() }));
-        lastDraftJson = json;
-      }
-      return true;
-    } catch (e) { return false; }
-  }
-
-  function clearFormDraft(){
-    try { localStorage.removeItem(formDraftKey()); } catch (e) {}
-    lastDraftJson = '';
-    const bar = gid('draftBar');
-    if (bar) bar.style.display = 'none';
-  }
-
-  // Dipanggil dari prepareAddForm() setelah form dikosongkan
-  function restoreFormDraft(){
-    const bar = gid('draftBar');
-    const d = readFormDraft();
-    if (!d) { bar.style.display = 'none'; lastDraftJson = ''; return false; }
-    FORM_FIELD_IDS.forEach(id => { gid(id).value = (d.fields && d.fields[id]) || ''; });
-    addBukti.setUrls(Array.isArray(d.bukti) ? d.bukti : []);
-    if (d.pickup) {
-      pickupMode = d.pickup.mode === 'bayar' ? 'bayar' : 'ambil';
-      pickupAutoKet = d.pickup.autoKet || '';
-      pickupAutoHarga = !!d.pickup.autoHarga;
-      pendingPickupRestore = Array.isArray(d.pickup.applied) ? d.pickup.applied : null;
-    }
-    bar.style.display = 'flex';
-    lastDraftJson = '';
-    if (typeof schedulePickupLookup === 'function') schedulePickupLookup(); // segarkan kartu "barang masih ditinggal"
-    return true;
-  }
-
-  function discardFormDraft(){
-    const urls = addBukti.getUrls();
-    if (urls.length) { try { deleteBuktiFromSupabase(urls.map(buktiPathFromUrl)); } catch (e) {} } // foto draft ikut dibuang
-    clearFormDraft();
-    prepareAddForm();
-  }
-
-  // ---------- panah pindah nomor ----------
-  function currentPosition(){
-    const all = sortedRecords();
-    if (currentView === 'detail') {
-      const idx = all.findIndex(r => r.id === editingRecordId);
-      return idx >= 0 ? idx + 1 : all.length + 1;
-    }
-    return all.length + 1; // form Tambah Data
-  }
-
-  function isDetailEditing(){
-    const el = gid('detailActionsEdit');
-    return !!el && el.style.display === 'flex';
-  }
-
-  function goPosition(pos){
-    const all = sortedRecords();
-    const n = all.length;
-    if (pos < 1 || pos > n + 1) return;
-    if (currentView === 'add') {
-      if (writeFormDraft() && pos !== n + 1) showMigrationToast('Draft tersimpan di perangkat ini.');
-    }
-    if (pos === n + 1) { goView('add'); return; }
-    openDetail(all[pos - 1].id);
-  }
-
-  function refreshPager(){
-    const n = sortedRecords().length;
-    const pos = currentPosition();
-    const editing = currentView === 'detail' && isDetailEditing();
-    const set = (id, disabled) => { const el = gid(id); if (el) el.disabled = !!disabled; };
-    set('btnAddPrev', n < 1);
-    set('btnAddNext', true);
-    set('btnDetPrev', editing || pos <= 1);
-    set('btnDetNext', editing || pos > n);
-  }
-
-  function bindPager(){
-    gid('btnAddPrev').addEventListener('click', () => goPosition(currentPosition() - 1));
-    gid('btnDetPrev').addEventListener('click', () => { if (!isDetailEditing()) goPosition(currentPosition() - 1); });
-    gid('btnDetNext').addEventListener('click', () => { if (!isDetailEditing()) goPosition(currentPosition() + 1); });
-    gid('btnDraftDiscard').addEventListener('click', () => {
-      if (window.confirm('Buang draft ini? Isi form akan dikosongkan.')) discardFormDraft();
-    });
-    // tombol panah ikut nonaktif saat Detail sedang diedit (supaya perubahan tidak hilang)
-    try {
-      new MutationObserver(refreshPager).observe(gid('detailActionsEdit'), { attributes: true, attributeFilter: ['style'] });
-    } catch (e) { /* tanpa observer, panah tetap di-refresh setiap pindah halaman */ }
-
-    // simpan draft otomatis: saat mengetik, berkala, dan saat aplikasi ditutup/disembunyikan
-    let draftTimer = null;
-    FORM_FIELD_IDS.forEach(id => {
-      gid(id).addEventListener('input', () => {
-        clearTimeout(draftTimer);
-        draftTimer = setTimeout(() => { if (currentView === 'add') writeFormDraft(); }, 500);
-      });
-    });
-    setInterval(() => { if (currentView === 'add') writeFormDraft(); }, 4000);
-    document.addEventListener('visibilitychange', () => { if (document.hidden && currentView === 'add') writeFormDraft(); });
-    window.addEventListener('pagehide', () => { if (currentView === 'add') writeFormDraft(); });
-  }
-  bindPager();
 
   // =====================================================================
   // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
@@ -3044,7 +2250,6 @@
       goView('home');
     } else if (deleteMode === 'purge') {
       if (deleteTargetIndex != null && trash[deleteTargetIndex]) {
-        revertLinksBestEffort([trash[deleteTargetIndex]]);
         deleteBuktiOfRecords([trash[deleteTargetIndex]]); // foto baru dihapus dari storage saat hilang permanen
         trash.splice(deleteTargetIndex, 1);
       }
@@ -3052,7 +2257,6 @@
       renderTrash();
       showMigrationToast('Data dihapus permanen.');
     } else {
-      revertLinksBestEffort(trash);
       deleteBuktiOfRecords(trash);
       trash = [];
       scheduleAutosave();
@@ -3124,7 +2328,6 @@
     const rec = { ...item };
     delete rec.deleted_at;
     if (records.some(r => r.id === rec.id)) rec.id = uid(); // hindari id kembar
-    if (rec.ambilDari) rec.ambilDari = rec.ambilDari.map(l => ({ ...l, synced: l.synced === 'reverted' ? false : l.synced }));
     records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
     scheduleAutosave();
     renderTrash();
@@ -3163,12 +2366,10 @@
     renderHome();
   });
 
-  function getStoredTheme(){ try { return localStorage.getItem('admdash_theme') || 'default'; } catch (e) { return 'default'; } }
-  function setStoredTheme(t){ try { localStorage.setItem('admdash_theme', t); } catch (e) {} }
-  function applyTheme(t){
-    document.body.classList.toggle('surface-dark', t === 'dark');
-    document.getElementById('themeColorMeta').setAttribute('content', t === 'dark' ? '#15140F' : '#F6F1E7');
-  }
+  // Tema mengikuti kunci 'bm-theme' yang sama dengan dashboard-admin (light / dark; kosong = dark)
+  function getStoredTheme(){ try { return localStorage.getItem('bm-theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; } }
+  function setStoredTheme(t){ try { localStorage.setItem('bm-theme', t === 'light' ? 'light' : 'dark'); } catch (e) {} }
+  function applyTheme(t){ window.bmApplyAppearance(); }
   function applyThemeUI(){
     const t = getStoredTheme();
     document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
@@ -3182,6 +2383,8 @@
     });
   });
   applyTheme(getStoredTheme());
+  applyThemeUI();
+  window.addEventListener('storage', (e) => { if (e.key === 'bm-theme') applyThemeUI(); });
 
   // =====================================================================
   // OVERLAY (modal & sheet) HELPERS
