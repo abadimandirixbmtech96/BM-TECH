@@ -2074,6 +2074,72 @@
       filter: brightness(1.12);
     }
   }
+  /* ===================================================================
+     FULL SCREEN MENYESUAIKAN PERANGKAT
+     - Semua ukuran: tinggi layar mengikuti area yang benar-benar terlihat
+       (dvh), supaya tidak terpotong bar alamat di iPhone/Android.
+     - Tablet (768px ke atas): aplikasi memenuhi lebar layar, kartu catatan
+       otomatis jadi beberapa kolom.
+     - Laptop/monitor (1024px ke atas): daftar folder jadi sidebar tetap di
+       kiri, isi catatan mengisi sisanya.
+     Tampilan HP (di bawah 768px) tidak diubah.
+     =================================================================== */
+  @supports (height: 100dvh) {
+    body { height: 100dvh; }
+  }
+
+  @media (min-width: 768px) {
+    .screen-container { max-width: none; }
+
+    .content-scroll { padding-left: 24px; padding-right: 24px; }
+
+    .notes-container.view-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    .notes-container.view-card { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .notes-container.view-list { max-width: 900px; margin-left: auto; margin-right: auto; }
+
+    .bottom-bar { max-width: 640px; margin-left: auto; margin-right: auto; }
+  }
+
+  @media (min-width: 1024px) {
+    :root { --sidebar-w: 300px; }
+
+    /* Daftar folder: dari panel geser menjadi sidebar tetap */
+    .drawer {
+      transform: none;
+      width: var(--sidebar-w);
+      max-width: none;
+      box-shadow: none;
+      border-right: 1px solid var(--card-border-dark);
+    }
+    .drawer.open { box-shadow: none; }
+    .drawer-overlay,
+    .drawer-overlay.open { display: none; }
+    #btnOpenDrawer { visibility: hidden; pointer-events: none; }
+
+    .screen-container {
+      margin-left: var(--sidebar-w);
+      width: auto;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    /* Layar sekunder (Settings, Customer, Karyawan, Sampah) mulai dari tepi sidebar,
+       isinya dibatasi lebarnya dan diletakkan di tengah */
+    .settings-screen,
+    .trash-screen,
+    .customer-screen,
+    .karyawan-screen { left: var(--sidebar-w); }
+
+    .settings-screen > *,
+    .trash-screen > *,
+    .customer-screen > *,
+    .karyawan-screen > * {
+      width: 100%;
+      max-width: 760px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
