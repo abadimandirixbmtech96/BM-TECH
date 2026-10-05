@@ -2,7 +2,7 @@
   "name": "BM-TECH",
   "short_name": "BM-TECH",
   "description": "Sistem catatan & administrasi BM-TECH",
-  "start_url": "/index.html",
+  "start_url": "/dashboard-admin.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
