@@ -20,6 +20,14 @@
 <style>
   :root{ --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
   *{ font-family:var(--app-font); }
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
+  body.font-bold-mode * { font-weight: 700 !important; }
 
   :root{
     --paper:#F6F1E7;
@@ -31,9 +39,12 @@
     --glass-bg:rgba(255,255,255,0.6);
     --glass-border:rgba(255,255,255,0.7);
     --glass-shadow:0 8px 32px rgba(80,70,50,0.14);
-    --accent:#C9932F;
-    --accent-ink:#5A430F;
-    --accent-soft:rgba(201,147,47,0.14);
+    --accent:#F0A529;
+    --accent-rgb:240, 165, 41;
+    --accent-ink:#6C4A12;
+    --accent-ink-rgb:108, 74, 18;
+    --on-accent:#1C1B19;
+    --accent-soft:rgba(var(--accent-rgb),0.14);
     --danger:#C24444;
     --danger-soft:rgba(194,68,68,0.12);
     --radius-pill:999px;
@@ -62,14 +73,14 @@
     --glass-bg:rgba(30,28,23,0.6);
     --glass-border:rgba(255,255,255,0.09);
     --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
-    --accent-soft:rgba(201,147,47,0.18);
+    --accent-soft:rgba(var(--accent-rgb),0.18);
     --danger-soft:rgba(194,68,68,0.18);
     --skeleton-a:rgba(255,255,255,0.06);
     --skeleton-b:rgba(255,255,255,0.13);
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
+  ::selection{ background:rgba(var(--accent-rgb),0.35); color:inherit; }
   button{ font:inherit; }
   html,body{height:100%;}
   body{
@@ -122,9 +133,9 @@
   .greet-card{
     margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
     background:
-      linear-gradient(135deg, rgba(196,143,31,0.55) 0%, rgba(90,62,15,0.68) 100%),
+      linear-gradient(135deg, rgba(var(--accent-rgb),0.55) 0%, rgba(var(--accent-ink-rgb),0.68) 100%),
       url('background-admin.jpg') center/cover no-repeat, var(--accent);
-    color:#fff; box-shadow:0 10px 26px rgba(180,130,30,0.28);
+    color:#fff; box-shadow:0 10px 26px rgba(var(--accent-rgb),0.28);
   }
   .greet-card p{ margin:0 0 4px 0; font-size:13px; opacity:0.85; font-weight:600; }
   .greet-card h3{ margin:0 0 4px 0; font-size:20px; font-weight:800; }
@@ -275,7 +286,7 @@
   .nav-add-fab{
     width:var(--fab-size); height:var(--fab-size); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    background:var(--accent); color:#fff;
+    background:var(--accent); color:var(--on-accent);
     transform:translateY(calc(-1 * var(--fab-lift)));
     transition:transform .15s ease, background .15s ease;
   }
@@ -335,9 +346,9 @@
   .hint-card svg{ width:18px; height:18px; flex-shrink:0; margin-top:1px; }
 
   .btn-primary{
-    width:100%; padding:15px; border:none; border-radius:16px; background:var(--accent); color:#fff;
+    width:100%; padding:15px; border:none; border-radius:16px; background:var(--accent); color:var(--on-accent);
     font-size:15.5px; font-weight:750; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-    box-shadow:0 8px 20px rgba(180,130,30,0.28);
+    box-shadow:0 8px 20px rgba(var(--accent-rgb),0.28);
   }
   .btn-primary svg{ width:18px; height:18px; }
   .btn-primary:disabled{ opacity:0.55; box-shadow:none; }
@@ -388,7 +399,7 @@
   }
   .pz-handle{
     position:absolute; left:2px; top:2px; width:39px; height:39px; border-radius:50%; border:none; padding:0;
-    background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center;
+    background:var(--accent); color:var(--on-accent); display:flex; align-items:center; justify-content:center;
     cursor:grab; touch-action:none; box-shadow:0 3px 10px rgba(80,60,20,0.35); will-change:transform; transition:none;
   }
   .pz-handle svg{ width:18px; height:18px; }
@@ -425,13 +436,13 @@
   .pickup-rec-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:2px; }
   .pk-badge{ flex-shrink:0; font-size:11px; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(0,0,0,0.08); color:var(--ink-soft); }
   .pk-badge.paid{ background:rgba(61,170,106,0.18); color:#2d8a55; }
-  .pk-badge.part{ background:rgba(240,165,41,0.2); color:var(--accent-ink); }
+  .pk-badge.part{ background:rgba(var(--accent-rgb),0.2); color:var(--accent-ink); }
   .pk-tag{ margin-left:8px; font-size:11px; font-weight:800; color:#2d8a55; }
   .pickup-item{ display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; }
   .pickup-item input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
   .pickup-item b{ display:block; font-size:14px; font-weight:750; }
   .pickup-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-  .pickup-apply{ padding:12px 8px; border:none; border-radius:13px; background:var(--accent); color:#fff; font-size:14px; font-weight:800; cursor:pointer; }
+  .pickup-apply{ padding:12px 8px; border:none; border-radius:13px; background:var(--accent); color:var(--on-accent); font-size:14px; font-weight:800; cursor:pointer; }
   .pickup-apply.alt{ background:transparent; color:var(--accent-ink); border:1.5px solid var(--accent); }
   body.surface-dark .pickup-apply.alt{ color:var(--accent); }
   .pickup-apply:disabled{ opacity:0.45; }
@@ -502,6 +513,7 @@
   }
   #migrationToast.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
 </style>
+<script src="/bm-theme.js"></script>
 
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -555,6 +567,53 @@
 
 </head>
 <body>
+<script>
+  /* Sinkron dengan System Management & dashboard-admin: tema, warna sistem, font, teks tebal */
+  (function () {
+    var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
+    function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+    function applyAccent() {
+      var B = window.BMTheme, hex;
+      if (!B || !B.getAccent) return;
+      try { hex = B.getAccent(); } catch (e) { return; }
+      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return;
+      var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+      var ir = Math.round(r * 0.45), ig = Math.round(g * 0.45), ib = Math.round(b * 0.45);
+      var st = document.documentElement.style;
+      st.setProperty('--accent', hex);
+      st.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
+      st.setProperty('--accent-ink', 'rgb(' + ir + ', ' + ig + ', ' + ib + ')');
+      st.setProperty('--accent-ink-rgb', ir + ', ' + ig + ', ' + ib);
+      var dark = '#1C1B19';
+      var onA = (B.contrast && B.contrast(hex, dark) < B.contrast(hex, '#FFFFFF')) ? '#FFFFFF' : dark;
+      st.setProperty('--on-accent', onA);
+    }
+
+    function applyAppearance() {
+      var cl = document.body.classList;
+      var isDark = ls('bm-theme') !== 'light';
+      cl.toggle('surface-dark', isDark);
+      var meta = document.getElementById('themeColorMeta');
+      if (meta) meta.setAttribute('content', isDark ? '#15140F' : '#F6F1E7');
+
+      Object.keys(FONT_CLASS).forEach(function (k) { cl.remove(FONT_CLASS[k]); });
+      var f = ls('bm-font');
+      if (f && FONT_CLASS[f]) cl.add(FONT_CLASS[f]);
+      cl.toggle('font-bold-mode', ls('bm-font-bold') === 'on');
+
+      applyAccent();
+      if (f === 'custom' && window.BMTheme && window.BMTheme.ensureCustom) {
+        try { window.BMTheme.ensureCustom(); } catch (e) {}
+      }
+    }
+
+    window.bmApplyAppearance = applyAppearance;
+    applyAppearance();
+    window.addEventListener('storage', function (e) { if (!e.key || e.key.indexOf('bm-') === 0) applyAppearance(); });
+    window.addEventListener('pageshow', applyAppearance);
+  })();
+</script>
 <div class="app">
 
   <!-- ============ HOME ============ -->
@@ -791,9 +850,8 @@
       <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
 
       <div class="section-label">Tema Tampilan</div>
-      <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
-      <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
-      <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="light"><b>Terang</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="dark"><b>Gelap</b><div class="dot"></div></div>
     </div>
   </section>
 
@@ -3163,12 +3221,10 @@
     renderHome();
   });
 
-  function getStoredTheme(){ try { return localStorage.getItem('admdash_theme') || 'default'; } catch (e) { return 'default'; } }
-  function setStoredTheme(t){ try { localStorage.setItem('admdash_theme', t); } catch (e) {} }
-  function applyTheme(t){
-    document.body.classList.toggle('surface-dark', t === 'dark');
-    document.getElementById('themeColorMeta').setAttribute('content', t === 'dark' ? '#15140F' : '#F6F1E7');
-  }
+  // Tema mengikuti kunci 'bm-theme' yang sama dengan dashboard-admin (light / dark; kosong = dark)
+  function getStoredTheme(){ try { return localStorage.getItem('bm-theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; } }
+  function setStoredTheme(t){ try { localStorage.setItem('bm-theme', t === 'light' ? 'light' : 'dark'); } catch (e) {} }
+  function applyTheme(t){ window.bmApplyAppearance(); }
   function applyThemeUI(){
     const t = getStoredTheme();
     document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
@@ -3182,6 +3238,8 @@
     });
   });
   applyTheme(getStoredTheme());
+  applyThemeUI();
+  window.addEventListener('storage', (e) => { if (e.key === 'bm-theme') applyThemeUI(); });
 
   // =====================================================================
   // OVERLAY (modal & sheet) HELPERS
