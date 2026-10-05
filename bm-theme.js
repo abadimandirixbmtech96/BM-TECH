@@ -235,7 +235,7 @@
 
   /* Kembali lewat tombol back sistem (bfcache) dengan pengaturan yang sudah berubah → muat ulang */
   function signature() {
-    return [K.accent, K.font, K.bold, K.custom, K.theme].map(get).join('|');
+    return [K.accent, K.font, K.bold, K.custom, K.theme, K.lang].map(get).join('|');
   }
   var bootSignature = signature();
   w.addEventListener('pageshow', function (e) {
