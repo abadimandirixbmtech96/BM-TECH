@@ -2027,6 +2027,53 @@
     transform: translateY(calc(100% + 80px));
     box-shadow: none !important;
   }
+  /* ===================================================================
+     LAYAR LEBAR (tablet & laptop)
+     Di HP, tombol aksi memenuhi lebar sheet. Di layar lebar, tombol
+     dikecilkan dan diletakkan di kanan, dan sheet bawah dibatasi lebarnya
+     supaya tidak membentang selebar monitor. Tampilan HP tidak berubah.
+     =================================================================== */
+  @media (min-width: 640px) {
+    .tf-sheet,
+    .karyawan-form-sheet,
+    .customer-form-sheet,
+    .share-sheet {
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tf-actions,
+    .pzv-actions,
+    .customer-form-actions,
+    .trash-card-actions,
+    .customer-card-actions {
+      justify-content: flex-end;
+    }
+
+    .tf-actions button,
+    .pzv-actions button,
+    .customer-form-actions button,
+    .trash-card-actions button,
+    .customer-card-actions button {
+      flex: 0 0 auto;
+      min-width: 96px;
+      height: 40px;
+      padding: 0 22px;
+      font-size: 14px;
+    }
+  }
+
+  /* Efek sorot kursor hanya untuk perangkat yang punya mouse/trackpad */
+  @media (hover: hover) and (pointer: fine) {
+    .tf-actions button:hover,
+    .pzv-actions button:hover,
+    .customer-form-actions button:hover,
+    .trash-card-actions button:hover,
+    .customer-card-actions button:hover {
+      filter: brightness(1.12);
+    }
+  }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
