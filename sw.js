@@ -4,11 +4,9 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v3'; // dinaikkan: halaman Analisa dipisah ke analisa.html
+const CACHE_NAME = 'bmtech-shell-v4'; // dinaikkan: index.html dihapus, cache lama dibuang
 
 const APP_SHELL = [
-  '/',
-  '/index.html',
   '/dashboard-admin.html',
   '/analisa.html',
   '/admin-login.html',
@@ -69,7 +67,7 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() =>
-          caches.match(event.request).then((cached) => cached || caches.match('/index.html'))
+          caches.match(event.request).then((cached) => cached || caches.match('/admin-login.html'))
         )
     );
     return;
