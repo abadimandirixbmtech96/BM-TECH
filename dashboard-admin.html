@@ -2099,16 +2099,40 @@
 
     .bottom-bar { max-width: 640px; margin-left: auto; margin-right: auto; }
 
-    /* Layar sekunder (Settings, Customer, Karyawan, Sampah): isi dibatasi lebarnya, di tengah */
-    .settings-screen > *,
-    .trash-screen > *,
-    .customer-screen > *,
-    .karyawan-screen > * {
-      width: 100%;
-      max-width: 760px;
-      margin-left: auto;
-      margin-right: auto;
+    /* Layar sekunder (Settings, Customer, Karyawan, Sampah): penuh layar,
+       isinya tersusun dalam kolom-kolom mengikuti lebar perangkat */
+    .settings-screen {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      column-gap: 16px;
+      align-content: start;
+      align-items: start;
+      padding-left: 32px;
+      padding-right: 32px;
     }
+    .settings-screen > .settings-header { grid-column: 1 / -1; }
+
+    .trash-header,
+    .karyawan-header,
+    .customer-header,
+    .trash-sub { padding-left: 32px; padding-right: 32px; }
+
+    .trash-list,
+    .karyawan-list,
+    .customer-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 12px;
+      align-content: start;
+      padding-left: 32px;
+      padding-right: 32px;
+    }
+    .trash-list > *,
+    .karyawan-list > *,
+    .customer-list > * { margin-bottom: 0; }
+    .trash-empty,
+    .karyawan-empty,
+    .customer-empty { grid-column: 1 / -1; }
   }
 </style>
 <script src="/bm-theme.js"></script>
