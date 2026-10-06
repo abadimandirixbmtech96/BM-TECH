@@ -671,6 +671,49 @@
     .analytics-search-box { display: none !important; }
     .panel, .income-card, .bar-list, .recent-activity-list, .target-card, .busy-card { break-inside: avoid; }
   }
+  /* ===================================================================
+     TRANSISI HALUS & LAYAR LEBAR
+     =================================================================== */
+  @view-transition { navigation: auto; }
+
+  /* Saat data dimuat: garis tipis di header, isi halaman memudar masuk (bukan layar loading penuh) */
+  .analytics-page > :not(.page-header) { transition: opacity 0.3s ease; }
+  .analytics-page.is-loading > :not(.page-header) { opacity: 0; }
+  .page-header::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-yellow), transparent) no-repeat;
+    background-size: 40% 100%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    animation: bmLoadBar 1.1s ease-in-out infinite;
+  }
+  .analytics-page.is-loading .page-header::after { opacity: 1; }
+  @keyframes bmLoadBar { 0% { background-position: -50% 0; } 100% { background-position: 150% 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .analytics-page > :not(.page-header) { transition: none; }
+    .page-header::after { animation: none; }
+  }
+
+  /* Tablet, laptop, monitor: halaman memenuhi layar, panel tersusun dalam kolom */
+  @media screen and (min-width: 768px) {
+    .analytics-page {
+      max-width: 1600px;
+      padding: 0 32px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      column-gap: 24px;
+      align-content: start;
+      align-items: start;
+    }
+    .analytics-page > .page-header { grid-column: 1 / -1; margin-left: -32px; margin-right: -32px; padding-left: 32px; padding-right: 32px; }
+    .analytics-page > .insight-banner,
+    .analytics-page > #historyPanel,
+    .analytics-page > .page-end { grid-column: 1 / -1; }
+  }
 </style>
 </head>
 <body>
@@ -2783,32 +2826,91 @@
   (async function init() {
     const guard = $('authGuardScreen');
     const page = $('analyticsPage');
+    const OK_KEY = 'bm-admin-ok';
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
+    function localUserId() {
+      try {
+        const raw = localStorage.getItem('bmtech-auth');
+        const j = raw ? JSON.parse(raw) : null;
+        return (j && j.user && j.user.id) ? j.user.id : null;
+      } catch (e) { return null; }
+    }
+    // Halaman tampil langsung dengan penanda "sedang memuat" (garis tipis di header, isi menyusul
+    // memudar masuk). Tidak ada layar loading penuh. Tata letak sudah terpasang, jadi grafik tetap
+    // bisa mengukur lebar sebenarnya.
+    function showPage() {
+      page.classList.add('is-loading');
+      page.style.display = '';
+      guard.style.display = 'none';
+    }
+
+    // Admin yang sudah pernah diverifikasi di perangkat ini: langsung tampil dan muat data
+    // bersamaan dengan verifikasi (data tetap dijaga RLS di server).
+    let okUid = null;
+    try { okUid = localStorage.getItem(OK_KEY); } catch (e) {}
+    const uid = localUserId();
+    const optimistic = !!uid && uid === okUid;
+    let earlyLoad = null;
+    if (optimistic) {
+      showPage();
+      earlyLoad = refreshData();
+    }
+
+    let session = null;
+    let timedOut = false;
+    try {
+      const r = await withTimeout(supabaseClient.auth.getSession(), 8000);
+      session = r.data.session;
+    } catch (e) {
+      timedOut = true;
+      console.error('getSession lambat/gagal:', e.message);
+    }
+
+    if (timedOut && !optimistic) {
+      $('authGuardText').textContent = 'Koneksi lambat, belum bisa memverifikasi.';
+      const btn = document.createElement('button');
+      btn.textContent = 'Coba lagi';
+      btn.style.cssText = 'margin-top:6px;padding:10px 22px;border-radius:12px;border:0;background:#F5A524;color:#000;font-weight:700;font-size:14px';
+      btn.addEventListener('click', () => location.reload());
+      guard.appendChild(btn);
+      return;
+    }
+
+    if (!session && !timedOut) {
+      try { localStorage.removeItem(OK_KEY); } catch (e) {}
       window.location.href = 'admin-login.html';
       return;
     }
 
-    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+    let isAdmin = null, error = null;
+    if (timedOut) {
+      error = new Error('timeout');
+    } else {
+      try {
+        const r = await withTimeout(supabaseClient.rpc('is_admin'), 8000);
+        isAdmin = r.data; error = r.error;
+      } catch (e) { error = e; }
+    }
+
     if (error) {
       // Error jaringan (bukan konfirmasi "bukan admin") — JANGAN paksa logout;
       // RLS di server tetap jadi penjaga utama.
       console.error('Gagal cek status admin (jaringan?):', error.message);
     } else if (!isAdmin) {
+      try { localStorage.removeItem(OK_KEY); } catch (e) {}
       await supabaseClient.auth.signOut();
       window.location.href = 'admin-login.html';
       return;
+    } else {
+      try { localStorage.setItem(OK_KEY, session.user.id); } catch (e) {}
     }
 
-    // Halaman ditampilkan di balik layar loading supaya grafik bisa mengukur lebar sebenarnya,
-    // dan pengguna tidak sempat melihat angka 0 / kosong sebelum data datang.
-    page.style.display = 'flex';
-    $('authGuardText').textContent = 'Memuat data analisa...';
+    showPage();
     try {
-      await refreshData();
+      await (earlyLoad || refreshData());
     } finally {
-      guard.style.display = 'none';
+      page.classList.remove('is-loading');
     }
 
     // Jam relatif ("5 menit lalu") tetap segar tanpa mengambil data lagi
