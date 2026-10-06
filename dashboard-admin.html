@@ -2114,6 +2114,18 @@
 
     .bottom-bar { max-width: 640px; margin-left: auto; margin-right: auto; }
 
+    /* Pencarian: kolom tengah selebar nyaman dibaca, simetris kiri-kanan */
+    .search-overlay { padding-left: 32px; padding-right: 32px; }
+    .search-overlay > * {
+      width: 100%;
+      max-width: 760px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Detail catatan: tabel memakai lebar penuh, margin sama dengan layar lain */
+    .note-detail-overlay { padding-left: 32px; padding-right: 32px; }
+
     /* Layar sekunder (Settings, Customer, Karyawan, Sampah): penuh layar,
        isinya tersusun dalam kolom-kolom mengikuti lebar perangkat */
     .settings-screen {
@@ -3726,15 +3738,15 @@
 
   function noteCardHtml(note, idx) {
     return `
-      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${note.id}" style="animation-delay: ${idx * 0.05}s">
+      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${escapeHtml(note.id)}" style="animation-delay: ${idx * 0.05}s">
         ${note.pinned ? `
           <div class="note-pin-badge">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
           </div>
         ` : ''}
         <div class="note-content-layer">
-          <h2 class="note-title">${note.title || 'Untitled'}</h2>
-          <p class="note-desc">${note.preview || ''}</p>
+          <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
+          <p class="note-desc">${escapeHtml(note.preview || '')}</p>
         </div>
         <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
         <div class="note-checkbox">
