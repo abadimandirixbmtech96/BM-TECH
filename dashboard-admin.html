@@ -2149,6 +2149,32 @@
     .karyawan-empty,
     .customer-empty { grid-column: 1 / -1; }
   }
+  /* ===================================================================
+     TRANSISI HALUS & TANPA KEDIP
+     =================================================================== */
+  @view-transition { navigation: auto; }
+
+  /* Muat ulang daftar (mis. setelah keluar dari editor): kartu tidak muncul-ulang dengan animasi */
+  .notes-container.no-anim .note-card { animation: none; }
+
+  /* Kerangka kartu saat data pertama belum datang, pengganti layar loading kosong */
+  .skeleton-card {
+    min-height: 110px;
+    border-radius: 18px;
+    background: var(--card-surface-dark, #1c1b1e);
+    border: 1px solid var(--card-border-dark, rgba(255, 255, 255, 0.06));
+    animation: bmSkeletonPulse 1.3s ease-in-out infinite;
+  }
+  @keyframes bmSkeletonPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
+
+  /* Editor: isi muncul halus setelah selesai dimuat */
+  .editor-frame { opacity: 0; transition: opacity 0.2s ease; }
+  .editor-modal.ready .editor-frame { opacity: 1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-card { animation: none; }
+    .editor-frame { transition: none; }
+  }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -2579,7 +2605,7 @@
 </div>
 
 <div class="editor-modal" id="editorModal">
-  <iframe id="editorFrame" class="editor-frame" src="editor-data-administrator.html"></iframe>
+  <iframe id="editorFrame" class="editor-frame" src="about:blank"></iframe>
 </div>
 
 <div class="liquid-alert-backdrop" id="liquidAlertBackdrop">
@@ -2685,10 +2711,10 @@
   <span id="miniToastText"></span>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
@@ -2705,38 +2731,109 @@
 
 <script>
   (async function guardAdminAccess() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const guardEl = document.getElementById('authGuardScreen');
+    const appEl = document.getElementById('screenContainer');
+    const OK_KEY = 'bm-admin-ok';
+    // Skrip utama (yang mendefinisikan loadCategories dll.) baru selesai dibaca setelah blok ini mulai
+    const ready = document.readyState === 'loading'
+      ? new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }))
+      : Promise.resolve();
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 
-    if (!session) {
+    function localUserId() {
+      try {
+        const raw = localStorage.getItem('bmtech-auth');
+        const j = raw ? JSON.parse(raw) : null;
+        return (j && j.user && j.user.id) ? j.user.id : null;
+      } catch (e) { return null; }
+    }
+    function revealApp() { guardEl.style.display = 'none'; appEl.style.display = 'flex'; }
+    function showSkeleton() {
+      const l = document.getElementById('notesList');
+      if (l && !l.children.length) l.innerHTML = Array.from({ length: 8 }, () => '<div class="skeleton-card"></div>').join('');
+    }
+
+    // Admin yang sudah pernah diverifikasi di perangkat ini: tampilkan aplikasi langsung tanpa
+    // menunggu jaringan. Verifikasi tetap jalan di belakang layar; data dilindungi RLS di server.
+    let okUid = null;
+    try { okUid = localStorage.getItem(OK_KEY); } catch (e) {}
+    const uid = localUserId();
+    const optimistic = !!uid && uid === okUid;
+    let earlyLoad = null;
+    if (optimistic) {
+      revealApp();
+      showSkeleton();
+      earlyLoad = ready.then(() => loadCategories());
+    }
+
+    let session = null;
+    let timedOut = false;
+    try {
+      const r = await withTimeout(supabaseClient.auth.getSession(), 8000);
+      session = r.data.session;
+    } catch (e) {
+      timedOut = true;
+      console.error('getSession lambat/gagal:', e.message);
+    }
+
+    if (timedOut && !optimistic) {
+      // Jangan biarkan spinner menggantung selamanya
+      const guardText = guardEl.querySelector('span');
+      if (guardText) guardText.textContent = 'Koneksi lambat, belum bisa memverifikasi.';
+      const btn = document.createElement('button');
+      btn.textContent = 'Coba lagi';
+      btn.style.cssText = 'margin-top:6px;padding:10px 22px;border-radius:12px;border:0;background:#F5A524;color:#000;font-weight:700;font-size:14px';
+      btn.addEventListener('click', () => location.reload());
+      guardEl.appendChild(btn);
+      return;
+    }
+
+    if (!session && !timedOut) {
+      try { localStorage.removeItem(OK_KEY); } catch (e) {}
       window.location.href = 'admin-login.html';
       return;
     }
 
-    const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+    let isAdmin = null, error = null;
+    if (timedOut) {
+      error = new Error('timeout');
+    } else {
+      try {
+        const r = await withTimeout(supabaseClient.rpc('is_admin'), 8000);
+        isAdmin = r.data; error = r.error;
+      } catch (e) { error = e; }
+    }
 
     if (error) {
       console.error('Gagal cek status admin (jaringan?):', error.message);
-      document.getElementById('authGuardScreen').style.display = 'none';
-      document.getElementById('screenContainer').style.display = 'flex';
-      loadCategories();
+      await ready;
+      revealApp();
+      if (!earlyLoad) loadCategories();
       return;
     }
 
     if (!isAdmin) {
+      try { localStorage.removeItem(OK_KEY); } catch (e) {}
       await supabaseClient.auth.signOut();
       window.location.href = 'admin-login.html';
       return;
     }
 
-    document.getElementById('authGuardScreen').style.display = 'none';
-    document.getElementById('screenContainer').style.display = 'flex';
-    await loadCategories();
+    try { localStorage.setItem(OK_KEY, session.user.id); } catch (e) {}
+
+    revealApp();
+    await ready;
+    await (earlyLoad || loadCategories());
     loadAllNotesInDashboard();
 
     let realtimeRefreshTimer = null;
     function scheduleRealtimeRefresh() {
       clearTimeout(realtimeRefreshTimer);
-      realtimeRefreshTimer = setTimeout(() => loadCategories(), 400);
+      realtimeRefreshTimer = setTimeout(() => {
+        const em = document.getElementById('editorModal');
+        if (em && em.classList.contains('open')) return; // daftar dimuat ulang sekali saat editor ditutup
+        loadCategories();
+      }, 400);
     }
     supabaseClient
       .channel('admin-realtime')
@@ -3650,6 +3747,10 @@
   
   const displayWeeks = groupNotesByWeek(notesData).reverse();
   let idxCounter = 0;
+  const viewKey = [activeCategoryId, activeFilterYear, activeFilterMonth].join('|');
+  container.classList.toggle('no-anim', container.dataset.viewKey === viewKey && container.dataset.rendered === '1');
+  container.dataset.viewKey = viewKey;
+  container.dataset.rendered = '1';
   container.style.display = 'grid';
   container.innerHTML = displayWeeks.map(week => {
     const cardsHtml = week.notes.map(note => noteCardHtml(note, idxCounter++)).join('');
@@ -5717,10 +5818,7 @@
   function openFolderBuilder(catId = null) {
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
-    editorFrame.src = 'about:blank';
-    requestAnimationFrame(() => {
-      editorFrame.src = CUSTOM_BUILDER_FILE + (catId ? '?id=' + encodeURIComponent(catId) + '&' : '?') + '_t=' + Date.now();
-    });
+    loadEditorFrame(CUSTOM_BUILDER_FILE + (catId ? '?id=' + encodeURIComponent(catId) + '&' : '?') + '_t=' + Date.now());
     editorModal.classList.add('open');
   }
 
@@ -5840,6 +5938,19 @@
 
   const OPEN_EDITOR_STORAGE_KEY = 'bmtech_open_editor';
 
+  // Muat halaman ke iframe editor. Iframe disembunyikan sampai selesai dimuat lalu muncul halus,
+  // jadi pengguna melihat panel naik dengan mulus, bukan layar putih/loading.
+  let editorReadyTimer = null;
+  function loadEditorFrame(url) {
+    clearTimeout(editorReadyTimer);
+    editorModal.classList.remove('ready');
+    editorFrame.onload = function () {
+      if ((editorFrame.getAttribute('src') || '') !== 'about:blank') editorModal.classList.add('ready');
+    };
+    editorReadyTimer = setTimeout(() => editorModal.classList.add('ready'), 6000);
+    editorFrame.src = url;
+  }
+
   function saveOpenEditorState(noteId, folderId) {
     try {
       localStorage.setItem(OPEN_EDITOR_STORAGE_KEY, JSON.stringify({ noteId: noteId || null, folderId: folderId || null }));
@@ -5885,11 +5996,7 @@
 
     saveOpenEditorState(noteId, folderId);
 
-    editorFrame.src = 'about:blank';
-    requestAnimationFrame(() => {
-      editorFrame.src = editorFile + '?' + params.toString();
-    });
-
+    loadEditorFrame(editorFile + '?' + params.toString());
     editorModal.classList.add('open');
   }
 
@@ -5897,11 +6004,13 @@
     if (e.data === 'close-editor') {
       clearOpenEditorState();
       editorModal.classList.remove('open');
+      clearTimeout(editorReadyTimer);
+      setTimeout(() => { if (!editorModal.classList.contains('open')) editorFrame.src = 'about:blank'; }, 500);
       loadCategories();
     }
     if (e.data === 'note-autosaved' || (e.data && e.data.type === 'note-autosaved')) {
       if (e.data && e.data.noteId) saveOpenEditorState(e.data.noteId, e.data.folder);
-      loadCategories();
+      // daftar dimuat ulang sekali saat editor ditutup, bukan di setiap simpan otomatis
     }
   });
 
