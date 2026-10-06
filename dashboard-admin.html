@@ -2086,6 +2086,21 @@
      =================================================================== */
   @supports (height: 100dvh) {
     body { height: 100dvh; }
+    .tf-sheet { max-height: 82dvh; }
+    .search-filter-popup { max-height: 50dvh; }
+    .nas-folder-list { max-height: 42dvh; }
+  }
+
+  /* iOS Safari: hilangkan kedip abu-abu saat tombol disentuh dan jeda ketuk-dua-kali */
+  button,
+  [role="button"],
+  .header-btn,
+  .search-pill,
+  .tab-btn,
+  .settings-item,
+  .drawer-foot-btn {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 
   @media (min-width: 768px) {
@@ -6514,6 +6529,11 @@
   if (navigator.storage && navigator.storage.persist) {
     navigator.storage.persist().catch(() => {});
   }
+</script>
+<script>
+  // iOS Safari: efek :active (tombol terlihat tertekan) baru bekerja kalau dokumen
+  // punya listener touchstart. Listener kosong ini membuat semua tombol responsif.
+  document.addEventListener('touchstart', function () {}, { passive: true });
 </script>
 <script>
   if ('serviceWorker' in navigator) {
