@@ -2187,6 +2187,17 @@
     .skeleton-card { animation: none; }
     .editor-frame { transition: none; }
   }
+  /* Panel halaman (Analisa, System Management, Daftar Nomor HP): naik dari bawah, dashboard tetap hidup di belakang */
+  .page-modal {
+    position: fixed;
+    inset: 0;
+    background: var(--bg-dark);
+    z-index: 210;
+    transform: translateY(100%);
+    transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+  .page-modal.open { transform: translateY(0); }
+  .page-modal.ready .editor-frame { opacity: 1; }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -2618,6 +2629,11 @@
 
 <div class="editor-modal" id="editorModal">
   <iframe id="editorFrame" class="editor-frame" src="about:blank"></iframe>
+</div>
+
+<!-- Analisa, System Management, Daftar Nomor HP: terbuka sebagai panel di atas dashboard (seperti editor), tanpa memuat ulang dashboard -->
+<div class="page-modal" id="pageModal">
+  <iframe id="pageFrame" class="editor-frame" src="about:blank"></iframe>
 </div>
 
 <div class="liquid-alert-backdrop" id="liquidAlertBackdrop">
@@ -6631,19 +6647,62 @@
     );
   });
 
-  document.getElementById('btnAnalyticsOpen').addEventListener('click', () => {
-    window.location.href = 'analisa.html';
-  });
+  // ---- Panel halaman: buka Analisa / System Management / Daftar Nomor HP tanpa memuat ulang dashboard ----
+  const pageModal = document.getElementById('pageModal');
+  const pageFrame = document.getElementById('pageFrame');
+  let pageReadyTimer = null;
+  let pageThemeSnap = null;
 
-  document.getElementById('btnOpenSystem').addEventListener('click', () => {
-    try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
-    window.location.href = 'system-management.html';
-  });
+  // Pengaturan tampilan (warna, font, bahasa) disimpan di localStorage berawalan "bm-"
+  function themeSnapshot() {
+    try {
+      return Object.keys(localStorage)
+        .filter(k => k.indexOf('bm-') === 0 && k !== 'bm-admin-ok')
+        .sort().map(k => k + '=' + localStorage.getItem(k)).join('|');
+    } catch (e) { return ''; }
+  }
 
-  document.getElementById('btnOpenPhones').addEventListener('click', () => {
-    try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
-    window.location.href = 'daftar-nomor-hp.html';
+  function openPageModal(file, watchTheme) {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('open');
+    pageThemeSnap = watchTheme ? themeSnapshot() : null;
+    clearTimeout(pageReadyTimer);
+    pageModal.classList.remove('ready');
+    pageFrame.onload = function () {
+      if ((pageFrame.getAttribute('src') || '') !== 'about:blank') pageModal.classList.add('ready');
+    };
+    pageReadyTimer = setTimeout(() => pageModal.classList.add('ready'), 6000);
+    pageFrame.src = file;
+    pageModal.classList.add('open');
+    try { history.pushState({ pageModal: true }, ''); } catch (e) {}
+  }
+
+  function closePageModal() {
+    if (!pageModal.classList.contains('open')) return;
+    pageModal.classList.remove('open');
+    clearTimeout(pageReadyTimer);
+    setTimeout(() => { if (!pageModal.classList.contains('open')) pageFrame.src = 'about:blank'; }, 500);
+    // Kalau pengaturan tampilan berubah, dashboard dimuat ulang sekali (setelah panel turun)
+    // supaya warna/font/bahasa baru langsung berlaku, lalu layar Settings dibuka lagi.
+    if (pageThemeSnap !== null && themeSnapshot() !== pageThemeSnap) {
+      try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
+      setTimeout(() => location.reload(), 360);
+    }
+    pageThemeSnap = null;
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.source !== pageFrame.contentWindow) return;
+    if (e.data && e.data.type === 'close-page') {
+      if (history.state && history.state.pageModal) history.back(); // memicu popstate -> closePageModal
+      else closePageModal();
+    }
   });
+  window.addEventListener('popstate', () => { if (pageModal.classList.contains('open')) closePageModal(); });
+
+  document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
+  document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
+  document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
 
 </script>
 <script>
