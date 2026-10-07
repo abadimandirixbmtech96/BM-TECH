@@ -1054,6 +1054,7 @@
 
   /* ---------- Kembali ke dashboard (buka lagi layar Settings) ---------- */
   $('btnBack').addEventListener('click', function () {
+    if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'close-page' }, '*'); return; }
     try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
     window.location.href = 'dashboard-admin.html';
   });
