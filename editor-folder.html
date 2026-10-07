@@ -498,7 +498,30 @@
   .bukti-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all .15s ease; }
   .bukti-dot.active{ background:#fff; width:16px; border-radius:3px; }
 
-  </style>
+    /* ===================================================================
+     MEMUAT HALUS & LAYAR LEBAR
+     =================================================================== */
+  .scroll { transition: opacity 0.25s ease; }
+  html.is-loading .scroll { opacity: 0; }
+  @media (prefers-reduced-motion: reduce) { .scroll { transition: none; } }
+
+  /* Tablet, laptop, monitor: isi berada di kolom tengah yang nyaman dibaca, simetris kiri-kanan */
+  @media screen and (min-width: 768px) {
+    .topbar,
+    .px {
+      padding-left: max(calc(var(--safe-left) + 24px), calc((100% - 900px) / 2));
+      padding-right: max(calc(var(--safe-right) + 24px), calc((100% - 900px) / 2));
+    }
+    .stat-grid { grid-template-columns: repeat(4, 1fr); }
+    .bottom-nav { max-width: 560px; margin-left: auto; margin-right: auto; }
+  }
+</style>
+<script>
+  // Isi halaman disembunyikan sampai data selesai dimuat, lalu muncul halus (tanpa kedip kosong-lalu-terisi).
+  // Pengaman: tampilkan paksa setelah 6 detik kalau jaringan macet.
+  document.documentElement.classList.add('is-loading');
+  setTimeout(function () { document.documentElement.classList.remove('is-loading'); }, 6000);
+</script>
 
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1517,7 +1540,7 @@
     } catch (e) {
       $('recentList').innerHTML = '<p style="text-align:center;padding:30px 10px;color:var(--ink-soft);font-size:14px;">' + esc(e.message || 'Gagal memuat — cek koneksi lalu buka ulang.') + '</p>';
     }
-  })();
+  })().finally(() => document.documentElement.classList.remove('is-loading'));
 </script>
 </body>
 </html>
