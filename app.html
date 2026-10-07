@@ -11,7 +11,8 @@
 <meta property="og:site_name" content="Dashboard Trader">
 <meta property="og:title" content="Dashboard Trader - Kripto, Saham & Forex Real-Time">
 <meta property="og:description" content="Pantau Kripto, Saham & Forex dalam satu dashboard: candlestick, MA 50, RSI 14, dan order book.">
-<meta property="og:url" content="https://dashboard-bm-tech.vercel.app/">
+<meta property="og:url" content="https://dashboard-bm-tech.vercel.app/app.html">
+<link rel="canonical" href="https://dashboard-bm-tech.vercel.app/app.html">
 <meta property="og:image" content="https://dashboard-bm-tech.vercel.app/banner-dashboard-trader.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
@@ -65,7 +66,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font:13px/1.35 system
 .a span:first-child{color:var(--dn)}.a i{background:var(--dn)}
 .b span:first-child{color:var(--up)}.b i{background:var(--up)}
 #mid{padding:5px 10px;text-align:center;font-weight:700;border-top:1px solid var(--bd);border-bottom:1px solid var(--bd)}
-#ts{padding:6px 10px}#ts div{display:flex;justify-content:space-between;padding:2px 0}
+#ts{padding:6px 10px}#attr{padding:8px 10px;font-size:10px;color:#787b86;margin-top:auto}#attr a{color:#787b86}#ts div{display:flex;justify-content:space-between;padding:2px 0}
 #sig{font-weight:700;font-size:15px}
 #ov{position:fixed;inset:0;background:rgba(11,14,20,.96);display:none;z-index:9;padding:20px;align-items:center;justify-content:center;text-align:center}
 #ov div{max-width:420px}#ov input{margin-top:14px;color:var(--tx)}
@@ -102,6 +103,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font:13px/1.35 system
  <div id="asks"></div><div id="mid">-</div><div id="bids"></div>
  <h4>Technical Summary</h4>
  <div id="ts"><div><span>RSI (14)</span><b id="tR">-</b></div><div><span>MA (50)</span><b id="tM">-</b></div><div><span>Tren</span><b id="tT">-</b></div><div><span>Sinyal</span><span id="sig">-</span></div></div>
+ <div id="attr">Grafik oleh <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView Lightweight Charts</a></div>
 </div>
 </div>
 <script>
@@ -129,7 +131,7 @@ function buildList(){
 function init(){
  var L=window.LightweightCharts;
  chart=L.createChart($('chart'),{autoSize:true,
-  layout:{background:{type:'solid',color:'#0b0e14'},textColor:'#d1d4dc'},
+  layout:{background:{type:'solid',color:'#0b0e14'},textColor:'#d1d4dc',attributionLogo:false},
   grid:{vertLines:{color:'#1a1f2b'},horzLines:{color:'#1a1f2b'}},
   rightPriceScale:{borderColor:'#1f2430'},
   timeScale:{borderColor:'#1f2430',timeVisible:true,secondsVisible:false},
