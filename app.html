@@ -115,6 +115,7 @@ var TF={'1m':{s:60,b:'1m'},'5m':{s:300,b:'5m'},'1h':{s:3600,b:'1h'},'1d':{s:8640
 var $=function(i){return document.getElementById(i)};
 var cur=SYMS[0],tfk='1m',candles=[],gen=0,ws=null,tm=null,chart,cs,ls,ma=null,rs=null,maOn=false,rsiOn=false,lastPx=null,styleLine=false;
 var upC='#089981',dnC='#f23645';
+var rt=null;
 
 function fmt(x){return x.toFixed(x<10?5:2)}
 
@@ -208,6 +209,7 @@ function hist(o,sec){
 function stop(){
  if(ws){ws.onclose=null;ws.onmessage=null;try{ws.close()}catch(e){}ws=null}
  if(tm){clearInterval(tm);tm=null}
+ if(rt){clearTimeout(rt);rt=null}
 }
 function status(s){$('st').textContent=s}
 
@@ -223,30 +225,52 @@ function sim(){
  },1000);
 }
 
-function openWS(my){
- ws=new WebSocket('wss://stream.binance.com:9443/ws/'+cur.s.toLowerCase()+'@kline_'+TF[tfk].b);
- ws.onmessage=function(e){
+var REST=['https://data-api.binance.vision','https://api.binance.com','https://api1.binance.com','https://api-gcp.binance.com'];
+var WSH=['wss://data-stream.binance.vision','wss://stream.binance.com:9443','wss://stream.binance.com:443'];
+var hostI=0;
+
+async function getJSON(u){
+ var c=new AbortController(),t=setTimeout(function(){c.abort()},7000);
+ try{var r=await fetch(u,{signal:c.signal});if(!r.ok)throw new Error('http '+r.status);return await r.json()}
+ finally{clearTimeout(t)}
+}
+
+function openWS(my,wi){
+ if(my!==gen)return;
+ if(wi>=WSH.length){status('Stream gagal - simulasi');sim();return}
+ var got=false,w=new WebSocket(WSH[wi]+'/ws/'+cur.s.toLowerCase()+'@kline_'+TF[tfk].b);
+ ws=w;
+ var to=setTimeout(function(){if(!got)try{w.close()}catch(e){}},7000);
+ w.onmessage=function(e){
   var k=JSON.parse(e.data).k;if(!k)return;
+  if(!got){got=true;status('Binance LIVE')}
   push({time:k.t/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c});
  };
- ws.onclose=function(){if(my===gen){status('Terputus - simulasi');sim()}};
+ w.onclose=function(){
+  clearTimeout(to);
+  if(my!==gen)return;
+  if(got){status('Menyambung ulang...');rt=setTimeout(function(){openWS(my,wi)},2000)}
+  else openWS(my,wi+1);
+ };
 }
 
 async function load(){
  var my=++gen;stop();lastPx=null;candles=[];status('Memuat...');
  var tf=TF[tfk];
  if(cur.t==='c'){
-  try{
-   var r=await fetch('https://api.binance.com/api/v3/klines?symbol='+cur.s+'&interval='+tf.b+'&limit=500');
-   var j=await r.json();
+  var path='/api/v3/klines?symbol='+cur.s+'&interval='+tf.b+'&limit=500',i,j=null;
+  for(i=0;i<REST.length&&!j;i++){
+   try{j=await getJSON(REST[i]+path)}catch(e){j=null}
    if(my!==gen)return;
+  }
+  if(j&&j.length){
    candles=j.map(function(k){return{time:k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4]}});
-   render(true);openWS(my);status('Binance LIVE');return;
-  }catch(e){}
+   render(true);status('Menghubungkan...');openWS(my,0);return;
+  }
  }
  if(my!==gen)return;
  candles=hist(cur,tf.s);render(true);sim();
- status(cur.t==='c'?'Offline - simulasi':'Simulator');
+ status(cur.t==='c'?'Binance tidak terjangkau - simulasi':'Simulator');
 }
 
 function setTF(k){
