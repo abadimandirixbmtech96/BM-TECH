@@ -285,6 +285,27 @@
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
+  /* ===================================================================
+     TRANSISI HALUS & LAYAR LEBAR
+     =================================================================== */
+  @view-transition { navigation: auto; }
+
+  /* Tablet, laptop, monitor: halaman memenuhi layar, kelompok pengaturan tersusun dalam kolom */
+  @media screen and (min-width: 768px) {
+    body {
+      max-width: 1600px;
+      padding-left: 32px;
+      padding-right: 32px;
+      column-width: 360px;
+      column-count: 3;
+      column-gap: 16px;
+    }
+    body > .group { break-inside: avoid; }
+    body > .top,
+    body > .foot-note,
+    body > #btnReset { column-span: all; }
+    body > #btnReset { display: block; margin-left: auto; margin-right: auto; width: min(100%, 420px) !important; }
+  }
 </style>
 </head>
 <body>
