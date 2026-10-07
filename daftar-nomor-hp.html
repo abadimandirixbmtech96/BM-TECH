@@ -881,6 +881,7 @@
   });
 
   document.getElementById('btnBack').addEventListener('click', () => {
+    if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'close-page' }, '*'); return; }
     pageEl.classList.add('leaving');
     setTimeout(() => { window.location.href = DASHBOARD_FILE; }, 200);
   });
