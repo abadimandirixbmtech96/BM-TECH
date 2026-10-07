@@ -420,6 +420,19 @@
       transition-duration: 0.01ms !important;
     }
   }
+  /* ===================================================================
+     TRANSISI HALUS & LAYAR LEBAR
+     =================================================================== */
+  @view-transition { navigation: auto; }
+
+  /* Tablet, laptop, monitor: halaman memenuhi layar, daftar nomor tersusun dalam kolom */
+  @media screen and (min-width: 768px) {
+    .top-bar { padding-left: 32px; padding-right: 32px; }
+    .head { max-width: 1536px; }
+    .page { max-width: 1600px; padding-left: 32px; padding-right: 32px; }
+    .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+    .list > .state { grid-column: 1 / -1; }
+  }
 </style>
 </head>
 <body>
@@ -878,29 +891,53 @@
 
   (async function guardAdminAccess() {
     renderSkeleton();
+    const OK_KEY = 'bm-admin-ok';
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+
+    function localUserId() {
+      try {
+        const raw = localStorage.getItem('bmtech-auth');
+        const j = raw ? JSON.parse(raw) : null;
+        return (j && j.user && j.user.id) ? j.user.id : null;
+      } catch (e) { return null; }
+    }
+
+    // Admin yang sudah pernah diverifikasi di perangkat ini: data langsung dimuat bersamaan
+    // dengan verifikasi (data tetap dijaga RLS di server), tanpa menunggu antrean jaringan.
+    let okUid = null;
+    try { okUid = localStorage.getItem(OK_KEY); } catch (e) {}
+    const uid = localUserId();
+    const optimistic = !!uid && uid === okUid;
+    let earlyLoad = null;
+    if (optimistic) earlyLoad = loadData();
+
     try {
-      const { data: { session } } = await supabaseClient.auth.getSession();
+      const { data: { session } } = await withTimeout(supabaseClient.auth.getSession(), 8000);
       if (!session) {
+        try { localStorage.removeItem(OK_KEY); } catch (e) {}
         window.location.href = LOGIN_FILE;
         return;
       }
 
-      const { data: isAdmin, error } = await supabaseClient.rpc('is_admin');
+      const { data: isAdmin, error } = await withTimeout(supabaseClient.rpc('is_admin'), 8000);
       if (error) throw error;
 
       if (!isAdmin) {
+        try { localStorage.removeItem(OK_KEY); } catch (e) {}
         await supabaseClient.auth.signOut();
         window.location.href = LOGIN_FILE;
         return;
       }
+      try { localStorage.setItem(OK_KEY, session.user.id); } catch (e) {}
     } catch (err) {
       console.error('Gagal cek akses admin:', err && err.message ? err.message : err);
+      if (optimistic) return; // data sudah dimuat; jangan ditimpa pesan error
       subtitleEl.textContent = 'Gagal memuat';
       renderState(ICON_ALERT, 'Gagal memeriksa akses', 'Periksa koneksi internet Anda lalu coba lagi.', () => window.location.reload());
       return;
     }
 
-    loadData();
+    if (!earlyLoad) loadData();
   })();
 </script>
 </body>
