@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Dashboard Trader - Kripto, Saham & Forex Real-Time</title>
-<meta name="description" content="Dashboard trading real-time: candlestick, MA 50, RSI 14, order book, dan watchlist Kripto, Saham & Forex dalam satu halaman.">
+<title>Dashboard Trader - Kripto & Forex Real-Time</title>
+<meta name="description" content="Dashboard trading real-time: candlestick, MA 50, RSI 14, order book, dan watchlist Kripto & Forex dalam satu halaman.">
 <meta name="theme-color" content="#0b0e14">
 <!-- Open Graph (WhatsApp, Facebook, Telegram) -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Dashboard Trader">
-<meta property="og:title" content="Dashboard Trader - Kripto, Saham & Forex Real-Time">
-<meta property="og:description" content="Pantau Kripto, Saham & Forex dalam satu dashboard: candlestick, MA 50, RSI 14, dan order book.">
+<meta property="og:title" content="Dashboard Trader - Kripto & Forex Real-Time">
+<meta property="og:description" content="Pantau Kripto & Forex dalam satu dashboard: candlestick, MA 50, RSI 14, dan order book.">
 <meta property="og:url" content="https://dashboard-bm-tech.vercel.app/app.html">
 <link rel="canonical" href="https://dashboard-bm-tech.vercel.app/app.html">
 <meta property="og:image" content="https://dashboard-bm-tech.vercel.app/banner-dashboard-trader.png">
@@ -21,8 +21,8 @@
 <meta property="og:locale" content="id_ID">
 <!-- Twitter / X -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Dashboard Trader - Kripto, Saham & Forex Real-Time">
-<meta name="twitter:description" content="Pantau Kripto, Saham & Forex dalam satu dashboard.">
+<meta name="twitter:title" content="Dashboard Trader - Kripto & Forex Real-Time">
+<meta name="twitter:description" content="Pantau Kripto & Forex dalam satu dashboard.">
 <meta name="twitter:image" content="https://dashboard-bm-tech.vercel.app/banner-dashboard-trader.png">
 <script id="lib">
 /*!
@@ -109,15 +109,22 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font:13px/1.35 system
 <script>
 (function(){
 var SYMS=[
-{s:'BTCUSDT',n:'Bitcoin',t:'c',p:65000,v:30},{s:'ETHUSDT',n:'Ethereum',t:'c',p:3200,v:3},{s:'SOLUSDT',n:'Solana',t:'c',p:150,v:.3},
-{s:'AAPL',n:'Apple (sim)',t:'s',p:225,v:.15},{s:'TSLA',n:'Tesla (sim)',t:'s',p:250,v:.4},{s:'EURUSD',n:'Forex (sim)',t:'f',p:1.085,v:.0002}];
-var TF={'1m':{s:60,b:'1m'},'5m':{s:300,b:'5m'},'1h':{s:3600,b:'1h'},'1d':{s:86400,b:'1d'}};
+{s:'BTCUSDT',n:'Bitcoin',d:2},{s:'ETHUSDT',n:'Ethereum',d:2},{s:'SOLUSDT',n:'Solana',d:2},
+{s:'BTCIDR',n:'Bitcoin (Rupiah)',d:0},{s:'EURUSDT',n:'Euro / USDT',d:4}];
+var TF={'1m':{b:'1m'},'5m':{b:'5m'},'1h':{b:'1h'},'1d':{b:'1d'}};
+var REST=['https://data-api.binance.vision','https://api.binance.com','https://api1.binance.com','https://api-gcp.binance.com'];
+var WSH=['wss://data-stream.binance.vision','wss://stream.binance.com:9443','wss://stream.binance.com:443'];
 var $=function(i){return document.getElementById(i)};
-var cur=SYMS[0],tfk='1m',candles=[],gen=0,ws=null,tm=null,chart,cs,ls,ma=null,rs=null,maOn=false,rsiOn=false,lastPx=null,styleLine=false;
+var cur=SYMS[0],tfk='1m',candles=[],gen=0,ws=null,rt=null,chart,cs,ls,ma=null,rs=null,maOn=false,rsiOn=false,lastPx=null,book=null;
 var upC='#089981',dnC='#f23645';
-var rt=null;
 
-function fmt(x){return x.toFixed(x<10?5:2)}
+function fmt(x){
+ var t=x.toFixed(cur.d);
+ if(cur.d===0)t=t.replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+ return t;
+}
+function fq(q){return q>=1000?q.toFixed(0):q>=1?q.toFixed(3):q.toFixed(5)}
+function status(t){$('st').textContent=t}
 
 function buildList(){
  var w=$('wl');w.innerHTML='';
@@ -128,6 +135,8 @@ function buildList(){
   w.appendChild(b);
  });
 }
+
+function candleOpts(){return{upColor:upC,downColor:dnC,borderUpColor:upC,borderDownColor:dnC,wickUpColor:upC,wickDownColor:dnC}}
 
 function init(){
  var L=window.LightweightCharts;
@@ -140,10 +149,8 @@ function init(){
  cs=chart.addSeries(L.CandlestickSeries,candleOpts());
  ls=chart.addSeries(L.LineSeries,{color:'#2962ff',lineWidth:2,visible:false});
  buildList();setTF(tfk);load();
- setInterval(sideUpdate,800);
+ setInterval(summary,1000);
 }
-
-function candleOpts(){return{upColor:upC,downColor:dnC,borderUpColor:upC,borderDownColor:dnC,wickUpColor:upC,wickDownColor:dnC}}
 
 function maData(){
  var o=[],s=0,i;
@@ -176,6 +183,7 @@ function render(fit){
 
 function push(c){
  var l=candles[candles.length-1];
+ if(l&&c.time<l.time)return;
  if(l&&l.time===c.time)candles[candles.length-1]=c;else candles.push(c);
  cs.update(c);ls.update({time:c.time,value:c.close});
  if(ma){var m=maData();if(m.length)ma.update(m[m.length-1])}
@@ -186,48 +194,48 @@ function push(c){
 function tick(p){
  var el=$('px');
  if(lastPx!==null&&p!==lastPx){
-  el.className=p>lastPx?'up':'dn';
-  setTimeout(function(){el.className=p>lastPx?'upt':'dnt'},350);
+  var up=p>lastPx;
+  el.className=up?'up':'dn';
+  setTimeout(function(){el.className=up?'upt':'dnt'},350);
  }
  lastPx=p;
  el.textContent=fmt(p);
  $('sym').textContent=cur.s;
- var f=candles[0];
- if(f){var ch=(p-f.open)/f.open*100;$('chg').textContent=(ch>=0?'+':'')+ch.toFixed(2)+'%';$('chg').style.color=ch>=0?'#089981':'#f23645'}
+ if(book)$('mid').textContent=fmt(p);
 }
 
-function hist(o,sec){
- var out=[],p=o.p,t=Math.floor(Date.now()/1000/sec)*sec-299*sec,i,k,vol=o.v*Math.sqrt(sec/10);
- for(i=0;i<300;i++){
-  var op=p,hi=p,lo=p;
-  for(k=0;k<4;k++){p+=(Math.random()-.5)*2*vol/2;if(p>hi)hi=p;if(p<lo)lo=p}
-  out.push({time:t+i*sec,open:op,high:hi,low:lo,close:p});
+function drawBook(){
+ if(!book)return;
+ var a=book.a.slice(0,8),b=book.b.slice(0,8),mx=0,A='',B='',i;
+ a.concat(b).forEach(function(x){var q=+x[1];if(q>mx)mx=q});
+ function row(c,x){
+  var q=+x[1];
+  return '<div class="row '+c+'"><i style="width:'+(mx?q/mx*100:0)+'%"></i><span>'+fmt(+x[0])+'</span><span>'+fq(q)+'</span></div>';
  }
- return out;
+ for(i=a.length-1;i>=0;i--)A+=row('a',a[i]);
+ for(i=0;i<b.length;i++)B+=row('b',b[i]);
+ $('asks').innerHTML=A;$('bids').innerHTML=B;
+ if(lastPx!==null)$('mid').textContent=fmt(lastPx);
+}
+
+function summary(){
+ var r=rsiData(),m=maData();
+ if(!r.length||!m.length||lastPx===null)return;
+ var p=lastPx,rv=r[r.length-1].value,mv=m[m.length-1].value,bull=p>mv,sg,col;
+ if(rv>70){sg='JUAL (Overbought)';col='#f23645'}
+ else if(rv<30){sg='BELI (Oversold)';col='#089981'}
+ else if(bull&&rv>50){sg='BELI';col='#089981'}
+ else if(!bull&&rv<50){sg='JUAL';col='#f23645'}
+ else{sg='NETRAL';col='#d1d4dc'}
+ $('tR').textContent=rv.toFixed(1);$('tM').textContent=fmt(mv);
+ $('tT').textContent=bull?'Bullish':'Bearish';$('tT').style.color=bull?'#089981':'#f23645';
+ $('sig').textContent=sg;$('sig').style.color=col;
 }
 
 function stop(){
  if(ws){ws.onclose=null;ws.onmessage=null;try{ws.close()}catch(e){}ws=null}
- if(tm){clearInterval(tm);tm=null}
  if(rt){clearTimeout(rt);rt=null}
 }
-function status(s){$('st').textContent=s}
-
-function sim(){
- if(tm)clearInterval(tm);
- var sec=TF[tfk].s;
- tm=setInterval(function(){
-  var l=candles[candles.length-1];
-  var p=l.close+(Math.random()-.5)*2*cur.v;
-  var t=Math.max(Math.floor(Date.now()/1000/sec)*sec,l.time);
-  if(t>l.time)push({time:t,open:l.close,high:Math.max(l.close,p),low:Math.min(l.close,p),close:p});
-  else push({time:l.time,open:l.open,high:Math.max(l.high,p),low:Math.min(l.low,p),close:p});
- },1000);
-}
-
-var REST=['https://data-api.binance.vision','https://api.binance.com','https://api1.binance.com','https://api-gcp.binance.com'];
-var WSH=['wss://data-stream.binance.vision','wss://stream.binance.com:9443','wss://stream.binance.com:443'];
-var hostI=0;
 
 async function getJSON(u){
  var c=new AbortController(),t=setTimeout(function(){c.abort()},7000);
@@ -235,16 +243,27 @@ async function getJSON(u){
  finally{clearTimeout(t)}
 }
 
+function fail(my){
+ status('Binance tidak terjangkau. Mencoba lagi...');
+ rt=setTimeout(function(){if(my===gen)load()},5000);
+}
+
 function openWS(my,wi){
  if(my!==gen)return;
- if(wi>=WSH.length){status('Stream gagal - simulasi');sim();return}
- var got=false,w=new WebSocket(WSH[wi]+'/ws/'+cur.s.toLowerCase()+'@kline_'+TF[tfk].b);
+ if(wi>=WSH.length){fail(my);return}
+ var s=cur.s.toLowerCase(),got=false;
+ var w=new WebSocket(WSH[wi]+'/stream?streams='+s+'@kline_'+TF[tfk].b+'/'+s+'@depth10@1000ms/'+s+'@ticker');
  ws=w;
  var to=setTimeout(function(){if(!got)try{w.close()}catch(e){}},7000);
  w.onmessage=function(e){
-  var k=JSON.parse(e.data).k;if(!k)return;
+  var m=JSON.parse(e.data),d=m.data,st=m.stream||'';
+  if(!d)return;
   if(!got){got=true;status('Binance LIVE')}
-  push({time:k.t/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c});
+  if(st.indexOf('@kline')>0){var k=d.k;push({time:k.t/1000,open:+k.o,high:+k.h,low:+k.l,close:+k.c})}
+  else if(st.indexOf('@depth')>0){book={a:d.asks,b:d.bids};drawBook()}
+  else if(st.indexOf('@ticker')>0){
+   var pc=+d.P;$('chg').textContent='24j '+(pc>=0?'+':'')+pc.toFixed(2)+'%';$('chg').style.color=pc>=0?'#089981':'#f23645';
+  }
  };
  w.onclose=function(){
   clearTimeout(to);
@@ -255,22 +274,21 @@ function openWS(my,wi){
 }
 
 async function load(){
- var my=++gen;stop();lastPx=null;candles=[];status('Memuat...');
- var tf=TF[tfk];
- if(cur.t==='c'){
-  var path='/api/v3/klines?symbol='+cur.s+'&interval='+tf.b+'&limit=500',i,j=null;
-  for(i=0;i<REST.length&&!j;i++){
-   try{j=await getJSON(REST[i]+path)}catch(e){j=null}
-   if(my!==gen)return;
-  }
-  if(j&&j.length){
-   candles=j.map(function(k){return{time:k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4]}});
-   render(true);status('Menghubungkan...');openWS(my,0);return;
-  }
+ var my=++gen;stop();lastPx=null;candles=[];book=null;
+ cs.setData([]);ls.setData([]);if(ma)ma.setData([]);if(rs)rs.setData([]);
+ $('sym').textContent=cur.s;$('px').textContent='-';$('px').className='';$('chg').textContent='';
+ $('asks').innerHTML='';$('bids').innerHTML='';$('mid').textContent='-';
+ var pf={type:'price',precision:cur.d,minMove:1/Math.pow(10,cur.d)};
+ cs.applyOptions({priceFormat:pf});ls.applyOptions({priceFormat:pf});
+ status('Memuat data Binance...');
+ var path='/api/v3/klines?symbol='+cur.s+'&interval='+TF[tfk].b+'&limit=500',i,j=null;
+ for(i=0;i<REST.length&&!j;i++){
+  try{j=await getJSON(REST[i]+path)}catch(e){j=null}
+  if(my!==gen)return;
  }
- if(my!==gen)return;
- candles=hist(cur,tf.s);render(true);sim();
- status(cur.t==='c'?'Binance tidak terjangkau - simulasi':'Simulator');
+ if(!(j&&j.length)){fail(my);return}
+ candles=j.map(function(k){return{time:k[0]/1000,open:+k[1],high:+k[2],low:+k[3],close:+k[4]}});
+ render(true);status('Menghubungkan...');openWS(my,0);
 }
 
 function setTF(k){
@@ -280,7 +298,6 @@ function setTF(k){
 document.querySelectorAll('[data-tf]').forEach(function(b){b.onclick=function(){setTF(b.dataset.tf);load()}});
 
 function setStyle(line){
- styleLine=line;
  cs.applyOptions({visible:!line});ls.applyOptions({visible:line});
  $('bC').classList.toggle('on',!line);$('bL').classList.toggle('on',line);
 }
@@ -307,36 +324,6 @@ $('kRSI').onchange=function(){
   try{var pn=chart.panes();if(pn[1])pn[1].setStretchFactor(0.3)}catch(e){}
  }else if(rs){chart.removeSeries(rs);rs=null}
 };
-
-function rnd(a,b){return a+Math.random()*(b-a)}
-function sideUpdate(){
- if(lastPx===null)return;
- var p=lastPx,st=p*0.0002,i,A='',B='',sz=cur.t==='f'?[10000,90000]:cur.p>1000?[.05,3]:[1,200];
- var as=[],bs=[],mx=0;
- for(i=8;i>=1;i--){as.push(rnd(sz[0],sz[1]));bs.push(rnd(sz[0],sz[1]))}
- as.concat(bs).forEach(function(x){if(x>mx)mx=x});
- for(i=8;i>=1;i--){
-  var a=as[8-i];
-  A+='<div class="row a"><i style="width:'+(a/mx*100)+'%"></i><span>'+fmt(p+i*st)+'</span><span>'+a.toFixed(sz[0]<1?3:0)+'</span></div>';
- }
- for(i=1;i<=8;i++){
-  var b=bs[i-1];
-  B+='<div class="row b"><i style="width:'+(b/mx*100)+'%"></i><span>'+fmt(p-i*st)+'</span><span>'+b.toFixed(sz[0]<1?3:0)+'</span></div>';
- }
- $('asks').innerHTML=A;$('bids').innerHTML=B;$('mid').textContent=fmt(p);
- var r=rsiData(),m=maData();
- if(r.length&&m.length){
-  var rv=r[r.length-1].value,mv=m[m.length-1].value,bull=p>mv,sg,col;
-  if(rv>70){sg='JUAL (Overbought)';col='#f23645'}
-  else if(rv<30){sg='BELI (Oversold)';col='#089981'}
-  else if(bull&&rv>50){sg='BELI';col='#089981'}
-  else if(!bull&&rv<50){sg='JUAL';col='#f23645'}
-  else{sg='NETRAL';col='#d1d4dc'}
-  $('tR').textContent=rv.toFixed(1);$('tM').textContent=fmt(mv);
-  $('tT').textContent=bull?'Bullish':'Bearish';$('tT').style.color=bull?'#089981':'#f23645';
-  $('sig').textContent=sg;$('sig').style.color=col;
- }
-}
 
 function boot(){
  if(window.LightweightCharts){$('ov').style.display='none';init();return}
