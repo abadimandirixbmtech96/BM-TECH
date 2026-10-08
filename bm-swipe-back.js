@@ -1,6 +1,10 @@
 /*
- * BM-TECH: gestur geser dari tepi kiri layar = "kembali" (untuk iPhone/iPad yang tidak punya tombol back).
+ * BM-TECH: navigasi "kembali" untuk layar sentuh dan keyboard.
+ *  - Sentuh (iPhone/iPad yang tidak punya tombol back): geser dari tepi kiri layar = kembali.
+ *  - Keyboard (desktop): tombol Esc = kembali. Saat sedang mengetik di kolom isian, Esc pertama hanya
+ *    melepas fokus dari kolom (supaya tidak menutup layar saat mengedit), Esc kedua baru menutup.
  *
+ * Tentang gestur sentuh:
  * Cara kerja: gestur memanggil history.back(), yaitu jalur yang sama dengan tombol back Android,
  * sehingga dashboard menutup lapisan paling atas (panel editor, sheet, layar Settings, dst.) satu per satu.
  *
@@ -82,4 +86,19 @@
   }, { passive: true });
 
   document.addEventListener('touchcancel', function () { active = false; hideHint(); }, { passive: true });
+
+  // ---- Keyboard: Esc ----
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    var el = document.activeElement;
+    var tag = el && el.tagName;
+    var typing = el && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable);
+    if (typing) { el.blur(); return; }      // Esc pertama: lepas fokus dulu
+    if (Date.now() - lastFire < 250) return;
+    if (!canGoBack()) return;
+    e.preventDefault();
+    lastFire = Date.now();
+    history.back();
+  });
 })();
