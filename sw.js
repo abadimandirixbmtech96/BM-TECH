@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v4'; // dinaikkan: index.html dihapus, cache lama dibuang
+const CACHE_NAME = 'bmtech-shell-v5'; // dinaikkan: tambah bm-swipe-back.js
 
 const APP_SHELL = [
   '/dashboard-admin.html',
@@ -15,6 +15,7 @@ const APP_SHELL = [
   '/customer-login.html',
   '/customer-tracking.html',
   '/calculator.html',
+  '/bm-swipe-back.js',
   '/manifest.json',
   '/manifest-admin.json',
   '/manifest-customer.json',
