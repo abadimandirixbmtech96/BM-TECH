@@ -6047,8 +6047,6 @@
     setTimeout(() => { if (!editorModal.classList.contains('open')) navigateFrame(editorFrame, 'about:blank'); }, 500);
     loadCategories();
   }
-  // Tombol kembali perangkat (Android / gestur iPhone) menutup panel editor, bukan keluar dari aplikasi
-  window.addEventListener('popstate', () => { if (editorModal.classList.contains('open')) closeEditorModal(); });
   function pushEditorState() { try { history.pushState({ editorModal: true }, ''); } catch (e) {} }
 
   window.addEventListener('message', (e) => {
@@ -6718,7 +6716,89 @@
       else closePageModal();
     }
   });
-  window.addEventListener('popstate', () => { if (pageModal.classList.contains('open')) closePageModal(); });
+
+  // ======================================================================
+  // TOMBOL KEMBALI PERANGKAT (Android / gestur iPhone)
+  // Menutup lapisan paling atas yang sedang terbuka (panel editor/halaman, sheet, layar Settings,
+  // pencarian, menu folder, dll.), satu per satu. Baru kalau tidak ada yang terbuka, keluar dari aplikasi.
+  // ======================================================================
+  (function backButtonManager() {
+    const $id = (i) => document.getElementById(i);
+    const rm = (...ids) => () => ids.forEach(i => { const e = $id(i); if (e) e.classList.remove('open'); });
+    // id = elemen utama yang diberi kelas "open"; close = cara menutupnya (memakai fungsi tutup bawaan bila ada)
+    const LAYERS = [
+      { id: 'liquidAlertBackdrop',   close: rm('liquidAlertBackdrop') },
+      { id: 'pzvOverlay',            close: () => $id('pzvCancel').click() }, // batal = menyelesaikan konfirmasi dengan benar
+      { id: 'imageLightboxOverlay',  close: () => closeLightbox() },
+      { id: 'shareSheet',            close: () => closeShareSheet() },
+      { id: 'noteActionSheet',       close: () => closeActionSheet() },
+      { id: 'customerFormSheet',     close: () => closeCustomerForm() },
+      { id: 'karyawanFormSheet',     close: () => closeKaryawanForm() },
+      { id: 'newFolderSheet',        close: () => closeNewFolderModal() },
+      { id: 'tfOverlay',             close: () => closeTasksFilterSheet() },
+      { id: 'noteDetailOverlay',     close: rm('noteDetailOverlay') },
+      { id: 'searchOverlay',         close: rm('searchOverlay') },
+      { id: 'trashScreen',           close: rm('trashScreen') },
+      { id: 'customerScreen',        close: rm('customerScreen') },
+      { id: 'karyawanScreen',        close: rm('karyawanScreen') },
+      { id: 'settingsScreen',        close: rm('settingsScreen') },
+      { id: 'drawer',                close: rm('drawer', 'drawerOverlay') },
+    ].filter(L => $id(L.id));
+    const byId = {};
+    LAYERS.forEach(L => { L.el = $id(L.id); byId[L.id] = L; });
+
+    const tracked = new Set();   // lapisan yang sedang terbuka dan punya entri riwayat
+    const stack = [];            // urutan pembukaan (yang terakhir dibuka ditutup paling dulu)
+    let internalPops = 0;        // history.back() yang kita panggil sendiri
+    let skipGuard = 0;
+
+    function isLayerState(st) { return st && st.t === 'layer'; }
+
+    // Entri riwayat milik lapisan yang sudah tertutup lewat UI bisa "basi"; lewati saat mendarat di sana
+    function skipStale() {
+      const st = history.state;
+      if (isLayerState(st) && !tracked.has(st.id) && skipGuard < 30) {
+        skipGuard++; internalPops++; history.back();
+      } else { skipGuard = 0; }
+    }
+
+    const mo = new MutationObserver(() => {
+      const opened = [], closed = [];
+      LAYERS.forEach(L => {
+        const open = L.el.classList.contains('open');
+        const was = tracked.has(L.id);
+        if (open && !was) opened.push(L); else if (!open && was) closed.push(L);
+      });
+      closed.forEach(L => { tracked.delete(L.id); const i = stack.lastIndexOf(L.id); if (i >= 0) stack.splice(i, 1); });
+      // Ditutup lewat UI (panah kembali, tombol tutup): buang entri riwayatnya kalau memang yang teratas
+      if (closed.length && !opened.length) {
+        const st = history.state;
+        if (isLayerState(st) && closed.some(L => L.id === st.id)) { internalPops++; history.back(); }
+      }
+      opened.forEach(L => {
+        tracked.add(L.id); stack.push(L.id);
+        try { history.pushState({ t: 'layer', id: L.id }, ''); } catch (e) {}
+      });
+    });
+    LAYERS.forEach(L => mo.observe(L.el, { attributes: true, attributeFilter: ['class'] }));
+
+    window.addEventListener('popstate', () => {
+      if (internalPops > 0) { internalPops--; skipStale(); return; }
+      if (pageModal.classList.contains('open')) {
+        closePageModal();
+      } else if (editorModal.classList.contains('open')) {
+        closeEditorModal();
+      } else {
+        while (stack.length) {
+          const id = stack.pop();
+          tracked.delete(id);
+          const L = byId[id];
+          if (L && L.el.classList.contains('open')) { L.close(); break; }
+        }
+      }
+      skipStale();
+    });
+  })();
 
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
   document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
