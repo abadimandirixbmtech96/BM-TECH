@@ -752,7 +752,7 @@
     overlay.addEventListener('click', close);
     document.addEventListener('keydown', function (e) {
       if (!current) return;
-      if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
       if (e.key !== 'Tab') return;
       var f = focusables(current);
       if (!f.length) { e.preventDefault(); return; }
