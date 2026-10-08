@@ -5848,6 +5848,7 @@
     drawerOverlay.classList.remove('open');
     loadEditorFrame(CUSTOM_BUILDER_FILE + (catId ? '?id=' + encodeURIComponent(catId) + '&' : '?') + '_t=' + Date.now());
     editorModal.classList.add('open');
+    pushEditorState();
   }
 
   function openNewFolderModal(catId = null) {
@@ -5968,15 +5969,24 @@
 
   // Muat halaman ke iframe editor. Iframe disembunyikan sampai selesai dimuat lalu muncul halus,
   // jadi pengguna melihat panel naik dengan mulus, bukan layar putih/loading.
+  // Memuat iframe lewat location.replace (bukan .src) supaya TIDAK menambah entri riwayat browser.
+  // Kalau tidak, tombol kembali Android mundur ke about:blank di dalam iframe = layar kosong.
+  function navigateFrame(frame, url) {
+    try { frame.contentWindow.location.replace(url); } catch (e) { frame.src = url; }
+  }
+  function frameIsBlank(frame) {
+    try { return frame.contentWindow.location.href === 'about:blank'; } catch (e) { return false; }
+  }
+
   let editorReadyTimer = null;
   function loadEditorFrame(url) {
     clearTimeout(editorReadyTimer);
     editorModal.classList.remove('ready');
     editorFrame.onload = function () {
-      if ((editorFrame.getAttribute('src') || '') !== 'about:blank') editorModal.classList.add('ready');
+      if (!frameIsBlank(editorFrame)) editorModal.classList.add('ready');
     };
     editorReadyTimer = setTimeout(() => editorModal.classList.add('ready'), 6000);
-    editorFrame.src = url;
+    navigateFrame(editorFrame, url);
   }
 
   function saveOpenEditorState(noteId, folderId) {
@@ -6026,15 +6036,25 @@
 
     loadEditorFrame(editorFile + '?' + params.toString());
     editorModal.classList.add('open');
+    pushEditorState();
   }
+
+  function closeEditorModal() {
+    if (!editorModal.classList.contains('open')) return;
+    clearOpenEditorState();
+    editorModal.classList.remove('open');
+    clearTimeout(editorReadyTimer);
+    setTimeout(() => { if (!editorModal.classList.contains('open')) navigateFrame(editorFrame, 'about:blank'); }, 500);
+    loadCategories();
+  }
+  // Tombol kembali perangkat (Android / gestur iPhone) menutup panel editor, bukan keluar dari aplikasi
+  window.addEventListener('popstate', () => { if (editorModal.classList.contains('open')) closeEditorModal(); });
+  function pushEditorState() { try { history.pushState({ editorModal: true }, ''); } catch (e) {} }
 
   window.addEventListener('message', (e) => {
     if (e.data === 'close-editor') {
-      clearOpenEditorState();
-      editorModal.classList.remove('open');
-      clearTimeout(editorReadyTimer);
-      setTimeout(() => { if (!editorModal.classList.contains('open')) editorFrame.src = 'about:blank'; }, 500);
-      loadCategories();
+      if (history.state && history.state.editorModal) history.back(); // memicu popstate -> closeEditorModal
+      else closeEditorModal();
     }
     if (e.data === 'note-autosaved' || (e.data && e.data.type === 'note-autosaved')) {
       if (e.data && e.data.noteId) saveOpenEditorState(e.data.noteId, e.data.folder);
@@ -6669,10 +6689,10 @@
     clearTimeout(pageReadyTimer);
     pageModal.classList.remove('ready');
     pageFrame.onload = function () {
-      if ((pageFrame.getAttribute('src') || '') !== 'about:blank') pageModal.classList.add('ready');
+      if (!frameIsBlank(pageFrame)) pageModal.classList.add('ready');
     };
     pageReadyTimer = setTimeout(() => pageModal.classList.add('ready'), 6000);
-    pageFrame.src = file;
+    navigateFrame(pageFrame, file);
     pageModal.classList.add('open');
     try { history.pushState({ pageModal: true }, ''); } catch (e) {}
   }
@@ -6681,7 +6701,7 @@
     if (!pageModal.classList.contains('open')) return;
     pageModal.classList.remove('open');
     clearTimeout(pageReadyTimer);
-    setTimeout(() => { if (!pageModal.classList.contains('open')) pageFrame.src = 'about:blank'; }, 500);
+    setTimeout(() => { if (!pageModal.classList.contains('open')) navigateFrame(pageFrame, 'about:blank'); }, 500);
     // Kalau pengaturan tampilan berubah, dashboard dimuat ulang sekali (setelah panel turun)
     // supaya warna/font/bahasa baru langsung berlaku, lalu layar Settings dibuka lagi.
     if (pageThemeSnap !== null && themeSnapshot() !== pageThemeSnap) {
