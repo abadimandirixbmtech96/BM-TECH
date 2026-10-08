@@ -6039,8 +6039,18 @@
     pushEditorState();
   }
 
+  // Setelah panel (iframe) ditutup, fokus keyboard harus kembali ke dashboard, kalau tidak Esc berikutnya tidak sampai
+  function returnFocusToDashboard() {
+    try {
+      const a = document.activeElement;
+      if (a && a.tagName === 'IFRAME') a.blur();
+      window.focus();
+    } catch (e) {}
+  }
+
   function closeEditorModal() {
     if (!editorModal.classList.contains('open')) return;
+    returnFocusToDashboard();
     clearOpenEditorState();
     editorModal.classList.remove('open');
     clearTimeout(editorReadyTimer);
@@ -6697,6 +6707,7 @@
 
   function closePageModal() {
     if (!pageModal.classList.contains('open')) return;
+    returnFocusToDashboard();
     pageModal.classList.remove('open');
     clearTimeout(pageReadyTimer);
     setTimeout(() => { if (!pageModal.classList.contains('open')) navigateFrame(pageFrame, 'about:blank'); }, 500);
@@ -6781,6 +6792,23 @@
       });
     });
     LAYERS.forEach(L => mo.observe(L.el, { attributes: true, attributeFilter: ['class'] }));
+
+    // Pintasan keyboard: "/" atau Ctrl/Cmd+K membuka pencarian (atau memfokuskan kolomnya kalau sudah terbuka)
+    document.addEventListener('keydown', (e) => {
+      if (e.isComposing || e.altKey) return;
+      const el = document.activeElement, tag = el && el.tagName;
+      const typing = el && (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable);
+      const isK = (e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey);
+      const isSlash = e.key === '/' && !e.ctrlKey && !e.metaKey;
+      if (!isK && !isSlash) return;
+      if (isSlash && typing) return;                       // "/" biasa kalau sedang mengetik
+      if (pageModal.classList.contains('open') || editorModal.classList.contains('open')) return;
+      const searchOpen = $id('searchOverlay').classList.contains('open');
+      if (searchOpen) { e.preventDefault(); const f = $id('searchInputField'); if (f) f.focus(); return; }
+      if (tracked.size > 0) return;                        // ada layar/sheet lain di atas dashboard
+      e.preventDefault();
+      $id('btnSearchOpen').click();
+    });
 
     // Dipakai gestur geser-dari-tepi (bm-swipe-back.js): hanya aktif kalau memang ada lapisan yang bisa ditutup
     window.__bmCanBack = () => tracked.size > 0 || pageModal.classList.contains('open') || editorModal.classList.contains('open');
