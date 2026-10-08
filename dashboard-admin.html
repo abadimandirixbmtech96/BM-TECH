@@ -6782,6 +6782,9 @@
     });
     LAYERS.forEach(L => mo.observe(L.el, { attributes: true, attributeFilter: ['class'] }));
 
+    // Dipakai gestur geser-dari-tepi (bm-swipe-back.js): hanya aktif kalau memang ada lapisan yang bisa ditutup
+    window.__bmCanBack = () => tracked.size > 0 || pageModal.classList.contains('open') || editorModal.classList.contains('open');
+
     window.addEventListener('popstate', () => {
       if (internalPops > 0) { internalPops--; skipStale(); return; }
       if (pageModal.classList.contains('open')) {
@@ -6824,5 +6827,6 @@
     });
   }
 </script>
+<script src="/bm-swipe-back.js" defer></script>
 </body>
 </html>
