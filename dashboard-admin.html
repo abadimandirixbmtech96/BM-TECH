@@ -3041,7 +3041,6 @@
 
   const PERMANENT_FOLDERS = ['BUKU BESAR', 'BUKU HUTANG PIUTANG', 'BUKU WARUNG', 'BUKU OPERASIONAL', 'BUKU KASBON'];
   const PERMANENT_FOLDER_COLOR = '#D9A536';
-  let ensuringPermanentFolders = false;
 
   function isPermanentName(name) {
     const k = normalizeKey(name || '');
@@ -3057,27 +3056,16 @@
       .select('*')
       .order('created_at', { ascending: true });
 
-    if (!folderError && !ensuringPermanentFolders) {
+    // CATATAN: dulu di sini aplikasi otomatis MEMBUAT folder permanen yang tidak ada di daftar yang diterima.
+    // Itu berbahaya: kalau daftar yang datang kosong/tidak lengkap sesaat (sesi belum siap, jaringan, dsb.),
+    // kelima folder dibuat ulang, dan itu terulang setiap muat ulang (kejadian 8 Okt: 240 folder kembar).
+    // Pembuatan otomatis DIHAPUS. Folder permanen cukup ada sekali di database; di sini hanya diberi peringatan.
+    if (!folderError) {
       const have = new Set((folders || [])
         .filter(f => f && !f.owner_username && typeof f.name === 'string')
         .map(f => normalizeKey(f.name)));
       const missing = PERMANENT_FOLDERS.filter(n => !have.has(normalizeKey(n)));
-      if (missing.length) {
-        ensuringPermanentFolders = true;
-        try {
-          const { error: insErr } = await supabaseClient
-            .from('folders')
-            .insert(missing.map(name => ({ name, color: PERMANENT_FOLDER_COLOR })));
-          if (insErr) {
-            console.error('Gagal membuat folder permanen:', insErr.message);
-          } else {
-            const re = await supabaseClient.from('folders').select('*').order('created_at', { ascending: true });
-            if (!re.error) folders = re.data;
-          }
-        } finally {
-          ensuringPermanentFolders = false;
-        }
-      }
+      if (missing.length) console.warn('Folder permanen tidak ada di daftar (tidak dibuat otomatis):', missing.join(', '));
     }
 
     if (folderError) {
