@@ -5034,7 +5034,16 @@
   }
 
   async function purgeExpiredTrash(){
-    const cutoff = new Date(Date.now() - TRASH_DAYS * 86400000).toISOString();
+    // Batas kedaluwarsa dihitung dari jam SERVER, bukan jam HP. Kalau jam perangkat salah/maju jauh,
+    // jam HP bisa membuat isi Sampah terhapus permanen lebih cepat dari seharusnya.
+    // Kalau jam server tidak bisa didapat, tidak ada yang dihapus.
+    let serverNowMs = NaN;
+    try {
+      const { data: sn, error: snErr } = await supabaseClient.rpc('server_now');
+      if (!snErr && typeof sn === 'string') serverNowMs = Date.parse(sn);
+    } catch (e) {}
+    if (!Number.isFinite(serverNowMs)) return 0;
+    const cutoff = new Date(serverNowMs - TRASH_DAYS * 86400000).toISOString();
     const { data: expired, error } = await supabaseClient.from('trash_items').select('*').lt('deleted_at', cutoff);
     if (error || !expired || expired.length === 0) return 0;
     await removeBuktiFilesOfTrashItems(expired);
