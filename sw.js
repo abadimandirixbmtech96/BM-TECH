@@ -4,17 +4,27 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v5'; // dinaikkan: tambah bm-swipe-back.js
+const CACHE_NAME = 'bmtech-shell-v6'; // dinaikkan: lengkapi halaman offline, perbaiki cache editor & pembaruan JS
 
 const APP_SHELL = [
   '/dashboard-admin.html',
   '/analisa.html',
+  '/daftar-nomor-hp.html',
+  '/system-management.html',
   '/admin-login.html',
   '/editor-data-administrator.html',
   '/editor-data-warung.html',
+  '/editor-data-hutang-piutang.html',
+  '/editor-data-kasbon.html',
+  '/editor-folder.html',
+  '/folder-baru.html',
+  '/karyawan-login.html',
+  '/karyawan-tracking.html',
   '/customer-login.html',
   '/customer-tracking.html',
   '/calculator.html',
+  '/bm-theme.js',
+  '/bm-lang.js',
   '/bm-swipe-back.js',
   '/manifest.json',
   '/manifest-admin.json',
@@ -57,24 +67,45 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Navigasi ke halaman HTML: coba jaringan dulu (biar selalu dapat versi
-  // terbaru kalau online), fallback ke cache kalau offline.
+  // Halaman HTML: coba jaringan dulu (selalu versi terbaru kalau online), fallback ke cache kalau offline.
+  // Kunci cache = alamat TANPA query string. Editor dibuka dengan ?id=...&_t=... yang selalu berbeda;
+  // tanpa normalisasi, tiap pembukaan menambah satu salinan halaman ke cache dan saat offline tidak ada yang cocok.
   if (event.request.mode === 'navigate') {
+    const pageKey = new Request(url.origin + url.pathname);
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          if (response.ok && url.origin === self.location.origin) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(pageKey, clone));
+          }
           return response;
         })
         .catch(() =>
-          caches.match(event.request).then((cached) => cached || caches.match('/admin-login.html'))
+          caches.match(pageKey).then((cached) => cached || caches.match('/admin-login.html'))
         )
     );
     return;
   }
 
-  // Aset statis lain (script CDN, icon, dst): cache-first — cepat &
+  // Skrip/gaya/manifest milik kita sendiri: jaringan dulu supaya pembaruan langsung sampai, cache sebagai cadangan offline.
+  if (url.origin === self.location.origin && /\.(js|css|json)$/.test(url.pathname)) {
+    const assetKey = new Request(url.origin + url.pathname);
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(assetKey, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(assetKey).then((cached) => cached || Response.error()))
+    );
+    return;
+  }
+
+  // Aset lain (script CDN, icon, dst): cache-first — cepat &
   // tetap jalan walau offline, karena jarang berubah.
   event.respondWith(
     caches.match(event.request).then((cached) => {
