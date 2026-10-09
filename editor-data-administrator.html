@@ -1098,7 +1098,7 @@
     function render(){
       cfg.thumbs.innerHTML = items.map((it, i) => `
         <div class="bukti-thumb ${it.status === 'error' ? 'error' : ''}" data-idx="${i}">
-          <img src="${it.previewUrl || it.url || ''}" alt="Bukti ${i + 1}">
+          <img src="${escapeHtml(it.previewUrl || it.url || '')}" alt="Bukti ${i + 1}">
           ${it.status === 'uploading' ? '<div class="bukti-thumb-spinner"></div>' : ''}
           ${it.status === 'error' ? '<div class="bukti-thumb-error" title="Gagal upload — tap untuk hapus lalu coba lagi">!</div>' : ''}
           <button type="button" class="bukti-thumb-remove" data-idx="${i}" aria-label="Hapus gambar">&times;</button>
