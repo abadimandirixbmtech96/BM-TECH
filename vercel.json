@@ -1,6 +1,43 @@
 {
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://zgzmbneqqzxnptbmlhsz.supabase.co; connect-src 'self' https://zgzmbneqqzxnptbmlhsz.supabase.co wss://zgzmbneqqzxnptbmlhsz.supabase.co https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; worker-src 'self'; manifest-src 'self'"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "microphone=(), geolocation=(), payment=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        }
+      ]
+    }
+  ],
   "rewrites": [
-    { "source": "/role-customer-:username", "destination": "/customer-tracking.html" },
-    { "source": "/role-karyawan-:username", "destination": "/karyawan-tracking.html" }
+    {
+      "source": "/role-customer-:username",
+      "destination": "/customer-tracking.html"
+    },
+    {
+      "source": "/role-karyawan-:username",
+      "destination": "/karyawan-tracking.html"
+    }
   ]
 }
