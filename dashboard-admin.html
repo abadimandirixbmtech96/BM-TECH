@@ -2818,6 +2818,12 @@
 
     if (!session && !timedOut) {
       try { localStorage.removeItem(OK_KEY); } catch (e) {}
+      // Tautan berbagi (?id=...): ingat tujuannya supaya terbuka setelah login (berlaku 30 menit)
+      try {
+        if (/[?&]id=/.test(window.location.search)) {
+          sessionStorage.setItem('bm-pending-link', JSON.stringify({ s: window.location.search, t: Date.now() }));
+        }
+      } catch (e) {}
       window.location.href = 'admin-login.html';
       return;
     }
@@ -2869,7 +2875,15 @@
       .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, scheduleRealtimeRefresh)
       .subscribe();
 
-    const deepLinkParams = new URLSearchParams(window.location.search);
+    let pendingLinkSearch = '';
+    if (!window.location.search) {
+      try {
+        const pl = JSON.parse(sessionStorage.getItem('bm-pending-link') || 'null');
+        sessionStorage.removeItem('bm-pending-link');
+        if (pl && typeof pl.s === 'string' && Date.now() - pl.t < 30 * 60 * 1000) pendingLinkSearch = pl.s;
+      } catch (e) {}
+    }
+    const deepLinkParams = new URLSearchParams(window.location.search || pendingLinkSearch);
     const deepLinkNoteId = deepLinkParams.get('id');
     if (deepLinkNoteId) {
       openEditor(deepLinkNoteId, {
