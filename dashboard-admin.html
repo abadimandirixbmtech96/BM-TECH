@@ -6071,6 +6071,8 @@
   function pushEditorState() { try { history.pushState({ editorModal: true }, ''); } catch (e) {} }
 
   window.addEventListener('message', (e) => {
+    // Hanya pesan dari iframe editor kita sendiri yang dipercaya (jendela lain tidak boleh menutup editor / menyimpan state)
+    if (e.source !== editorFrame.contentWindow || e.origin !== window.location.origin) return;
     if (e.data === 'close-editor') {
       if (history.state && history.state.editorModal) history.back(); // memicu popstate -> closeEditorModal
       else closeEditorModal();
@@ -6732,7 +6734,7 @@
   }
 
   window.addEventListener('message', (e) => {
-    if (e.source !== pageFrame.contentWindow) return;
+    if (e.source !== pageFrame.contentWindow || e.origin !== window.location.origin) return;
     if (e.data && e.data.type === 'close-page') {
       if (history.state && history.state.pageModal) history.back(); // memicu popstate -> closePageModal
       else closePageModal();
