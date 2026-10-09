@@ -813,6 +813,10 @@
         localStorage.setItem('calc_history', JSON.stringify(history));
     }
 
+    function escHtml(s) {
+        return String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
     function renderHistory() {
         const history = JSON.parse(localStorage.getItem('calc_history') || '[]');
         if (history.length === 0) {
@@ -821,9 +825,9 @@
         }
 
         historyListContainer.innerHTML = history.map((item) => `
-            <div class="history-item" onclick="loadFromHistory('${item.res}')">
-                <div class="history-expr">${item.expr} =</div>
-                <div class="history-result">${item.res}</div>
+            <div class="history-item" data-res="${escHtml(item.res)}" onclick="loadFromHistory(this.dataset.res)">
+                <div class="history-expr">${escHtml(item.expr)} =</div>
+                <div class="history-result">${escHtml(item.res)}</div>
             </div>
         `).join('');
     }
