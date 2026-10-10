@@ -2915,7 +2915,6 @@
   let folderYearMonthData = {};
   let activeFilterYear = null;
   let activeFilterMonth = null;
-  let weekEpoch = null;
 
   const PJ_NAMES = ['Amin', 'BM', 'Mail', 'Kuswanto', 'Yono'];
   const PJ_PREFIX = '__pj__';
@@ -3103,7 +3102,6 @@
         schema: (f.schema && Array.isArray(f.schema.columns)) ? f.schema : null
       }));
     rebuildPjFolders();
-    if (!notesError) recomputeWeekEpoch();
 
     if (!activeCategoryId) {
       const savedFolderId = localStorage.getItem(LAST_FOLDER_KEY);
@@ -3617,7 +3615,6 @@
     return `${dd}/${mm}/${d.getFullYear()}`;
   }
 
-  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   const MONTH_SHORT_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 
   function getWeekAnchorThursday(date) {
@@ -3626,56 +3623,6 @@
     const diffFromThursday = (day - 4 + 7) % 7;
     d.setDate(d.getDate() - diffFromThursday);
     return d;
-  }
-
-  function parseStrictDate(val) {
-    const s = String(val || '').trim();
-    let y, mo, d;
-    let m = s.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})$/);
-    if (m) {
-      d = Number(m[1]); mo = Number(m[2]); y = Number(m[3]);
-      if (m[3].length === 2) y += 2000;
-    } else {
-      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-      if (!m) return null;
-      y = Number(m[1]); mo = Number(m[2]); d = Number(m[3]);
-    }
-    if (y < 2000 || y > 2100 || mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-    const dt = new Date(y, mo - 1, d);
-    return isNaN(dt) ? null : dt;
-  }
-
-  function getNoteEarliestDate(note) {
-    let min = null;
-    const consider = dt => { if (dt && !isNaN(dt) && (!min || dt < min)) min = dt; };
-
-    if (note && note.title) {
-      const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
-      if (m) consider(parseStrictDate(m[0]));
-    }
-
-    const table = getNoteTable(note);
-    if (table && Array.isArray(table.rows) && Array.isArray(table.columns)) {
-      table.rows.forEach(r => {
-        const val = getRowValueByLabel(table.columns, r, 'Tanggal');
-        if (!isEmptyValue(val)) consider(parseStrictDate(val));
-      });
-    }
-
-    if (!min && note && note.created_at) consider(new Date(note.created_at));
-    return min;
-  }
-
-  function recomputeWeekEpoch() {
-    const bukuBesar = (categoriesData || []).find(c => !c.ownerUsername && normalizeKey(c.name) === normalizeKey('BUKU BESAR'));
-    if (!bukuBesar) { weekEpoch = null; return; }
-    let min = null;
-    (pjNotesSource || []).forEach(n => {
-      if (n.folder_id !== bukuBesar.id) return;
-      const d = getNoteEarliestDate(n);
-      if (d && !isNaN(d) && (!min || d < min)) min = d;
-    });
-    weekEpoch = min ? getWeekAnchorThursday(min) : null;
   }
 
   function weekRangeLabel(anchor) {
@@ -3699,18 +3646,19 @@
     });
 
     const sortedKeys = Object.keys(buckets).map(Number).sort((a, b) => a - b);
-    const epoch = weekEpoch || (sortedKeys.length ? new Date(sortedKeys[0]) : null);
 
     const groups = sortedKeys.map(key => {
       const b = buckets[key];
-      const num = epoch ? Math.round((b.anchor.getTime() - epoch.getTime()) / WEEK_MS) + 1 : 1;
+      // Nomor pekan di-reset tiap bulan: Kamis pertama bulan itu = Pekan 1, Kamis kedua = Pekan 2, dst.
+      // Pekan dihitung milik bulan tempat hari Kamis awalnya jatuh.
+      const num = Math.floor((b.anchor.getDate() - 1) / 7) + 1;
       b.notes.sort((x, y) => {
         const pinDiff = (y.pinned ? 1 : 0) - (x.pinned ? 1 : 0);
         if (pinDiff !== 0) return pinDiff;
         return getNoteEffectiveDate(y) - getNoteEffectiveDate(x);
       });
       return {
-        label: num >= 1 ? `Pekan ${num}` : 'Sebelum Pekan 1',
+        label: `Pekan ${num}`,
         range: weekRangeLabel(b.anchor),
         anchor: b.anchor,
         notes: b.notes
