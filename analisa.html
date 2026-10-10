@@ -22,6 +22,9 @@
     --card-surface-dark: #121214;
     --card-border-dark: rgba(255, 255, 255, 0.08);
     --accent-yellow: #F0A529;
+    --accent-yellow-glow: rgba(240, 165, 41, 0.28);
+    --accent-rgb: 240, 165, 41;
+    --on-accent: #1C1B19;
     --accent-green: #3DD68C;
     --accent-red: #F0555C;
     --text-primary: #FFFFFF;
@@ -43,6 +46,7 @@
   body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
   body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
   body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
   body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
   body.font-bold-mode * { font-weight: 700 !important; }
 
@@ -248,7 +252,7 @@
   }
   .act-icon svg { width: 18px; height: 18px; }
   .act-icon.tx { background: rgba(61, 214, 140, 0.14); color: var(--accent-green); }
-  .act-icon.out { background: rgba(240, 165, 41, 0.16); color: var(--accent-yellow); }
+  .act-icon.out { background: rgba(var(--accent-rgb), 0.16); color: var(--accent-yellow); }
   .act-icon.note { background: var(--glass-pill-bg); color: var(--text-secondary); }
   .act-body { flex: 1; min-width: 0; }
   .recent-activity-title {
@@ -276,7 +280,7 @@
     border-radius: 999px;
     white-space: nowrap;
   }
-  .act-tag.out { color: var(--accent-yellow); background: rgba(240, 165, 41, 0.14); }
+  .act-tag.out { color: var(--accent-yellow); background: rgba(var(--accent-rgb), 0.14); }
   .act-tag.note { color: var(--text-secondary); background: var(--glass-pill-bg); }
   .recent-activity-empty { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 16px; }
 
@@ -345,7 +349,7 @@
     cursor: pointer;
     transition: all 0.22s ease;
   }
-  .period-tab.active { background: var(--accent-yellow); color: #1C1B19; }
+  .period-tab.active { background: var(--accent-yellow); color: var(--on-accent); }
 
   .custom-range-row { display: none; gap: 8px; margin-bottom: 14px; }
   .custom-range-row.show { display: flex; }
@@ -363,7 +367,7 @@
   .pekan-select { width: 100%; text-overflow: ellipsis; }
   .apply-range-btn {
     background: var(--accent-yellow);
-    color: #1C1B19;
+    color: var(--on-accent);
     border: none;
     border-radius: 10px;
     padding: 8px 14px;
@@ -406,7 +410,7 @@
   .chart-title { font-size: 11.5px; font-weight: 600; color: var(--text-secondary); min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .chart-mode { display: inline-flex; flex-shrink: 0; background: var(--glass-pill-bg); border-radius: 999px; padding: 3px; }
   .chart-mode button { border: none; background: transparent; color: var(--text-secondary); font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
-  .chart-mode button.active { background: var(--accent-yellow); color: #1C1B19; }
+  .chart-mode button.active { background: var(--accent-yellow); color: var(--on-accent); }
   .chart-mode button:disabled { opacity: 0.4; }
   .chart-axis {
     display: flex;
@@ -448,7 +452,7 @@
   }
   .export-btn svg { width: 15px; height: 15px; }
   .export-btn:active { background: rgba(255, 255, 255, 0.12); }
-  .share-btn { flex: 1 1 100%; background: var(--accent-yellow); border-color: transparent; color: #1C1B19; }
+  .share-btn { flex: 1 1 100%; background: var(--accent-yellow); border-color: transparent; color: var(--on-accent); }
   .share-btn:active { background: #D9921F; }
   .income-best { font-size: 11.5px; color: var(--text-secondary); text-align: center; margin-top: 6px; line-height: 1.4; }
 
@@ -549,7 +553,7 @@
   .busy-bars { display: grid; align-items: end; height: 64px; gap: 3px; margin-top: 16px; }
   .busy-bars.hours { grid-template-columns: repeat(24, minmax(0, 1fr)); }
   .busy-bars.days { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-  .busy-bar { position: relative; background: rgba(240, 165, 41, 0.38); border-radius: 3px 3px 0 0; }
+  .busy-bar { position: relative; background: rgba(var(--accent-rgb), 0.38); border-radius: 3px 3px 0 0; }
   .busy-peak { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 3px; font-size: 10px; font-weight: 800; color: var(--accent-yellow); white-space: nowrap; }
   .busy-bar.peak { background: var(--accent-yellow); }
   .busy-bar.zero { background: var(--glass-pill-bg); }
@@ -598,7 +602,7 @@
   .tube-fill {
     width: 100%;
     border-radius: 12px 12px 13px 13px;
-    background: linear-gradient(180deg, rgba(240, 165, 41, 0.62), rgba(240, 165, 41, 0.38));
+    background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.62), rgba(var(--accent-rgb), 0.38));
     transition: height 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .tube-col.current .tube-fill { background: linear-gradient(180deg, #F7B948, #E39A1C); }
@@ -686,6 +690,8 @@
     .analytics-page > .page-end { grid-column: 1 / -1; }
   }
 </style>
+<script src="/bm-theme.js"></script>
+<script src="/bm-lang.js"></script>
 </head>
 <body>
 <script>
@@ -694,11 +700,13 @@
     if (localStorage.getItem('bm-theme') === 'light') document.body.classList.add('theme-light');
     const FONT_CLASS_BY_ID = {
       serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis',
-      kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded'
+      kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded',
+      custom: 'font-custom'
     };
     const savedFont = localStorage.getItem('bm-font');
     if (savedFont && FONT_CLASS_BY_ID[savedFont]) document.body.classList.add(FONT_CLASS_BY_ID[savedFont]);
     if (localStorage.getItem('bm-font-bold') === 'on') document.body.classList.add('font-bold-mode');
+    if (savedFont === 'custom' && window.BMTheme) window.BMTheme.ensureCustom();
   })();
 </script>
 
@@ -1680,9 +1688,9 @@
       const ax = Math.max(bx + 8, Math.min(bx + bw - 8, xs[pi]));
       peak = `
         <circle cx="${xs[pi].toFixed(1)}" cy="${ys[pi].toFixed(1)}" r="4.6" fill="#3DD68C"></circle>
-        <rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="8.5" fill="#F0A529"></rect>
-        <polygon points="${(ax - 4).toFixed(1)},${(by + bh).toFixed(1)} ${(ax + 4).toFixed(1)},${(by + bh).toFixed(1)} ${ax.toFixed(1)},${(by + bh + 4.5).toFixed(1)}" fill="#F0A529"></polygon>
-        <text x="${(bx + bw / 2).toFixed(1)}" y="${(by + 12).toFixed(1)}" text-anchor="middle" style="fill:#1C1B19;font-size:10px;font-weight:700;">${txt}</text>`;
+        <rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="8.5" style="fill:var(--accent-yellow)"></rect>
+        <polygon points="${(ax - 4).toFixed(1)},${(by + bh).toFixed(1)} ${(ax + 4).toFixed(1)},${(by + bh).toFixed(1)} ${ax.toFixed(1)},${(by + bh + 4.5).toFixed(1)}" style="fill:var(--accent-yellow)"></polygon>
+        <text x="${(bx + bw / 2).toFixed(1)}" y="${(by + 12).toFixed(1)}" text-anchor="middle" style="fill:var(--on-accent);font-size:10px;font-weight:700;">${txt}</text>`;
     }
 
     svgEl.innerHTML = `
