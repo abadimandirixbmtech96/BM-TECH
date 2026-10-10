@@ -271,7 +271,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .recent-activity-amount { font-size: 13px; font-weight: 700; color: var(--accent-green); flex-shrink: 0; white-space: nowrap; }
+  .recent-activity-amount { font-size: 13px; font-weight: 700; color: var(--accent-green); flex-shrink: 0; white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
   .act-tag {
     flex-shrink: 0;
     font-size: 10.5px;
@@ -321,6 +321,7 @@
     line-height: 1.2;
   }
   .income-total-sub { font-size: 11.5px; color: var(--text-muted); margin-bottom: 14px; }
+  #incomeTotalValue { max-width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   .trend-badge {
     display: none;
@@ -430,7 +431,7 @@
     border-top: 1px solid var(--card-border-dark);
   }
   .income-mini-stat { text-align: center; flex: 1; min-width: 0; }
-  .income-mini-stat-value { font-size: 14px; font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+  .income-mini-stat-value { font-size: 14px; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .income-mini-stat-label { font-size: 10.5px; color: var(--text-secondary); margin-top: 2px; }
   .income-unit-note { font-size: 10.5px; color: var(--text-muted); text-align: center; margin-top: 10px; }
 
@@ -453,8 +454,8 @@
   .export-btn svg { width: 15px; height: 15px; }
   .export-btn:active { background: rgba(255, 255, 255, 0.12); }
   .share-btn { flex: 1 1 100%; background: var(--accent-yellow); border-color: transparent; color: var(--on-accent); }
-  .share-btn:active { background: #D9921F; }
-  .income-best { font-size: 11.5px; color: var(--text-secondary); text-align: center; margin-top: 6px; line-height: 1.4; }
+  .share-btn:active { filter: brightness(0.88); }
+  .income-best { font-size: 11.5px; color: var(--text-secondary); text-align: center; margin-top: 6px; line-height: 1.4; overflow-wrap: anywhere; }
 
   /* --- Kartu statistik --- */
   .stat-cards-row { display: flex; gap: 10px; }
@@ -489,7 +490,7 @@
   .bar-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; margin-bottom: 6px; }
   .bar-name { color: var(--text-primary); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bar-meta { color: var(--text-muted); font-weight: 600; font-size: 11px; margin-left: 6px; }
-  .bar-count { color: var(--text-secondary); font-weight: 600; flex-shrink: 0; }
+  .bar-count { color: var(--text-secondary); font-weight: 600; flex-shrink: 0; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bar-track { height: 8px; border-radius: 999px; background: var(--glass-pill-bg); overflow: hidden; }
   .bar-fill {
     height: 100%;
@@ -584,7 +585,7 @@
   .trend-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; padding: 0 4px; }
   .tubes { display: grid; gap: 6px; align-items: end; }
   .tube-col { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; cursor: pointer; }
-  .tube-val { font-size: 9.5px; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+  .tube-val { font-size: 9.5px; font-weight: 700; color: var(--text-secondary); white-space: nowrap; max-width: 100%; overflow: hidden; }
   .tube-col.current .tube-val { color: var(--accent-yellow); }
   .tube {
     position: relative;
@@ -605,7 +606,7 @@
     background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.62), rgba(var(--accent-rgb), 0.38));
     transition: height 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .tube-col.current .tube-fill { background: linear-gradient(180deg, #F7B948, #E39A1C); }
+  .tube-col.current .tube-fill { background: linear-gradient(180deg, var(--accent-yellow), rgba(var(--accent-rgb), 0.78)); }
   .tube-col.selected .tube { border-color: var(--accent-yellow); }
   .tube-label { font-size: 10.5px; font-weight: 700; color: var(--text-primary); }
   .tube-sub { font-size: 9px; color: var(--text-muted); margin-top: -4px; white-space: nowrap; }
@@ -1041,6 +1042,8 @@
   function compactRupiah(n) {
     n = Math.round(n);
     const fmt = (v, unit) => 'Rp ' + (Math.round(v * 10) / 10).toLocaleString('id-ID') + ' ' + unit;
+    if (n >= 1e15) return 'Rp ' + n.toExponential(1).replace('.', ',').replace('e+', 'e');
+    if (n >= 1e12) return fmt(n / 1e12, 'T');
     if (n >= 1e9) return fmt(n / 1e9, 'M');
     if (n >= 1e6) return fmt(n / 1e6, 'jt');
     if (n >= 1e3) return fmt(n / 1e3, 'rb');
@@ -1995,6 +1998,8 @@
   function shortNum(n) {
     n = Math.round(n);
     const f = (v, u) => (Math.round(v * 10) / 10).toLocaleString('id-ID') + u;
+    if (n >= 1e15) return n.toExponential(1).replace('.', ',').replace('e+', 'e');
+    if (n >= 1e12) return f(n / 1e12, 'T');
     if (n >= 1e9) return f(n / 1e9, 'M');
     if (n >= 1e6) return f(n / 1e6, 'jt');
     if (n >= 1e3) return f(n / 1e3, 'rb');
@@ -2645,6 +2650,39 @@
     URL.revokeObjectURL(url);
   });
 
+  // --- Angka terlalu panjang: huruf dikecilkan sampai muat (kalau sudah paling kecil, dipotong "...") ---
+  const FIT_SELECTOR = '#incomeTotalValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
+  const FIT_MIN_PX = 8;
+
+  function fitOne(el) {
+    el.style.fontSize = '';
+    if (!el.clientWidth || el.scrollWidth <= el.clientWidth + 1) return;
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    for (let i = 0; i < 4 && size > FIT_MIN_PX && el.scrollWidth > el.clientWidth + 1; i++) {
+      size = Math.max(FIT_MIN_PX, Math.floor(size * (el.clientWidth / el.scrollWidth) * 10) / 10 - 0.2);
+      el.style.fontSize = size + 'px';
+    }
+  }
+  function fitAll() { document.querySelectorAll(FIT_SELECTOR).forEach(fitOne); }
+
+  let fitQueued = false;
+  function queueFit() {
+    if (fitQueued) return;
+    fitQueued = true;
+    requestAnimationFrame(() => { fitQueued = false; fitAll(); });
+  }
+  (function watchFit() {
+    const page = $('analyticsPage');
+    // Isi berubah (data baru, ganti periode, muat riwayat) -> ukur ulang. Perubahan style tidak memicu ulang.
+    new MutationObserver(queueFit).observe(page, { childList: true, subtree: true, characterData: true });
+    window.addEventListener('resize', queueFit);
+    if (window.ResizeObserver) {
+      let lastW = 0;
+      new ResizeObserver(() => { const w = page.clientWidth; if (w !== lastW) { lastW = w; queueFit(); } }).observe(page);
+    }
+    if (document.fonts) document.fonts.addEventListener('loadingdone', queueFit);
+  })();
+
   $('btnShare').addEventListener('click', shareReport);
 
   // Tren: ketuk kolom -> buka periodenya; ganti Pekan / Bulan
@@ -2725,7 +2763,7 @@
       $('authGuardText').textContent = 'Koneksi lambat, belum bisa memverifikasi.';
       const btn = document.createElement('button');
       btn.textContent = 'Coba lagi';
-      btn.style.cssText = 'margin-top:6px;padding:10px 22px;border-radius:12px;border:0;background:#F5A524;color:#000;font-weight:700;font-size:14px';
+      btn.style.cssText = 'margin-top:6px;padding:10px 22px;border-radius:12px;border:0;background:var(--accent-yellow);color:var(--on-accent);font-weight:700;font-size:14px';
       btn.addEventListener('click', () => location.reload());
       guard.appendChild(btn);
       return;
