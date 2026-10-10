@@ -2324,12 +2324,12 @@
   <div class="folder-list" id="categoryFolderList"></div>
 
   <div class="drawer-footer">
-    <button class="drawer-foot-btn" id="btnModePreview" onclick="window.location.href='https://dashboard-bm-tech.vercel.app/'">
+    <button class="drawer-foot-btn" id="btnProfile">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
       </svg>
-      Mode Preview
+      Profile
     </button>
     <button class="drawer-foot-btn" id="btnAnalyticsOpen">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
@@ -6844,6 +6844,7 @@
     });
   })();
 
+  document.getElementById('btnProfile').addEventListener('click', () => alert('Masih dalam tahap pengembangan'));
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
   document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
   document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
