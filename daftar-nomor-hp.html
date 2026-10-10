@@ -277,10 +277,11 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 8px 14px 14px;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 12px 16px 16px;
   }
+  .row-top { display: flex; align-items: center; gap: 12px; }
 
   .idx {
     min-width: 22px;
@@ -312,7 +313,7 @@
     font-size: 14px;
     font-weight: 600;
     color: var(--text-secondary);
-    margin-top: 1px;
+    margin-top: 4px;
     font-variant-numeric: tabular-nums;
   }
   .num {
@@ -325,23 +326,57 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .meta {
-    font-size: 12.5px;
-    color: var(--text-secondary);
-    margin-top: 3px;
-    line-height: 1.35;
+  .fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--glass-pill-bg);
   }
-  .meta b { color: var(--accent-yellow); font-weight: 600; }
-  .detail {
-    font-size: 12.5px;
+  .field { display: flex; align-items: flex-start; gap: 12px; }
+  .fl {
+    flex: 0 0 56px;
+    padding-top: 3px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
     color: var(--text-secondary);
-    margin-top: 3px;
-    line-height: 1.35;
-    white-space: nowrap;
+  }
+  .fv {
+    flex: 1;
+    min-width: 0;
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
-  .detail b { color: var(--text-primary); font-weight: 600; }
+  .row-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .pill {
+    padding: 4px 11px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-yellow-glow);
+    color: var(--accent-yellow);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .pill b { font-weight: 800; }
+  .date {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
 
   .copy-btn {
     width: 56px;
@@ -359,7 +394,7 @@
   .copy-btn.done svg { transform: scale(1.2); }
 
   .skeleton {
-    height: 74px;
+    height: 170px;
     border-radius: var(--radius-xl);
     border: 1px solid var(--card-border-dark);
     background: linear-gradient(100deg, var(--skeleton-a) 30%, var(--skeleton-b) 50%, var(--skeleton-a) 70%);
@@ -742,19 +777,28 @@
 
   function rowHtml(item, index, animClass) {
     const style = animClass === 'anim' ? ' style="--i:' + Math.min(index, 14) + '"' : '';
-    const meta = '<b>' + item.count + '</b> transaksi' + (item.last ? ' &middot; ' + formatDate(item.last) : '');
     return (
       '<div class="row ' + animClass + '"' + style + '>' +
         '<a class="row-main" href="https://wa.me/' + item.key + '" target="_blank" rel="noopener noreferrer" aria-label="Chat WhatsApp ' + escapeHtml(item.name || formatLocal(item.key)) + '">' +
-          '<div class="idx">' + (index + 1) + '</div>' +
-          '<div class="wa-badge">' + ICON_WA + '</div>' +
-          '<div class="info">' +
-            (item.name
-              ? '<div class="num">' + escapeHtml(item.name) + '</div><div class="sub">' + formatDisplay(item.key) + '</div>'
-              : '<div class="num">' + formatDisplay(item.key) + '</div>') +
-            (item.pj ? '<div class="detail">PJ: <b>' + escapeHtml(item.pj) + '</b></div>' : '') +
-            (item.barang ? '<div class="detail">Barang: <b>' + escapeHtml(item.barang) + '</b></div>' : '') +
-            '<div class="meta">' + meta + '</div></div>' +
+          '<div class="row-top">' +
+            '<div class="idx">' + (index + 1) + '</div>' +
+            '<div class="wa-badge">' + ICON_WA + '</div>' +
+            '<div class="info">' +
+              (item.name
+                ? '<div class="num">' + escapeHtml(item.name) + '</div><div class="sub">' + formatDisplay(item.key) + '</div>'
+                : '<div class="num">' + formatDisplay(item.key) + '</div>') +
+            '</div>' +
+          '</div>' +
+          ((item.pj || item.barang)
+            ? '<div class="fields">' +
+                (item.pj ? '<div class="field"><span class="fl">PJ</span><span class="fv">' + escapeHtml(item.pj) + '</span></div>' : '') +
+                (item.barang ? '<div class="field"><span class="fl">Barang</span><span class="fv">' + escapeHtml(item.barang) + '</span></div>' : '') +
+              '</div>'
+            : '') +
+          '<div class="row-foot">' +
+            '<span class="pill"><b>' + item.count + '</b> transaksi</span>' +
+            (item.last ? '<span class="date">' + formatDate(item.last) + '</span>' : '') +
+          '</div>' +
         '</a>' +
         '<button class="copy-btn" data-copy="' + formatLocal(item.key) + '" aria-label="Salin nomor">' + ICON_COPY + '</button>' +
       '</div>'
