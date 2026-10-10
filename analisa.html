@@ -519,36 +519,10 @@
   }
   .history-meta { margin: 0 2px 10px; font-size: 11.5px; color: var(--text-secondary); }
 
-  /* --- Target omzet bulanan --- */
-  .target-card {
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-xl);
-    padding: 16px;
-  }
-  .target-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
-  .target-amount { font-size: 16px; font-weight: 800; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .target-amount span { color: var(--text-secondary); font-weight: 600; font-size: 12px; }
-  .target-pct { font-size: 14px; font-weight: 800; color: var(--accent-yellow); flex-shrink: 0; }
-  .target-pct.done { color: var(--accent-green); }
-  .bar-fill.done { background: var(--accent-green); }
+  /* --- Baris keterangan kecil (dipakai kartu Hutang Piutang) --- */
   .target-lines { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
   .target-line { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
   .target-line strong { color: var(--text-primary); font-weight: 700; }
-  .target-empty { text-align: center; font-size: 13px; color: var(--text-muted); line-height: 1.5; padding: 4px 4px 2px; }
-  .target-actions { display: flex; gap: 8px; margin-top: 14px; }
-  .target-edit-row { display: none; gap: 8px; margin-top: 14px; }
-  .target-edit-row.show { display: flex; }
-  .target-input {
-    flex: 1;
-    min-width: 0;
-    background: var(--glass-pill-bg);
-    border: 1px solid var(--glass-pill-border);
-    border-radius: 10px;
-    padding: 9px 12px;
-    color: var(--text-primary);
-    font-size: 13px;
-  }
 
   /* --- Pelanggan baru vs langganan --- */
   .split-row { display: flex; gap: 10px; }
@@ -591,7 +565,6 @@
   .ring-sub { font-size: 10px; color: var(--text-secondary); margin-top: 2px; font-weight: 600; }
   .ring-row { display: flex; align-items: center; gap: 16px; }
   .ring-body { flex: 1; min-width: 0; }
-  .ring-body .target-amount { white-space: normal; margin-bottom: 8px; }
   .ring-legend-item { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); font-weight: 600; margin-bottom: 8px; }
   .ring-legend-item:last-child { margin-bottom: 0; }
   .ring-legend-item strong { color: var(--text-primary); font-size: 17px; font-weight: 800; }
@@ -663,13 +636,11 @@
     .custom-range-row,
     .export-row,
     .load-more-btn,
-    .target-actions,
-    .target-edit-row,
     .share-btn,
     .chart-mode,
     .chart-tip,
     .analytics-search-box { display: none !important; }
-    .panel, .income-card, .bar-list, .recent-activity-list, .target-card, .busy-card { break-inside: avoid; }
+    .panel, .income-card, .bar-list, .recent-activity-list, .busy-card { break-inside: avoid; }
   }
   /* ===================================================================
      TRANSISI HALUS & LAYAR LEBAR
@@ -846,21 +817,6 @@
   </section>
 
   <section class="panel">
-    <p class="analytics-section-title">Target Omzet <span class="section-period" id="targetMonthLabel"></span></p>
-    <div class="target-card">
-      <div id="targetSummary"></div>
-      <div class="target-edit-row" id="targetEditRow">
-        <input type="text" inputmode="numeric" class="target-input" id="targetInput" placeholder="Contoh: 15.000.000" autocomplete="off">
-        <button class="apply-range-btn" id="btnSaveTarget">Simpan</button>
-      </div>
-      <div class="target-actions">
-        <button class="export-btn" id="btnEditTarget">Atur Target</button>
-        <button class="export-btn" id="btnClearTarget" style="display:none;">Hapus Target</button>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel">
     <div class="stat-cards-row">
       <div class="stat-card">
         <p class="stat-card-value" id="statTxCount">0</p>
@@ -892,16 +848,16 @@
   </section>
 
   <section class="panel">
-    <p class="analytics-section-title">Pelanggan <span class="section-period" data-period-label></span></p>
-    <div class="bar-list" id="customerSplitCard">
-      <p class="bar-empty">Belum ada data customer</p>
+    <p class="analytics-section-title">Performa PJ Gabungan <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="pjComboList">
+      <p class="bar-empty">Belum ada transaksi gabungan PJ</p>
     </div>
   </section>
 
   <section class="panel">
-    <p class="analytics-section-title">Perlu Di-follow Up <span class="section-period">· 30+ hari tidak transaksi</span></p>
-    <div class="recent-activity-list" id="followUpList">
-      <p class="recent-activity-empty">Belum ada data customer</p>
+    <p class="analytics-section-title">Pelanggan <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="customerSplitCard">
+      <p class="bar-empty">Belum ada data customer</p>
     </div>
   </section>
 
@@ -1192,7 +1148,7 @@
   const LEDGER_NAME_RE = /buku\s*besar/i;
   // Customer yang tidak ditulis namanya biasanya diisi "Iklan" (juga "Iklan 2", "IKLAN FB", dst).
   // Baris seperti ini tetap dihitung sebagai transaksi, tapi dianggap TANPA NAMA untuk Top Customer,
-  // Pelanggan, Follow Up, dan Customer Aktif. Ubah pola ini kalau ada kata lain yang dipakai.
+  // Pelanggan, dan Customer Aktif. Ubah pola ini kalau ada kata lain yang dipakai.
   const UNNAMED_CUSTOMER_RE = /^iklan\b/i;
   const NOTES_PAGE_SIZE = 1000; // batas default Supabase per request
 
@@ -1615,8 +1571,7 @@
   const ICONS = {
     tx: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>',
     out: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"/><path d="M3.3 7.5L12 12l8.7-4.5"/><line x1="12" y1="22" x2="12" y2="12"/></svg>',
-    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>',
-    clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>'
+    note: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>'
   };
 
   function entryRowHtml(e, whenText) {
@@ -1880,34 +1835,59 @@
     return { groups: [...map.values()].sort((a, b) => b.total - a.total), skipped };
   }
 
-  // PJ per transaksi. Satu sel PJ boleh memuat beberapa nama dipisah tanda baca/spasi
-  // ("Amin/BM", "BM & Mail"), sama seperti pencocokan PJ di dashboard-admin.html.
-  // Transaksi bersama dihitung penuh untuk setiap PJ yang tertulis. Semua PJ resmi
-  // selalu tampil walau belum ada transaksinya (Rp 0).
+  // PJ per transaksi. Satu sel PJ boleh memuat beberapa nama dipisah tanda baca, spasi, atau "x"
+  // ("Amin/BM", "BM & Mail", "Yono x Mail"). Hanya nama di PJ_NAMES yang dikenali: sel yang
+  // memuat nama lain, kosong, atau "Tanpa PJ" tidak masuk ke dua panel PJ.
+  // Hasil: daftar nama resmi (urut sesuai PJ_NAMES), atau null kalau sel tidak valid.
+  function parsePj(cell) {
+    const text = String(cell || '');
+    if (text === 'Tanpa PJ') return null;
+    const index = new Map(PJ_NAMES.map((n, i) => [normalizeKey(n), i]));
+    const hits = new Set();
+    const tokens = text.split(/[^A-Za-z0-9]+/).filter(Boolean);
+    for (const tok of tokens) {
+      const k = normalizeKey(tok);
+      if (k === 'x' || k === 'dan') continue;
+      if (!index.has(k)) return null;
+      hits.add(index.get(k));
+    }
+    if (!hits.size) return null;
+    return [...hits].sort((a, b) => a - b).map(i => PJ_NAMES[i]);
+  }
+
+  // Performa PJ: hanya transaksi satu PJ saja. Semua PJ resmi selalu tampil walau Rp 0.
   function pjTotals(txs) {
-    const known = new Map(PJ_NAMES.map(n => [normalizeKey(n), { name: n, total: 0, count: 0 }]));
-    const other = new Map();
-    let skipped = 0, shared = 0;
+    const solo = new Map(PJ_NAMES.map(n => [n, { name: n, total: 0, count: 0 }]));
+    let skipped = 0;
     txs.forEach(t => {
-      if (t.pj === 'Tanpa PJ') { skipped++; return; }
-      const hits = new Set();
-      String(t.pj).split(/[^A-Za-z0-9]+/).forEach(tok => {
-        const k = normalizeKey(tok);
-        if (k && known.has(k)) hits.add(k);
-      });
-      if (hits.size) {
-        if (hits.size > 1) shared++;
-        hits.forEach(k => { const g = known.get(k); g.total += t.amount; g.count += 1; });
-        return;
+      const names = parsePj(t.pj);
+      if (names && names.length === 1) {
+        const g = solo.get(names[0]);
+        g.total += t.amount;
+        g.count += 1;
+      } else {
+        skipped++;
       }
-      const key = normalizeKey(t.pj) || t.pj.toLowerCase();   // PJ di luar daftar: kelompokkan apa adanya
-      let g = other.get(key);
-      if (!g) { g = { name: t.pj, total: 0, count: 0 }; other.set(key, g); }
+    });
+    const groups = [...solo.values()].sort((a, b) => (b.total - a.total) || (b.count - a.count));
+    return { groups, skipped };
+  }
+
+  // Performa PJ Gabungan: transaksi yang dikerjakan 2 PJ atau lebih, dikelompokkan per kombinasi
+  // ("Yono x Mail" dan "Mail x Yono" jadi satu, nama ditulis urut sesuai PJ_NAMES).
+  function pjComboTotals(txs) {
+    const map = new Map();
+    txs.forEach(t => {
+      const names = parsePj(t.pj);
+      if (!names || names.length < 2) return;
+      const key = names.join('|');
+      let g = map.get(key);
+      if (!g) { g = { name: names.join(' x '), total: 0, count: 0 }; map.set(key, g); }
       g.total += t.amount;
       g.count += 1;
     });
-    const groups = [...known.values(), ...other.values()].sort((a, b) => (b.total - a.total) || (b.count - a.count));
-    return { groups, skipped, shared };
+    const groups = [...map.values()].sort((a, b) => (b.total - a.total) || (b.count - a.count));
+    return { groups, skipped: 0 };
   }
 
   // Rekap transaksi tanpa nama, dipisah: yang ditulis "Iklan" vs yang benar-benar kosong
@@ -1999,21 +1979,6 @@
       <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
         <circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:var(--glass-pill-bg)" stroke-width="${stroke}"></circle>${circles}
       </svg>
-      <div class="ring-center"><span class="ring-main">${centerMain}</span>${centerSub ? `<span class="ring-sub">${centerSub}</span>` : ''}</div>
-    </div>`;
-  }
-
-  // Cincin terbagi sejumlah ruas (mis. 6/10 terisi)
-  function segmentedRingHtml(size, stroke, filled, total, color, centerMain, centerSub) {
-    const r = (size - stroke) / 2, c = size / 2, C = 2 * Math.PI * r;
-    const gapAng = 6, segLen = C * (360 / total - gapAng) / 360;
-    let segs = '';
-    for (let i = 0; i < total; i++) {
-      const start = C * (i * 360 / total + gapAng / 2) / 360;
-      segs += `<circle cx="${c}" cy="${c}" r="${r}" fill="none" style="stroke:${i < filled ? color : 'var(--glass-pill-bg)'}" stroke-width="${stroke}" stroke-dasharray="${segLen.toFixed(2)} ${(C - segLen).toFixed(2)}" stroke-dashoffset="${(-start).toFixed(2)}" transform="rotate(-90 ${c} ${c})"></circle>`;
-    }
-    return `<div class="ring" style="width:${size}px;height:${size}px">
-      <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${segs}</svg>
       <div class="ring-center"><span class="ring-main">${centerMain}</span>${centerSub ? `<span class="ring-sub">${centerSub}</span>` : ''}</div>
     </div>`;
   }
@@ -2123,76 +2088,7 @@
     $('incomeCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // --- Target omzet bulanan (disimpan di perangkat ini) ---
-  const TARGET_KEY = 'bm-analisa-target-bulanan';
-
-  function loadTarget() {
-    try {
-      const v = parseInt(localStorage.getItem(TARGET_KEY), 10);
-      return v > 0 ? v : 0;
-    } catch (e) { return 0; }
-  }
-  function saveTarget(v) {
-    try {
-      if (v > 0) localStorage.setItem(TARGET_KEY, String(v));
-      else localStorage.removeItem(TARGET_KEY);
-    } catch (e) { /* penyimpanan diblokir: target tetap berlaku selama halaman terbuka */ }
-  }
-  let monthlyTarget = loadTarget();
-
-  function renderTarget() {
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    $('targetMonthLabel').textContent = '· ' + now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
-    $('btnEditTarget').textContent = monthlyTarget ? 'Ubah Target' : 'Atur Target';
-    $('btnClearTarget').style.display = monthlyTarget ? 'block' : 'none';
-
-    const el = $('targetSummary');
-    if (!monthlyTarget) {
-      el.innerHTML = '<p class="target-empty">Belum ada target. Atur target omzet bulanan untuk melihat progres dan proyeksi akhir bulan.</p>';
-      return;
-    }
-
-    const total = sumAmountInRange(monthStart, now);
-    const pct = (total / monthlyTarget) * 100;
-    const done = total >= monthlyTarget;
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const dayOfMonth = now.getDate();
-    const daysLeft = daysInMonth - dayOfMonth;
-    const remaining = Math.max(0, monthlyTarget - total);
-
-    const lines = [];
-    if (done) {
-      lines.push(`<p class="target-line">🎉 <strong>Target tercapai</strong>, lebih ${formatRupiah(total - monthlyTarget)} dari target.</p>`);
-    } else {
-      lines.push(daysLeft > 0
-        ? `<p class="target-line">Sisa <strong>${formatRupiah(remaining)}</strong> · ${daysLeft} hari lagi, butuh rata-rata <strong>${formatRupiah(remaining / daysLeft)}/hari</strong>.</p>`
-        : `<p class="target-line">Hari terakhir bulan ini · sisa <strong>${formatRupiah(remaining)}</strong> lagi.</p>`);
-      if (dayOfMonth >= 3) {
-        const projection = (total / dayOfMonth) * daysInMonth;
-        lines.push(`<p class="target-line">Proyeksi akhir bulan <strong>${formatRupiah(projection)}</strong> (${Math.round((projection / monthlyTarget) * 100)}% dari target).</p>`);
-      } else {
-        lines.push('<p class="target-line">Proyeksi akhir bulan muncul setelah hari ke-3.</p>');
-      }
-    }
-
-    const filledSeg = Math.min(10, Math.floor(pct / 10));
-    const ring = segmentedRingHtml(96, 11, filledSeg, 10, done ? 'var(--accent-green)' : 'var(--accent-yellow)', Math.floor(pct) + '%', `${filledSeg}/10`);
-    el.innerHTML = `
-      <div class="ring-row">
-        ${ring}
-        <div class="ring-body">
-          <p class="target-amount">${formatRupiah(total)} <span>dari ${compactRupiah(monthlyTarget)}</span></p>
-          <div class="target-lines">${lines.join('')}</div>
-        </div>
-      </div>
-    `;
-  }
-
-  // --- Pelanggan: baru vs langganan, dan yang perlu di-follow up ---
-  const FOLLOWUP_DAYS = 30;     // tidak transaksi selama minimal ini
-  const FOLLOWUP_MIN_TX = 3;    // dan sebelumnya sudah transaksi minimal sebanyak ini
-
+  // --- Pelanggan: baru vs langganan ---
   // Rekap semua customer bernama sepanjang waktu (nama huruf besar/kecil & spasi dianggap sama)
   function customerStats() {
     const map = new Map();
@@ -2254,34 +2150,6 @@
       ${currentIncomePeriod === 'all' ? '<p class="bar-note">Semua waktu: semua customer dihitung baru. Pilih periode lain untuk melihat langganan.</p>' : '<p class="bar-note">Baru = transaksi pertamanya terjadi di periode ini.</p>'}
       ${unnamedHtml}
     `;
-  }
-
-  function renderFollowUp() {
-    const el = $('followUpList');
-    const map = customerStats();
-    if (map.size === 0) { el.innerHTML = '<p class="recent-activity-empty">Belum ada data customer</p>'; return; }
-
-    const today = startOfDay(new Date());
-    const list = [...map.values()]
-      .map(s => ({ ...s, daysAgo: Math.round((today - startOfDay(s.last)) / 86400000) }))
-      .filter(s => s.count >= FOLLOWUP_MIN_TX && s.daysAgo >= FOLLOWUP_DAYS)
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 5);
-
-    if (list.length === 0) {
-      el.innerHTML = `<p class="recent-activity-empty">Tidak ada. Semua pelanggan tetap (${FOLLOWUP_MIN_TX}x transaksi atau lebih) masih aktif 👍</p>`;
-      return;
-    }
-    el.innerHTML = list.map(s => `
-      <div class="recent-activity-item">
-        <div class="act-icon out">${ICONS.clock}</div>
-        <div class="act-body">
-          <p class="recent-activity-title">${escapeHtml(s.name)}</p>
-          <p class="recent-activity-sub">Terakhir ${s.daysAgo} hari lalu · ${s.count}x transaksi</p>
-        </div>
-        <span class="recent-activity-amount">${compactRupiah(s.total)}</span>
-      </div>
-    `).join('');
   }
 
   // --- Waktu ramai: jumlah transaksi per jam & per hari ---
@@ -2374,6 +2242,11 @@
         lines.push('', '*Performa PJ*');
         pjs.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
       }
+      const combos = pjComboTotals(txs).groups;
+      if (combos.length) {
+        lines.push('', '*Performa PJ Gabungan*');
+        combos.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
+      }
     }
     const openDebt = debtItems.filter(d => d.sisa > 0);
     if (openDebt.length) {
@@ -2406,7 +2279,8 @@
     renderIncomeCard();
     renderStatCards(txs);
     renderRanking('topCustomerList', txs, 'customer', 'Tanpa Nama', 5, 'Belum ada data customer', 'tanpa nama customer / "Iklan" tidak masuk peringkat');
-    renderRanking('pjBarList', txs, 'pj', 'Tanpa PJ', PJ_NAMES.length + 3, 'Belum ada data PJ', 'tanpa PJ tidak masuk peringkat', pjTotals);
+    renderRanking('pjBarList', txs, 'pj', 'Tanpa PJ', PJ_NAMES.length, 'Belum ada data PJ', 'bukan PJ tunggal (gabungan, PJ lain, atau tanpa PJ) tidak masuk peringkat ini', pjTotals);
+    renderRanking('pjComboList', txs, 'pj', 'Tanpa PJ', 10, 'Belum ada transaksi gabungan PJ', '', pjComboTotals);
     renderTrend();
     renderCustomerSplit(txs);
     renderBusyTimes(txs, currentIncomePeriod);
@@ -2418,8 +2292,6 @@
     rebuildPekanOptions();
     renderBanner();
     renderActivity();
-    renderTarget();
-    renderFollowUp();
     renderDebt();
     renderPeriodViews();
     updateLastUpdated();
@@ -2765,33 +2637,6 @@
     URL.revokeObjectURL(url);
   });
 
-  // Target omzet: atur / simpan / hapus
-  $('btnEditTarget').addEventListener('click', () => {
-    const row = $('targetEditRow');
-    if (row.classList.contains('show')) { row.classList.remove('show'); return; }
-    row.classList.add('show');
-    $('targetInput').value = monthlyTarget ? monthlyTarget.toLocaleString('id-ID') : '';
-    $('targetInput').focus();
-  });
-  $('targetInput').addEventListener('input', (e) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 12);
-    e.target.value = digits ? Number(digits).toLocaleString('id-ID') : '';
-  });
-  $('btnSaveTarget').addEventListener('click', () => {
-    const n = parseInt($('targetInput').value.replace(/\D/g, ''), 10);
-    if (!(n > 0)) return;
-    monthlyTarget = n;
-    saveTarget(n);
-    $('targetEditRow').classList.remove('show');
-    renderTarget();
-  });
-  $('btnClearTarget').addEventListener('click', () => {
-    monthlyTarget = 0;
-    saveTarget(0);
-    $('targetEditRow').classList.remove('show');
-    renderTarget();
-  });
-
   $('btnShare').addEventListener('click', shareReport);
 
   // Tren: ketuk kolom -> buka periodenya; ganti Pekan / Bulan
@@ -2918,7 +2763,6 @@
     setInterval(() => {
       if (document.visibilityState !== 'visible') return;
       renderActivity();
-      renderTarget();
       updateLastUpdated();
     }, 30000);
 
