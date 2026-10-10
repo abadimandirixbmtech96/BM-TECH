@@ -2394,7 +2394,7 @@
     } catch (err) {
       if (err && err.name === 'AbortError') return; // pengguna membatalkan
     }
-    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank', 'noopener,noreferrer');
   }
 
   // Semua panel yang ikut periode terpilih
