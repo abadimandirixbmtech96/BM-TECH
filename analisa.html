@@ -378,6 +378,9 @@
     flex-shrink: 0;
   }
 
+  .method-card { margin-top: 12px; }
+  .method-card.method-cash .income-total-value { color: #3DD68C; }
+  .method-card.method-transfer .income-total-value { color: #3B8FE0; }
   .income-chart-wrap { position: relative; width: 100%; height: 150px; touch-action: pan-y; }
   .income-chart-wrap svg { width: 100%; height: 150px; display: block; }
   .income-chart-empty {
@@ -810,6 +813,44 @@
     </div>
   </section>
 
+  <section class="panel" id="methodPanel">
+    <p class="analytics-section-title">Metode Bayar <span class="section-period" data-period-label></span></p>
+    <div class="income-card method-card method-cash">
+      <p class="income-total-label">💵 Pemasukan Cash</p>
+      <p class="income-total-value"><span id="cashValue">Rp 0</span></p>
+      <p class="income-total-sub" id="cashSub">Belum ada transaksi Cash</p>
+      <div class="income-chart-wrap" id="cashChartWrap">
+        <svg id="cashChartSvg" viewBox="0 0 320 150"></svg>
+        <div class="income-chart-empty" id="cashChartEmpty">Belum ada data untuk periode ini</div>
+        <div class="chart-tip" id="cashChartTip"></div>
+      </div>
+      <div class="chart-axis"><span id="cashAxisStart"></span><span id="cashAxisEnd"></span></div>
+      <div class="income-mini-stats">
+        <div class="income-mini-stat"><p class="income-mini-stat-value" id="cashHighest">-</p><p class="income-mini-stat-label">Tertinggi</p></div>
+        <div class="income-mini-stat"><p class="income-mini-stat-value" id="cashAvg">-</p><p class="income-mini-stat-label">Rata-rata</p></div>
+        <div class="income-mini-stat"><p class="income-mini-stat-value" id="cashLowest">-</p><p class="income-mini-stat-label">Terendah</p></div>
+      </div>
+    </div>
+
+    <div class="income-card method-card method-transfer">
+      <p class="income-total-label">🏦 Pemasukan Transfer</p>
+      <p class="income-total-value"><span id="transferValue">Rp 0</span></p>
+      <p class="income-total-sub" id="transferSub">Belum ada transaksi Transfer</p>
+      <div class="income-chart-wrap" id="transferChartWrap">
+        <svg id="transferChartSvg" viewBox="0 0 320 150"></svg>
+        <div class="income-chart-empty" id="transferChartEmpty">Belum ada data untuk periode ini</div>
+        <div class="chart-tip" id="transferChartTip"></div>
+      </div>
+      <div class="chart-axis"><span id="transferAxisStart"></span><span id="transferAxisEnd"></span></div>
+      <div class="income-mini-stats">
+        <div class="income-mini-stat"><p class="income-mini-stat-value" id="transferHighest">-</p><p class="income-mini-stat-label">Tertinggi</p></div>
+        <div class="income-mini-stat"><p class="income-mini-stat-value" id="transferAvg">-</p><p class="income-mini-stat-label">Rata-rata</p></div>
+        <div class="income-mini-stat"><p class="income-mini-stat-value" id="transferLowest">-</p><p class="income-mini-stat-label">Terendah</p></div>
+      </div>
+    </div>
+    <p class="income-unit-note" id="methodUnsetNote" style="display:none;"></p>
+  </section>
+
   <section class="panel">
     <p class="analytics-section-title">Tren <span class="section-period" id="trendLabel"></span></p>
     <div class="trend-card">
@@ -959,6 +1000,7 @@
     { id: 'stokBarang', label: 'Stok Barang' },
     { id: 'keterangan', label: 'Keterangan' },
     { id: 'harga', label: 'Harga' },
+    { id: 'metode', label: 'Metode' },
     { id: 'bukti', label: 'Bukti', type: 'image' }
   ];
 
@@ -994,6 +1036,7 @@
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
             harga: formatHargaCell(r.harga),
+            metode: r.metode || '',
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
           }
@@ -1371,6 +1414,14 @@
     return e.customerRaw || 'Tanpa Nama';
   }
 
+  // 'cash' | 'transfer' | '' (belum dipilih / data lama)
+  function normMetode(v) {
+    const s = String(v || '').toLowerCase();
+    if (/cash|tunai/.test(s)) return 'cash';
+    if (/transfer|\btf\b/.test(s)) return 'transfer';
+    return '';
+  }
+
   // Semua baris bermakna di buku besar (terbaru dulu): transaksi (ada Harga) maupun
   // catatan lain seperti barang keluar. Baris kosong dilewati.
   function extractEntries() {
@@ -1403,6 +1454,7 @@
         list.push({
           amount, date, ts, hasTime, customer, customerRaw, barang, keluar,
           pj: cellText(columns, row, 'PJ', 'Tanpa PJ'),
+          metode: normMetode(cellText(columns, row, 'Metode', '')),
           folder: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled'
         });
@@ -1437,8 +1489,8 @@
   // Hari Ini      -> satu titik per transaksi (urut jam)
   // <= 92 hari    -> satu titik per hari, hari tanpa transaksi diisi 0 (grafik jujur, tidak "melompat")
   // lebih panjang -> satu titik per bulan, bulan kosong diisi 0
-  function computeIncomeSeries(period) {
-    const txs = getPeriodTxs(period);
+  function computeIncomeSeries(period, filter) {
+    const txs = filter ? getPeriodTxs(period).filter(filter) : getPeriodTxs(period);
     const total = sumTxs(txs);
     if (txs.length === 0) return { points: [], total: 0, unit: 'hari', txCount: 0 };
 
@@ -1644,20 +1696,29 @@
   }
 
   // --- Render: kartu omzet & grafik ---
-  let chartState = { points: [], xs: [], ys: [], w: 320, h: 150, padX: 6 };
+  // Tiga grafik berbagi kode yang sama: total, Cash, Transfer
+  const CHART_CFGS = {
+    all:      { svg: 'incomeChartSvg',   empty: 'incomeChartEmpty',   wrap: 'incomeChartWrap',   tip: 'chartTip',         color: '#3DD68C', sfx: '' },
+    cash:     { svg: 'cashChartSvg',     empty: 'cashChartEmpty',     wrap: 'cashChartWrap',     tip: 'cashChartTip',     color: '#3DD68C', sfx: 'Cash' },
+    transfer: { svg: 'transferChartSvg', empty: 'transferChartEmpty', wrap: 'transferChartWrap', tip: 'transferChartTip', color: '#3B8FE0', sfx: 'Transfer' }
+  };
+  const chartStates = {};
   let chartTipTimer = null;
 
-  function renderIncomeChartSVG(points) {
-    const svgEl = $('incomeChartSvg');
-    const emptyEl = $('incomeChartEmpty');
-    const wrap = $('incomeChartWrap');
+  function renderIncomeChartSVG(points, key) {
+    key = key || 'all';
+    const cfg = CHART_CFGS[key];
+    const svgEl = $(cfg.svg);
+    const emptyEl = $(cfg.empty);
+    const wrap = $(cfg.wrap);
     const w = (wrap && wrap.clientWidth) || 320;
     const h = 150, padX = 6, padTop = 30, padBottom = 8;   // padTop lega untuk label nilai tertinggi
     const baseStroke = document.body.classList.contains('theme-light') ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.10)';
+    const C = cfg.color, S = cfg.sfx;
     svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
-    hideChartTip();
-    chartState = { points: [], xs: [], ys: [], w, h, padX };
+    hideChartTip(key);
+    chartStates[key] = { points: [], xs: [], ys: [], w, h, padX };
 
     if (points.length === 0) {
       svgEl.innerHTML = `<line x1="0" y1="${h - padBottom}" x2="${w}" y2="${h - padBottom}" stroke="${baseStroke}" stroke-width="1.5"/>`;
@@ -1670,14 +1731,14 @@
     const stepX = points.length > 1 ? (w - padX * 2) / (points.length - 1) : 0;
     const xs = points.map((_, i) => points.length > 1 ? padX + i * stepX : w / 2);
     const ys = points.map(p => h - padBottom - (p.value / max) * (h - padTop - padBottom));
-    chartState = { points, xs, ys, w, h, padX };
+    chartStates[key] = { points, xs, ys, w, h, padX };
 
     const linePath = xs.map((x, i) => (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + ys[i].toFixed(1)).join(' ');
     const areaPath = `${linePath} L${xs[xs.length - 1].toFixed(1)},${h - padBottom} L${xs[0].toFixed(1)},${h - padBottom} Z`;
 
     // Titik di setiap hari yang ada transaksinya (kalau tidak terlalu padat)
     const dots = points.length <= 45
-      ? points.map((p, i) => p.value > 0 ? `<circle cx="${xs[i].toFixed(1)}" cy="${ys[i].toFixed(1)}" r="3" fill="var(--card-surface-dark)" stroke="#3DD68C" stroke-width="2"></circle>` : '').join('')
+      ? points.map((p, i) => p.value > 0 ? `<circle cx="${xs[i].toFixed(1)}" cy="${ys[i].toFixed(1)}" r="3" fill="var(--card-surface-dark)" stroke="${C}" stroke-width="2"></circle>` : '').join('')
       : '';
     const last = points.length - 1;
 
@@ -1691,7 +1752,7 @@
       const by = Math.max(2, ys[pi] - bh - 9);
       const ax = Math.max(bx + 8, Math.min(bx + bw - 8, xs[pi]));
       peak = `
-        <circle cx="${xs[pi].toFixed(1)}" cy="${ys[pi].toFixed(1)}" r="4.6" fill="#3DD68C"></circle>
+        <circle cx="${xs[pi].toFixed(1)}" cy="${ys[pi].toFixed(1)}" r="4.6" fill="${C}"></circle>
         <rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="8.5" style="fill:var(--accent-yellow)"></rect>
         <polygon points="${(ax - 4).toFixed(1)},${(by + bh).toFixed(1)} ${(ax + 4).toFixed(1)},${(by + bh).toFixed(1)} ${ax.toFixed(1)},${(by + bh + 4.5).toFixed(1)}" style="fill:var(--accent-yellow)"></polygon>
         <text x="${(bx + bw / 2).toFixed(1)}" y="${(by + 12).toFixed(1)}" text-anchor="middle" style="fill:var(--on-accent);font-size:10px;font-weight:700;">${txt}</text>`;
@@ -1699,43 +1760,48 @@
 
     svgEl.innerHTML = `
       <defs>
-        <linearGradient id="incomeGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#3DD68C" stop-opacity="0.32"/>
-          <stop offset="100%" stop-color="#3DD68C" stop-opacity="0"/>
+        <linearGradient id="incomeGrad${S}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${C}" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="${C}" stop-opacity="0"/>
         </linearGradient>
       </defs>
       <line x1="0" y1="${h - padBottom}" x2="${w}" y2="${h - padBottom}" stroke="${baseStroke}" stroke-width="1"/>
-      <path d="${areaPath}" fill="url(#incomeGrad)"></path>
-      <path d="${linePath}" fill="none" stroke="#3DD68C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="${areaPath}" fill="url(#incomeGrad${S})"></path>
+      <path d="${linePath}" fill="none" stroke="${C}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path>
       ${dots}
-      <circle cx="${xs[last].toFixed(1)}" cy="${ys[last].toFixed(1)}" r="4" fill="#3DD68C"></circle>
+      <circle cx="${xs[last].toFixed(1)}" cy="${ys[last].toFixed(1)}" r="4" fill="${C}"></circle>
       ${peak}
-      <line id="chartCursorLine" x1="0" y1="0" x2="0" y2="${h - padBottom}" stroke="#3DD68C" stroke-width="1" stroke-dasharray="3 3" opacity="0"></line>
-      <circle id="chartCursorDot" cx="0" cy="0" r="5" fill="#3DD68C" stroke="#FFFFFF" stroke-width="2" opacity="0"></circle>
+      <line id="chartCursorLine${S}" x1="0" y1="0" x2="0" y2="${h - padBottom}" stroke="${C}" stroke-width="1" stroke-dasharray="3 3" opacity="0"></line>
+      <circle id="chartCursorDot${S}" cx="0" cy="0" r="5" fill="${C}" stroke="#FFFFFF" stroke-width="2" opacity="0"></circle>
     `;
   }
 
-  function hideChartTip() {
-    const tip = $('chartTip');
+  function hideChartTip(key) {
+    key = (typeof key === 'string') ? key : 'all';
+    const cfg = CHART_CFGS[key];
+    const tip = $(cfg.tip);
     if (tip) tip.style.display = 'none';
-    const line = $('chartCursorLine'), dot = $('chartCursorDot');
+    const line = $('chartCursorLine' + cfg.sfx), dot = $('chartCursorDot' + cfg.sfx);
     if (line) line.setAttribute('opacity', '0');
     if (dot) dot.setAttribute('opacity', '0');
   }
 
   // Sentuh / geser di grafik untuk lihat nilai tiap titik
-  function onChartPointer(e) {
-    const { points, xs, ys, w } = chartState;
-    if (!points.length) return;
+  function onChartPointer(e, key) {
+    key = key || 'all';
+    const cfg = CHART_CFGS[key];
+    const st = chartStates[key];
+    if (!st || !st.points.length) return;
+    const { points, xs, ys, w } = st;
     clearTimeout(chartTipTimer);
 
-    const wrap = $('incomeChartWrap');
+    const wrap = $(cfg.wrap);
     const rect = wrap.getBoundingClientRect();
     const x = e.clientX - rect.left;
     let idx = 0, best = Infinity;
     xs.forEach((cx, i) => { const d = Math.abs(cx - x); if (d < best) { best = d; idx = i; } });
 
-    const line = $('chartCursorLine'), dot = $('chartCursorDot'), tip = $('chartTip');
+    const line = $('chartCursorLine' + cfg.sfx), dot = $('chartCursorDot' + cfg.sfx), tip = $(cfg.tip);
     line.setAttribute('x1', xs[idx]); line.setAttribute('x2', xs[idx]); line.setAttribute('opacity', '0.7');
     dot.setAttribute('cx', xs[idx]); dot.setAttribute('cy', ys[idx]); dot.setAttribute('opacity', '1');
 
@@ -1816,6 +1882,44 @@
       const bestLabel = unit === 'bulan' ? 'Bulan terbaik' : (unit === 'transaksi' ? 'Transaksi terbesar' : 'Hari terbaik');
       $('incomeBest').textContent = `🏆 ${bestLabel}: ${best.label} · ${compactRupiah(best.value)}`;
     }
+    renderMethodCards();
+  }
+
+  // --- Grafik per metode bayar: Cash & Transfer (ikut periode terpilih) ---
+  function renderMethodCard(key) {
+    const label = key === 'cash' ? 'Cash' : 'Transfer';
+    const { points, total, unit, txCount } = computeIncomeSeries(currentIncomePeriod, t => t.metode === key);
+    const grand = sumTxs(getPeriodTxs(currentIncomePeriod));
+    $(key + 'Value').textContent = formatRupiah(total);
+
+    const active = points.filter(p => p.value > 0);
+    let sub;
+    if (txCount === 0) sub = `Belum ada transaksi ${label}`;
+    else sub = `${txCount.toLocaleString('id-ID')} transaksi` + (grand > 0 ? ` · ${Math.round(total / grand * 100)}% dari total` : '');
+    $(key + 'Sub').textContent = sub;
+
+    renderIncomeChartSVG(points, key);
+    $(key + 'AxisStart').textContent = points.length ? points[0].short : '';
+    $(key + 'AxisEnd').textContent = points.length > 1 ? points[points.length - 1].short : '';
+
+    const values = active.map(p => p.value);
+    $(key + 'Highest').textContent = values.length ? compactRupiah(Math.max(...values)) : '-';
+    $(key + 'Avg').textContent = values.length ? compactRupiah(values.reduce((a, b) => a + b, 0) / values.length) : '-';
+    $(key + 'Lowest').textContent = values.length ? compactRupiah(Math.min(...values)) : '-';
+  }
+
+  function renderMethodCards() {
+    renderMethodCard('cash');
+    renderMethodCard('transfer');
+    const unset = getPeriodTxs(currentIncomePeriod).filter(t => !t.metode);
+    const el = $('methodUnsetNote');
+    if (unset.length) {
+      el.style.display = '';
+      el.textContent = `${unset.length.toLocaleString('id-ID')} transaksi (${compactRupiah(sumTxs(unset))}) belum punya metode bayar — umumnya data lama atau yang bertanda ✓ — jadi tidak masuk grafik Cash/Transfer.`;
+    } else {
+      el.style.display = 'none';
+    }
+    queueFit();
   }
 
   // --- Render: statistik & peringkat ---
@@ -2600,16 +2704,19 @@
 
   // Grafik: sentuh/geser untuk lihat nilai tiap titik
   (function bindChartPointer() {
-    const wrap = $('incomeChartWrap');
-    wrap.addEventListener('pointerdown', onChartPointer);
-    wrap.addEventListener('pointermove', onChartPointer);
-    wrap.addEventListener('pointerleave', hideChartTip);
-    wrap.addEventListener('pointercancel', hideChartTip);
-    wrap.addEventListener('pointerup', (e) => {
-      if (e.pointerType === 'touch') {
-        clearTimeout(chartTipTimer);
-        chartTipTimer = setTimeout(hideChartTip, 2200); // di layar sentuh, biarkan terbaca sebentar
-      }
+    Object.keys(CHART_CFGS).forEach(key => {
+      const wrap = $(CHART_CFGS[key].wrap);
+      const onMove = (e) => onChartPointer(e, key);
+      wrap.addEventListener('pointerdown', onMove);
+      wrap.addEventListener('pointermove', onMove);
+      wrap.addEventListener('pointerleave', () => hideChartTip(key));
+      wrap.addEventListener('pointercancel', () => hideChartTip(key));
+      wrap.addEventListener('pointerup', (e) => {
+        if (e.pointerType === 'touch') {
+          clearTimeout(chartTipTimer);
+          chartTipTimer = setTimeout(() => hideChartTip(key), 2200); // di layar sentuh, biarkan terbaca sebentar
+        }
+      });
     });
   })();
 
@@ -2630,9 +2737,9 @@
 
   function buildTransactionsCsv(txs) {
     const rows = [...txs].sort((a, b) => a.ts - b.ts);
-    const lines = [['Tanggal', 'Jam', 'Customer', 'Barang', 'PJ', 'Harga (Rp)', 'Folder', 'Note'].join(',')];
+    const lines = [['Tanggal', 'Jam', 'Customer', 'Barang', 'PJ', 'Harga (Rp)', 'Metode', 'Folder', 'Note'].join(',')];
     rows.forEach(t => {
-      lines.push([toLocalDateStr(t.date), t.hasTime ? formatTime(t.ts) : '', t.customerRaw, t.barang, t.pj, t.amount, t.folder, t.noteTitle].map(csvCell).join(','));
+      lines.push([toLocalDateStr(t.date), t.hasTime ? formatTime(t.ts) : '', t.customerRaw, t.barang, t.pj, t.amount, t.metode === 'cash' ? 'Cash' : t.metode === 'transfer' ? 'Transfer' : '', t.folder, t.noteTitle].map(csvCell).join(','));
     });
     return '\uFEFF' + lines.join('\r\n') + '\r\n'; // BOM supaya Excel membaca UTF-8 dengan benar
   }
@@ -2652,7 +2759,7 @@
   });
 
   // --- Angka terlalu panjang: huruf dikecilkan sampai muat (kalau sudah paling kecil, dipotong "...") ---
-  const FIT_SELECTOR = '#incomeTotalValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
+  const FIT_SELECTOR = '#incomeTotalValue, #cashValue, #transferValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
   const FIT_MIN_PX = 8;
 
   function fitOne(el) {
