@@ -2962,12 +2962,20 @@
       hasNo ? { ...r, cells: { ...r.cells, no: String(i + 1).padStart(3, '0') } } : r);
     return { ...table, rows };
   }
+  function countWeeks(notes) {
+    const set = new Set();
+    notes.forEach(n => {
+      const d = getNoteEffectiveDate(n);
+      if (d && !isNaN(d)) set.add(getWeekAnchorThursday(d).getTime());
+    });
+    return set.size;
+  }
   function rebuildPjFolders() {
     pjFolders = PJ_NAMES.map(name => ({
       id: PJ_PREFIX + name,
       name,
       color: PJ_COLOR,
-      count: pjNotesSource.filter(n => noteHasVf(n, { field: 'PJ', key: normalizeKey(name) })).length
+      count: countWeeks(pjNotesSource.filter(n => noteHasVf(n, { field: 'PJ', key: normalizeKey(name) })))
     }));
 
     customerFolders = CUSTOMER_NAMES.map(name => {
@@ -2976,9 +2984,79 @@
         id: CU_PREFIX + f.key,
         name,
         color: '#5B9BE6',
-        count: pjNotesSource.filter(n => noteHasVf(n, f)).length
+        count: countWeeks(pjNotesSource.filter(n => noteHasVf(n, f)))
       };
     });
+  }
+
+  // --- Folder karyawan (PJ) & customer: semua note dalam satu pekan digabung jadi SATU note ---
+  // Baris dari beberapa note (mis. hari ini 2 note, besok 1 note) disatukan berurutan dan diberi nomor ulang.
+  // Note gabungan ini hanya tampilan (tidak disimpan di database), jadi tidak bisa diedit / dipin / dihapus;
+  // untuk mengubah data, buka note aslinya di folder BUKU BESAR.
+  function mergeNotesByWeek(notes, vf) {
+    const buckets = new Map();
+    notes.forEach(n => {
+      const d = getNoteEffectiveDate(n);
+      if (!d || isNaN(d)) return;
+      const anchor = getWeekAnchorThursday(d);
+      const key = anchor.getTime();
+      if (!buckets.has(key)) buckets.set(key, { anchor, notes: [] });
+      buckets.get(key).notes.push(n);
+    });
+
+    const filter = { field: vf.field, key: vf.key };
+    return [...buckets.values()].map(b => {
+      const src = [...b.notes].sort((x, y) =>
+        (getNoteEffectiveDate(x) - getNoteEffectiveDate(y)) || (new Date(x.created_at) - new Date(y.created_at)));
+
+      const columns = [];
+      const colByLabel = new Map();
+      const rows = [];
+      src.forEach(n => {
+        const t = filterTableByVf(getNoteTable(n), filter);
+        if (!t || !Array.isArray(t.rows)) return;
+
+        // Kolom disamakan lewat label (id kolom note lama acak), urutan kolom ikut note pertama
+        const idMap = {};
+        (t.columns || []).forEach(c => {
+          const k = normalizeKey(c.label || c.id);
+          let m = colByLabel.get(k);
+          if (!m) {
+            m = { ...c };
+            if (columns.some(x => x.id === m.id)) m.id = `${m.id}_${columns.length}`;
+            columns.push(m);
+            colByLabel.set(k, m);
+          }
+          idMap[c.id] = m.id;
+        });
+        t.rows.forEach(r => {
+          const cells = {};
+          Object.keys(r.cells || {}).forEach(cid => {
+            if (idMap[cid]) cells[idMap[cid]] = r.cells[cid];
+            else if (cid.charAt(0) === '_') cells[cid] = r.cells[cid];   // penanda internal baris (_buktiAll, _paid, _linked, dst) ikut dibawa
+          });
+          rows.push({ ...r, cells });
+        });
+      });
+
+      const noCol = columns.find(c => c.id === 'no' || normalizeKey(c.label) === 'no');
+      if (noCol) rows.forEach((r, i) => { r.cells[noCol.id] = String(i + 1).padStart(3, '0'); });
+
+      const num = Math.floor((b.anchor.getDate() - 1) / 7) + 1;
+      const latestCreated = src.reduce((m, n) => (!m || new Date(n.created_at) > new Date(m) ? n.created_at : m), null);
+      return {
+        id: `__wk__${vf.key}__${b.anchor.getTime()}`,
+        folder_id: null,
+        title: `Rekap ${vf.name} - Pekan ${num} ${MONTH_SHORT_ID[b.anchor.getMonth()]} ${b.anchor.getFullYear()}`,
+        preview: `${rows.length} baris dari ${src.length} note`,
+        content: { columns, rows },
+        created_at: latestCreated,
+        pinned: false,
+        is_glass: false,
+        _merged: true,
+        _weekAnchor: b.anchor.getTime()
+      };
+    }).sort((a, b) => b._weekAnchor - a._weekAnchor);
   }
 
   async function loadPjNotes(catId, year, month) {
@@ -3000,19 +3078,17 @@
       notesLoadFailed = true;
     } else {
       notesLoadFailed = false;
-      notesData = (data || [])
+      // Bulan mengikuti pekan (bulan tempat Kamis awalnya jatuh), supaya satu pekan tidak terbelah dua bulan
+      const matched = (data || [])
         .filter(n => noteHasVf(n, vf))
         .filter(n => {
           if (!(year && month)) return true;
           const d = getNoteEffectiveDate(n);
-          return d && !isNaN(d) && d.getFullYear() === year && (d.getMonth() + 1) === month;
-        })
-        .map(n => ({ ...n, _vfFilter: { field: vf.field, key: vf.key } }))
-        .sort((a, b) => {
-          const pinDiff = (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-          if (pinDiff !== 0) return pinDiff;
-          return getNoteEffectiveDate(b) - getNoteEffectiveDate(a);
+          if (!d || isNaN(d)) return false;
+          const a = getWeekAnchorThursday(d);
+          return a.getFullYear() === year && (a.getMonth() + 1) === month;
         });
+      notesData = mergeNotesByWeek(matched, vf);
     }
     renderNotes();
   }
@@ -3429,8 +3505,9 @@
 
     const map = {};
     (data || []).forEach(row => {
-      const d = getNoteEffectiveDate(row);
-      if (!d || isNaN(d)) return;
+      const rawDate = getNoteEffectiveDate(row);
+      if (!rawDate || isNaN(rawDate)) return;
+      const d = vfForYears ? getWeekAnchorThursday(rawDate) : rawDate;   // folder karyawan/customer: bulan mengikuti pekan
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
       if (!map[y]) map[y] = new Set();
@@ -3704,7 +3781,7 @@
 
   function noteCardHtml(note, idx) {
     return `
-      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${escapeHtml(note.id)}" style="animation-delay: ${idx * 0.05}s">
+      <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${escapeHtml(note.id)}" ${note._merged ? 'data-merged="1"' : ''} style="animation-delay: ${idx * 0.05}s">
         ${note.pinned ? `
           <div class="note-pin-badge">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
@@ -3743,7 +3820,7 @@
       card.addEventListener('click', () => {
         if (longPressed) { longPressed = false; return; }
         if (noteSelectionMode) {
-          toggleNoteSelection(card.dataset.id);
+          if (card.dataset.merged !== '1') toggleNoteSelection(card.dataset.id);   // note gabungan bukan data asli
         } else {
           openNoteDetail(card.dataset.id);
         }
@@ -3751,6 +3828,7 @@
 
       card.addEventListener('touchstart', () => {
         longPressed = false;
+        if (card.dataset.merged === '1') return;   // tidak ada pin / pindah / hapus untuk note gabungan
         pressTimer = setTimeout(() => {
           longPressed = true;
           if (!noteSelectionMode) enterSelectionMode(card.dataset.id);
@@ -4115,6 +4193,7 @@
   }
 
   function getNoteEffectiveDate(note) {
+    if (note && note._weekAnchor) return new Date(note._weekAnchor);   // note gabungan per pekan
     if (note && note.title) {
       const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
       if (m) {
@@ -6078,6 +6157,10 @@
 
   document.getElementById('btnNoteDetailEdit').addEventListener('click', () => {
     if (!currentDetailNote) return;
+    if (currentDetailNote._merged) {
+      showLiquidAlert('Tidak Bisa Diedit', 'Ini rekap gabungan satu pekan dari beberapa note. Untuk mengubah data, buka note aslinya di folder BUKU BESAR.');
+      return;
+    }
     noteDetailOverlay.classList.remove('open');
     openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });
   });
@@ -6173,6 +6256,10 @@
   document.getElementById('btnShareCopyLink').addEventListener('click', async () => {
     if (!currentDetailNote) return;
     closeShareSheet();
+    if (currentDetailNote._merged) {
+      showLiquidAlert('Link Tidak Tersedia', 'Rekap gabungan per pekan belum punya link berbagi. Gunakan opsi gambar / PDF, atau bagikan note aslinya.');
+      return;
+    }
 
     const cat = categoriesData.find(c => c.id === currentDetailNote.folder_id);
     const folderSlug = slugify(cat ? cat.name : '');
