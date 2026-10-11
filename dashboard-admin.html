@@ -5021,6 +5021,11 @@
 
   const TRASH_DAYS = 30;
   const BUKTI_BUCKET = 'bukti';
+  // Gambar ImgBB ditampilkan lewat /api/img (proxy Vercel) karena i.ibb.co diblokir di sebagian jaringan.
+  // Yang tersimpan di data tetap URL aslinya; URL Supabase dan lainnya dibiarkan.
+  function buktiSrc(u){
+    return (typeof u === 'string' && /^https:\/\/i\.ibb\.co\//.test(u)) ? '/api/img?u=' + encodeURIComponent(u) : (u || '');
+  }
 
   function trashDaysLeft(item){
     const d = new Date(item.deleted_at).getTime();
@@ -5029,7 +5034,7 @@
   }
 
   function collectBuktiPathsFromNotes(notes){
-    const marker = '/' + BUKTI_BUCKET + '/';
+    const marker = '/storage/v1/object/public/' + BUKTI_BUCKET + '/'; // hanya foto Supabase; foto ImgBB tidak ikut dihapus
     const paths = [];
     (notes || []).forEach(n => {
       const c = n && n.content;
@@ -6197,12 +6202,12 @@
             const list = Array.isArray(row.cells && row.cells._buktiAll) ? row.cells._buktiAll : (val ? [val] : []);
             if (!list.length) return '<td></td>';
             const imgs = list.map((u, i) =>
-              `<img src="${escapeHtml(u)}" class="note-detail-img" data-bukti-group="${escapeHtml(list.join('|'))}" data-bukti-idx="${i}" alt="Bukti ${i + 1}">`
+              `<img src="${escapeHtml(buktiSrc(u))}" class="note-detail-img" data-bukti-group="${escapeHtml(list.join('|'))}" data-bukti-idx="${i}" alt="Bukti ${i + 1}">`
             ).join('');
             return `<td><div class="note-detail-bukti-group">${imgs}</div></td>`;
           }
           if (c.type === 'image' && val) {
-            return `<td><img src="${escapeHtml(val)}" class="note-detail-img" alt="Gambar"></td>`;
+            return `<td><img src="${escapeHtml(buktiSrc(val))}" class="note-detail-img" alt="Gambar"></td>`;
           }
           return `<td>${escapeHtml(val || '')}</td>`;
         }).join('') + '</tr>';
@@ -6230,7 +6235,7 @@
 
   let lightboxUrls = [], lightboxIndex = 0;
   function renderLightbox() {
-    lightboxImage.src = lightboxUrls[lightboxIndex] || '';
+    lightboxImage.src = buktiSrc(lightboxUrls[lightboxIndex]);
     document.getElementById('lightboxDots').innerHTML = lightboxUrls.length > 1
       ? lightboxUrls.map((_, i) => `<span class="lightbox-dot ${i === lightboxIndex ? 'active' : ''}"></span>`).join('')
       : '';
