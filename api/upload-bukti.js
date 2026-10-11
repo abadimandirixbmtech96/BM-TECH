@@ -8,8 +8,6 @@ const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
 const MAX_BYTES = 3 * 1024 * 1024; // batas aman (Vercel maks 4,5 MB per request)
 
-module.exports.config = { api: { bodyParser: false } };
-
 function readBody(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
@@ -41,7 +39,7 @@ module.exports = async function handler(req, res) {
     });
     if (!who.ok) return res.status(401).json({ error: 'Sesi login tidak valid' });
 
-    const body = await readBody(req);
+    const body = Buffer.isBuffer(req.body) && req.body.length ? req.body : await readBody(req);
     if (!body.length) return res.status(400).json({ error: 'Foto kosong' });
     const isJpeg = body[0] === 0xff && body[1] === 0xd8;
     if (!isJpeg) return res.status(415).json({ error: 'Hanya JPEG yang diterima' });
@@ -62,3 +60,6 @@ module.exports = async function handler(req, res) {
     return res.status(err.status || 500).json({ error: err.message || 'Gagal mengunggah' });
   }
 };
+
+// Harus SETELAH module.exports di atas (kalau sebelumnya, ikut tertimpa).
+module.exports.config = { api: { bodyParser: false } };
