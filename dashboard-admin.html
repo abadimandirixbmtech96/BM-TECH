@@ -1519,12 +1519,13 @@
   body.theme-light .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); box-shadow: 0 0 0 3px var(--accent-yellow-glow); }
 
   /* Folder ALL: penanda asal buku di tiap kartu (warna khusus per buku + nama) */
-  .note-meta-row { align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; max-width: 100%; padding-right: 30px; }
-  .note-meta-row .note-date-tag { margin-top: 0; }
+  .note-meta-row { align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; max-width: 100%; min-width: 0; }
+  .note-meta-row .note-date-tag { margin-top: 0; flex-shrink: 0; }
   .note-book-chip {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    min-width: 0;
     max-width: 100%;
     font-size: 10px;
     font-weight: 700;
@@ -1532,9 +1533,11 @@
     color: var(--text-dark);
     padding: 3px 8px 3px 7px;
     border-radius: 6px;
-    white-space: nowrap;
   }
   .note-book-chip i { display: block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .note-book-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* saat memilih note, kotak centang ada di pojok kanan bawah: sisakan ruang agar tidak menimpa chip */
+  .notes-container.selection-mode .note-book-chip { max-width: calc(100% - 34px); }
   .notes-container.view-list .note-book-chip { color: var(--text-primary); }
 
   .note-card { position: relative; }
@@ -3807,6 +3810,15 @@
     bukuoperasional: '#8B5CF6'
   };
 
+  // Nama di chip: yang jelas dibaca tanpa kata "BUKU" kecuali "Buku Besar" (kata "Besar" saja membingungkan)
+  const BOOK_LABELS = {
+    bukubesar: 'Buku Besar',
+    bukukasbon: 'Kasbon',
+    bukuhutangpiutang: 'Hutang Piutang',
+    bukuwarung: 'Warung',
+    bukuoperasional: 'Operasional'
+  };
+
   function hexToRgba(hex, alpha) {
     const m = String(hex).match(/^#?([0-9a-f]{6})$/i);
     if (!m) return `rgba(128,128,128,${alpha})`;
@@ -3820,8 +3832,8 @@
     const cat = categoriesData.find(c => c.id === note.folder_id);
     if (!cat) return '';
     const color = BOOK_COLORS[normalizeKey(cat.name)] || cat.color || '#D9A536';
-    const label = cat.name.replace(/^buku\s+/i, '');
-    return `<span class="note-book-chip" style="background:${hexToRgba(color, 0.2)}"><i style="background:${color}"></i>${escapeHtml(label)}</span>`;
+    const label = BOOK_LABELS[normalizeKey(cat.name)] || cat.name;
+    return `<span class="note-book-chip" style="background:${hexToRgba(color, 0.2)}"><i style="background:${color}"></i><span class="note-book-label">${escapeHtml(label)}</span></span>`;
   }
 
   function noteCardHtml(note, idx) {
