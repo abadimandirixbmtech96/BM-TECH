@@ -4005,6 +4005,7 @@
     { id: 'stokBarang', label: 'Stok Barang' },
     { id: 'keterangan', label: 'Keterangan' },
     { id: 'harga', label: 'Harga' },
+    { id: 'metode', label: 'Metode' },
     { id: 'bukti', label: 'Bukti', type: 'image' }
   ];
 
@@ -4079,6 +4080,7 @@
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
             harga: formatHargaCell(r.harga),
+            metode: r.metode === 'cash' ? '💵 Cash' : r.metode === 'transfer' ? '🏦 Transfer' : '',
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _paid: !!r.hargaAuto,
             _linked: !!(Array.isArray(r.ambilDari) && r.ambilDari.length),
