@@ -226,6 +226,21 @@
   .bukti-view-thumb{ width:56px; height:56px; border-radius:10px; object-fit:cover; cursor:pointer; }
   .r-photo-badge{ font-size:12px; margin-right:2px; vertical-align:-1px; }
 
+  /* ---------- Metode bayar (Cash / Transfer) ---------- */
+  .metode-group{ display:flex; gap:10px; }
+  .metode-chip{
+    flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:13px 10px;
+    border-radius:14px; border:1.5px solid var(--line); background:var(--paper-alt); color:var(--ink);
+    font-size:14.5px; font-weight:700; cursor:pointer;
+  }
+  .metode-chip.on::after{ content:'\2713'; font-weight:800; }
+  .metode-chip.on[data-metode="cash"]{ border-color:#2d8a55; background:rgba(61,170,106,0.16); color:#2d8a55; }
+  .metode-chip.on[data-metode="transfer"]{ border-color:#3B8FE0; background:rgba(59,143,224,0.16); color:#3B8FE0; }
+  .mt-badge{ display:inline-block; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:999px; margin-right:6px; vertical-align:1px; }
+  .mt-badge.cash{ background:rgba(61,170,106,0.18); color:#2d8a55; }
+  .mt-badge.transfer{ background:rgba(59,143,224,0.18); color:#3B8FE0; }
+  .detail-row .metode-group{ display:none; }
+
   /* ---------- Viewer bukti: preview geser (swipe) antar gambar ---------- */
   .bukti-viewer-overlay{
     position:fixed; inset:0; background:rgba(10,8,4,0.92); z-index:300;
@@ -743,6 +758,14 @@
       </div>
 
       <div class="field">
+        <label>Metode Bayar <span class="opt-tag">(opsional — ketuk lagi untuk batal)</span></label>
+        <div class="metode-group" id="metodeGroupAdd">
+          <button type="button" class="metode-chip" data-metode="cash">💵 Cash</button>
+          <button type="button" class="metode-chip" data-metode="transfer">🏦 Transfer</button>
+        </div>
+      </div>
+
+      <div class="field">
         <label>Bukti <span class="opt-tag">(opsional — maks. 2 gambar)</span></label>
         <div class="bukti-dropzone" id="buktiDropzone">
           <input type="file" id="buktiFileGaleri" accept="image/*" multiple hidden>
@@ -816,6 +839,14 @@
           <label>Harga</label>
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
+        </div>
+        <div class="detail-row">
+          <label>Metode Bayar</label>
+          <div class="val" id="detMetodeView">—</div>
+          <div class="metode-group" id="metodeGroupDet">
+            <button type="button" class="metode-chip" data-metode="cash">💵 Cash</button>
+            <button type="button" class="metode-chip" data-metode="transfer">🏦 Transfer</button>
+          </div>
         </div>
         <div class="detail-row" id="detLinkRow" style="display:none;">
           <label>Terhubung</label>
@@ -934,6 +965,7 @@
         <div class="preview-row"><span>Stok Barang</span><span id="cfStok">—</span></div>
         <div class="preview-row"><span>Keterangan</span><span id="cfKet">—</span></div>
         <div class="preview-row"><span>Harga</span><span id="cfHarga">—</span></div>
+        <div class="preview-row"><span>Metode Bayar</span><span id="cfMetode">—</span></div>
         <div class="preview-row"><span>Bukti</span><span id="cfBukti">—</span></div>
         <div class="preview-row" id="cfLinkRow" style="display:none;"><span>Menandai selesai</span><span id="cfLink">—</span></div>
       </div>
@@ -1022,6 +1054,25 @@
   // =====================================================================
 
   function uid(){ return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
+
+  // ---------- Metode bayar: 'cash' | 'transfer' | '' (belum dipilih) ----------
+  const METODE = { cash: { label: 'Cash', icon: '💵' }, transfer: { label: 'Transfer', icon: '🏦' } };
+  function metodeText(m){ return METODE[m] ? (METODE[m].icon + ' ' + METODE[m].label) : ''; }
+  function metodeBadgeHtml(m){ return METODE[m] ? `<span class="mt-badge ${m}">${METODE[m].icon} ${METODE[m].label}</span>` : ''; }
+  function setupMetodePicker(groupEl, onChange){
+    let val = '';
+    function paint(){ groupEl.querySelectorAll('.metode-chip').forEach(b => b.classList.toggle('on', b.dataset.metode === val)); }
+    groupEl.addEventListener('click', (e) => {
+      const b = e.target.closest('.metode-chip');
+      if (!b) return;
+      val = (val === b.dataset.metode) ? '' : b.dataset.metode; // ketuk lagi = batal
+      paint();
+      if (onChange) onChange(val);
+    });
+    return { get(){ return val; }, set(v){ val = METODE[v] ? v : ''; paint(); } };
+  }
+  const addMetode = setupMetodePicker(document.getElementById('metodeGroupAdd'), () => { try { if (currentView === 'add') writeFormDraft(); } catch (e) {} });
+  const detMetode = setupMetodePicker(document.getElementById('metodeGroupDet'));
 
   // =====================================================================
   // BUKTI (upload gambar opsional, maks. 2 per data) — disimpan di Supabase
@@ -1820,8 +1871,8 @@
 
     listEl.innerHTML = recent.map(r => {
       const rightHtml = r.harga
-        ? `<div class="r-right">${(r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : ''}${escapeHtml(rupiah(r.harga))}</div>`
-        : `<div class="r-right pending">${(r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : ''}Belum lengkap</div>`;
+        ? `<div class="r-right">${metodeBadgeHtml(r.metode)}${(r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : ''}${escapeHtml(rupiah(r.harga))}</div>`
+        : `<div class="r-right pending">${metodeBadgeHtml(r.metode)}${(r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : ''}Belum lengkap</div>`;
       return `
         <div class="recent-row tap" data-id="${r.id}">
           <div class="r-no">${pad3(noMap.get(r.id))}</div>
@@ -1855,6 +1906,7 @@
     document.getElementById('inputKeterangan').value = '';
     document.getElementById('inputHarga').value = '';
     addBukti.reset();
+    addMetode.set('');
     resetPickupForm();
     restoreFormDraft();
   }
@@ -2007,8 +2059,11 @@
     setPreviewOptional('cfKet', keterangan);
     setPreviewOptional('cfHarga', harga ? rupiah(harga) : '');
     setPreviewOptional('cfBukti', bukti.length ? bukti.length + ' gambar dilampirkan' : '');
+    const metode = addMetode.get();
+    setPreviewOptional('cfMetode', metodeText(metode));
 
     pendingNewRecord = { pj, customer, barang, barangKeluar, stokBarang, keterangan, harga, bukti };
+    if (metode) pendingNewRecord.metode = metode;
     const pickupLinks = resolvePickupLinks(barang);
     if (pickupLinks.length) pendingNewRecord.ambilDari = pickupLinks;
     document.getElementById('cfLinkRow').style.display = pickupLinks.length ? '' : 'none';
@@ -2063,6 +2118,7 @@
     setDetailView('detKetView', r.keterangan);
     setDetailView('detHargaView', r.harga ? rupiah(r.harga) : '');
     renderDetailBuktiView(r.bukti);
+    setDetailView('detMetodeView', metodeText(r.metode));
     renderLinkInfo(r);
 
     exitEditMode();
@@ -2086,6 +2142,8 @@
     document.getElementById('detHargaEditWrap').style.display = 'none';
     document.getElementById('detBuktiView').style.display = '';
     document.getElementById('detBuktiDropzone').style.display = 'none';
+    document.getElementById('detMetodeView').style.display = '';
+    document.getElementById('metodeGroupDet').style.display = '';
     document.getElementById('detailActionsView').style.display = 'flex';
     document.getElementById('detailActionsEdit').style.display = 'none';
   }
@@ -2110,6 +2168,9 @@
     document.getElementById('detBuktiView').style.display = 'none';
     document.getElementById('detBuktiDropzone').style.display = 'block';
     detBukti.setUrls(r.bukti || []);
+    document.getElementById('detMetodeView').style.display = 'none';
+    document.getElementById('metodeGroupDet').style.display = 'flex';
+    detMetode.set(r.metode || '');
     document.getElementById('detPJedit').value = r.pj || '';
     document.getElementById('detCustomerEdit').value = r.customer || '';
     document.getElementById('detBarangEdit').value = r.barang || '';
@@ -2141,6 +2202,7 @@
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
     r.pj = pj; r.customer = customer; r.barang = barang; r.barangKeluar = barangKeluar;
     r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga; r.bukti = bukti;
+    if (detMetode.get()) r.metode = detMetode.get(); else delete r.metode;
     // Kalau tanda otomatis diubah manual, hormati pilihan manual (jangan ditimpa lagi)
     if (r.pickups) {
       if (r.stokAutoLast != null && stokBarang !== r.stokAutoLast) {
@@ -2822,7 +2884,7 @@
         lastDraftJson = '';
         return false;
       }
-      const d = { v: 1, fields: {}, bukti: addBukti.getUrls(), pickup: pickupDraftState() };
+      const d = { v: 1, fields: {}, bukti: addBukti.getUrls(), metode: addMetode.get(), pickup: pickupDraftState() };
       FORM_FIELD_IDS.forEach(id => { d.fields[id] = gid(id).value; });
       const json = JSON.stringify(d);
       if (json !== lastDraftJson) {
@@ -2847,6 +2909,7 @@
     if (!d) { bar.style.display = 'none'; lastDraftJson = ''; return false; }
     FORM_FIELD_IDS.forEach(id => { gid(id).value = (d.fields && d.fields[id]) || ''; });
     addBukti.setUrls(Array.isArray(d.bukti) ? d.bukti : []);
+    addMetode.set(d.metode || '');
     if (d.pickup) {
       pickupMode = d.pickup.mode === 'bayar' ? 'bayar' : 'ambil';
       pickupAutoKet = d.pickup.autoKet || '';
