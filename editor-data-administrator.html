@@ -1028,45 +1028,79 @@
   // Storage, bucket "bukti" (bucket + policy dibuat sekali lewat SQL, lihat
   // catatan terpisah). Pakai supabaseClient yang sama dengan data notes,
   // jadi tidak perlu API key tambahan.
-  // Sebelum diupload, gambar dikompres dulu lewat <canvas> (maks 1280px,
-  // JPEG kualitas 0.8) supaya tetap ringan & cepat walau sinyal lemot.
+  // Foto baru diunggah ke ImgBB; sebelumnya dikompres lewat <canvas> (maks 1024px,
+  // JPEG, target <= 200 KB). Foto lama di Supabase Storage tetap tampil & tetap bisa dihapus.
   // =====================================================================
-  const BUKTI_BUCKET = 'bukti';
+  const BUKTI_BUCKET = 'bukti'; // hanya untuk foto LAMA yang masih di Supabase Storage
 
-  function compressImageFile(file, maxDim, quality){
+  // ---- ImgBB lewat Vercel: foto baru tidak membebani Supabase free tier ----
+  // Browser tidak memegang API key. Foto dikirim ke /api/upload-bukti (Vercel Function),
+  // yang menyimpan IMGBB_API_KEY di Environment Variable dan meneruskannya ke ImgBB.
+  const BUKTI_UPLOAD_ENDPOINT = '/api/upload-bukti';
+  // Target ukuran per foto setelah dikecilkan (foto HP 1-2 MB -> sekitar 80-200 KB).
+  const BUKTI_TARGET_BYTES = 200 * 1024;
+  const BUKTI_STEPS = [[1024, 0.72], [1024, 0.6], [900, 0.5], [800, 0.45]]; // [sisi terpanjang px, kualitas JPEG]
+
+  function loadImageFromFile(file){
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Gagal membaca file gambar'));
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onerror = () => reject(new Error('File bukan gambar yang valid'));
-        img.onload = () => {
-          let w = img.naturalWidth, h = img.naturalHeight;
-          if (w > maxDim || h > maxDim) {
-            if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-            else { w = Math.round(w * maxDim / h); h = maxDim; }
-          }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-          canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal memproses gambar')), 'image/jpeg', quality);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('File bukan gambar yang valid')); };
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.src = url;
     });
   }
-
-  // Upload -> { url: link publik untuk ditampilkan, path: lokasi di bucket untuk dihapus nanti }
-  async function uploadBuktiToSupabase(blob){
-    const path = new Date().toISOString().slice(0, 10) + '/' + uid() + '.jpg';
-    const { error } = await supabaseClient.storage.from(BUKTI_BUCKET).upload(path, blob, {
-      contentType: 'image/jpeg',
-      upsert: false
+  function canvasToJpeg(img, maxDim, quality){
+    let w = img.naturalWidth, h = img.naturalHeight;
+    const longest = Math.max(w, h);
+    if (longest > maxDim) { const r = maxDim / longest; w = Math.round(w * r); h = Math.round(h * r); }
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); // PNG transparan -> latar putih, bukan hitam
+    ctx.drawImage(img, 0, 0, w, h);
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal memproses gambar')), 'image/jpeg', quality);
     });
-    if (error) throw new Error(error.message || 'Upload bukti gagal, coba lagi.');
-    const { data } = supabaseClient.storage.from(BUKTI_BUCKET).getPublicUrl(path);
-    return { url: data.publicUrl, path };
+  }
+  // Kecilkan bertahap sampai <= BUKTI_TARGET_BYTES; kalau tetap besar, pakai hasil terkecil.
+  async function compressImageFile(file){
+    const img = await loadImageFromFile(file);
+    let best = null;
+    for (const [dim, q] of BUKTI_STEPS) {
+      const blob = await canvasToJpeg(img, dim, q);
+      if (!best || blob.size < best.size) best = blob;
+      if (blob.size <= BUKTI_TARGET_BYTES) break;
+    }
+    return best;
+  }
+
+  async function imgbbUploadOnce(blob){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) throw new Error('Sesi login habis, muat ulang halaman.');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 45000);
+    try {
+      const res = await fetch(BUKTI_UPLOAD_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'image/jpeg', 'Authorization': 'Bearer ' + session.access_token },
+        body: blob,
+        signal: ctrl.signal
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json || !json.url) throw new Error((json && json.error) || ('Upload gagal (' + res.status + ')'));
+      return json.url;
+    } finally { clearTimeout(timer); }
+  }
+  // Upload -> { url, path }. path selalu null: ImgBB tidak punya hapus lewat client,
+  // jadi foto yang dibuang hanya dilepas dari data (file di ImgBB tidak memakan kuota Supabase).
+  async function uploadBukti(blob){
+    let lastErr;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try { return { url: await imgbbUploadOnce(blob), path: null }; }
+      catch (err) { lastErr = err; await new Promise(r => setTimeout(r, 800)); }
+    }
+    throw lastErr;
   }
 
   // Hapus file di bucket. Dipanggil saat: user hapus thumbnail (sebelum/sesudah simpan),
@@ -1082,10 +1116,9 @@
   }
   // Path Supabase Storage selalu berbentuk ".../object/public/<bucket>/<path>" — ambil bagian setelah nama bucket.
   function buktiPathFromUrl(url){
-    if (!url) return null;
+    if (!url || url.indexOf('/storage/v1/object/public/' + BUKTI_BUCKET + '/') === -1) return null; // ImgBB & lainnya: tidak ada yang dihapus
     const marker = '/' + BUKTI_BUCKET + '/';
-    const i = url.indexOf(marker);
-    return i === -1 ? null : url.slice(i + marker.length);
+    return url.slice(url.indexOf(marker) + marker.length);
   }
 
   // Satu controller dipakai 2x: form Tambah Data & mode Edit di Detail Data.
@@ -1118,13 +1151,14 @@
         items.push(item);
         render();
         try {
-          const blob = await compressImageFile(file, 1280, 0.8);
-          const { url, path } = await uploadBuktiToSupabase(blob);
+          const blob = await compressImageFile(file);
+          const { url, path } = await uploadBukti(blob);
           item.url = url; item.path = path;
           item.status = 'done';
         } catch (err) {
           console.error('Upload bukti gagal:', err);
           item.status = 'error';
+          showMigrationToast('Upload foto gagal: ' + (err && err.message ? err.message : 'coba lagi'));
         }
         render();
       }
