@@ -1518,6 +1518,25 @@
   body.theme-light .btn-select-all { border-color: rgba(0, 0, 0, 0.4); background: rgba(0, 0, 0, 0.06); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
   body.theme-light .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); box-shadow: 0 0 0 3px var(--accent-yellow-glow); }
 
+  /* Folder ALL: penanda asal buku di tiap kartu (warna khusus per buku + nama) */
+  .note-meta-row { align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; max-width: 100%; padding-right: 30px; }
+  .note-meta-row .note-date-tag { margin-top: 0; }
+  .note-book-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--text-dark);
+    padding: 3px 8px 3px 7px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+  .note-book-chip i { display: block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .notes-container.view-list .note-book-chip { color: var(--text-primary); }
+
   .note-card { position: relative; }
   .note-checkbox {
     display: none;
@@ -3779,6 +3798,32 @@
       return;
     }
 
+  // Warna tetap per buku (semua folder permanen berwarna kuning sama, jadi warna folder tidak bisa membedakan)
+  const BOOK_COLORS = {
+    bukubesar: '#2FA866',
+    bukukasbon: '#E8892B',
+    bukuhutangpiutang: '#E04F5F',
+    bukuwarung: '#3B8FE0',
+    bukuoperasional: '#8B5CF6'
+  };
+
+  function hexToRgba(hex, alpha) {
+    const m = String(hex).match(/^#?([0-9a-f]{6})$/i);
+    if (!m) return `rgba(128,128,128,${alpha})`;
+    const n = parseInt(m[1], 16);
+    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+  }
+
+  // Di folder ALL, tiap kartu diberi penanda buku asalnya: titik berwarna + nama (tanpa kata "BUKU")
+  function bookChipHtml(note) {
+    if (activeCategoryId !== '__all__' || note._merged) return '';
+    const cat = categoriesData.find(c => c.id === note.folder_id);
+    if (!cat) return '';
+    const color = BOOK_COLORS[normalizeKey(cat.name)] || cat.color || '#D9A536';
+    const label = cat.name.replace(/^buku\s+/i, '');
+    return `<span class="note-book-chip" style="background:${hexToRgba(color, 0.2)}"><i style="background:${color}"></i>${escapeHtml(label)}</span>`;
+  }
+
   function noteCardHtml(note, idx) {
     return `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${escapeHtml(note.id)}" ${note._merged ? 'data-merged="1"' : ''} style="animation-delay: ${idx * 0.05}s">
@@ -3791,7 +3836,10 @@
           <h2 class="note-title">${escapeHtml(note.title || 'Untitled')}</h2>
           <p class="note-desc">${escapeHtml(note.preview || '')}</p>
         </div>
-        <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
+        <div class="note-meta-row">
+          <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
+          ${bookChipHtml(note)}
+        </div>
         <div class="note-checkbox">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -4961,11 +5009,6 @@
 
   const TRASH_DAYS = 30;
   const BUKTI_BUCKET = 'bukti';
-  // Gambar ImgBB ditampilkan lewat /api/img (proxy Vercel) karena i.ibb.co diblokir di sebagian jaringan.
-  // Yang tersimpan di data tetap URL aslinya; URL Supabase dan lainnya dibiarkan.
-  function buktiSrc(u){
-    return (typeof u === 'string' && /^https:\/\/i\.ibb\.co\//.test(u)) ? '/api/img?u=' + encodeURIComponent(u) : (u || '');
-  }
 
   function trashDaysLeft(item){
     const d = new Date(item.deleted_at).getTime();
@@ -4974,7 +5017,7 @@
   }
 
   function collectBuktiPathsFromNotes(notes){
-    const marker = '/storage/v1/object/public/' + BUKTI_BUCKET + '/'; // hanya foto Supabase; foto ImgBB tidak ikut dihapus
+    const marker = '/' + BUKTI_BUCKET + '/';
     const paths = [];
     (notes || []).forEach(n => {
       const c = n && n.content;
@@ -6142,12 +6185,12 @@
             const list = Array.isArray(row.cells && row.cells._buktiAll) ? row.cells._buktiAll : (val ? [val] : []);
             if (!list.length) return '<td></td>';
             const imgs = list.map((u, i) =>
-              `<img src="${escapeHtml(buktiSrc(u))}" class="note-detail-img" data-bukti-group="${escapeHtml(list.join('|'))}" data-bukti-idx="${i}" alt="Bukti ${i + 1}">`
+              `<img src="${escapeHtml(u)}" class="note-detail-img" data-bukti-group="${escapeHtml(list.join('|'))}" data-bukti-idx="${i}" alt="Bukti ${i + 1}">`
             ).join('');
             return `<td><div class="note-detail-bukti-group">${imgs}</div></td>`;
           }
           if (c.type === 'image' && val) {
-            return `<td><img src="${escapeHtml(buktiSrc(val))}" class="note-detail-img" alt="Gambar"></td>`;
+            return `<td><img src="${escapeHtml(val)}" class="note-detail-img" alt="Gambar"></td>`;
           }
           return `<td>${escapeHtml(val || '')}</td>`;
         }).join('') + '</tr>';
@@ -6175,7 +6218,7 @@
 
   let lightboxUrls = [], lightboxIndex = 0;
   function renderLightbox() {
-    lightboxImage.src = buktiSrc(lightboxUrls[lightboxIndex]);
+    lightboxImage.src = lightboxUrls[lightboxIndex] || '';
     document.getElementById('lightboxDots').innerHTML = lightboxUrls.length > 1
       ? lightboxUrls.map((_, i) => `<span class="lightbox-dot ${i === lightboxIndex ? 'active' : ''}"></span>`).join('')
       : '';
