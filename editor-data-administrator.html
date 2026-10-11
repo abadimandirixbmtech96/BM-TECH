@@ -1852,7 +1852,13 @@
   // =====================================================================
   // ROUTER ANTAR HALAMAN
   // =====================================================================
+  let homeScrollPos = 0;   // posisi gulir daftar Home, dipulihkan saat kembali dari Detail
   function goView(name){
+    const prevView = currentView;
+    if (prevView === 'home' && name !== 'home') {
+      const hs = document.getElementById('view-home').querySelector('.scroll');
+      if (hs) homeScrollPos = hs.scrollTop;
+    }
     currentView = name;
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById('view-' + name).classList.add('active');
@@ -1864,6 +1870,11 @@
     if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
     refreshPager();
+    // Kembali dari Detail: tetap di posisi semula (tidak loncat ke paling atas)
+    if (name === 'home' && prevView === 'detail') {
+      const hs = document.getElementById('view-home').querySelector('.scroll');
+      if (hs) { hs.scrollTop = homeScrollPos; requestAnimationFrame(() => { hs.scrollTop = homeScrollPos; }); }
+    }
   }
 
   document.getElementById('btnHomeBack').addEventListener('click', () => {
