@@ -508,6 +508,13 @@
   .modal-icon.danger{ background:var(--danger-soft); color:var(--danger); }
   .modal-card h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; text-align:center; }
   .modal-card p.desc{ margin:0 0 16px 0; font-size:13.5px; color:var(--ink-soft); text-align:center; line-height:1.5; }
+  /* ---------- Dialog pemberitahuan (pengganti alert bawaan browser) ---------- */
+  .notice-choices{ margin:0 0 14px 0; }
+  .notice-choices .metode-chip:active{ transform:scale(0.97); }
+  .notice-hint{ margin:0 0 16px 0; padding:10px 12px; border-radius:12px; background:var(--paper-alt); border:1px solid var(--line-soft);
+    font-size:12.5px; color:var(--ink-soft); text-align:center; line-height:1.5; }
+  .notice-hint b{ color:var(--ink); }
+  #overlayNotice{ z-index:300; }
   .preview-box{ background:var(--paper-alt); border-radius:16px; padding:4px 14px; margin-bottom:18px; }
   .preview-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
   .preview-row:last-child{ border-bottom:none; }
@@ -1015,6 +1022,23 @@
   <div id="saveStatusIndicator"></div>
   <div id="migrationToast"></div>
 </div>
+
+  <!-- ============ MODAL: PEMBERITAHUAN (pengganti alert) ============ -->
+  <div class="overlay center" id="overlayNotice">
+    <div class="modal-card">
+      <div class="modal-icon" id="noticeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+      <h3 id="noticeTitle">Perhatian</h3>
+      <p class="desc" id="noticeText"></p>
+      <div class="metode-group notice-choices" id="noticeChoices" style="display:none;">
+        <button type="button" class="metode-chip" data-metode="cash">💵 Cash</button>
+        <button type="button" class="metode-chip" data-metode="transfer">🏦 Transfer</button>
+      </div>
+      <p class="notice-hint" id="noticeHint" style="display:none;"></p>
+      <div class="btn-row">
+        <button class="btn-primary" id="btnNoticeOk">Mengerti</button>
+      </div>
+    </div>
+  </div>
 
 <script>
   // =====================================================================
@@ -2077,8 +2101,17 @@
     if (addBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
     if (hargaButuhMetode(harga) && !addMetode.get()) {
       refreshMetodeNeed();
-      alert('Harga sudah diisi, jadi Metode Bayar wajib dipilih (Cash atau Transfer).\n\nKalau sudah lunas/beres, beri tanda ✓ di kolom Harga.');
-      document.getElementById('metodeGroupAdd').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      appNotice({
+        title: 'Pilih metode pembayaran',
+        text: 'Harga ' + rupiah(harga) + ' sudah diisi, jadi pembayarannya perlu dicatat lewat Cash atau Transfer.',
+        hint: 'Sudah lunas atau beres? Beri tanda <b>✓</b> di kolom Harga, maka metode tidak wajib.',
+        choices: true,
+        onChoose: (m) => {
+          addMetode.set(m); refreshMetodeNeed();
+          try { writeFormDraft(); } catch (e) {}
+          document.getElementById('btnBukaKonfirmasi').click(); // lanjut ke konfirmasi
+        }
+      });
       return;
     }
 
@@ -2234,8 +2267,13 @@
     if (detBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
     if (hargaButuhMetode(harga) && !detMetode.get()) {
       refreshMetodeNeed();
-      alert('Harga berisi angka, jadi Metode Bayar wajib dipilih (Cash atau Transfer).\n\nKalau sudah lunas/beres, beri tanda ✓ di kolom Harga.');
-      document.getElementById('metodeGroupDet').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      appNotice({
+        title: 'Pilih metode pembayaran',
+        text: 'Harga ' + rupiah(harga) + ' sudah diisi, jadi pembayarannya perlu dicatat lewat Cash atau Transfer.',
+        hint: 'Sudah lunas atau beres? Beri tanda <b>✓</b> di kolom Harga, maka metode tidak wajib.',
+        choices: true,
+        onChoose: (m) => { detMetode.set(m); refreshMetodeNeed(); }
+      });
       return;
     }
     const bukti = detBukti.getUrls();
@@ -3411,6 +3449,36 @@
   // OVERLAY (modal & sheet) HELPERS
   // =====================================================================
   function openOverlay(id){ document.getElementById(id).classList.add('show'); }
+
+  // Dialog pemberitahuan bergaya aplikasi (menggantikan alert bawaan browser)
+  // opts: { title, text, hint, danger, choices:true, onChoose(metode), okLabel }
+  let noticeOnChoose = null;
+  function appNotice(opts){
+    const ov = document.getElementById('overlayNotice');
+    if (!ov) { window.__nativeAlert && window.__nativeAlert(opts.text || ''); return; }
+    opts = opts || {};
+    document.getElementById('noticeTitle').textContent = opts.title || 'Perhatian';
+    document.getElementById('noticeText').textContent = opts.text || '';
+    document.getElementById('noticeIcon').classList.toggle('danger', !!opts.danger);
+    const ch = document.getElementById('noticeChoices');
+    ch.style.display = opts.choices ? 'flex' : 'none';
+    const hint = document.getElementById('noticeHint');
+    if (opts.hint) { hint.innerHTML = opts.hint; hint.style.display = ''; } else { hint.style.display = 'none'; }
+    document.getElementById('btnNoticeOk').textContent = opts.okLabel || (opts.choices ? 'Nanti dulu' : 'Mengerti');
+    document.getElementById('btnNoticeOk').className = opts.choices ? 'btn-secondary' : 'btn-primary';
+    noticeOnChoose = opts.onChoose || null;
+    openOverlay('overlayNotice');
+  }
+  document.getElementById('btnNoticeOk').addEventListener('click', () => closeOverlay('overlayNotice'));
+  document.getElementById('noticeChoices').addEventListener('click', (e) => {
+    const b = e.target.closest('.metode-chip');
+    if (!b) return;
+    closeOverlay('overlayNotice');
+    if (noticeOnChoose) noticeOnChoose(b.dataset.metode);
+  });
+  // Semua alert() lain di halaman ikut tampil dengan gaya yang sama
+  window.__nativeAlert = window.alert.bind(window);
+  window.alert = function(msg){ appNotice({ text: String(msg == null ? '' : msg).replace(/\n+/g, ' ').trim() }); };
   function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
   document.querySelectorAll('.overlay').forEach(ov => {
     ov.addEventListener('click', (e) => { if (e.target === ov) closeOverlay(ov.id); });
