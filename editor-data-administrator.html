@@ -240,6 +240,8 @@
   .mt-badge.cash{ background:rgba(61,170,106,0.18); color:#2d8a55; }
   .mt-badge.transfer{ background:rgba(59,143,224,0.18); color:#3B8FE0; }
   .detail-row .metode-group{ display:none; }
+  .metode-group.need .metode-chip:not(.on){ border-color:#d9534f; border-style:dashed; }
+  .field label .opt-tag.need, .detail-row label .opt-tag.need{ color:#d9534f; font-weight:800; opacity:1; }
 
   /* ---------- Viewer bukti: preview geser (swipe) antar gambar ---------- */
   .bukti-viewer-overlay{
@@ -758,7 +760,7 @@
       </div>
 
       <div class="field">
-        <label>Metode Bayar <span class="opt-tag">(opsional — ketuk lagi untuk batal)</span></label>
+        <label>Metode Bayar <span class="opt-tag" id="metodeTagAdd">(wajib jika Harga berisi angka)</span></label>
         <div class="metode-group" id="metodeGroupAdd">
           <button type="button" class="metode-chip" data-metode="cash">💵 Cash</button>
           <button type="button" class="metode-chip" data-metode="transfer">🏦 Transfer</button>
@@ -841,7 +843,7 @@
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
         </div>
         <div class="detail-row">
-          <label>Metode Bayar</label>
+          <label>Metode Bayar <span class="opt-tag" id="metodeTagDet"></span></label>
           <div class="val" id="detMetodeView">—</div>
           <div class="metode-group" id="metodeGroupDet">
             <button type="button" class="metode-chip" data-metode="cash">💵 Cash</button>
@@ -1071,8 +1073,35 @@
     });
     return { get(){ return val; }, set(v){ val = METODE[v] ? v : ''; paint(); } };
   }
-  const addMetode = setupMetodePicker(document.getElementById('metodeGroupAdd'), () => { try { if (currentView === 'add') writeFormDraft(); } catch (e) {} });
-  const detMetode = setupMetodePicker(document.getElementById('metodeGroupDet'));
+  const addMetode = setupMetodePicker(document.getElementById('metodeGroupAdd'), () => { try { if (currentView === 'add') writeFormDraft(); } catch (e) {} refreshMetodeNeed(); });
+  const detMetode = setupMetodePicker(document.getElementById('metodeGroupDet'), () => refreshMetodeNeed());
+
+  // Aturan: Harga berisi nominal angka => Metode Bayar WAJIB dipilih.
+  // Harga bertanda centang (\u2713 / \u221A dst.) = urusan sudah beres, metode boleh kosong.
+  function hargaButuhMetode(h){
+    if (typeof h === 'number') return h > 0;
+    const s = String(h == null ? '' : h).trim();
+    if (!s || /[\u221A\u2713\u2714\u2611\u2705]/.test(s)) return false;
+    return /^(rp\.?\s*)?\d[\d.,\s]*$/i.test(s) && /[1-9]/.test(s);
+  }
+  function refreshMetodeNeed(){
+    try {
+      const pairs = [
+        ['inputHarga', addMetode, 'metodeGroupAdd', 'metodeTagAdd', '(wajib jika Harga berisi angka)'],
+        ['detHargaEdit', detMetode, 'metodeGroupDet', 'metodeTagDet', '(wajib jika Harga berisi angka)']
+      ];
+      pairs.forEach(([hid, picker, gid_, tid, hint]) => {
+        const hEl = document.getElementById(hid), g = document.getElementById(gid_), t = document.getElementById(tid);
+        if (!hEl || !g || !t) return;
+        const need = hargaButuhMetode(parseHarga(hEl.value));
+        const missing = need && !picker.get();
+        g.classList.toggle('need', missing);
+        t.classList.toggle('need', missing);
+        t.textContent = missing ? '(WAJIB dipilih — Harga sudah diisi)' : hint;
+      });
+    } catch (e) {}
+  }
+  setInterval(refreshMetodeNeed, 400); // Harga bisa terisi otomatis dari fitur ambil/bayar, jadi dicek berkala
 
   // =====================================================================
   // BUKTI (upload gambar opsional, maks. 2 per data) — disimpan di Supabase
@@ -2046,6 +2075,12 @@
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); document.getElementById('inputBarang').focus(); return; }
     if (!pj) { alert('PJ (Penanggung Jawab) wajib diisi.'); document.getElementById('inputPJ').focus(); return; }
     if (addBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
+    if (hargaButuhMetode(harga) && !addMetode.get()) {
+      refreshMetodeNeed();
+      alert('Harga sudah diisi, jadi Metode Bayar wajib dipilih (Cash atau Transfer).\n\nKalau sudah lunas/beres, beri tanda ✓ di kolom Harga.');
+      document.getElementById('metodeGroupAdd').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
 
     const now = new Date();
     document.getElementById('cfNo').textContent = pad3(records.length + 1);
@@ -2197,6 +2232,12 @@
     if (!barang) { alert('Barang dan Jumlah wajib diisi.'); return; }
     if (!pj) { alert('PJ wajib diisi.'); return; }
     if (detBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
+    if (hargaButuhMetode(harga) && !detMetode.get()) {
+      refreshMetodeNeed();
+      alert('Harga berisi angka, jadi Metode Bayar wajib dipilih (Cash atau Transfer).\n\nKalau sudah lunas/beres, beri tanda ✓ di kolom Harga.');
+      document.getElementById('metodeGroupDet').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      return;
+    }
     const bukti = detBukti.getUrls();
 
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
