@@ -1115,6 +1115,11 @@
       .catch(err => console.warn('Gagal hapus file bukti lama:', err.message));
   }
   // Path Supabase Storage selalu berbentuk ".../object/public/<bucket>/<path>" — ambil bagian setelah nama bucket.
+  // Gambar ImgBB ditampilkan lewat /api/img (proxy Vercel) karena i.ibb.co diblokir di sebagian jaringan.
+  // Yang tersimpan di data tetap URL aslinya. URL Supabase / blob: dibiarkan apa adanya.
+  function buktiSrc(u){
+    return (typeof u === 'string' && /^https:\/\/i\.ibb\.co\//.test(u)) ? '/api/img?u=' + encodeURIComponent(u) : (u || '');
+  }
   function buktiPathFromUrl(url){
     if (!url || url.indexOf('/storage/v1/object/public/' + BUKTI_BUCKET + '/') === -1) return null; // ImgBB & lainnya: tidak ada yang dihapus
     const marker = '/' + BUKTI_BUCKET + '/';
@@ -1201,7 +1206,7 @@
     return {
       getUrls(){ return items.filter(it => it.status === 'done').map(it => it.url); },
       isUploading(){ return items.some(it => it.status === 'uploading'); },
-      setUrls(urls){ items = (urls || []).map(u => ({ id: uid(), url: u, path: buktiPathFromUrl(u), previewUrl: u, status: 'done' })); render(); },
+      setUrls(urls){ items = (urls || []).map(u => ({ id: uid(), url: u, path: buktiPathFromUrl(u), previewUrl: buktiSrc(u), status: 'done' })); render(); },
       reset(){ items = []; render(); }
     };
   }
@@ -1222,7 +1227,7 @@
     if (!list || !list.length) { el.innerHTML = 'Belum diisi'; el.classList.add('empty'); return; }
     el.classList.remove('empty');
     el.innerHTML = '<div class="bukti-view-thumbs">' + list.map((u, i) =>
-      `<img src="${escapeHtml(u)}" data-idx="${i}" class="bukti-view-thumb" alt="Bukti ${i + 1}">`
+      `<img src="${escapeHtml(buktiSrc(u))}" data-idx="${i}" class="bukti-view-thumb" alt="Bukti ${i + 1}">`
     ).join('') + '</div>';
   }
   document.getElementById('detBuktiView').addEventListener('click', (e) => {
@@ -1242,7 +1247,7 @@
     openOverlay('overlayBuktiViewer');
   }
   function renderBuktiViewer(){
-    document.getElementById('buktiViewerImg').src = viewerUrls[viewerIndex] || '';
+    document.getElementById('buktiViewerImg').src = buktiSrc(viewerUrls[viewerIndex]);
     document.getElementById('buktiViewerDots').innerHTML = viewerUrls.map((_, i) =>
       `<span class="bukti-dot ${i === viewerIndex ? 'active' : ''}"></span>`).join('');
     document.getElementById('buktiViewerPrev').style.display = (viewerUrls.length > 1 && viewerIndex > 0) ? 'flex' : 'none';
