@@ -242,17 +242,18 @@
     .detail-row .metode-group{ display:none; }
   .mt-badge.campur{ background:linear-gradient(90deg,rgba(61,170,106,0.22),rgba(59,143,224,0.22)); color:var(--ink); }
   /* Bayar campur: dua kolom nominal muncul saat Cash & Transfer sama-sama menyala */
-  .metode-split{ display:none; margin-top:12px; padding:12px; border-radius:16px; background:var(--paper-alt); border:1px solid var(--line-soft); }
-  .metode-split.show{ display:block; }
+  .metode-split{ display:none; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+  .metode-split.show{ display:grid; }
   .detail-row .metode-split.show{ display:none; }
-  .detail-row .metode-group[style*="flex"] + .metode-split.show{ display:block; }
-  .split-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-  .split-row .mt-badge{ margin:0; flex-shrink:0; min-width:92px; text-align:center; padding:6px 10px; font-size:12px; }
+  .detail-row .metode-group[style*="flex"] + .metode-split.show{ display:grid; }
   .split-field{ flex:1; display:flex; align-items:center; gap:8px; padding:0 12px; border-radius:12px; border:1.5px solid var(--line); background:var(--paper); }
   .split-field span{ font-weight:700; color:var(--ink-soft); font-size:14px; }
   .metode-split .split-field input{ flex:1; min-width:0; width:100%; border:0 !important; outline:0; box-shadow:none !important; border-radius:0 !important; background:transparent !important; color:var(--ink); font:inherit; font-size:15px; font-weight:750; padding:11px 0 !important; margin:0; }
-  .split-field:focus-within{ border-color:var(--accent); }
-  .split-status{ margin:2px 0 0 0; font-size:12.5px; font-weight:700; color:var(--ink-soft); text-align:center; line-height:1.4; }
+  .split-field.cash{ border-color:rgba(61,170,106,0.55); }
+  .split-field.transfer{ border-color:rgba(59,143,224,0.55); }
+  .split-field.cash:focus-within{ border-color:#2d8a55; }
+  .split-field.transfer:focus-within{ border-color:#3B8FE0; }
+  .split-status{ grid-column:1 / -1; margin:0; font-size:12.5px; font-weight:700; color:var(--ink-soft); text-align:center; line-height:1.4; }
   .split-status.ok{ color:#2d8a55; }
   .split-status.bad{ color:#d9534f; }
   .notice-choices{ flex-wrap:wrap; }
@@ -1129,8 +1130,8 @@
     const panel = document.createElement('div');
     panel.className = 'metode-split';
     panel.innerHTML =
-      '<div class="split-row"><span class="mt-badge cash">💵 Cash</span><div class="split-field"><span>Rp</span><input type="text" inputmode="numeric" autocomplete="off" placeholder="0" data-k="cash"></div></div>' +
-      '<div class="split-row"><span class="mt-badge transfer">🏦 Transfer</span><div class="split-field"><span>Rp</span><input type="text" inputmode="numeric" autocomplete="off" placeholder="0" data-k="transfer"></div></div>' +
+      '<div class="split-field cash"><span>Rp</span><input type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Nominal Cash" data-k="cash"></div>' +
+      '<div class="split-field transfer"><span>Rp</span><input type="text" inputmode="numeric" autocomplete="off" placeholder="0" aria-label="Nominal Transfer" data-k="transfer"></div>' +
       '<p class="split-status"></p>';
     groupEl.insertAdjacentElement('afterend', panel);
     const inC = panel.querySelector('[data-k="cash"]'), inT = panel.querySelector('[data-k="transfer"]');
@@ -1209,6 +1210,7 @@
       if (sp.cash > 0 || sp.transfer > 0) { rec.bayarCash = sp.cash; rec.bayarTransfer = sp.transfer; }
     }
   }
+  function rpFmt(n){ return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
   // Pemeriksaan sebelum simpan. Kembali true kalau boleh lanjut.
   function validateMetode(picker, harga, onPicked){
     const needIt = hargaButuhMetode(harga);
@@ -1222,7 +1224,7 @@
         onChoose: (m) => {
           picker.set(m); refreshMetodeNeed();
           if (picker === addMetode) { try { writeFormDraft(); } catch (e) {} }
-          if (m === 'campur') { setTimeout(() => picker.focusSplit(), 120); return; } // isi nominal dulu
+          if (m === 'campur') return; // isi nominal dulu (keyboard tidak dipaksa muncul)
           if (onPicked) onPicked();
         }
       });
@@ -1235,10 +1237,9 @@
         refreshMetodeNeed();
         appNotice({
           title: 'Nominal belum pas',
-          text: 'Cash ' + rupiah(sp.cash) + ' + Transfer ' + rupiah(sp.transfer) + ' = ' + rupiah(sum) + ', sedangkan Harga ' + rupiah(nominal) + '. Samakan totalnya dulu ya.',
+          text: 'Cash ' + rpFmt(sp.cash) + ' + Transfer ' + rpFmt(sp.transfer) + ' = ' + rpFmt(sum) + ', sedangkan Harga ' + rpFmt(nominal) + '. Samakan totalnya dulu ya.',
           okLabel: 'Perbaiki'
         });
-        setTimeout(() => picker.focusSplit(), 150);
         return false;
       }
     }
@@ -3600,6 +3601,7 @@
     document.getElementById('btnNoticeOk').textContent = opts.okLabel || (opts.choices ? 'Nanti dulu' : 'Mengerti');
     document.getElementById('btnNoticeOk').className = opts.choices ? 'btn-secondary' : 'btn-primary';
     noticeOnChoose = opts.onChoose || null;
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {} // tutup keyboard
     openOverlay('overlayNotice');
   }
   document.getElementById('btnNoticeOk').addEventListener('click', () => closeOverlay('overlayNotice'));
