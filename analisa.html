@@ -1037,6 +1037,8 @@
             keterangan: r.keterangan || '',
             harga: formatHargaCell(r.harga),
             metode: r.metode || '',
+            _bayarCash: Number(r.bayarCash) || 0,
+            _bayarTransfer: Number(r.bayarTransfer) || 0,
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
           }
@@ -1417,6 +1419,7 @@
   // 'cash' | 'transfer' | '' (belum dipilih / data lama)
   function normMetode(v) {
     const s = String(v || '').toLowerCase();
+    if (/campur|\+/.test(s) || (/cash|tunai/.test(s) && /transfer/.test(s))) return 'campur';
     if (/cash|tunai/.test(s)) return 'cash';
     if (/transfer|\btf\b/.test(s)) return 'transfer';
     return '';
@@ -1455,6 +1458,8 @@
           amount, date, ts, hasTime, customer, customerRaw, barang, keluar,
           pj: cellText(columns, row, 'PJ', 'Tanpa PJ'),
           metode: normMetode(cellText(columns, row, 'Metode', '')),
+          cashAmt: Number(row.cells && row.cells._bayarCash) || 0,
+          trfAmt: Number(row.cells && row.cells._bayarTransfer) || 0,
           folder: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled'
         });
@@ -1489,8 +1494,8 @@
   // Hari Ini      -> satu titik per transaksi (urut jam)
   // <= 92 hari    -> satu titik per hari, hari tanpa transaksi diisi 0 (grafik jujur, tidak "melompat")
   // lebih panjang -> satu titik per bulan, bulan kosong diisi 0
-  function computeIncomeSeries(period, filter) {
-    const txs = filter ? getPeriodTxs(period).filter(filter) : getPeriodTxs(period);
+  function computeIncomeSeries(period, txsOverride) {
+    const txs = txsOverride || getPeriodTxs(period);
     const total = sumTxs(txs);
     if (txs.length === 0) return { points: [], total: 0, unit: 'hari', txCount: 0 };
 
@@ -1886,9 +1891,22 @@
   }
 
   // --- Grafik per metode bayar: Cash & Transfer (ikut periode terpilih) ---
+  // Transaksi yang masuk ke grafik satu metode. Bayar campur dipecah: tiap metode hanya mengambil porsinya.
+  function methodTxs(period, key) {
+    const out = [];
+    getPeriodTxs(period).forEach(t => {
+      if (t.metode === key) out.push(t);
+      else if (t.metode === 'campur') {
+        const part = key === 'cash' ? t.cashAmt : t.trfAmt;
+        if (part > 0) out.push({ ...t, amount: part });
+      }
+    });
+    return out;
+  }
+
   function renderMethodCard(key) {
     const label = key === 'cash' ? 'Cash' : 'Transfer';
-    const { points, total, unit, txCount } = computeIncomeSeries(currentIncomePeriod, t => t.metode === key);
+    const { points, total, unit, txCount } = computeIncomeSeries(currentIncomePeriod, methodTxs(currentIncomePeriod, key));
     const grand = sumTxs(getPeriodTxs(currentIncomePeriod));
     $(key + 'Value').textContent = formatRupiah(total);
 
@@ -1911,7 +1929,7 @@
   function renderMethodCards() {
     renderMethodCard('cash');
     renderMethodCard('transfer');
-    const unset = getPeriodTxs(currentIncomePeriod).filter(t => !t.metode);
+    const unset = getPeriodTxs(currentIncomePeriod).filter(t => !t.metode || (t.metode === 'campur' && !(t.cashAmt + t.trfAmt > 0)));
     const el = $('methodUnsetNote');
     if (unset.length) {
       el.style.display = '';
@@ -2739,7 +2757,7 @@
     const rows = [...txs].sort((a, b) => a.ts - b.ts);
     const lines = [['Tanggal', 'Jam', 'Customer', 'Barang', 'PJ', 'Harga (Rp)', 'Metode', 'Folder', 'Note'].join(',')];
     rows.forEach(t => {
-      lines.push([toLocalDateStr(t.date), t.hasTime ? formatTime(t.ts) : '', t.customerRaw, t.barang, t.pj, t.amount, t.metode === 'cash' ? 'Cash' : t.metode === 'transfer' ? 'Transfer' : '', t.folder, t.noteTitle].map(csvCell).join(','));
+      lines.push([toLocalDateStr(t.date), t.hasTime ? formatTime(t.ts) : '', t.customerRaw, t.barang, t.pj, t.amount, t.metode === 'cash' ? 'Cash' : t.metode === 'transfer' ? 'Transfer' : t.metode === 'campur' ? ('Campur (Cash ' + t.cashAmt + ' + Transfer ' + t.trfAmt + ')') : '', t.folder, t.noteTitle].map(csvCell).join(','));
     });
     return '\uFEFF' + lines.join('\r\n') + '\r\n'; // BOM supaya Excel membaca UTF-8 dengan benar
   }
