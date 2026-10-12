@@ -533,6 +533,7 @@
     font-size:12.5px; color:var(--ink-soft); text-align:center; line-height:1.5; }
   .notice-hint b{ color:var(--ink); }
   #overlayNotice{ z-index:300; }
+  #overlayNotice .btn-row{ flex-direction:column; }
   .preview-box{ background:var(--paper-alt); border-radius:16px; padding:4px 14px; margin-bottom:18px; }
   .preview-row{ display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
   .preview-row:last-child{ border-bottom:none; }
@@ -1055,6 +1056,7 @@
       <p class="notice-hint" id="noticeHint" style="display:none;"></p>
       <div class="btn-row">
         <button class="btn-primary" id="btnNoticeOk">Mengerti</button>
+        <button class="btn-secondary" id="btnNoticeExtra" style="display:none;"></button>
       </div>
     </div>
   </div>
@@ -1214,6 +1216,17 @@
   // Pemeriksaan sebelum simpan. Kembali true kalau boleh lanjut.
   function validateMetode(picker, harga, onPicked){
     const needIt = hargaButuhMetode(harga);
+    // Harga kosong tapi metode dipilih: tidak ada yang dibayar, jadi metode tidak ada gunanya
+    if (picker.get() && isHargaKosong(harga)) {
+      refreshMetodeNeed();
+      appNotice({
+        title: 'Harga masih kosong',
+        text: 'Metode bayar hanya dicatat kalau kolom Harga berisi nominal. Isi Harga dulu, atau lepas pilihan metodenya.',
+        okLabel: 'Isi Harga',
+        extra: { label: 'Lepas pilihan metode', onClick: () => { picker.set(''); refreshMetodeNeed(); if (picker === addMetode) { try { writeFormDraft(); } catch (e) {} } } }
+      });
+      return false;
+    }
     if (needIt && !picker.get()) {
       refreshMetodeNeed();
       appNotice({
@@ -1265,9 +1278,10 @@
         if (!hEl || !g || !t) return;
         const need = hargaButuhMetode(parseHarga(hEl.value));
         const missing = need && !picker.get();
-        g.classList.toggle('need', missing);
-        t.classList.toggle('need', missing);
-        t.textContent = missing ? '(WAJIB dipilih — Harga sudah diisi)' : hint;
+        const stray = !need && picker.get() && isHargaKosong(parseHarga(hEl.value));
+        g.classList.toggle('need', missing || stray);
+        t.classList.toggle('need', missing || stray);
+        t.textContent = missing ? '(WAJIB dipilih — Harga sudah diisi)' : stray ? '(Harga masih kosong — metode tidak perlu)' : hint;
         picker.refresh();
       });
     } catch (e) {}
@@ -3586,7 +3600,7 @@
 
   // Dialog pemberitahuan bergaya aplikasi (menggantikan alert bawaan browser)
   // opts: { title, text, hint, danger, choices:true, onChoose(metode), okLabel }
-  let noticeOnChoose = null;
+  let noticeOnChoose = null, noticeExtra = null;
   function appNotice(opts){
     const ov = document.getElementById('overlayNotice');
     if (!ov) { window.__nativeAlert && window.__nativeAlert(opts.text || ''); return; }
@@ -3601,10 +3615,15 @@
     document.getElementById('btnNoticeOk').textContent = opts.okLabel || (opts.choices ? 'Nanti dulu' : 'Mengerti');
     document.getElementById('btnNoticeOk').className = opts.choices ? 'btn-secondary' : 'btn-primary';
     noticeOnChoose = opts.onChoose || null;
+    const ex = document.getElementById('btnNoticeExtra');
+    noticeExtra = opts.extra || null;
+    ex.style.display = noticeExtra ? '' : 'none';
+    if (noticeExtra) ex.textContent = noticeExtra.label;
     try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {} // tutup keyboard
     openOverlay('overlayNotice');
   }
   document.getElementById('btnNoticeOk').addEventListener('click', () => closeOverlay('overlayNotice'));
+  document.getElementById('btnNoticeExtra').addEventListener('click', () => { closeOverlay('overlayNotice'); if (noticeExtra && noticeExtra.onClick) noticeExtra.onClick(); });
   document.getElementById('noticeChoices').addEventListener('click', (e) => {
     const b = e.target.closest('.metode-chip');
     if (!b) return;
