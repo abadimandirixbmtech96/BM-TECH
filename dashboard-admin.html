@@ -4080,7 +4080,11 @@
             stokBarang: r.stokBarang || '',
             keterangan: r.keterangan || '',
             harga: formatHargaCell(r.harga),
-            metode: r.metode === 'cash' ? '💵 Cash' : r.metode === 'transfer' ? '🏦 Transfer' : '',
+            metode: r.metode === 'cash' ? '💵 Cash' : r.metode === 'transfer' ? '🏦 Transfer'
+              : r.metode === 'campur' ? ((r.bayarCash || r.bayarTransfer)
+                  ? `💵 Cash ${Math.round(r.bayarCash || 0).toLocaleString('id-ID')} + 🏦 Transfer ${Math.round(r.bayarTransfer || 0).toLocaleString('id-ID')}`
+                  : '💵 Cash + 🏦 Transfer')
+              : '',
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _paid: !!r.hargaAuto,
             _linked: !!(Array.isArray(r.ambilDari) && r.ambilDari.length),
