@@ -678,6 +678,17 @@
   @keyframes imgIn{ from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:none; } }
   .bukti-viewer-overlay{ transition:opacity .28s ease; }
   @media (prefers-reduced-motion: reduce){ .pickup-card.pk-enter, .pickup-card.pk-enter *, .pickup-item input, .img-swap{ animation:none !important; } }
+
+  /* =====================================================================
+     TEKS TIDAK BISA DISELEKSI / KLIK-KANAN (kecuali kolom isian & gambar),
+     tanpa sorotan biru saat disentuh
+     ===================================================================== */
+  html, body, .app{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
+  *{ -webkit-tap-highlight-color:transparent; }
+  ::selection{ background:transparent; color:inherit; }
+  input, textarea, select, [contenteditable="true"]{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
+  input::selection, textarea::selection{ background:rgba(var(--accent-rgb),0.35); color:inherit; }
+  img{ -webkit-user-select:auto; user-select:auto; -webkit-touch-callout:default; }
 </style>
 <script>
   // Isi halaman disembunyikan sampai data selesai dimuat, lalu muncul halus (tanpa kedip kosong-lalu-terisi).
@@ -3828,6 +3839,18 @@
   // OVERLAY (modal & sheet) HELPERS
   // =====================================================================
   function openOverlay(id){ document.getElementById(id).classList.add('show'); }
+  // Blokir menu klik-kanan / tekan-tahan pada teks. Kolom isian (agar tetap bisa tempel/salin) dan gambar tetap normal.
+  document.addEventListener('contextmenu', (e) => {
+    const t = e.target;
+    if (t && t.closest && t.closest('img, input, textarea, [contenteditable="true"]')) return;
+    e.preventDefault();
+  });
+  document.addEventListener('selectstart', (e) => {
+    const t = e.target && (e.target.nodeType === 3 ? e.target.parentElement : e.target);
+    if (t && t.closest && t.closest('input, textarea, [contenteditable="true"], img')) return;
+    e.preventDefault();
+  });
+
 
   // Dialog pemberitahuan bergaya aplikasi (menggantikan alert bawaan browser)
   // opts: { title, text, hint, danger, choices:true, onChoose(metode), okLabel }
