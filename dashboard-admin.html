@@ -5847,7 +5847,7 @@
     searchFilterPopup.classList.remove('open');
   });
 
-  function renderSearchResults(term) {
+  function renderSearchResults(term, opts) {
     const list = document.getElementById('searchResultsList');
     const headerEl = document.getElementById('searchResultsHeader');
     const countEl = document.getElementById('searchResultsCount');
@@ -5920,8 +5920,20 @@
     `).join('');
 
     list.innerHTML = folderHtml + noteHtml;
-    list.scrollTop = 0;
+    if (!(opts && opts.keepScroll)) list.scrollTop = 0;
     wireSearchResultClicks();
+  }
+
+  // Dipanggil saat editor ditutup: hasil pencarian yang sedang terbuka diperbarui dengan kata kunci,
+  // filter folder, dan posisi gulir yang sama.
+  async function refreshSearchAfterEditor() {
+    if (!searchOverlay.classList.contains('open')) return;
+    const list = document.getElementById('searchResultsList');
+    const scrollTop = list.scrollTop;
+    await loadAllNotesData();
+    if (!searchOverlay.classList.contains('open')) return;
+    renderSearchResults(document.getElementById('searchInputField').value, { keepScroll: true });
+    list.scrollTop = scrollTop;
   }
 
   function wireSearchResultClicks() {
@@ -5933,7 +5945,9 @@
     });
     document.querySelectorAll('#searchResultsList [data-type="note"]').forEach(item => {
       item.addEventListener('click', () => {
-        searchOverlay.classList.remove('open');
+        // Pencarian dibiarkan terbuka di bawah editor: saat editor ditutup, kata kunci, filter, dan posisi gulir masih sama.
+        const field = document.getElementById('searchInputField');
+        if (field) field.blur();   // tutup keyboard, dan jangan muncul lagi saat kembali
         openEditor(item.dataset.noteId, { folder: item.dataset.folderId });
       });
     });
@@ -6165,6 +6179,7 @@
     clearTimeout(editorReadyTimer);
     setTimeout(() => { if (!editorModal.classList.contains('open')) navigateFrame(editorFrame, 'about:blank'); }, 500);
     loadCategories();
+    refreshSearchAfterEditor();
   }
   function pushEditorState() { try { history.pushState({ editorModal: true }, ''); } catch (e) {} }
 
