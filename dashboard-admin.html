@@ -977,6 +977,20 @@
     padding-bottom: calc(var(--kb, 0px) + 12px);
   }
 
+  /* --- Riwayat pencarian & saran "mungkin yang Anda maksud" --- */
+  .search-history-head { display: flex; justify-content: space-between; align-items: center; margin: 6px 4px 6px; }
+  .search-history-head span { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  .search-history-clear { background: none; border: none; color: var(--accent-yellow); font-size: 13px; font-weight: 700; padding: 6px 4px; cursor: pointer; }
+  .search-history-item { display: flex; align-items: center; gap: 12px; padding: 13px 4px; border-bottom: 1px solid var(--card-border-dark); cursor: pointer; }
+  .search-history-item:active { opacity: 0.6; }
+  .search-history-item > svg { width: 18px; height: 18px; color: var(--text-secondary); flex-shrink: 0; }
+  .search-history-text { flex: 1; min-width: 0; font-size: 15px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .search-history-del { background: none; border: none; color: var(--text-secondary); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; border-radius: 50%; }
+  .search-history-del svg { width: 16px; height: 16px; }
+  .search-history-empty { font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.6; padding: 36px 12px; }
+  .search-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px 14px; margin-bottom: 14px; border-radius: 14px; background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); font-size: 14px; color: var(--text-secondary); }
+  .search-suggest-btn { background: none; border: none; padding: 0; font-size: 14px; font-weight: 800; color: var(--accent-yellow); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
   .search-top {
     display: flex;
     align-items: center;
@@ -5847,32 +5861,180 @@
     searchFilterPopup.classList.remove('open');
   });
 
-  function renderSearchResults(term, opts) {
-    const list = document.getElementById('searchResultsList');
-    const headerEl = document.getElementById('searchResultsHeader');
-    const countEl = document.getElementById('searchResultsCount');
-    const q = term.trim().toLowerCase();
+  // --- Riwayat pencarian (disimpan di perangkat ini) ---
+  const SEARCH_HISTORY_KEY = 'bm-search-history';
+  const SEARCH_HISTORY_MAX = 10;
 
-    if (!q) {
-      headerEl.style.display = 'none';
-      searchFilterPopup.classList.remove('open');
-      list.innerHTML = categoriesData.length === 0
-        ? `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">Belum ada folder</p>`
-        : categoriesData.map(cat => `
-            <div class="folder-item" data-type="folder" data-cat-id="${cat.id}">
-              <div class="folder-item-left">
-                <svg viewBox="0 0 24 24" fill="none" stroke="${cat.color}" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                <span>${escapeHtml(cat.name)}</span>
-              </div>
-              <span class="folder-count">${cat.count || 0} &rsaquo;</span>
-            </div>
-          `).join('');
-      wireSearchResultClicks();
-      return;
+  function loadSearchHistory() {
+    try {
+      const arr = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY) || '[]');
+      return Array.isArray(arr) ? arr.filter(t => typeof t === 'string' && t.trim()) : [];
+    } catch (e) { return []; }
+  }
+  function persistSearchHistory(arr) {
+    try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr)); } catch (e) { /* penyimpanan diblokir: abaikan */ }
+  }
+  // Kata kunci terbaru di paling atas, tanpa duplikat (huruf besar/kecil dianggap sama)
+  function saveSearchHistory(term) {
+    const t = String(term || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    if (t.length < 2) return;
+    const rest = loadSearchHistory().filter(x => x.toLowerCase() !== t.toLowerCase());
+    persistSearchHistory([t, ...rest].slice(0, SEARCH_HISTORY_MAX));
+  }
+  function removeSearchHistory(term) {
+    persistSearchHistory(loadSearchHistory().filter(x => x !== term));
+  }
+  function clearSearchHistory() {
+    persistSearchHistory([]);
+  }
+
+  function searchHistoryHtml() {
+    const items = loadSearchHistory();
+    if (items.length === 0) {
+      return `<p class="search-history-empty">Belum ada riwayat pencarian.<br>Ketik nama customer, karyawan, atau barang.</p>`;
     }
+    const clock = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>';
+    const x = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>';
+    return `
+      <div class="search-history-head"><span>Riwayat Pencarian</span><button class="search-history-clear" id="btnClearSearchHistory">Bersihkan</button></div>
+      ${items.map(t => `
+        <div class="search-history-item" data-term="${escapeHtml(t)}">
+          ${clock}
+          <span class="search-history-text">${escapeHtml(t)}</span>
+          <button class="search-history-del" data-del="${escapeHtml(t)}" aria-label="Hapus dari riwayat">${x}</button>
+        </div>`).join('')}`;
+  }
 
-    headerEl.style.display = 'flex';
+  // Isi kolom pencarian dengan kata kunci tertentu (dari riwayat atau saran), lalu cari
+  function applySearchTerm(term) {
+    const field = document.getElementById('searchInputField');
+    field.value = term;
+    saveSearchHistory(term);
+    field.blur();
+    renderSearchResults(term);
+  }
 
+  function wireSearchHistoryClicks() {
+    document.querySelectorAll('#searchResultsList .search-history-item').forEach(item => {
+      item.addEventListener('click', () => applySearchTerm(item.dataset.term));
+    });
+    document.querySelectorAll('#searchResultsList .search-history-del').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeSearchHistory(btn.dataset.del);
+        renderSearchResults('');
+      });
+    });
+    const clearBtn = document.getElementById('btnClearSearchHistory');
+    if (clearBtn) clearBtn.addEventListener('click', () => { clearSearchHistory(); renderSearchResults(''); });
+  }
+
+  // --- Saran pencarian cerdas: "Mungkin yang Anda maksud ..." (koreksi ketikan berdasarkan isi data) ---
+  const SEARCH_SUGGEST_BELOW = 3;   // saran hanya muncul kalau hasil kurang dari ini
+
+  // Jarak edit (Damerau-Levenshtein): sisip, hapus, ganti, dan tukar dua huruf bersebelahan = 1 langkah.
+  // Berhenti lebih awal kalau sudah melewati batas.
+  function editDistance(a, b, max) {
+    const al = a.length, bl = b.length;
+    if (Math.abs(al - bl) > max) return max + 1;
+    let prev2 = null;
+    let prev = Array.from({ length: bl + 1 }, (_, j) => j);
+    for (let i = 1; i <= al; i++) {
+      const cur = [i];
+      let rowMin = i;
+      for (let j = 1; j <= bl; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+        cur[j] = v;
+        if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > max) return max + 1;
+      prev2 = prev;
+      prev = cur;
+    }
+    return prev[bl];
+  }
+
+  // Daftar kata dari data (judul, isi tabel, nama folder) beserta seberapa sering muncul.
+  // Dibuat sekali setiap data dimuat ulang.
+  let searchVocabCache = { ref: null, vocab: null };
+  function getSearchVocab() {
+    if (searchVocabCache.ref === allNotesData && searchVocabCache.vocab) return searchVocabCache.vocab;
+    const vocab = new Map();
+    const add = (text) => {
+      const words = String(text || '').toLowerCase().match(/[\p{L}\p{N}]+/gu);
+      if (!words) return;
+      words.forEach(w => {
+        if (w.length < 3 || w.length > 24 || !/\p{L}/u.test(w)) return;   // angka murni bukan salah ketik
+        vocab.set(w, (vocab.get(w) || 0) + 1);
+      });
+    };
+    categoriesData.forEach(c => add(c.name));
+    allNotesData.forEach(n => {
+      add(n.title);
+      const t = getNoteTable(n);
+      if (!t || !Array.isArray(t.rows) || !Array.isArray(t.columns)) return;
+      t.rows.forEach(r => {
+        if (!r.cells) return;
+        t.columns.forEach(c => {
+          if (c.type === 'image') return;
+          const v = r.cells[c.id];
+          if (typeof v === 'string' || typeof v === 'number') add(v);
+        });
+      });
+    });
+    searchVocabCache = { ref: allNotesData, vocab };
+    return vocab;
+  }
+
+  // Kata terdekat dari data untuk satu kata yang salah ketik; null kalau tidak ada yang cukup dekat
+  function closestVocabWord(token, vocab) {
+    if (token.length < 4) return null;
+    const maxDist = token.length <= 5 ? 1 : 2;
+    let best = null;
+    vocab.forEach((freq, word) => {
+      const d = editDistance(token, word, maxDist);
+      if (d > maxDist) return;
+      const sameFirst = word[0] === token[0] ? 1 : 0;
+      const cand = { word, d, sameFirst, freq };
+      if (!best
+        || cand.d < best.d
+        || (cand.d === best.d && cand.sameFirst > best.sameFirst)
+        || (cand.d === best.d && cand.sameFirst === best.sameFirst && cand.freq > best.freq)) best = cand;
+    });
+    return best ? best.word : null;
+  }
+
+  // Koreksi seluruh kata kunci (per kata). Kata yang sudah ada di data, atau baru diketik sebagian,
+  // dibiarkan. Mengembalikan kalimat hasil koreksi, atau null kalau tidak ada yang perlu diperbaiki.
+  function suggestQuery(term) {
+    const vocab = getSearchVocab();
+    if (vocab.size === 0) return null;
+    const words = vocab.keys ? [...vocab.keys()] : [];
+    let changed = false;
+    const fixed = term.trim().split(/\s+/).map(tok => {
+      const low = tok.toLowerCase();
+      if (vocab.has(low) || words.some(w => w.startsWith(low))) return tok;
+      const hit = closestVocabWord(low, vocab);
+      if (!hit) return tok;
+      changed = true;
+      return tok[0] !== tok[0].toLowerCase() ? hit.charAt(0).toUpperCase() + hit.slice(1) : hit;
+    });
+    return changed ? fixed.join(' ') : null;
+  }
+
+  function suggestionHtml(sug) {
+    return `<div class="search-suggest">Mungkin yang Anda maksud: <button class="search-suggest-btn" data-suggest="${escapeHtml(sug)}">${escapeHtml(sug)}</button></div>`;
+  }
+
+  function wireSearchSuggestClicks() {
+    document.querySelectorAll('#searchResultsList .search-suggest-btn').forEach(btn => {
+      btn.addEventListener('click', () => applySearchTerm(btn.dataset.suggest));
+    });
+  }
+
+  function computeSearchMatches(q) {
     const folderMatches = searchFolderFilter
       ? []
       : categoriesData.filter(c => c.name.toLowerCase().includes(q));
@@ -5886,11 +6048,44 @@
         return { note: n, cellMatch };
       })
       .filter(Boolean);
+    return { folderMatches, noteMatches };
+  }
 
-    countEl.textContent = `Found ${folderMatches.length + noteMatches.length} results`;
+  function renderSearchResults(term, opts) {
+    const list = document.getElementById('searchResultsList');
+    const headerEl = document.getElementById('searchResultsHeader');
+    const countEl = document.getElementById('searchResultsCount');
+    const q = term.trim().toLowerCase();
 
-    if (folderMatches.length === 0 && noteMatches.length === 0) {
-      list.innerHTML = `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">"${escapeHtml(term.trim())}" tidak ditemukan</p>`;
+    // Belum mengetik: tampilkan riwayat pencarian (bukan daftar folder)
+    if (!q) {
+      headerEl.style.display = 'none';
+      searchFilterPopup.classList.remove('open');
+      list.innerHTML = searchHistoryHtml();
+      wireSearchHistoryClicks();
+      if (!(opts && opts.keepScroll)) list.scrollTop = 0;
+      return;
+    }
+
+    headerEl.style.display = 'flex';
+
+    const { folderMatches, noteMatches } = computeSearchMatches(q);
+    const total = folderMatches.length + noteMatches.length;
+    countEl.textContent = `Found ${total} results`;
+
+    // Saran koreksi: hanya kalau hasilnya sedikit DAN kata koreksinya memang menemukan lebih banyak
+    let suggestHtml = '';
+    if (total < SEARCH_SUGGEST_BELOW) {
+      const sug = suggestQuery(term.trim());
+      if (sug && sug.toLowerCase() !== q) {
+        const m = computeSearchMatches(sug.toLowerCase());
+        if (m.folderMatches.length + m.noteMatches.length > total) suggestHtml = suggestionHtml(sug);
+      }
+    }
+
+    if (total === 0) {
+      list.innerHTML = suggestHtml + `<p style="font-size:13px; color:var(--text-muted); text-align:center; padding:20px 4px;">"${escapeHtml(term.trim())}" tidak ditemukan</p>`;
+      wireSearchSuggestClicks();
       return;
     }
 
@@ -5919,9 +6114,10 @@
       </div>
     `).join('');
 
-    list.innerHTML = folderHtml + noteHtml;
+    list.innerHTML = suggestHtml + folderHtml + noteHtml;
     if (!(opts && opts.keepScroll)) list.scrollTop = 0;
     wireSearchResultClicks();
+    wireSearchSuggestClicks();
   }
 
   // Dipanggil saat editor ditutup: hasil pencarian yang sedang terbuka diperbarui dengan kata kunci,
@@ -5939,6 +6135,7 @@
   function wireSearchResultClicks() {
     document.querySelectorAll('#searchResultsList [data-type="folder"]').forEach(item => {
       item.addEventListener('click', () => {
+        saveSearchHistory(document.getElementById('searchInputField').value);
         searchOverlay.classList.remove('open');
         selectCategory(item.dataset.catId);
       });
@@ -5947,7 +6144,7 @@
       item.addEventListener('click', () => {
         // Pencarian dibiarkan terbuka di bawah editor: saat editor ditutup, kata kunci, filter, dan posisi gulir masih sama.
         const field = document.getElementById('searchInputField');
-        if (field) field.blur();   // tutup keyboard, dan jangan muncul lagi saat kembali
+        if (field) { saveSearchHistory(field.value); field.blur(); }   // simpan ke riwayat; tutup keyboard dan jangan muncul lagi saat kembali
         openEditor(item.dataset.noteId, { folder: item.dataset.folderId });
       });
     });
@@ -5955,6 +6152,13 @@
 
   document.getElementById('searchInputField').addEventListener('input', (e) => {
     renderSearchResults(e.target.value);
+  });
+  // Tekan Enter / tombol cari di keyboard: simpan ke riwayat dan tutup keyboard supaya hasil terlihat penuh
+  document.getElementById('searchInputField').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    saveSearchHistory(e.target.value);
+    e.target.blur();
   });
 
   const newFolderOverlay = document.getElementById('newFolderOverlay');
