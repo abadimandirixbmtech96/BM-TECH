@@ -4316,9 +4316,10 @@
     hutang:    { badge: 'Hutang belum lunas',     group: 'Hutang belum lunas',     short: 'Hutang',        sub: '',               color: '#D64B4B', amountNote: 'sisa harus dibayar' },
     piutang:   { badge: 'Piutang belum lunas',    group: 'Piutang belum lunas',    short: 'Piutang',       sub: '',               color: '#3DAA6A', amountNote: 'sisa ditagih' },
     ditinggal: { badge: 'Barang ditinggal',       group: 'Barang masih ditinggal', short: 'Ditinggal',     sub: 'di bengkel',     color: '#4C9EFF' },
+    belumbayar:{ badge: 'Barang dibawa, belum dibayar', group: 'Barang dibawa, belum dibayar', short: 'Belum dibayar', sub: 'barang sudah diambil', color: '#E0A526' },
     lengkap:   { badge: 'Data belum lengkap',     group: 'Data belum lengkap',     short: 'Belum lengkap', sub: 'perlu dilengkapi', color: '#FF8A4C' }
   };
-  const TASK_TYPE_ORDER = ['kasbon', 'hutang', 'piutang', 'ditinggal', 'lengkap'];
+  const TASK_TYPE_ORDER = ['kasbon', 'hutang', 'piutang', 'ditinggal', 'belumbayar', 'lengkap'];
   const TASK_MONEY_TYPES = ['kasbon', 'hutang', 'piutang'];
   const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];
   const TASKS_FILTER_KEY = 'bmtech_tasks_filter_v1';
@@ -4414,6 +4415,24 @@
           tasks.push({ ...base, type: 'ditinggal', allLeft: left.whole, what: left.names.join(', '), paid: paidNames.length === left.names.length, paidNames });
         }
 
+        // Barang sudah DIBAWA semua (Barang Keluar terisi, Stok "Tidak ada") tapi Harga kosong = belum dibayar.
+        // Berlaku juga untuk baris pengambilan (terhubung ke titipan) selama belum dibayar lewat "Bayar saja".
+        {
+          const keluar = String(val('Barang Keluar') || '').trim();
+          const stokClean = stok.replace(/[√✓✔☑✅]/g, '').trim();
+          const links = Array.isArray(cells._from) ? cells._from : [];
+          if (!paidFlag && !cells._payAll && (stokClean === '' || isStokNone(stokClean)) && keluar && !isStokNone(keluar)
+              && isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal) && !links.some(l => l && l.mode === 'bayar')) {
+            let names;
+            if (links.length) names = [].concat(...links.map(l => (Array.isArray(l.items) && l.items.length) ? l.items : String(l.label || '').split(/[,;\n]+/)));
+            else names = (isStokBJ(keluar) ? base.barang : keluar).split(/[,;\n]+/);
+            names = names.map(n => n.replace(/[√✓✔☑✅]/g, '').trim()).filter(Boolean);
+            const payKeys2 = new Set((cells._payKeys || []).map(k => normalizeKey(k)));
+            const unpaid = names.filter(n => !payKeys2.has(normalizeKey(n)));
+            if (unpaid.length) tasks.push({ ...base, type: 'belumbayar', what: unpaid.join(', '), paidNames: names.filter(n => payKeys2.has(normalizeKey(n))) });
+          }
+        }
+
         const missing = TASK_INCOMPLETE_FIELDS.filter(f => (f === 'Harga' ? isHargaEmpty(val(f)) : isEmptyValue(val(f))));
         if (missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing });
       });
@@ -4497,6 +4516,9 @@
           : (t.paidNames && t.paidNames.length
             ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar: ${escapeHtml(t.paidNames.join(', '))}</span></div>`
             : ''));
+    } else if (t.type === 'belumbayar') {
+      detail = `<b>Sudah dibawa, belum dibayar:</b> ${escapeHtml(t.what || '-')}` +
+        (t.paidNames && t.paidNames.length ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar: ${escapeHtml(t.paidNames.join(', '))}</span></div>` : '');
     } else {
       detail = (t.barang ? `<div>${escapeHtml(t.barang)}</div>` : '') +
         `<div class="task-missing-row" style="margin-top:6px;"><span style="font-size:12px;color:var(--text-secondary);align-self:center;">Belum diisi:</span>${t.missing.map(f => `<span class="task-missing-chip">${escapeHtml(f)}</span>`).join('')}</div>`;
