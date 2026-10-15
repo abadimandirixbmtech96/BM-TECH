@@ -2732,12 +2732,17 @@
   // Barang sudah DIBAWA semua (Barang Keluar terisi, Stok "Tidak ada") tapi Harga kosong = belum dibayar.
   // Dilacak seperti titipan, hanya bisa "Bayar saja" (barangnya sudah keluar, tidak ada yang perlu diambil).
   function outUnpaidNames(o, text){
-    if (!o || (o.ambilDari && o.ambilDari.length)) return null;
+    if (!o) return null;
+    const links = Array.isArray(o.ambilDari) ? o.ambilDari : [];
+    if (links.some(l => l && l.mode === 'bayar')) return null; // baris "bayar duluan" bukan barang dibawa
     if (!(text === '' || isTidakAdaText(stripCentang(text)))) return null;
     const keluar = String(o.barangKeluar == null ? '' : o.barangKeluar).trim();
     if (!keluar || isTidakAdaText(stripCentang(keluar))) return null;
     if (!(isHargaKosong(o.harga) || o.hargaAuto || (o.pickups && Object.keys(o.pickups).length))) return null;
-    let names = isBJWhole(keluar) ? splitList(o.barang) : splitList(keluar);
+    let names;
+    if (links.length) { // baris pengambilan: barang yang dibawa = barang yang dipilih dari titipan
+      names = [].concat(...links.map(l => (Array.isArray(l.items) && l.items.length) ? l.items : splitList(l.label)));
+    } else names = isBJWhole(keluar) ? splitList(o.barang) : splitList(keluar);
     names = names.map(stripCentang).filter(Boolean);
     return names.length ? names : null;
   }
@@ -2890,7 +2895,7 @@
     const pushFrom = (noteId, recs) => {
       (recs || []).forEach(r => {
         if (!r || !r.id) return;
-        if (r.ambilDari && r.ambilDari.length) return; // baris pengambilan/pembayaran bukan titipan
+        if (r.ambilDari && r.ambilDari.length && !parseStokItems(r).out) return; // baris pengambilan/pembayaran bukan titipan (kecuali sudah dibawa tapi belum dibayar)
         if (pjKey(r.pj) !== npj || normText(r.customer) !== ncu) return;
         // Harga ✓ yang diketik manual (kebiasaan lama) = urusan sudah beres.
         // Harga ✓ otomatis dari "Bayar saja" (hargaAuto) tetap ditampilkan.
