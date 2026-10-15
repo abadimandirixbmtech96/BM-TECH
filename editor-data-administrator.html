@@ -239,7 +239,10 @@
   .mt-badge{ display:inline-block; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:999px; margin-right:6px; vertical-align:1px; }
   .mt-badge.cash{ background:rgba(61,170,106,0.18); color:#2d8a55; }
   .mt-badge.transfer{ background:rgba(59,143,224,0.18); color:#3B8FE0; }
-    .detail-row .metode-group{ display:none; }
+    .link-jump{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; font-weight:600; color:#2563eb; background:rgba(37,99,235,.08); border:0; border-radius:9px; padding:7px 10px; margin:0 0 6px; cursor:pointer; }
+  .link-jump:active{ transform:scale(.98); }
+  .link-jump:disabled{ color:inherit; background:none; padding-left:0; cursor:default; }
+  .detail-row .metode-group{ display:none; }
   .mt-badge.campur{ background:linear-gradient(90deg,rgba(61,170,106,0.22),rgba(59,143,224,0.22)); color:var(--ink); }
   /* Bayar campur: dua kolom nominal muncul saat Cash & Transfer sama-sama menyala */
   .metode-split{ display:none; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
@@ -3284,25 +3287,46 @@
   // ---------- info keterhubungan di halaman Detail ----------
   function renderLinkInfo(r){
     const row = gid('detLinkRow'), val = gid('detLinkView');
-    const parts = [];
+    const parts = []; // { text, noteId, recId }
     (r.ambilDari || []).forEach(l => {
-      parts.push((l.mode === 'bayar' ? 'Bayar duluan: ' : 'Mengambil: ') + (l.label || 'barang') + (l.tgl ? ' (' + l.tgl + ')' : ''));
+      parts.push({ text: '↩ ' + (l.mode === 'bayar' ? 'Bayar duluan: ' : 'Mengambil: ') + (l.label || 'barang') + (l.tgl ? ' (titipan ' + l.tgl + ')' : ''), noteId: l.noteId, recId: l.recordId });
     });
     if (r.pickups) {
-      Object.values(r.pickups)
-        .filter(p => p && p.at)
-        .sort((a, b) => new Date(a.at) - new Date(b.at))
-        .forEach(p => {
+      Object.keys(r.pickups)
+        .map(k => ({ k, p: r.pickups[k] }))
+        .filter(x => x.p && x.p.at)
+        .sort((a, b) => new Date(a.p.at) - new Date(b.p.at))
+        .forEach(({ k, p }) => {
           const when = fmtTanggalFromISO(p.at) + ' ' + fmtWaktuFromISO(p.at);
           const what = (p.names && p.names.length) ? ': ' + p.names.join(', ') : '';
-          parts.push((p.mode === 'bayar' ? 'Dibayar ' : 'Diambil ') + when + what);
+          parts.push({ text: (p.mode === 'bayar' ? '💰 Dibayar ' : '📦 Diambil ') + when + what + ' ↗', noteId: p.noteId, recId: k });
         });
     } else if (r.pickup && r.pickup.at) {
-      parts.push('Sudah diambil ' + fmtTanggalFromISO(r.pickup.at) + ' ' + fmtWaktuFromISO(r.pickup.at));
+      parts.push({ text: 'Sudah diambil ' + fmtTanggalFromISO(r.pickup.at) + ' ' + fmtWaktuFromISO(r.pickup.at), noteId: r.pickup.noteId, recId: r.pickup.recordId });
     }
-    if (!parts.length) { row.style.display = 'none'; val.textContent = ''; return; }
+    val.textContent = '';
+    if (!parts.length) { row.style.display = 'none'; return; }
     row.style.display = '';
-    val.textContent = parts.join('\n');
+    parts.forEach(x => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'link-jump'; b.textContent = x.text;
+      if (x.noteId && x.recId) b.addEventListener('click', () => jumpToLinked(x.noteId, x.recId));
+      else b.disabled = true;
+      val.appendChild(b);
+    });
+  }
+
+  // Lompat ke data terhubung: di note ini -> buka detailnya; di note lain -> buka note itu
+  function jumpToLinked(noteId, recId){
+    if (!noteId || noteId === currentNoteId) {
+      if (records.some(x => x.id === recId)) openDetail(recId);
+      else appNotice({ title: 'Data Tidak Ditemukan', text: 'Data tujuan sudah dihapus.' });
+      return;
+    }
+    const u = new URL(window.location.href);
+    u.searchParams.set('id', noteId);
+    u.searchParams.set('rec', recId);
+    window.location.replace(u.toString());
   }
 
   // =====================================================================
@@ -3942,7 +3966,11 @@
   window.addEventListener('load', updateNavNotch);
   updateNavNotch();
 
-  loadExistingNote().finally(() => document.documentElement.classList.remove('is-loading'));
+  loadExistingNote().finally(() => {
+    document.documentElement.classList.remove('is-loading');
+    const rec = urlParams.get('rec');
+    if (rec && records.some(x => x.id === rec)) openDetail(rec);
+  });
 </script>
 
 <script>
