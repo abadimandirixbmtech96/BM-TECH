@@ -6135,7 +6135,7 @@
     `).join('');
 
     const noteHtml = noteMatches.map(({ note: n, cellMatch }) => `
-      <div class="search-note-card" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}">
+      <div class="search-note-card" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}" data-rec-id="${escapeHtml((cellMatch && cellMatch.row && cellMatch.row.cells && cellMatch.row.cells._rid) || '')}">
         <p class="search-note-title">${highlightMatch(n.title || 'Untitled', term.trim())}</p>
         <div class="search-note-meta-row">
           <span class="search-note-time-badge">${escapeHtml(formatTimeOnly(n.created_at))}</span>
@@ -6180,7 +6180,7 @@
         // Pencarian dibiarkan terbuka di bawah editor: saat editor ditutup, kata kunci, filter, dan posisi gulir masih sama.
         const field = document.getElementById('searchInputField');
         if (field) { saveSearchHistory(field.value); field.blur(); }   // simpan ke riwayat; tutup keyboard dan jangan muncul lagi saat kembali
-        openEditor(item.dataset.noteId, { folder: item.dataset.folderId });
+        openEditor(item.dataset.noteId, { folder: item.dataset.folderId, rec: item.dataset.recId || null });   // editor langsung menampilkan data yang dicari
       });
     });
   }
@@ -6392,6 +6392,7 @@
 
     if (extra.row !== undefined && extra.row !== null) params.set('row', extra.row);
     if (extra.focus) params.set('focus', extra.focus);
+    if (extra.rec) params.set('rec', extra.rec);
     params.set('_t', Date.now());
 
     saveOpenEditorState(noteId, folderId);
