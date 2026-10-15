@@ -242,6 +242,8 @@
     .link-jump{ display:block; width:100%; text-align:left; font:inherit; font-size:13px; font-weight:600; color:#2563eb; background:rgba(37,99,235,.08); border:0; border-radius:9px; padding:7px 10px; margin:0 0 6px; cursor:pointer; }
   .link-jump:active{ transform:scale(.98); }
   .link-jump:disabled{ color:inherit; background:none; padding-left:0; cursor:default; }
+  @keyframes rowFlash{ 0%,55%{ background:rgba(250,204,21,.45); } 100%{ background:transparent; } }
+  .recent-row.row-flash{ animation:rowFlash 2.4s ease-out; border-radius:12px; }
   .detail-row .metode-group{ display:none; }
   .mt-badge.campur{ background:linear-gradient(90deg,rgba(61,170,106,0.22),rgba(59,143,224,0.22)); color:var(--ink); }
   /* Bayar campur: dua kolom nominal muncul saat Cash & Transfer sama-sama menyala */
@@ -2183,6 +2185,20 @@
       const hs = document.getElementById('view-home').querySelector('.scroll');
       if (hs) { hs.scrollTop = homeScrollPos; requestAnimationFrame(() => { hs.scrollTop = homeScrollPos; }); }
     }
+    if (name === 'home') requestAnimationFrame(focusSearchedRow);
+  }
+
+  // Dari hasil pencarian dashboard: data yang dicari ditampilkan, lalu saat kembali ke daftar
+  // baris itu otomatis digulir ke tengah layar dan berkedip sebentar.
+  let focusRecId = null;
+  function focusSearchedRow(){
+    if (!focusRecId) return;
+    const id = focusRecId; focusRecId = null;
+    const row = Array.from(document.querySelectorAll('#recentList .recent-row')).find(e => e.dataset.id === id);
+    if (!row) return;
+    row.scrollIntoView({ block: 'center' });
+    row.classList.remove('row-flash'); void row.offsetWidth; row.classList.add('row-flash');
+    setTimeout(() => row.classList.remove('row-flash'), 2600);
   }
 
   // ---- Penjaga keluar: jangan keluar sebelum semua tersimpan & tersinkron ----
@@ -4043,7 +4059,7 @@
   loadExistingNote().finally(() => {
     document.documentElement.classList.remove('is-loading');
     const rec = urlParams.get('rec');
-    if (rec && records.some(x => x.id === rec)) openDetail(rec);
+    if (rec && records.some(x => x.id === rec)) { focusRecId = rec; openDetail(rec); }
   });
 </script>
 
