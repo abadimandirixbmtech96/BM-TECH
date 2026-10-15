@@ -1958,6 +1958,10 @@
     }
     const purgedCount = purgeExpiredTrash();
     if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
+    try {
+      const lim = Date.now() - 45 * 86400000;
+      records.forEach(rec => { if (new Date(rec.created_at).getTime() > lim) (rec.ambilDari || []).forEach(l => verifyLinks.add(l)); });
+    } catch (e) {}
     setTimeout(() => { try { reconcileLinks(); } catch (e) {} }, 800);
   }
 
@@ -2181,7 +2185,36 @@
     }
   }
 
-  document.getElementById('btnHomeBack').addEventListener('click', () => {
+  // ---- Penjaga keluar: jangan keluar sebelum semua tersimpan & tersinkron ----
+  function syncBusy(){
+    if (existingNoteLoadFailed) return false;
+    if (hasUnsyncedChanges || autosaveInFlight) return true;
+    if (reconciling) return true;
+    try { if (navigator.onLine && currentNoteId && collectLinkJobs().length) return true; } catch (e) {}
+    return false;
+  }
+  let leaveWaiting = false;
+  function requestLeave(){
+    if (leaveWaiting) return;
+    if (!syncBusy()) { doLeave(); return; }
+    const ov = document.getElementById('overlayNotice');
+    if (!navigator.onLine) {
+      appNotice({ title: 'Belum Terkirim', text: 'Kamu sedang offline. Data aman tersimpan di HP ini dan akan terkirim otomatis saat online dan editor dibuka lagi.', okLabel: 'Tetap di sini', extra: { label: 'Tetap keluar', onClick: doLeave } });
+      return;
+    }
+    leaveWaiting = true;
+    appNotice({ title: 'Tunggu sebentar…', text: 'Data belum tersimpan semua. Jangan keluar dulu, kami selesaikan penyimpanan dan sinkronisasi dulu.', okLabel: 'Tetap di sini', extra: { label: 'Tetap keluar', onClick: () => { leaveWaiting = false; doLeave(); } } });
+    clearTimeout(autosaveTimer);
+    if (hasUnsyncedChanges) runAutosave(); else reconcileLinks();
+    const t0 = Date.now();
+    const iv = setInterval(() => {
+      if (!ov.classList.contains('show')) { clearInterval(iv); leaveWaiting = false; return; } // dibatalkan pengguna
+      if (!syncBusy()) { clearInterval(iv); leaveWaiting = false; closeOverlay('overlayNotice'); doLeave(); return; }
+      if (hasUnsyncedChanges && !autosaveInFlight && !autosaveTimer) runAutosave();
+      if (Date.now() - t0 > 20000) document.getElementById('noticeText').textContent = 'Penyimpanan lebih lama dari biasanya. Periksa koneksi internet, atau pilih Tetap keluar (data tetap tersimpan di HP).';
+    }, 300);
+  }
+  function doLeave(){
     // Editor ini biasanya berjalan sebagai iframe di dalam dashboard-admin.html
     // (lihat pola window.parent.postMessage('note-autosaved', ...) di atas).
     // 'close-editor' adalah nama pesan yang sudah didengarkan oleh
@@ -2198,7 +2231,8 @@
     } else {
       window.location.href = 'dashboard-admin.html';
     }
-  });
+  }
+  document.getElementById('btnHomeBack').addEventListener('click', requestLeave);
 
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
@@ -2621,6 +2655,7 @@
       if (!isCentangText(stokBarang)) delete r.pickup;
       else if (r.pickup.hargaAuto && !isCentangText(harga)) r.pickup.hargaAuto = false;
     }
+    (r.ambilDari || []).forEach(l => verifyLinks.add(l)); // data pengambilan diedit -> cek ulang data titipan
     scheduleAutosave();
     openDetail(editingRecordId);
   });
@@ -3209,41 +3244,51 @@
       groups.get(nid).push(j);
     });
 
-    let anyDone = false, anyFail = false, anyApplied = false, anyReverted = false;
+    let anyDone = false, anyFail = false, anyApplied = false, anyReverted = false, needSave = false, anyChanged = false;
     for (const [nid, list] of groups) {
+      let touched = false;
       const mutate = (recs) => {
         let ch = false;
         list.forEach(j => { if (applyLinkToOrigin(recs, j)) ch = true; });
+        if (ch) touched = true;
         return ch;
       };
+      const prev = list.map(j => j.link.synced);
       if (nid === 'self') {
         mutate(records);
         list.forEach(j => { j.link.synced = j.want; if (j.link.noteId === 'self') j.link.noteId = currentNoteId; });
+        if (touched) needSave = true;
       } else {
         let r;
         try { r = await patchRemoteNoteRecords(nid, mutate); } catch (e) { r = { ok: false }; }
         if (r.ok || r.missing) list.forEach(j => { j.link.synced = j.want; });
         else { anyFail = true; continue; }
       }
+      if (list.some((j, i) => prev[i] !== j.link.synced)) needSave = true;
+      if (touched) anyChanged = true;
       anyDone = true;
       list.forEach(j => { if (j.want === 'reverted') anyReverted = true; else anyApplied = true; });
     }
 
     if (anyDone) {
       folderNotesCache.at = 0;
-      scheduleAutosave(); // simpan status `synced` terbaru
-      if (anyApplied) showMigrationToast('Data lama diperbarui \u2713');
-      else if (anyReverted) showMigrationToast('Tanda di data lama dibatalkan.');
+      if (needSave) scheduleAutosave(); // simpan status `synced` terbaru
+      if (anyChanged) {
+        if (anyApplied) showMigrationToast('Data lama diperbarui \u2713');
+        else if (anyReverted) showMigrationToast('Tanda di data lama dibatalkan.');
+      }
     }
     return { anyDone, anyFail };
   }
 
+  // Link yang harus dicek ulang ke data titipan walau statusnya sudah 'synced' (setelah diedit / saat note dibuka)
+  const verifyLinks = new Set();
   function collectLinkJobs(){
     const jobs = [];
     records.forEach(rec => {
       (rec.ambilDari || []).forEach(l => {
         const want = wantOf(rec, l);
-        if (l.synced !== want) jobs.push({ rec, link: l, want });
+        if (l.synced !== want || verifyLinks.has(l)) jobs.push({ rec, link: l, want });
       });
     });
     trash.forEach(rec => {
@@ -3263,6 +3308,7 @@
       const jobs = collectLinkJobs();
       if (!jobs.length) return;
       const res = await runLinkJobs(jobs);
+      jobs.forEach(j => { if (!res.anyFail) verifyLinks.delete(j.link); });
       if (res.anyFail) {
         clearTimeout(reconcileRetryTimer);
         reconcileRetryTimer = setTimeout(reconcileLinks, 20000);
