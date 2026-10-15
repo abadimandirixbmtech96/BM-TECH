@@ -1872,6 +1872,15 @@
   .note-detail-img { width: 42px; height: 42px; object-fit: cover; border-radius: 8px; display: block; cursor: pointer; transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
   .note-detail-img:active { transform: scale(0.92); }
   .note-detail-bukti-group { display: flex; gap: 6px; }
+  .jump-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .jump-chip { font: inherit; font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; border: 1px solid transparent; cursor: pointer; white-space: nowrap; transition: transform .15s, filter .15s; }
+  .jump-chip:active { transform: scale(.94); }
+  .jump-chip.take { background: rgba(59,130,246,.15); color: #60a5fa; border-color: rgba(59,130,246,.35); }
+  .jump-chip.pay { background: rgba(34,197,94,.15); color: #4ade80; border-color: rgba(34,197,94,.35); }
+  .jump-chip.back { background: rgba(245,158,11,.15); color: #fbbf24; border-color: rgba(245,158,11,.35); }
+  @keyframes jumpHl { 0%,60% { background: rgba(250,204,21,.35); } 100% { background: transparent; } }
+  .note-detail-table tbody tr.jump-hl td { animation: jumpHl 2.2s ease-out; }
+
 
   .note-detail-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
@@ -4104,7 +4113,11 @@
             _linked: !!(Array.isArray(r.ambilDari) && r.ambilDari.length),
             _payAll: (r.pickups ? Object.values(r.pickups) : []).some(p => p && p.paid && p.payItems == null),
             _payKeys: (r.pickups ? Object.values(r.pickups) : []).reduce((a, p) => (p && p.paid && Array.isArray(p.payItems)) ? a.concat(p.payItems) : a, []),
-            _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
+            _buktiAll: Array.isArray(r.bukti) ? r.bukti : [],
+            _nid: note.id || '',
+            _rid: r.id || '',
+            _pk: (r.pickups && typeof r.pickups === 'object') ? Object.keys(r.pickups).map(k => ({ recordId: k, ...r.pickups[k] })).filter(p => p && p.noteId) : [],
+            _from: Array.isArray(r.ambilDari) ? r.ambilDari.filter(l => l && l.noteId && l.recordId) : []
           }
         };
       });
@@ -6405,6 +6418,49 @@
   const noteDetailOverlay = document.getElementById('noteDetailOverlay');
   let currentDetailNote = null;
 
+  // ---- Pintasan titipan <-> pengambilan/pembayaran ----
+  function fmtJumpDate(iso) {
+    const d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d)) return '';
+    const p = n => String(n).padStart(2, '0');
+    return `${p(d.getDate())}-${p(d.getMonth() + 1)}-${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function jumpChipsHtml(cells) {
+    if (!cells) return '';
+    const out = [];
+    (cells._pk || []).slice().sort((a, b) => new Date(a.at) - new Date(b.at)).forEach(p => {
+      const bayar = p.mode === 'bayar';
+      const lunas = !!p.paid;
+      const label = bayar ? 'Dibayar' : (lunas ? 'Diambil & dibayar' : 'Diambil');
+      const ico = bayar ? '💰' : (lunas ? '✅' : '📦');
+      const what = Array.isArray(p.names) && p.names.length ? ` (${p.names.join(', ')})` : '';
+      out.push(`<button type="button" class="jump-chip ${bayar || lunas ? 'pay' : 'take'}" data-jn="${escapeHtml(p.noteId)}" data-jr="${escapeHtml(p.recordId)}" title="Buka data ${label.toLowerCase()}">${ico} ${label} ${escapeHtml(fmtJumpDate(p.at))}${escapeHtml(what)} ↗</button>`);
+    });
+    (cells._from || []).forEach(l => {
+      const bayar = l.mode === 'bayar';
+      out.push(`<button type="button" class="jump-chip back" data-jn="${escapeHtml(l.noteId)}" data-jr="${escapeHtml(l.recordId)}" title="Kembali ke data titipan">↩ ${bayar ? 'Bayar' : 'Ambil'} titipan tgl ${escapeHtml(l.tgl || '?')}${l.label ? ' · ' + escapeHtml(l.label) : ''}</button>`);
+    });
+    return out.length ? `<div class="jump-chips">${out.join('')}</div>` : '';
+  }
+  function jumpToRecord(noteId, recId) {
+    const note = notesData.find(n => n.id === noteId);
+    if (!note) { showLiquidAlert('Data Tidak Ditemukan', 'Note tujuan sudah dihapus atau belum termuat.'); return; }
+    openNoteDetail(noteId);
+    const wrap = document.querySelector('.note-detail-table-wrap');
+    const tr = Array.from(document.querySelectorAll('#noteDetailTable tbody tr[data-rid]')).find(t => t.dataset.rid === recId);
+    if (!tr) { showLiquidAlert('Baris Tidak Ditemukan', 'Baris tujuan tidak ada di note ini (mungkin sudah dihapus).'); return; }
+    setTimeout(() => {
+      tr.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      tr.classList.remove('jump-hl'); void tr.offsetWidth; tr.classList.add('jump-hl');
+    }, 60);
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('.jump-chip');
+    if (!b) return;
+    e.stopPropagation();
+    jumpToRecord(b.dataset.jn, b.dataset.jr);
+  });
+
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId);
     if (!note) return;
@@ -6421,8 +6477,10 @@
       const cols = content.columns;
       const theadHtml = '<thead><tr>' + cols.map(c => `<th>${escapeHtml(c.label || '')}</th>`).join('') + '</tr></thead>';
       const tbodyHtml = '<tbody>' + content.rows.map(row => {
-        return '<tr>' + cols.map(c => {
+        const rc = row.cells || {};
+        return `<tr${rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : ''}>` + cols.map(c => {
           const val = row.cells ? row.cells[c.id] : '';
+          if (c.id === 'barang') return `<td>${escapeHtml(val || '')}${jumpChipsHtml(rc)}</td>`;
           if (c.id === 'bukti') {
             const list = Array.isArray(row.cells && row.cells._buktiAll) ? row.cells._buktiAll : (val ? [val] : []);
             if (!list.length) return '<td></td>';
