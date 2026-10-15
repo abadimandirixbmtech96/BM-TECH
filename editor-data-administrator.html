@@ -3176,6 +3176,12 @@
     });
   }
 
+  // JSON dengan urutan kunci tetap (database jsonb mengacak urutan kunci, jadi JSON.stringify biasa selalu dianggap 'beda')
+  function stableJson(v){
+    if (Array.isArray(v)) return '[' + v.map(stableJson).join(',') + ']';
+    if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableJson(v[k])).join(',') + '}';
+    return JSON.stringify(v === undefined ? null : v);
+  }
   function applyLinkToOrigin(recs, job){
     const o = recs.find(r => r && r.id === job.link.recordId);
     if (!o) return false;
@@ -3204,7 +3210,7 @@
       paid
     };
     o.pickups = o.pickups || {};
-    if (JSON.stringify(o.pickups[pid]) !== JSON.stringify(entry)) {
+    if (stableJson(o.pickups[pid]) !== stableJson(entry)) {
       o.pickups[pid] = entry;
       changed = true;
     }
