@@ -2424,6 +2424,11 @@
   </div>
 
   <div class="settings-group">
+    <div class="settings-item" id="rowLanguage">
+      <span class="settings-item-title notranslate" translate="no" id="langTitle">Bahasa / Language</span>
+      <select id="langSelect" class="notranslate" translate="no" style="max-width:55%; background:transparent; color:var(--text-secondary); border:1px solid var(--card-border-dark); border-radius:10px; padding:6px 8px; font:inherit; font-size:13px;"></select>
+    </div>
+
     <div class="settings-item">
       <span class="settings-item-title">Dark Theme</span>
       <label class="switch">
@@ -3292,8 +3297,11 @@
     const t = amt < 0 ? 0 : 255, a = Math.abs(amt);
     return '#' + n.map(v => Math.round(v + (t - v) * a).toString(16).padStart(2, '0')).join('');
   }
-  function bookIcon(color) {
-    const c = color || '#D9A536';
+  function bookIcon(catOrColor) {
+    // Warna sama dengan penanda buku di kartu note (Buku Besar hijau, Kasbon oranye, dst.)
+    const c = (catOrColor && typeof catOrColor === 'object')
+      ? ((() => { try { return BOOK_COLORS[normalizeKey(catOrColor.name)]; } catch (e) { return null; } })() || catOrColor.color || '#D9A536')
+      : (catOrColor || '#D9A536');
     const dark = shadeHex(c, -0.32), light = shadeHex(c, 0.38), edge = shadeHex(c, -0.5);
     return `<svg class="book3d" viewBox="0 0 24 24" aria-hidden="true">
       <ellipse cx="12.6" cy="22.2" rx="8.2" ry="1.1" fill="rgba(0,0,0,.18)"/>
@@ -3351,7 +3359,7 @@
       return `
       <div class="folder-item ${cat.active ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
-          ${bookIcon(cat.color)}
+          ${bookIcon(cat)}
           <span>${escapeHtml(cat.name)}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
@@ -3387,7 +3395,7 @@
       return `
       <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
-          ${bookIcon(cat.color)}
+          ${bookIcon(cat)}
           <span>${escapeHtml(cat.name)}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
@@ -4814,7 +4822,7 @@
     const otherFolders = categoriesData.filter(c => c.id !== activeCategoryId);
     const folderOptions = otherFolders.map(cat => `
       <div class="nas-folder-row" data-folder-id="${cat.id}">
-        ${bookIcon(cat.color)}
+        ${bookIcon(cat)}
         <span>${escapeHtml(cat.name)}</span>
       </div>
     `).join('');
@@ -6156,7 +6164,7 @@
     const folderHtml = folderMatches.map(cat => `
       <div class="folder-item" data-type="folder" data-cat-id="${cat.id}">
         <div class="folder-item-left">
-          ${bookIcon(cat.color)}
+          ${bookIcon(cat)}
           <span>${highlightMatch(cat.name, term.trim())}</span>
         </div>
         <span class="folder-count">${cat.count || 0} &rsaquo;</span>
@@ -7305,5 +7313,63 @@
   }
 </script>
 <script src="/bm-swipe-back.js" defer></script>
+
+<!-- ===== Terjemahan otomatis (semua bahasa) — ikut bahasa HP, bisa diganti di Pengaturan ===== -->
+<style>
+  body{ top:0 !important; }
+  .goog-te-banner-frame, iframe.goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt, .goog-tooltip, .VIpgJd-ZVi9od-aZ2wEe-wOHMyf, .VIpgJd-ZVi9od-ORHb-OEVmcd, .skiptranslate > iframe{ display:none !important; visibility:hidden !important; }
+  .goog-text-highlight{ background:none !important; box-shadow:none !important; }
+  #google_translate_element{ position:absolute; width:0; height:0; overflow:hidden; opacity:0; pointer-events:none; }
+  font{ background:transparent !important; box-shadow:none !important; }
+</style>
+<div id="google_translate_element" class="notranslate" translate="no"></div>
+<script>
+(function(){
+  var KEY = 'bm_lang';
+  var LANGS = [['auto','Otomatis (ikut bahasa HP)'],['id','Bahasa Indonesia'],['en','English'],['ms','Bahasa Melayu'],['jw','Basa Jawa'],['su','Basa Sunda'],['zh-CN','中文 (简体)'],['zh-TW','中文 (繁體)'],['ja','日本語'],['ko','한국어'],['ar','العربية'],['hi','हिन्दी'],['bn','বাংলা'],['ur','اردو'],['fa','فارسی'],['es','Español'],['fr','Français'],['de','Deutsch'],['pt','Português'],['it','Italiano'],['nl','Nederlands'],['ru','Русский'],['uk','Українська'],['pl','Polski'],['tr','Türkçe'],['th','ไทย'],['vi','Tiếng Việt'],['tl','Filipino'],['sv','Svenska'],['el','Ελληνικά'],['he','עברית'],['sw','Kiswahili'],['ta','தமிழ்'],['te','తెలుగు'],['ro','Română'],['hu','Magyar'],['cs','Čeština']];
+  function stored(){ try { return localStorage.getItem(KEY) || 'auto'; } catch (e) { return 'auto'; } }
+  function deviceLang(){
+    var l = String((navigator.languages && navigator.languages[0]) || navigator.language || 'id').toLowerCase();
+    if (l === 'zh-tw' || l === 'zh-hk' || l === 'zh-hant') return 'zh-TW';
+    if (l.indexOf('zh') === 0) return 'zh-CN';
+    if (l === 'jv') return 'jw';
+    if (l === 'fil') return 'tl';
+    if (l === 'he' || l === 'iw') return 'he';
+    return l.split('-')[0];
+  }
+  function target(){ var s = stored(); return s === 'auto' ? deviceLang() : s; }
+  function setCookie(v){
+    var host = location.hostname, exp = v ? '' : ';expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    var val = v ? '/id/' + v : '';
+    document.cookie = 'googtrans=' + val + ';path=/' + exp;
+    if (host.indexOf('.') > -1) document.cookie = 'googtrans=' + val + ';path=/;domain=' + host + exp;
+  }
+  var t = target();
+  var on = !!t && t !== 'id';
+  setCookie(on ? t : '');
+  window.bmLang = {
+    list: LANGS, current: stored(),
+    set: function(v){ try { localStorage.setItem(KEY, v); } catch (e) {} setCookie(v === 'auto' ? (deviceLang() === 'id' ? '' : deviceLang()) : (v === 'id' ? '' : v)); location.reload(); }
+  };
+  if (!on) return;
+  window.googleTranslateElementInit = function(){
+    try { new google.translate.TranslateElement({ pageLanguage: 'id', autoDisplay: false }, 'google_translate_element'); } catch (e) {}
+  };
+  var sc = document.createElement('script');
+  sc.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+  sc.async = true;
+  document.head.appendChild(sc);
+})();
+</script>
+
+<script>
+(function(){
+  var sel = document.getElementById('langSelect');
+  if (!sel || !window.bmLang) return;
+  sel.innerHTML = window.bmLang.list.map(function(l){ return '<option value="' + l[0] + '">' + l[1] + '</option>'; }).join('');
+  sel.value = window.bmLang.current;
+  sel.addEventListener('change', function(){ window.bmLang.set(sel.value); });
+})();
+</script>
 </body>
 </html>
