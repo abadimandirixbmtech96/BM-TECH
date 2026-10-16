@@ -2339,7 +2339,7 @@
      ============================================================ */
   .segmented-tabs {
     --seg-text: #8e8e93;
-    --seg-text-lens: #1c1c1e;
+    --seg-text-lens: var(--accent-yellow);   /* warna sistem (diatur di System Management) */
     position: relative;
     display: flex;
     padding: 4px;
@@ -2479,7 +2479,7 @@
   /* TEMA GELAP: trek gelap netral; penanda tab terpilih LEBIH GELAP dari trek (seperti iOS 27); lensa kaca bening */
   body:not(.theme-light) .segmented-tabs {
     --seg-text: #8e8e93;
-    --seg-text-lens: #ffffff;
+    --seg-text-lens: var(--accent-yellow);
     background: linear-gradient(180deg, #2c2c2f 0%, #1f1f21 100%) !important;
     border: 1px solid rgba(255, 255, 255, .11) !important;
     box-shadow:
