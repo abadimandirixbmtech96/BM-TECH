@@ -2330,38 +2330,35 @@
   .nas-btn:active, .folder-empty-create-btn:active, .jump-chip:active { transform: scale(1.1) !important; }
 
   /* ============================================================
-     NAVIGASI ATAS Notes | Tasks — pil kaca + lensa kaca yang bisa digeser
-     Latar pil mengikuti tema sistem (gelap di tema gelap, terang di tema terang).
-     Tahan = lensa melebar & membesar; geser ke kiri/kanan untuk pindah tab.
+     NAVIGASI ATAS Notes | Tasks — pil hitam + lensa kaca cembung yang bisa digeser
+     Tepi lensa memantulkan warna yang ada di bawahnya (bukan warna buatan).
+     Tahan = lensa melebar & membesar; geser untuk pindah tab.
      ============================================================ */
-  :root { --nav-bg: rgba(12, 12, 14, .78); --nav-border: rgba(255,255,255,.16); --lens-bg: rgba(255,255,255,.13); --lens-rim: rgba(255,255,255,.5); --lens-shadow: rgba(0,0,0,.45); --nav-active: #FFFFFF; --nav-idle: rgba(255,255,255,.55); }
-  body.theme-light { --nav-bg: rgba(255,255,255,.62); --nav-border: rgba(255,255,255,.9); --lens-bg: rgba(255,255,255,.55); --lens-rim: rgba(255,255,255,.95); --lens-shadow: rgba(40,40,80,.22); --nav-active: #000000; --nav-idle: rgba(60,60,67,.6); }
-
   .segmented-tabs {
     position: relative;
     display: flex;
     padding: 4px;
     overflow: visible;
-    touch-action: pan-y;
-    background: var(--nav-bg) !important;
-    -webkit-backdrop-filter: blur(22px) saturate(1.7);
-    backdrop-filter: blur(22px) saturate(1.7);
-    border: 1px solid var(--nav-border);
-    box-shadow: inset 0 1px 1px rgba(255,255,255,.22), inset 0 -1px 2px rgba(0,0,0,.25), 0 8px 22px var(--glass-shadow);
+    background: rgba(8, 8, 10, .9) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;   /* penting: supaya lensa bisa "melihat" isi halaman di bawahnya */
+    border: 1px solid rgba(255, 255, 255, .1) !important;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.12), inset 0 -1px 2px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.28) !important;
   }
+  .segmented-tabs, .segmented-tabs * { touch-action: none; }
   .segmented-tabs .tab-btn {
     position: relative;
     z-index: 2;
     background: transparent !important;
     box-shadow: none !important;
-    color: var(--nav-idle);
+    color: rgba(255, 255, 255, .55);
     padding: 8px 22px;
     font-size: 14px;
     font-weight: 700;
-    transition: color .25s ease, transform .3s cubic-bezier(.34,1.56,.5,1);
+    transition: color .22s ease;
   }
-  .segmented-tabs .tab-btn.active { color: var(--nav-active); }
-  .segmented-tabs.holding .tab-btn.active { transform: scale(1.08); }
+  .segmented-tabs .tab-btn.active, .segmented-tabs .tab-btn.hov { color: #fff; }
+  .segmented-tabs .tab-btn:active { transform: none !important; filter: none !important; }
 
   .seg-lens {
     position: absolute;
@@ -2372,24 +2369,29 @@
     pointer-events: none;
     transform: translateX(var(--lx, 0px)) scale(var(--lsx, 1), var(--lsy, 1));
     transform-origin: 50% 50%;
-    background:
-      radial-gradient(130% 90% at 25% -15%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 55%),
-      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04)),
-      var(--lens-bg);
-    -webkit-backdrop-filter: blur(5px) saturate(2) brightness(1.18);
-    backdrop-filter: blur(5px) saturate(2) brightness(1.18);
-    border: 1px solid var(--lens-rim);
+    background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,.04) 55%, rgba(255,255,255,.08) 100%);
+    border: 1px solid rgba(255, 255, 255, .32);
     box-shadow:
-      inset 0 1.5px 1px rgba(255,255,255,.7),
-      inset 0 -2px 3px rgba(255,255,255,.18),
-      inset 3px 0 4px rgba(90,130,255,.38),
-      inset -3px 0 4px rgba(255,90,130,.26),
-      0 8px 20px var(--lens-shadow);
+      inset 0 1.5px 1px rgba(255,255,255,.75),
+      inset 0 -1.5px 1px rgba(255,255,255,.3),
+      0 8px 20px rgba(0,0,0,.42);
     transition: transform .5s cubic-bezier(.34, 1.45, .5, 1), width .4s cubic-bezier(.34, 1.45, .5, 1), box-shadow .3s ease;
     will-change: transform;
   }
-  .segmented-tabs.holding .seg-lens { --lsx: 1.2; --lsy: 1.34; box-shadow: inset 0 1.5px 1px rgba(255,255,255,.8), inset 0 -2px 3px rgba(255,255,255,.22), inset 4px 0 5px rgba(90,130,255,.5), inset -4px 0 5px rgba(255,90,130,.36), 0 14px 30px var(--lens-shadow); }
-  .segmented-tabs.dragging .seg-lens { transition: transform .5s cubic-bezier(.34, 1.45, .5, 1) 0s, box-shadow .3s; transition-property: box-shadow; }
+  /* tepi cembung: hanya cincin tepi yang memantulkan/memperkuat warna di bawahnya */
+  .seg-ring {
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 6px;
+    -webkit-backdrop-filter: blur(6px) saturate(2.4) brightness(1.5) contrast(1.1);
+    backdrop-filter: blur(6px) saturate(2.4) brightness(1.5) contrast(1.1);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    pointer-events: none;
+  }
+  .segmented-tabs.holding .seg-lens { --lsx: 1.22; --lsy: 1.36; box-shadow: inset 0 1.5px 1px rgba(255,255,255,.85), inset 0 -1.5px 1px rgba(255,255,255,.38), 0 14px 30px rgba(0,0,0,.5); }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -7476,63 +7478,75 @@
   if (!tabs.length) return;
   var lens = document.createElement('div');
   lens.className = 'seg-lens';
+  lens.innerHTML = '<div class="seg-ring"></div>';
   nav.insertBefore(lens, nav.firstChild);
 
   function activeTab(){ return tabs.filter(function(t){ return t.classList.contains('active'); })[0] || tabs[0]; }
+  function setLens(x, w){ lens.style.setProperty('--lx', x + 'px'); if (w != null) lens.style.setProperty('--lw', w + 'px'); }
   function place(btn, instant){
     if (!btn || !btn.offsetWidth) return;
-    if (instant) { lens.style.transition = 'none'; }
-    lens.style.setProperty('--lx', btn.offsetLeft + 'px');
-    lens.style.setProperty('--lw', btn.offsetWidth + 'px');
+    if (instant) lens.style.transition = 'none';
+    setLens(btn.offsetLeft, btn.offsetWidth);
     if (instant) { void lens.offsetWidth; lens.style.transition = ''; }
   }
-  var dragging = false, holding = false, startX = 0, startLeft = 0, pid = null;
+  var holding = false, dragging = false, startX = 0, pid = null;
   function sync(){ if (!dragging) place(activeTab(), false); }
-
   new MutationObserver(sync).observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
-  if (window.ResizeObserver) new ResizeObserver(function(){ place(activeTab(), true); }).observe(nav);
+  if (window.ResizeObserver) new ResizeObserver(function(){ if (!dragging) place(activeTab(), true); }).observe(nav);
   window.addEventListener('resize', function(){ place(activeTab(), true); });
   window.addEventListener('load', function(){ place(activeTab(), true); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ place(activeTab(), true); });
   setTimeout(function(){ place(activeTab(), true); }, 60);
 
+  function nearest(cx){
+    var best = tabs[0], bd = 1e9;
+    tabs.forEach(function(t){ var d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx); if (d < bd) { bd = d; best = t; } });
+    return best;
+  }
+  // posisi lensa mengikuti jari secara langsung (titik tengah lensa = posisi jari)
+  function follow(clientX){
+    var nr = nav.getBoundingClientRect();
+    var w = activeTab().offsetWidth;
+    var min = tabs[0].offsetLeft, max = tabs[tabs.length - 1].offsetLeft + tabs[tabs.length - 1].offsetWidth - w;
+    var x = Math.max(min, Math.min(max, clientX - nr.left - w / 2));
+    lens.style.transition = 'box-shadow .3s ease, width .3s ease';
+    setLens(x, w);
+    var near = nearest(x + w / 2);
+    tabs.forEach(function(t){ t.classList.toggle('hov', t === near); });
+  }
   nav.addEventListener('pointerdown', function(e){
-    holding = true; dragging = false; pid = e.pointerId;
-    startX = e.clientX; startLeft = activeTab().offsetLeft;
+    holding = true; dragging = false; pid = e.pointerId; startX = e.clientX;
     nav.classList.add('holding');
+    try { nav.setPointerCapture(pid); } catch (err) {}
   });
   nav.addEventListener('pointermove', function(e){
     if (!holding) return;
-    var dx = e.clientX - startX;
-    if (!dragging && Math.abs(dx) > 5) {
-      dragging = true; nav.classList.add('dragging');
-      try { nav.setPointerCapture(pid); } catch (err) {}
-    }
-    if (dragging) {
-      var w = activeTab().offsetWidth;
-      var min = tabs[0].offsetLeft, max = tabs[tabs.length - 1].offsetLeft + tabs[tabs.length - 1].offsetWidth - w;
-      var x = Math.max(min, Math.min(max, startLeft + dx));
-      lens.style.transition = 'box-shadow .3s ease';
-      lens.style.setProperty('--lx', x + 'px');
-    }
+    if (!dragging && Math.abs(e.clientX - startX) > 4) { dragging = true; nav.classList.add('dragging'); }
+    if (dragging) follow(e.clientX);
   });
-  function end(){
+  function end(e){
     if (!holding) return;
-    var wasDrag = dragging;
+    var wasDrag = dragging, upX = e && e.clientX != null ? e.clientX : startX;
     holding = false; dragging = false;
     nav.classList.remove('holding'); nav.classList.remove('dragging');
+    tabs.forEach(function(t){ t.classList.remove('hov'); });
     lens.style.transition = '';
+    try { nav.releasePointerCapture(pid); } catch (err) {}
+    var target = null;
     if (wasDrag) {
       var cx = parseFloat(lens.style.getPropertyValue('--lx')) + activeTab().offsetWidth / 2;
-      var best = tabs[0], bd = 1e9;
-      tabs.forEach(function(t){ var d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx); if (d < bd) { bd = d; best = t; } });
-      if (best !== activeTab()) best.click();
+      target = nearest(cx);
+    } else if (e && e.type === 'pointerup') {
+      // ketukan biasa: pilih tab yang disentuh (karena pointer capture, klik bawaan tidak sampai ke tombol)
+      var nr = nav.getBoundingClientRect();
+      var el = document.elementFromPoint(upX, nr.top + nr.height / 2);
+      target = (el && el.closest && el.closest('.tab-btn')) || nearest(upX - nr.left);
     }
+    if (target && target !== activeTab()) target.click();
     place(activeTab(), false);
   }
   nav.addEventListener('pointerup', end);
   nav.addEventListener('pointercancel', end);
-  nav.addEventListener('lostpointercapture', end);
 })();
 </script>
 <script src="/bm-swipe-back.js" defer></script>
