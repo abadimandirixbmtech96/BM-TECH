@@ -2392,6 +2392,26 @@
     pointer-events: none;
   }
   .segmented-tabs.holding .seg-lens { --lsx: 1.22; --lsy: 1.36; box-shadow: inset 0 1.5px 1px rgba(255,255,255,.85), inset 0 -1.5px 1px rgba(255,255,255,.38), 0 14px 30px rgba(0,0,0,.5); }
+
+  /* Ikut tema sistem: tema terang → pil putih, teks gelap */
+  body.theme-light .segmented-tabs {
+    background: rgba(255, 255, 255, .88) !important;
+    border: 1px solid rgba(0, 0, 0, .08) !important;
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.9), inset 0 -1px 2px rgba(0,0,0,.06), 0 8px 22px rgba(0,0,0,.10) !important;
+  }
+  body.theme-light .segmented-tabs .tab-btn { color: rgba(0, 0, 0, .45); }
+  body.theme-light .segmented-tabs .tab-btn.active,
+  body.theme-light .segmented-tabs .tab-btn.hov { color: #000; }
+  body.theme-light .seg-lens {
+    background: linear-gradient(180deg, rgba(0,0,0,.07) 0%, rgba(0,0,0,.02) 55%, rgba(0,0,0,.05) 100%);
+    border: 1px solid rgba(0, 0, 0, .14);
+    box-shadow: inset 0 1.5px 1px rgba(255,255,255,.95), inset 0 -1.5px 1px rgba(0,0,0,.10), 0 6px 16px rgba(0,0,0,.14);
+  }
+  body.theme-light .seg-ring {
+    -webkit-backdrop-filter: blur(6px) saturate(2.2) brightness(.9) contrast(1.05);
+    backdrop-filter: blur(6px) saturate(2.2) brightness(.9) contrast(1.05);
+  }
+  body.theme-light .segmented-tabs.holding .seg-lens { box-shadow: inset 0 1.5px 1px rgba(255,255,255,1), inset 0 -1.5px 1px rgba(0,0,0,.14), 0 12px 26px rgba(0,0,0,.2); }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
