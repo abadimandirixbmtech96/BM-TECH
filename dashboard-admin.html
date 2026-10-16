@@ -2330,34 +2330,50 @@
   .nas-btn:active, .folder-empty-create-btn:active, .jump-chip:active { transform: scale(1.1) !important; }
 
   /* ============================================================
-     NAVIGASI ATAS Notes | Tasks — pil hitam + lensa kaca cembung yang bisa digeser
-     Tepi lensa memantulkan warna yang ada di bawahnya (bukan warna buatan).
-     Tahan = lensa melebar & membesar; geser untuk pindah tab.
+     NAVIGASI ATAS Notes | Tasks
+     DIAM    : pil lembut ala neumorphism (permukaan terang, bayangan halus), tanpa lensa.
+     DISENTUH: lensa kaca cembung muncul di atas tab aktif, melebar & menonjol keluar pil
+               (gaya Liquid Glass iOS). Tahan lalu geser untuk pindah tab; lepas = lensa
+               meluncur ke tab tujuan lalu memudar.
      ============================================================ */
   .segmented-tabs {
+    --seg-text: #8a92a1;
+    --seg-text-on: #596173;
+    --seg-text-lens: #1d2330;
     position: relative;
     display: flex;
     padding: 4px;
     overflow: visible;
-    background: rgba(8, 8, 10, .9) !important;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #fafbfc 0%, #eff1f4 55%, #e9ecf0 100%) !important;
     -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;   /* penting: supaya lensa bisa "melihat" isi halaman di bawahnya */
-    border: 1px solid rgba(255, 255, 255, .1) !important;
-    box-shadow: inset 0 1px 1px rgba(255,255,255,.12), inset 0 -1px 2px rgba(0,0,0,.5), 0 8px 22px rgba(0,0,0,.28) !important;
+    backdrop-filter: none !important;   /* penting: backdrop-filter di induk membatasi apa yang bisa dilihat anaknya */
+    border: 1px solid rgba(255, 255, 255, .95) !important;
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, .95),
+      inset 0 -4px 8px rgba(176, 184, 200, .30),
+      inset 3px 0 6px rgba(255, 255, 255, .55),
+      inset -3px 0 6px rgba(255, 255, 255, .55),
+      0 14px 26px -10px rgba(98, 110, 138, .38),
+      0 2px 6px rgba(98, 110, 138, .12) !important;
   }
   .segmented-tabs, .segmented-tabs * { touch-action: none; }
   .segmented-tabs .tab-btn {
     position: relative;
     z-index: 2;
+    min-width: 88px;
+    text-align: center;
     background: transparent !important;
     box-shadow: none !important;
-    color: rgba(255, 255, 255, .55);
-    padding: 8px 22px;
-    font-size: 14px;
-    font-weight: 700;
-    transition: color .22s ease;
+    color: var(--seg-text);
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    transition: color .25s ease;
   }
-  .segmented-tabs .tab-btn.active, .segmented-tabs .tab-btn.hov { color: #fff; }
+  .segmented-tabs .tab-btn.active { color: var(--seg-text-on); }
+  .segmented-tabs .tab-btn.hov { color: var(--seg-text-lens); }
   .segmented-tabs .tab-btn:active { transform: none !important; filter: none !important; }
 
   @property --lx  { syntax: '<length>'; inherits: true; initial-value: 0px; }
@@ -2365,8 +2381,10 @@
   @property --lsx { syntax: '<number>'; inherits: true; initial-value: 1; }
   @property --lsy { syntax: '<number>'; inherits: true; initial-value: 1; }
 
-  /* Gelembung kaca: badan transparan, tepi memantulkan warna di bawahnya, kilau putih, teks di dalamnya berwarna sistem */
+  /* Lensa kaca. Saat diam: tak terlihat & sedikit mengecil. Saat ditahan: muncul dan menonjol keluar pil. */
   .seg-lens {
+    --lsx: .92;
+    --lsy: .74;
     position: absolute;
     top: 4px; bottom: 4px; left: 0;
     width: var(--lw, 0px);
@@ -2374,21 +2392,41 @@
     z-index: 3;
     overflow: hidden;
     pointer-events: none;
+    opacity: 0;
     transform: translateX(var(--lx, 0px)) scale(var(--lsx, 1), var(--lsy, 1));
     transform-origin: 50% 50%;
     background:
-      radial-gradient(130% 160% at 50% 30%, rgba(255,255,255,.03) 0%, rgba(255,255,255,.06) 55%, rgba(255,255,255,.22) 100%);
-    border: 1px solid rgba(255, 255, 255, .38);
+      radial-gradient(120% 150% at 50% 32%, rgba(228, 238, 250, .97) 0%, rgba(212, 227, 245, .97) 58%, rgba(190, 209, 234, .97) 100%);
+    border: 1px solid rgba(255, 255, 255, .92);
     box-shadow:
-      inset 0 2px 3px rgba(255,255,255,.6),
-      inset 0 -3px 5px rgba(255,255,255,.28),
-      inset 4px 0 7px rgba(255,255,255,.12),
-      inset -4px 0 7px rgba(255,255,255,.12),
-      0 8px 20px rgba(0,0,0,.4);
-    transition: --lx .5s cubic-bezier(.34,1.45,.5,1), --lw .4s cubic-bezier(.34,1.45,.5,1), --lsx .4s cubic-bezier(.34,1.5,.5,1), --lsy .4s cubic-bezier(.34,1.5,.5,1), box-shadow .3s ease;
-    will-change: transform;
+      inset 0 3px 5px rgba(255, 255, 255, .95),
+      inset 0 -5px 9px rgba(122, 152, 196, .38),
+      inset 4px 0 8px rgba(255, 255, 255, .55),
+      inset -4px 0 8px rgba(255, 255, 255, .55),
+      0 12px 26px rgba(78, 98, 138, .30),
+      0 2px 5px rgba(78, 98, 138, .16);
+    transition:
+      --lx .5s cubic-bezier(.34, 1.4, .5, 1),
+      --lw .4s cubic-bezier(.34, 1.4, .5, 1),
+      --lsx .5s cubic-bezier(.34, 1.6, .5, 1),
+      --lsy .5s cubic-bezier(.34, 1.6, .5, 1),
+      opacity .32s ease .14s;            /* jeda kecil: lensa sempat meluncur ke tab tujuan sebelum memudar */
+    will-change: transform, opacity;
   }
-  /* teks salinan berwarna sistem: hanya terlihat di dalam gelembung, dibalik skalanya supaya tidak melar */
+  .segmented-tabs.holding .seg-lens {
+    --lsx: 1.16;
+    --lsy: 1.42;
+    opacity: 1;
+    transition:
+      --lx .5s cubic-bezier(.34, 1.4, .5, 1),
+      --lw .4s cubic-bezier(.34, 1.4, .5, 1),
+      --lsx .5s cubic-bezier(.34, 1.6, .5, 1),
+      --lsy .5s cubic-bezier(.34, 1.6, .5, 1),
+      opacity .12s ease;
+  }
+  .segmented-tabs.dragging .seg-lens { transition: --lw .3s ease, --lsx .5s cubic-bezier(.34, 1.6, .5, 1), --lsy .5s cubic-bezier(.34, 1.6, .5, 1), opacity .12s ease; }
+
+  /* Salinan label di dalam lensa (gelap, tajam); skalanya dibalik supaya huruf tidak melar */
   .seg-txt {
     position: absolute;
     top: -1px;
@@ -2401,48 +2439,74 @@
     transform: scale(calc(1 / var(--lsx, 1)), calc(1 / var(--lsy, 1)));
     transform-origin: calc(var(--lx, 0px) + var(--lw, 0px) / 2) 50%;
   }
-  .seg-txt .tab-btn { color: var(--accent-yellow) !important; transition: none !important; background: transparent !important; box-shadow: none !important; pointer-events: none; }
-  /* tepi cembung: cincin yang memantulkan warna halaman di bawahnya */
+  .segmented-tabs .seg-txt .tab-btn {
+    color: var(--seg-text-lens) !important;
+    transition: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    pointer-events: none;
+  }
+  /* Garis tepi dalam: membentuk kesan tebal kaca (dua garis di pinggir lensa seperti pada referensi) */
   .seg-ring {
     position: absolute;
-    inset: 0;
+    inset: 3px;
     border-radius: inherit;
-    padding: 5px;
-    -webkit-backdrop-filter: blur(5px) saturate(2.4) brightness(1.5) contrast(1.1);
-    backdrop-filter: blur(5px) saturate(2.4) brightness(1.5) contrast(1.1);
+    padding: 1.2px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, .95) 0%, rgba(150, 180, 222, .55) 48%, rgba(255, 255, 255, .85) 100%);
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
     pointer-events: none;
+    opacity: .85;
   }
+  /* Kilau: pita cahaya di atas dan pantulan lembut di bawah */
   .seg-glint-a, .seg-glint-b {
     position: absolute;
     border-radius: 50%;
     pointer-events: none;
   }
-  .seg-glint-a { left: 9%; top: 7%; width: 38%; height: 30%; transform: rotate(-6deg); background: radial-gradient(ellipse at 50% 50%, rgba(255,255,255,.9) 0%, rgba(255,255,255,.35) 45%, rgba(255,255,255,0) 72%); }
-  .seg-glint-b { right: 10%; bottom: 8%; width: 30%; height: 26%; background: radial-gradient(ellipse at 60% 60%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 70%); }
-  .segmented-tabs.holding .seg-lens { --lsx: 1.22; --lsy: 1.36; box-shadow: inset 0 2px 3px rgba(255,255,255,.75), inset 0 -3px 5px rgba(255,255,255,.35), inset 4px 0 7px rgba(255,255,255,.16), inset -4px 0 7px rgba(255,255,255,.16), 0 14px 30px rgba(0,0,0,.5); }
+  .seg-glint-a {
+    left: 12%; top: 7%; width: 76%; height: 36%;
+    background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .85) 0%, rgba(255, 255, 255, .35) 50%, rgba(255, 255, 255, 0) 78%);
+  }
+  .seg-glint-b {
+    left: 20%; bottom: 6%; width: 60%; height: 24%;
+    background: radial-gradient(ellipse at 50% 60%, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, 0) 72%);
+  }
 
-  /* Ikut tema sistem: tema terang → pil putih, teks gelap */
-  body.theme-light .segmented-tabs {
-    background: rgba(255, 255, 255, .88) !important;
-    border: 1px solid rgba(0, 0, 0, .08) !important;
-    box-shadow: inset 0 1px 1px rgba(255,255,255,.9), inset 0 -1px 2px rgba(0,0,0,.06), 0 8px 22px rgba(0,0,0,.10) !important;
+  /* TEMA GELAP: pil gelap lembut + lensa kaca kebiruan */
+  body:not(.theme-light) .segmented-tabs {
+    --seg-text: #8b8e99;
+    --seg-text-on: #d3d6e0;
+    --seg-text-lens: #ffffff;
+    background: linear-gradient(180deg, #2d2e34 0%, #212227 55%, #1b1c20 100%) !important;
+    border: 1px solid rgba(255, 255, 255, .09) !important;
+    box-shadow:
+      inset 0 1.5px 2px rgba(255, 255, 255, .14),
+      inset 0 -4px 8px rgba(0, 0, 0, .45),
+      0 14px 28px -8px rgba(0, 0, 0, .65),
+      0 2px 6px rgba(0, 0, 0, .35) !important;
   }
-  body.theme-light .segmented-tabs .tab-btn { color: rgba(0, 0, 0, .45); }
-  body.theme-light .segmented-tabs .tab-btn.active,
-  body.theme-light .segmented-tabs .tab-btn.hov { color: #000; }
-  body.theme-light .seg-lens {
-    background: radial-gradient(130% 160% at 50% 25%, rgba(255,255,255,.35) 0%, rgba(120,130,150,.07) 60%, rgba(0,0,0,.10) 100%);
-    border: 1px solid rgba(0, 0, 0, .12);
-    box-shadow: inset 0 2px 3px rgba(255,255,255,1), inset 0 -4px 6px rgba(0,0,0,.14), inset 4px 0 7px rgba(255,255,255,.7), inset -4px 0 7px rgba(255,255,255,.7), 0 6px 16px rgba(0,0,0,.14);
+  body:not(.theme-light) .seg-lens {
+    background: radial-gradient(120% 150% at 50% 32%, rgba(104, 128, 170, .97) 0%, rgba(80, 102, 142, .97) 58%, rgba(60, 80, 116, .97) 100%);
+    border: 1px solid rgba(255, 255, 255, .45);
+    box-shadow:
+      inset 0 3px 5px rgba(255, 255, 255, .5),
+      inset 0 -5px 9px rgba(20, 30, 60, .45),
+      inset 4px 0 8px rgba(255, 255, 255, .18),
+      inset -4px 0 8px rgba(255, 255, 255, .18),
+      0 14px 28px rgba(0, 0, 0, .55),
+      0 2px 5px rgba(0, 0, 0, .3);
   }
-  body.theme-light .seg-ring {
-    -webkit-backdrop-filter: blur(5px) saturate(2.2) brightness(.92) contrast(1.05);
-    backdrop-filter: blur(5px) saturate(2.2) brightness(.92) contrast(1.05);
+  body:not(.theme-light) .seg-ring {
+    background: linear-gradient(165deg, rgba(255, 255, 255, .6) 0%, rgba(150, 180, 230, .3) 48%, rgba(255, 255, 255, .5) 100%);
   }
-  body.theme-light .segmented-tabs.holding .seg-lens { box-shadow: inset 0 2px 3px rgba(255,255,255,1), inset 0 -3px 5px rgba(0,0,0,.12), inset 4px 0 7px rgba(255,255,255,.8), inset -4px 0 7px rgba(255,255,255,.8), 0 12px 26px rgba(0,0,0,.2); }
+  body:not(.theme-light) .seg-glint-a { background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .45) 0%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, 0) 78%); }
+  body:not(.theme-light) .seg-glint-b { background: radial-gradient(ellipse at 50% 60%, rgba(255, 255, 255, .2) 0%, rgba(255, 255, 255, 0) 72%); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .seg-lens, .segmented-tabs.holding .seg-lens { transition: opacity .15s ease; }
+  }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
