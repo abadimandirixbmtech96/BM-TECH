@@ -2370,8 +2370,8 @@
     letter-spacing: -0.01em;
     transition: color .25s ease;
   }
-  .segmented-tabs .tab-btn.active,
-  .segmented-tabs .tab-btn.hov { color: var(--seg-text-lens); }
+  /* Label asli selalu abu-abu netral. Warna sistem HANYA muncul pada salinan label di dalam pil kaca (.seg-txt),
+     jadi saat pil digeser ke tab lain, warnanya ikut pindah dan label yang ditinggalkan kembali abu-abu. */
   .segmented-tabs .tab-btn:active { transform: none !important; filter: none !important; }
 
   @property --lx  { syntax: '<length>'; inherits: true; initial-value: 0px; }
