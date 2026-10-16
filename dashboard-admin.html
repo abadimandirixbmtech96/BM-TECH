@@ -2361,13 +2361,13 @@
   .segmented-tabs .tab-btn {
     position: relative;
     z-index: 2;
-    min-width: 88px;
+    min-width: 76px;
     text-align: center;
     background: transparent !important;
     box-shadow: none !important;
     color: var(--seg-text);
-    padding: 10px 24px;
-    font-size: 15px;
+    padding: 8px 18px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: -0.01em;
     transition: color .25s ease;
@@ -2383,8 +2383,8 @@
 
   /* Lensa kaca. Saat diam: tak terlihat & sedikit mengecil. Saat ditahan: muncul dan menonjol keluar pil. */
   .seg-lens {
-    --lsx: .92;
-    --lsy: .74;
+    --lsx: .97;
+    --lsy: .9;
     position: absolute;
     top: 4px; bottom: 4px; left: 0;
     width: var(--lw, 0px);
@@ -2392,20 +2392,19 @@
     z-index: 3;
     overflow: hidden;
     pointer-events: none;
-    opacity: 0;
+    opacity: 1;
     transform: translateX(var(--lx, 0px)) scale(var(--lsx, 1), var(--lsy, 1));
     transform-origin: 50% 50%;
     background:
       radial-gradient(120% 150% at 50% 32%, rgba(228, 238, 250, .97) 0%, rgba(212, 227, 245, .97) 58%, rgba(190, 209, 234, .97) 100%);
     border: 1px solid rgba(255, 255, 255, .92);
     box-shadow:
-      inset 0 3px 5px rgba(255, 255, 255, .95),
-      inset 0 -5px 9px rgba(122, 152, 196, .38),
-      inset 4px 0 8px rgba(255, 255, 255, .55),
-      inset -4px 0 8px rgba(255, 255, 255, .55),
-      0 12px 26px rgba(78, 98, 138, .30),
-      0 2px 5px rgba(78, 98, 138, .16);
+      inset 0 2px 3px rgba(255, 255, 255, .95),
+      inset 0 -3px 6px rgba(122, 152, 196, .30),
+      0 4px 10px rgba(78, 98, 138, .16),
+      0 1px 2px rgba(78, 98, 138, .12);
     transition:
+      box-shadow .35s ease,
       --lx .5s cubic-bezier(.34, 1.4, .5, 1),
       --lw .4s cubic-bezier(.34, 1.4, .5, 1),
       --lsx .5s cubic-bezier(.34, 1.6, .5, 1),
@@ -2417,7 +2416,15 @@
     --lsx: 1.16;
     --lsy: 1.42;
     opacity: 1;
+    box-shadow:
+      inset 0 3px 5px rgba(255, 255, 255, .95),
+      inset 0 -5px 9px rgba(122, 152, 196, .38),
+      inset 4px 0 8px rgba(255, 255, 255, .55),
+      inset -4px 0 8px rgba(255, 255, 255, .55),
+      0 12px 26px rgba(78, 98, 138, .30),
+      0 2px 5px rgba(78, 98, 138, .16);
     transition:
+      box-shadow .3s ease,
       --lx .5s cubic-bezier(.34, 1.4, .5, 1),
       --lw .4s cubic-bezier(.34, 1.4, .5, 1),
       --lsx .5s cubic-bezier(.34, 1.6, .5, 1),
@@ -2457,8 +2464,10 @@
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
     pointer-events: none;
-    opacity: .85;
+    opacity: .6;
+    transition: opacity .3s ease;
   }
+  .segmented-tabs.holding .seg-ring { opacity: .9; }
   /* Kilau: pita cahaya di atas dan pantulan lembut di bawah */
   .seg-glint-a, .seg-glint-b {
     position: absolute;
@@ -2490,6 +2499,12 @@
   body:not(.theme-light) .seg-lens {
     background: radial-gradient(120% 150% at 50% 32%, rgba(104, 128, 170, .97) 0%, rgba(80, 102, 142, .97) 58%, rgba(60, 80, 116, .97) 100%);
     border: 1px solid rgba(255, 255, 255, .45);
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, .4),
+      inset 0 -3px 6px rgba(20, 30, 60, .4),
+      0 4px 10px rgba(0, 0, 0, .4);
+  }
+  body:not(.theme-light) .segmented-tabs.holding .seg-lens {
     box-shadow:
       inset 0 3px 5px rgba(255, 255, 255, .5),
       inset 0 -5px 9px rgba(20, 30, 60, .45),
