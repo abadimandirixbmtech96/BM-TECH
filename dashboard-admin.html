@@ -2277,7 +2277,7 @@
   /* ============================================================
      LIQUID GLASS NYATA: lapisan kaca + kilau tepi + sorot cahaya
      ============================================================ */
-  .header-btn, .segmented-tabs, .search-pill, .btn-compose-pencil, .settings-back-btn, .drawer-foot-btn {
+  .header-btn, .search-pill, .btn-compose-pencil, .settings-back-btn, .drawer-foot-btn {
     position: relative;
     background:
       linear-gradient(145deg, var(--glass-hi) 0%, var(--glass-lo) 38%, rgba(255,255,255,0.04) 62%, var(--glass-lo) 100%),
@@ -2298,7 +2298,7 @@
       linear-gradient(145deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.4) 40%, rgba(255,255,255,.18) 62%, rgba(255,255,255,.55) 100%),
       rgba(255,255,255,.3) !important;
   }
-  .header-btn::before, .search-pill::before, .btn-compose-pencil::before, .settings-back-btn::before, .drawer-foot-btn::before, .segmented-tabs::before {
+  .header-btn::before, .search-pill::before, .btn-compose-pencil::before, .settings-back-btn::before, .drawer-foot-btn::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -2309,15 +2309,14 @@
       radial-gradient(90% 70% at 85% 115%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 60%);
     opacity: .85;
   }
-  .header-btn > *, .search-pill > *, .btn-compose-pencil > *, .settings-back-btn > *, .drawer-foot-btn > *, .segmented-tabs > * { position: relative; z-index: 1; }
+  .header-btn > *, .search-pill > *, .btn-compose-pencil > *, .settings-back-btn > *, .drawer-foot-btn > * { position: relative; z-index: 1; }
   .hdr-filter-btn { overflow: visible; }
   .hdr-filter-btn .tasks-filter-badge { z-index: 2; }
-  .tab-btn.active { box-shadow: inset 0 1px 1px rgba(255,255,255,.55), 0 4px 14px var(--accent-yellow-glow); }
 
   /* ============================================================
      SENTUH / TAHAN = MEMBESAR (gaya iOS), bukan mengecil
      ============================================================ */
-  .header-btn, .search-pill, .btn-compose-pencil, .tab-btn, .settings-back-btn, .drawer-foot-btn,
+  .header-btn, .search-pill, .btn-compose-pencil, .settings-back-btn, .drawer-foot-btn,
   .sel-bar-btn, .btn-share-note, .btn-edit-note, .karyawan-add-btn, .customer-add-btn, .btn-create-category,
   .btn-new-folder-complete, .nas-btn, .folder-empty-create-btn, .jump-chip, .btn-select-all {
     transition: transform .38s cubic-bezier(.34, 1.7, .5, 1), background-color .2s ease, box-shadow .25s ease, filter .2s ease !important;
@@ -2327,8 +2326,70 @@
   .btn-share-note:active, .btn-edit-note:active, .karyawan-add-btn:active, .customer-add-btn:active,
   .btn-select-all:active { transform: scale(1.14) !important; filter: brightness(1.12); }
   .search-pill:active { transform: scale(1.035) !important; filter: brightness(1.08); }
-  .tab-btn:active, .sel-bar-btn:active, .btn-create-category:active, .btn-new-folder-complete:active,
+  .sel-bar-btn:active, .btn-create-category:active, .btn-new-folder-complete:active,
   .nas-btn:active, .folder-empty-create-btn:active, .jump-chip:active { transform: scale(1.1) !important; }
+
+  /* ============================================================
+     NAVIGASI ATAS Notes | Tasks — pil kaca + lensa kaca yang bisa digeser
+     Latar pil mengikuti tema sistem (gelap di tema gelap, terang di tema terang).
+     Tahan = lensa melebar & membesar; geser ke kiri/kanan untuk pindah tab.
+     ============================================================ */
+  :root { --nav-bg: rgba(12, 12, 14, .78); --nav-border: rgba(255,255,255,.16); --lens-bg: rgba(255,255,255,.13); --lens-rim: rgba(255,255,255,.5); --lens-shadow: rgba(0,0,0,.45); --nav-active: #FFFFFF; --nav-idle: rgba(255,255,255,.55); }
+  body.theme-light { --nav-bg: rgba(255,255,255,.62); --nav-border: rgba(255,255,255,.9); --lens-bg: rgba(255,255,255,.55); --lens-rim: rgba(255,255,255,.95); --lens-shadow: rgba(40,40,80,.22); --nav-active: #000000; --nav-idle: rgba(60,60,67,.6); }
+
+  .segmented-tabs {
+    position: relative;
+    display: flex;
+    padding: 4px;
+    overflow: visible;
+    touch-action: pan-y;
+    background: var(--nav-bg) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(1.7);
+    backdrop-filter: blur(22px) saturate(1.7);
+    border: 1px solid var(--nav-border);
+    box-shadow: inset 0 1px 1px rgba(255,255,255,.22), inset 0 -1px 2px rgba(0,0,0,.25), 0 8px 22px var(--glass-shadow);
+  }
+  .segmented-tabs .tab-btn {
+    position: relative;
+    z-index: 2;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: var(--nav-idle);
+    padding: 8px 22px;
+    font-size: 14px;
+    font-weight: 700;
+    transition: color .25s ease, transform .3s cubic-bezier(.34,1.56,.5,1);
+  }
+  .segmented-tabs .tab-btn.active { color: var(--nav-active); }
+  .segmented-tabs.holding .tab-btn.active { transform: scale(1.08); }
+
+  .seg-lens {
+    position: absolute;
+    top: 4px; bottom: 4px; left: 0;
+    width: var(--lw, 0px);
+    border-radius: 999px;
+    z-index: 1;
+    pointer-events: none;
+    transform: translateX(var(--lx, 0px)) scale(var(--lsx, 1), var(--lsy, 1));
+    transform-origin: 50% 50%;
+    background:
+      radial-gradient(130% 90% at 25% -15%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 55%),
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.04)),
+      var(--lens-bg);
+    -webkit-backdrop-filter: blur(5px) saturate(2) brightness(1.18);
+    backdrop-filter: blur(5px) saturate(2) brightness(1.18);
+    border: 1px solid var(--lens-rim);
+    box-shadow:
+      inset 0 1.5px 1px rgba(255,255,255,.7),
+      inset 0 -2px 3px rgba(255,255,255,.18),
+      inset 3px 0 4px rgba(90,130,255,.38),
+      inset -3px 0 4px rgba(255,90,130,.26),
+      0 8px 20px var(--lens-shadow);
+    transition: transform .5s cubic-bezier(.34, 1.45, .5, 1), width .4s cubic-bezier(.34, 1.45, .5, 1), box-shadow .3s ease;
+    will-change: transform;
+  }
+  .segmented-tabs.holding .seg-lens { --lsx: 1.2; --lsy: 1.34; box-shadow: inset 0 1.5px 1px rgba(255,255,255,.8), inset 0 -2px 3px rgba(255,255,255,.22), inset 4px 0 5px rgba(90,130,255,.5), inset -4px 0 5px rgba(255,90,130,.36), 0 14px 30px var(--lens-shadow); }
+  .segmented-tabs.dragging .seg-lens { transition: transform .5s cubic-bezier(.34, 1.45, .5, 1) 0s, box-shadow .3s; transition-property: box-shadow; }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -7403,6 +7464,75 @@
     try { hadLang = localStorage.getItem('bm_lang') !== null; localStorage.removeItem('bm_lang'); } catch (e) {}
     if ((had || hadLang) && !sessionStorage.getItem('bm_tr_clean')) { sessionStorage.setItem('bm_tr_clean', '1'); location.reload(); }
   } catch (e) {}
+})();
+</script>
+
+<script>
+// Lensa kaca Notes | Tasks: mengikuti tab aktif, melebar saat ditahan, bisa digeser untuk pindah tab
+(function(){
+  var nav = document.querySelector('.segmented-tabs');
+  if (!nav) return;
+  var tabs = Array.prototype.slice.call(nav.querySelectorAll('.tab-btn'));
+  if (!tabs.length) return;
+  var lens = document.createElement('div');
+  lens.className = 'seg-lens';
+  nav.insertBefore(lens, nav.firstChild);
+
+  function activeTab(){ return tabs.filter(function(t){ return t.classList.contains('active'); })[0] || tabs[0]; }
+  function place(btn, instant){
+    if (!btn || !btn.offsetWidth) return;
+    if (instant) { lens.style.transition = 'none'; }
+    lens.style.setProperty('--lx', btn.offsetLeft + 'px');
+    lens.style.setProperty('--lw', btn.offsetWidth + 'px');
+    if (instant) { void lens.offsetWidth; lens.style.transition = ''; }
+  }
+  var dragging = false, holding = false, startX = 0, startLeft = 0, pid = null;
+  function sync(){ if (!dragging) place(activeTab(), false); }
+
+  new MutationObserver(sync).observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  if (window.ResizeObserver) new ResizeObserver(function(){ place(activeTab(), true); }).observe(nav);
+  window.addEventListener('resize', function(){ place(activeTab(), true); });
+  window.addEventListener('load', function(){ place(activeTab(), true); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ place(activeTab(), true); });
+  setTimeout(function(){ place(activeTab(), true); }, 60);
+
+  nav.addEventListener('pointerdown', function(e){
+    holding = true; dragging = false; pid = e.pointerId;
+    startX = e.clientX; startLeft = activeTab().offsetLeft;
+    nav.classList.add('holding');
+  });
+  nav.addEventListener('pointermove', function(e){
+    if (!holding) return;
+    var dx = e.clientX - startX;
+    if (!dragging && Math.abs(dx) > 5) {
+      dragging = true; nav.classList.add('dragging');
+      try { nav.setPointerCapture(pid); } catch (err) {}
+    }
+    if (dragging) {
+      var w = activeTab().offsetWidth;
+      var min = tabs[0].offsetLeft, max = tabs[tabs.length - 1].offsetLeft + tabs[tabs.length - 1].offsetWidth - w;
+      var x = Math.max(min, Math.min(max, startLeft + dx));
+      lens.style.transition = 'box-shadow .3s ease';
+      lens.style.setProperty('--lx', x + 'px');
+    }
+  });
+  function end(){
+    if (!holding) return;
+    var wasDrag = dragging;
+    holding = false; dragging = false;
+    nav.classList.remove('holding'); nav.classList.remove('dragging');
+    lens.style.transition = '';
+    if (wasDrag) {
+      var cx = parseFloat(lens.style.getPropertyValue('--lx')) + activeTab().offsetWidth / 2;
+      var best = tabs[0], bd = 1e9;
+      tabs.forEach(function(t){ var d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx); if (d < bd) { bd = d; best = t; } });
+      if (best !== activeTab()) best.click();
+    }
+    place(activeTab(), false);
+  }
+  nav.addEventListener('pointerup', end);
+  nav.addEventListener('pointercancel', end);
+  nav.addEventListener('lostpointercapture', end);
 })();
 </script>
 <script src="/bm-swipe-back.js" defer></script>
