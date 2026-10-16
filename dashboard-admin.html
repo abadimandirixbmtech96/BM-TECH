@@ -7307,6 +7307,20 @@
     });
   }
 </script>
+<script>
+// Bersihkan sisa fitur terjemahan lama (cookie googtrans + pilihan bahasa) supaya halaman kembali murni Indonesia
+(function(){
+  try {
+    var h = location.hostname, past = ';expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    var had = /(?:^|;\s*)googtrans=/.test(document.cookie);
+    document.cookie = 'googtrans=;path=/' + past;
+    if (h.indexOf('.') > -1) document.cookie = 'googtrans=;path=/;domain=' + h + past;
+    var hadLang = false;
+    try { hadLang = localStorage.getItem('bm_lang') !== null; localStorage.removeItem('bm_lang'); } catch (e) {}
+    if ((had || hadLang) && !sessionStorage.getItem('bm_tr_clean')) { sessionStorage.setItem('bm_tr_clean', '1'); location.reload(); }
+  } catch (e) {}
+})();
+</script>
 <script src="/bm-swipe-back.js" defer></script>
 
 </body>
