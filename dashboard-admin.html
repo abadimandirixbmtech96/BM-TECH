@@ -2277,7 +2277,7 @@
   /* ============================================================
      LIQUID GLASS NYATA: lapisan kaca + kilau tepi + sorot cahaya
      ============================================================ */
-  .header-btn, .search-pill, .btn-compose-pencil, .settings-back-btn, .drawer-foot-btn {
+  .header-btn, .search-pill, .btn-compose-pencil {
     position: relative;
     background:
       linear-gradient(145deg, var(--glass-hi) 0%, var(--glass-lo) 38%, rgba(255,255,255,0.04) 62%, var(--glass-lo) 100%),
@@ -2298,7 +2298,7 @@
       linear-gradient(145deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.4) 40%, rgba(255,255,255,.18) 62%, rgba(255,255,255,.55) 100%),
       rgba(255,255,255,.3) !important;
   }
-  .header-btn::before, .search-pill::before, .btn-compose-pencil::before, .settings-back-btn::before, .drawer-foot-btn::before {
+  .header-btn::before, .search-pill::before, .btn-compose-pencil::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -2309,20 +2309,20 @@
       radial-gradient(90% 70% at 85% 115%, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 60%);
     opacity: .85;
   }
-  .header-btn > *, .search-pill > *, .btn-compose-pencil > *, .settings-back-btn > *, .drawer-foot-btn > * { position: relative; z-index: 1; }
+  .header-btn > *, .search-pill > *, .btn-compose-pencil > * { position: relative; z-index: 1; }
   .hdr-filter-btn { overflow: visible; }
   .hdr-filter-btn .tasks-filter-badge { z-index: 2; }
 
   /* ============================================================
      SENTUH / TAHAN = MEMBESAR (gaya iOS), bukan mengecil
      ============================================================ */
-  .header-btn, .search-pill, .btn-compose-pencil, .settings-back-btn, .drawer-foot-btn,
+  .header-btn, .search-pill, .btn-compose-pencil,
   .sel-bar-btn, .btn-share-note, .btn-edit-note, .karyawan-add-btn, .customer-add-btn, .btn-create-category,
   .btn-new-folder-complete, .nas-btn, .folder-empty-create-btn, .jump-chip, .btn-select-all {
     transition: transform .38s cubic-bezier(.34, 1.7, .5, 1), background-color .2s ease, box-shadow .25s ease, filter .2s ease !important;
     will-change: transform;
   }
-  .header-btn:active, .btn-compose-pencil:active, .settings-back-btn:active, .drawer-foot-btn:active,
+  .header-btn:active, .btn-compose-pencil:active,
   .btn-share-note:active, .btn-edit-note:active, .karyawan-add-btn:active, .customer-add-btn:active,
   .btn-select-all:active { transform: scale(1.14) !important; filter: brightness(1.12); }
   .search-pill:active { transform: scale(1.035) !important; filter: brightness(1.08); }
