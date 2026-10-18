@@ -64,6 +64,8 @@
   .hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 4px 14px; }
 
   .hero { display: flex; gap: 14px; align-items: center; }
+  .hero > div:last-child { min-width: 0; flex: 1; }
+  .hero p { word-break: break-all; }
   .avatar { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: #fff; background: linear-gradient(145deg, color-mix(in srgb, var(--accent-yellow) 70%, #fff), var(--accent-yellow)); flex: none; position: relative; }
   .avatar .cam { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--card); color: var(--text); display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
   .avatar .cam svg.i { width: 14px; height: 14px; }
@@ -444,7 +446,7 @@
       <div class="stat"><b>08:12</b><small>Login terakhir</small></div>
       <div class="stat"><b id="stDev">1</b><small>Perangkat</small></div>
     </div>
-    <div class="sec" style="margin-top:6px">Pintasan sesuai izin</div>
+    <div class="sec" style="margin-top:6px">Menu</div>
     <div class="grid2" id="shortcuts"></div>
     <div id="devWrap"></div>
     <div id="teamWrap"></div>
@@ -490,7 +492,6 @@
     <div class="sec" style="margin-top:6px">Perangkat yang sedang masuk</div>
     <div class="card" id="devList" style="padding:6px 18px"></div>
     <button class="btn danger" id="btnAll" style="margin-bottom:10px">Keluar dari semua perangkat lain</button>
-    <button class="btn ghost" id="btnOut">Keluar dari akun</button>
   </section>
 </div>
 
@@ -592,7 +593,7 @@
      Seluruh sisa kode hanya membaca akun lewat me() dan role lewat getRole().
      ============================================================ */
   var TEST_MODE = true;
-  var STORE_KEY = 'bmtech_myprofile_test_v2';
+  var STORE_KEY = 'bmtech_myprofile_test_v3';
 
   var ROLE_LABEL = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };
   var FEATURES = [
@@ -607,40 +608,42 @@
     admin1: { tulis:1, hapus:1, pulih:0, ekspor:1, role:0 },
     admin2: { tulis:1, hapus:0, pulih:0, ekspor:0, role:0 }
   };
-  /* Akun nyata saat ini. Owner bersifat sementara (akun developer) sampai akun Owner sebenarnya ada. */
+  /* Empat akun nyata: Owner, Admin 1, Admin 2, dan Admin + Dev (izin sama dengan Admin 1, ditambah Alat Developer). */
   var SEED = [
-    { id: 'u1', mail: 'reynaldtesla@gmail.com',           name: 'Reynald', role: 'owner',  dev: true,  active: true },
-    { id: 'u2', mail: 'abadimandirixbmtech96@gmail.com',  name: 'Admin 2', role: 'admin2', dev: false, active: true }
+    { id: 'u1', mail: 'badrulmunirfilm@gmail.com',          name: 'Owner',   role: 'owner',  dev: false, active: true },
+    { id: 'u2', mail: 'gila7515@gmail.com',                 name: 'Admin 1', role: 'admin1', dev: false, active: true },
+    { id: 'u3', mail: 'abadimandirixbmtech96@gmail.com',    name: 'Admin 2', role: 'admin2', dev: false, active: true },
+    { id: 'u4', mail: 'reynaldtesla@gmail.com',             name: 'Reynald', role: 'admin1', dev: true,  active: true }
   ];
   var SHORTCUTS = [
-    { k: null,       t: 'Buka Data',        ic: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' },
     { k: 'ann',      t: 'Pengumuman',       ic: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a4 4 0 010 6M17.5 6.5a8 8 0 010 11"/>' },
-    { k: 'pulih',    t: 'Sampah',           ic: '<path d="M4 12a8 8 0 108-8M4 4v5h5"/>' },
-    { k: 'ekspor',   t: 'Backup Data',      ic: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>' },
     { k: 'role',     t: 'Tambah Admin',     ic: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 19v-1a4 4 0 014-4h5a4 4 0 014 4v1M19 8v6M16 11h6"/>' },
     { k: 'role',     t: 'Kelola Admin',     ic: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>' }
   ];
   var LOGS = [
-    { a: 'u1', k: 'sys', t: 'Memperbarui halaman Profil (v0.4 uji)', m: '09:40' },
-    { a: 'u1', k: 'add', t: 'Menambah data di BUKU BESAR — Velg putih', m: '07:58' },
-    { a: 'u2', k: 'add', t: 'Menambah data di BUKU KASBON — Mail, sisa Rp 300.000', m: '08:55' },
-    { a: 'u1', k: 'sys', t: 'Mengubah izin Admin 1: Export & Backup diizinkan', m: '08:30' },
+    { a: 'u4', k: 'sys', t: 'Memperbarui halaman Profil (v0.6 uji)', m: '09:40' },
+    { a: 'u2', k: 'add', t: 'Menambah data di BUKU BESAR — Canteng Kuswanto', m: '09:16' },
+    { a: 'u3', k: 'add', t: 'Menambah data di BUKU KASBON — Mail, sisa Rp 300.000', m: '08:55' },
     { a: 'u1', k: 'sys', t: 'Mengunduh Backup Semua Data (JSON)', m: '08:15' },
     { a: 'u1', k: 'sys', t: 'Masuk dari perangkat ini', m: '08:12' },
-    { a: 'u1', k: 'del', t: 'Memindahkan 1 data ke Sampah (BUKU HUTANG PIUTANG)', m: 'Kemarin 20:14' },
-    { a: 'u2', k: 'add', t: 'Menambah data di BUKU BESAR — Dayat x amin', m: 'Kemarin 17:40' },
+    { a: 'u4', k: 'add', t: 'Menambah data di BUKU BESAR — Velg putih', m: '07:58' },
+    { a: 'u4', k: 'del', t: 'Memindahkan 1 data ke Sampah (BUKU HUTANG PIUTANG)', m: 'Kemarin 20:14' },
+    { a: 'u3', k: 'add', t: 'Menambah data di BUKU BESAR — Dayat x amin', m: 'Kemarin 17:40' },
     { a: 'u1', k: 'del', t: 'Menghapus permanen 3 data dari Sampah', m: 'Kemarin 10:11' }
   ];
   var LOGIN_SEED = [
     { a: 'u1', m: '08:12',         d: 'Android · Chrome · HP ini',      now: true },
-    { a: 'u2', m: '08:50',         d: 'Android · Chrome · Tablet toko', now: true },
-    { a: 'u1', m: 'Kemarin 20:05', d: 'Windows · Chrome · Laptop dev',  now: false },
-    { a: 'u2', m: 'Kemarin 17:31', d: 'Android · Chrome · Tablet toko', now: false },
+    { a: 'u3', m: '08:50',         d: 'Android · Chrome · Tablet toko', now: true },
+    { a: 'u2', m: '09:05',         d: 'Android · Chrome · HP ini',      now: true },
+    { a: 'u4', m: 'Kemarin 20:05', d: 'Windows · Chrome · Laptop dev',  now: false },
+    { a: 'u3', m: 'Kemarin 17:31', d: 'Android · Chrome · Tablet toko', now: false },
     { a: 'u1', m: 'Kemarin 07:48', d: 'Android · Chrome · HP ini',      now: false }
   ];
   var DEV_DEFAULT = {
-    u1: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Laptop dev', s: 'Windows · Chrome · 1 jam lalu', me: false }],
-    u2: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Tablet toko', s: 'Android · Chrome · kemarin', me: false }]
+    u1: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Laptop kasir', s: 'Windows · Chrome · 2 jam lalu', me: false }],
+    u2: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }],
+    u3: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Tablet toko', s: 'Android · Chrome · kemarin', me: false }],
+    u4: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Laptop dev', s: 'Windows · Chrome · 1 jam lalu', me: false }]
   };
   var ICO = {
     add: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
@@ -732,7 +735,7 @@
     var shown = SHORTCUTS.filter(function(x){ return can(x.k); });
     $('shortcuts').innerHTML = shown.map(function(x){
       return '<button class="short" data-k="' + (x.k || '') + '" data-t="' + x.t + '">' + svg(x.ic) + '<span>' + x.t + '</span></button>';
-    }).join('') + (r !== 'owner' && shown.length <= 2 ? '<div class="note">Sampah dan backup dikelola Owner. Hubungi Owner bila perlu akses tambahan.</div>' : '');
+    }).join('') + '';
     if (a.dev) {
       $('devWrap').innerHTML = '<div class="sec">Alat Developer <span class="devtag">DEV</span></div><div class="grid2">' +
         '<button class="short" data-dev="info">' + svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>') + '<span>Info Sistem</span></button></div>';
@@ -796,7 +799,7 @@
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
         return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left"><div class="mini">' + esc(initials(m.name)) + '</div><div style="min-width:0"><p>' + esc(m.name) + tag + '</p><small style="word-break:break-all">' + esc(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(ROLE_LABEL[m.role]) : 'Nonaktif') + '</span></button>';
       }).join('') + '</div><button class="btn ghost" id="admAdd">Tambah admin</button>' +
-      '<p class="hint" style="margin-top:12px">Ketuk akun untuk mengubah role, akses Developer, atau menonaktifkannya. Peran Owner saat ini bersifat sementara; serahkan ke akun Owner yang sebenarnya lewat tombol "Jadikan Owner". Selalu ada minimal satu Owner aktif. Versi uji: akun belum dibuat di server.</p>';
+      '<p class="hint" style="margin-top:12px">Ketuk akun untuk mengubah role, akses Developer, atau menonaktifkannya. Peran Owner bisa diserahkan ke akun lain lewat tombol "Jadikan Owner". Selalu ada minimal satu Owner aktif. Versi uji: akun belum dibuat di server.</p>';
     } else {
       $('aksesCard').innerHTML = FEATURES.map(function(f){
         var on = can(f.k);
@@ -885,7 +888,6 @@
       var a = me(); if (!a) return; S.devices[a.id] = devicesOf(a.id).filter(function(d){ return d.me; }); save(); renderSec(); renderHome(); toast('Perangkat lain dikeluarkan');
     });
   });
-  $('btnOut').addEventListener('click', function(){ confirmBox('Keluar dari akun?', 'Anda perlu login lagi untuk membuka dashboard.', function(){ toast('Keluar (demo)'); }); });
   $('btnBack').addEventListener('click', function(){ if (TEST_MODE) toast('Kembali ke Dashboard (mode uji)'); else history.back(); });
 
   /* ---------- panel mode uji ---------- */
@@ -1120,7 +1122,7 @@
     try { bytes = (localStorage.getItem(STORE_KEY) || '').length; } catch (e) {}
     var aktif = S.ann.filter(function(x){ return annStatus(x) === 'Aktif'; }).length;
     return [
-      ['Versi halaman', '0.4 (uji)'],
+      ['Versi halaman', '0.6 (uji)'],
       ['Mode', TEST_MODE ? 'Uji, tanpa login' : 'Login'],
       ['Akun', a ? a.name + ' · ' + a.mail : '-'],
       ['Role terbaca', a ? roleLabel(a) : '-'],
