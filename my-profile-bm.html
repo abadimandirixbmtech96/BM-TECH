@@ -193,6 +193,8 @@
   .ann-x2 svg.i { width: 16px; height: 16px; stroke-width: 2.2; }
   .ann-p { padding-top: 6px; } .ann-p p { margin-bottom: 4px; }
   .team.off { opacity: .5; }
+  .onl { color: var(--ok); font-weight: 700; }
+  .dot.on { color: var(--ok); }
   button.team { background: none; }
   .acct { display: flex; width: 100%; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 16px; background: var(--soft); margin-bottom: 8px; text-align: left; }
   .acct.on { outline: 2px solid var(--accent-yellow); outline-offset: -2px; }
@@ -457,7 +459,6 @@
     <div class="sec" style="margin-top:6px">Data diri</div>
     <div class="card">
       <div class="field"><label>Nama tampilan</label><input id="inName" autocomplete="off"></div>
-      <div class="field"><label>No. WhatsApp</label><input id="inHp" inputmode="tel" placeholder="08xxxxxxxxxx"></div>
       <div class="field"><label>Email login (tidak bisa diubah)</label><input id="inMail" readonly></div>
       <button class="btn" id="btnSave">Simpan perubahan</button>
     </div>
@@ -576,7 +577,7 @@
 <div class="ov" id="ov"><div class="dlg"><h3 id="dTitle"></h3><p id="dText"></p><div class="row-b"><button class="btn ghost" id="dNo">Batal</button><button class="btn" id="dYes">OK</button></div></div></div>
 <div class="ov sheet" id="ovTest"><div class="sh">
   <h3>Mode uji — tanpa login</h3>
-  <p>Pilih akun untuk melihat tampilan dan fungsinya. Setelah login diaktifkan, akun dan role otomatis dari email yang masuk dan panel ini hilang. Tema dan font mengikuti pengaturan dashboard.</p>
+  <p>Pilih akun untuk melihat tampilan dan fungsinya. Setelah login diaktifkan, akun dan role otomatis dari email yang masuk dan panel ini hilang. Tema dan font mengikuti dashboard.</p>
   <div id="acctSw"></div>
   <button class="btn ghost" id="btnSimDash" style="margin-bottom:10px">Simulasi: buka Dashboard (popup pengumuman)</button>
   <button class="btn ghost" id="btnTestReset" style="margin-bottom:10px">Atur ulang data uji</button>
@@ -599,15 +600,12 @@
     { k: 'hapus',    t: 'Hapus ke Sampah',            s: 'Wajib puzzle penghapusan' },
     { k: 'pulih',    t: 'Pulihkan / hapus permanen',  s: 'Isi Sampah (30 hari)' },
     { k: 'ekspor',   t: 'Export & Backup',            s: 'CSV Excel dan Backup JSON' },
-    { k: 'karyawan', t: 'Kelola Karyawan',            s: 'Akun & tautan login karyawan' },
-    { k: 'customer', t: 'Kelola Akun Customer',       s: 'Akun & tautan pelacakan customer' },
-    { k: 'sistem',   t: 'Pengaturan Sistem',          s: 'Warna sistem, tema, tampilan' },
     { k: 'role',     t: 'Kelola Admin & Hak Akses',   s: 'Hanya Owner' }
   ];
   var DEFAULTS = {
-    owner:  { tulis:1, hapus:1, pulih:1, ekspor:1, karyawan:1, customer:1, sistem:1, role:1 },
-    admin1: { tulis:1, hapus:1, pulih:0, ekspor:1, karyawan:1, customer:1, sistem:0, role:0 },
-    admin2: { tulis:1, hapus:0, pulih:0, ekspor:0, karyawan:0, customer:0, sistem:0, role:0 }
+    owner:  { tulis:1, hapus:1, pulih:1, ekspor:1, role:1 },
+    admin1: { tulis:1, hapus:1, pulih:0, ekspor:1, role:0 },
+    admin2: { tulis:1, hapus:0, pulih:0, ekspor:0, role:0 }
   };
   /* Akun nyata saat ini. Owner bersifat sementara (akun developer) sampai akun Owner sebenarnya ada. */
   var SEED = [
@@ -616,25 +614,29 @@
   ];
   var SHORTCUTS = [
     { k: null,       t: 'Buka Data',        ic: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>' },
-    { k: 'tulis',    t: 'Tambah Data',      ic: '<path d="M12 5v14M5 12h14"/>' },
     { k: 'ann',      t: 'Pengumuman',       ic: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a4 4 0 010 6M17.5 6.5a8 8 0 010 11"/>' },
-    { k: 'karyawan', t: 'Kelola Karyawan',  ic: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 19v-1a4 4 0 014-4h5a4 4 0 014 4v1M19 8v6M16 11h6"/>' },
-    { k: 'customer', t: 'Akun Customer',    ic: '<path d="M4 20V8l8-4 8 4v12M9 20v-6h6v6"/>' },
     { k: 'pulih',    t: 'Sampah',           ic: '<path d="M4 12a8 8 0 108-8M4 4v5h5"/>' },
     { k: 'ekspor',   t: 'Backup Data',      ic: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>' },
-    { k: 'sistem',   t: 'Warna & Tema',     ic: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>' },
+    { k: 'role',     t: 'Tambah Admin',     ic: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 19v-1a4 4 0 014-4h5a4 4 0 014 4v1M19 8v6M16 11h6"/>' },
     { k: 'role',     t: 'Kelola Admin',     ic: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>' }
   ];
   var LOGS = [
-    { a: 'u1', k: 'sys', t: 'Memperbarui halaman Profil (v0.3 uji)', m: '09:40' },
+    { a: 'u1', k: 'sys', t: 'Memperbarui halaman Profil (v0.4 uji)', m: '09:40' },
     { a: 'u1', k: 'add', t: 'Menambah data di BUKU BESAR — Velg putih', m: '07:58' },
     { a: 'u2', k: 'add', t: 'Menambah data di BUKU KASBON — Mail, sisa Rp 300.000', m: '08:55' },
-    { a: 'u1', k: 'sys', t: 'Mengubah warna sistem', m: '08:30' },
+    { a: 'u1', k: 'sys', t: 'Mengubah izin Admin 1: Export & Backup diizinkan', m: '08:30' },
     { a: 'u1', k: 'sys', t: 'Mengunduh Backup Semua Data (JSON)', m: '08:15' },
     { a: 'u1', k: 'sys', t: 'Masuk dari perangkat ini', m: '08:12' },
     { a: 'u1', k: 'del', t: 'Memindahkan 1 data ke Sampah (BUKU HUTANG PIUTANG)', m: 'Kemarin 20:14' },
     { a: 'u2', k: 'add', t: 'Menambah data di BUKU BESAR — Dayat x amin', m: 'Kemarin 17:40' },
     { a: 'u1', k: 'del', t: 'Menghapus permanen 3 data dari Sampah', m: 'Kemarin 10:11' }
+  ];
+  var LOGIN_SEED = [
+    { a: 'u1', m: '08:12',         d: 'Android · Chrome · HP ini',      now: true },
+    { a: 'u2', m: '08:50',         d: 'Android · Chrome · Tablet toko', now: true },
+    { a: 'u1', m: 'Kemarin 20:05', d: 'Windows · Chrome · Laptop dev',  now: false },
+    { a: 'u2', m: 'Kemarin 17:31', d: 'Android · Chrome · Tablet toko', now: false },
+    { a: 'u1', m: 'Kemarin 07:48', d: 'Android · Chrome · HP ini',      now: false }
   ];
   var DEV_DEFAULT = {
     u1: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Laptop dev', s: 'Windows · Chrome · 1 jam lalu', me: false }],
@@ -651,7 +653,7 @@
 
   /* ---------- penyimpanan data uji (aman bila localStorage diblokir) ---------- */
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  function freshStore(){ return { me: 'u1', admins: clone(SEED), perms: clone(DEFAULTS), hp: {}, devices: clone(DEV_DEFAULT), ann: [], seen: {}, extraLogs: [] }; }
+  function freshStore(){ return { me: 'u1', admins: clone(SEED), perms: clone(DEFAULTS), devices: clone(DEV_DEFAULT), logins: clone(LOGIN_SEED), ann: [], seen: {}, extraLogs: [] }; }
   function validAdmin(a){ return a && typeof a.id === 'string' && typeof a.mail === 'string' && typeof a.name === 'string' && ROLE_LABEL[a.role] && typeof a.dev === 'boolean' && typeof a.active === 'boolean'; }
   function loadStore(){
     var s = freshStore();
@@ -668,7 +670,7 @@
             if (o.perms && o.perms[r]) Object.keys(DEFAULTS[r]).forEach(function(k){ if (o.perms[r][k] === 0 || o.perms[r][k] === 1) s.perms[r][k] = o.perms[r][k]; });
           });
           if (o.devices && typeof o.devices === 'object') s.devices = o.devices;
-          if (o.hp && typeof o.hp === 'object') s.hp = o.hp;
+          if (Array.isArray(o.logins)) s.logins = o.logins.filter(function(l){ return l && typeof l.a === 'string' && typeof l.m === 'string' && typeof l.d === 'string'; }).slice(0, 40);
           if (Array.isArray(o.ann)) s.ann = o.ann.filter(function(a){ return a && typeof a.id === 'string' && typeof a.title === 'string' && Array.isArray(a.targets); });
           if (o.seen && typeof o.seen === 'object') s.seen = o.seen;
           if (Array.isArray(o.extraLogs)) s.extraLogs = o.extraLogs.slice(0, 80);
@@ -699,6 +701,7 @@
   function allLogs(){ return S.extraLogs.concat(LOGS); }
   function permCount(a){ return FEATURES.filter(function(f){ return S.perms[a.role][f.k]; }).length; }
   function devicesOf(id){ return S.devices[id] || []; }
+  function isOnline(id){ return S.logins.some(function(l){ return l.a === id && l.now; }); }
 
   var $ = function(id){ return document.getElementById(id); };
   var toastT;
@@ -729,7 +732,7 @@
     var shown = SHORTCUTS.filter(function(x){ return can(x.k); });
     $('shortcuts').innerHTML = shown.map(function(x){
       return '<button class="short" data-k="' + (x.k || '') + '" data-t="' + x.t + '">' + svg(x.ic) + '<span>' + x.t + '</span></button>';
-    }).join('') + (shown.length <= 3 ? '<div class="note">Karyawan, customer, Sampah, backup, dan pengaturan dikelola Owner. Hubungi Owner bila perlu akses tambahan.</div>' : '');
+    }).join('') + (r !== 'owner' && shown.length <= 2 ? '<div class="note">Sampah dan backup dikelola Owner. Hubungi Owner bila perlu akses tambahan.</div>' : '');
     if (a.dev) {
       $('devWrap').innerHTML = '<div class="sec">Alat Developer <span class="devtag">DEV</span></div><div class="grid2">' +
         '<button class="short" data-dev="info">' + svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>') + '<span>Info Sistem</span></button></div>';
@@ -738,13 +741,13 @@
       $('teamWrap').innerHTML = '<div class="sec">Tim</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var last = allLogs().filter(function(l){ return l.a === m.id; })[0];
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + esc(m.name) + tag + '</p><small>' + esc(ROLE_LABEL[m.role]) + ' · ' + (m.active ? (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas') : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
+        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + esc(m.name) + tag + '</p><small>' + esc(ROLE_LABEL[m.role]) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
       }).join('') + '</div>';
     } else $('teamWrap').innerHTML = '';
   }
   function renderAkun(){
     var a = me(); if (!a) return;
-    $('inName').value = a.name; $('inHp').value = S.hp[a.id] || ''; $('inMail').value = a.mail;
+    $('inName').value = a.name; $('inMail').value = a.mail;
     $('aBadge').textContent = roleLabel(a); $('aBadge').className = 'badge' + (a.role === 'owner' || a.dev ? ' owner' : '');
     $('avAkunTxt').textContent = initials(a.name);
   }
@@ -754,11 +757,23 @@
     if (!isOwner) logFilter = 'saya';
     $('logChips').innerHTML =
       '<button class="chip' + (logFilter === 'saya' ? ' on' : '') + '" data-f="saya">Aktivitas saya</button>' +
-      (isOwner ? '<button class="chip' + (logFilter === 'semua' ? ' on' : '') + '" data-f="semua">Semua orang</button>' : '');
+      (isOwner ? '<button class="chip' + (logFilter === 'semua' ? ' on' : '') + '" data-f="semua">Semua orang</button><button class="chip' + (logFilter === 'login' ? ' on' : '') + '" data-f="login">Login</button>' : '');
+    if (logFilter === 'login' && isOwner) { $('logList').className = ''; $('logList').style.padding = ''; return renderLogins(); }
+    $('logList').className = 'card'; $('logList').style.padding = '6px 18px';
     var rows = allLogs().filter(function(l){ return logFilter === 'semua' ? true : (a && l.a === a.id); });
     $('logList').innerHTML = rows.length ? rows.map(function(l){
       return '<div class="log"><div class="dot ' + l.k + '">' + ICO[l.k] + '</div><div><p>' + esc(l.t) + '</p><small>' + (logFilter === 'semua' ? esc(nameOfId(l.a)) + ' · ' : '') + esc(l.m) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada aktivitas.</div>';
+  }
+  function renderLogins(){
+    var now = S.logins.filter(function(l){ return l.now; });
+    var h = '<div class="sec" style="margin:4px 4px 8px">Sedang masuk (' + now.length + ')</div><div class="card" style="padding:6px 18px;margin-bottom:6px">' + (now.length ? now.map(function(l){
+      return '<div class="log"><div class="dot on">' + ICO.phone + '</div><div><p>' + esc(nameOfId(l.a)) + ' <span class="onl">online</span></p><small>' + esc(l.d) + ' · sejak ' + esc(l.m) + '</small></div></div>';
+    }).join('') : '<div class="empty">Tidak ada yang sedang masuk.</div>') + '</div>';
+    h += '<div class="sec" style="margin:18px 4px 8px">Riwayat login</div><div class="card" style="padding:6px 18px">' + (S.logins.length ? S.logins.map(function(l){
+      return '<div class="log"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(nameOfId(l.a)) + '</p><small>' + esc(l.d) + ' · ' + esc(l.m) + '</small></div></div>';
+    }).join('') : '<div class="empty">Belum ada riwayat login.</div>') + '</div>';
+    $('logList').innerHTML = h;
   }
   function renderAkses(){
     var a = me(), r = getRole(), isOwner = r === 'owner';
@@ -822,14 +837,14 @@
     var b = e.target.closest('.short'); if (!b) return;
     var k = b.getAttribute('data-k') || null;
     if (!can(k)) return toast('Tidak ada izin');   // lapisan kedua: izin dicek lagi saat diketuk
-    if (k === 'role') return goTab('akses');
+    if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
     if (k === 'ann') { renderForm(); renderHist(); return openPage('pgAnn'); }
     toast('Membuka ' + b.getAttribute('data-t') + ' … (prototipe)');
   });
   $('btnSave').addEventListener('click', function(){
     var n = $('inName').value.trim(), a = me(); if (!a) return;
     if (!n) return toast('Nama tidak boleh kosong');
-    a.name = n; S.hp[a.id] = $('inHp').value.trim(); save(); renderAll(); toast('Profil disimpan');
+    a.name = n; save(); renderAll(); toast('Profil disimpan');
   });
   $('btnPw').addEventListener('click', function(){
     var a = $('pw0').value, b = $('pw1').value, c = $('pw2').value;
@@ -841,7 +856,7 @@
   $('logChips').addEventListener('click', function(e){
     var b = e.target.closest('.chip'); if (!b) return;
     var f = b.getAttribute('data-f');
-    if (f === 'semua' && getRole() !== 'owner') return;
+    if ((f === 'semua' || f === 'login') && getRole() !== 'owner') return;
     logFilter = f; renderLog();
   });
   $('aksesCard').addEventListener('click', function(e){
@@ -885,7 +900,12 @@
     $('ovTest').addEventListener('click', function(e){ if (e.target === $('ovTest')) $('ovTest').classList.remove('on'); });
     $('acctSw').addEventListener('click', function(e){
       var b = e.target.closest('.acct'); if (!b) return;
-      S.me = b.getAttribute('data-id'); save();
+      var nid = b.getAttribute('data-id');
+      if (nid !== S.me) {
+        S.logins.forEach(function(l){ if (/HP ini$/.test(l.d)) l.now = false; });
+        S.logins.unshift({ a: nid, m: hhmm(), d: 'Android · Chrome · HP ini', now: true }); S.logins = S.logins.slice(0, 40);
+      }
+      S.me = nid; save();
       closeAllPages(); $('ovAdm').classList.remove('on'); logFilter = 'saya'; renderAll(); renderTestSheet();
     });
     $('btnSimDash').addEventListener('click', function(){
@@ -1096,18 +1116,16 @@
 
   /* --- Info Sistem (khusus akun dengan akses Developer) --- */
   function infoRows(){
-    var a = me(), bytes = 0, font = 'Bawaan';
-    try { bytes = (localStorage.getItem(STORE_KEY) || '').length; font = localStorage.getItem('bm-font') || 'Bawaan'; } catch (e) {}
+    var a = me(), bytes = 0;
+    try { bytes = (localStorage.getItem(STORE_KEY) || '').length; } catch (e) {}
     var aktif = S.ann.filter(function(x){ return annStatus(x) === 'Aktif'; }).length;
     return [
-      ['Versi halaman', '0.3 (uji)'],
+      ['Versi halaman', '0.4 (uji)'],
       ['Mode', TEST_MODE ? 'Uji, tanpa login' : 'Login'],
       ['Akun', a ? a.name + ' · ' + a.mail : '-'],
       ['Role terbaca', a ? roleLabel(a) : '-'],
       ['Koneksi', navigator.onLine ? 'Online' : 'Offline'],
       ['Layar', window.innerWidth + '×' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x'],
-      ['Tema (ikut dashboard)', document.body.classList.contains('theme-light') ? 'Terang' : 'Gelap'],
-      ['Font (ikut dashboard)', font],
       ['Data uji tersimpan', bytes + ' karakter'],
       ['Pengumuman', S.ann.length + ' total, ' + aktif + ' aktif']
     ];
