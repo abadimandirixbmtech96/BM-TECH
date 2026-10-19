@@ -575,6 +575,7 @@
   <p id="admSub"></p>
   <div class="field"><label>Nama</label><input id="admName" maxlength="40" autocomplete="off"></div>
   <div class="field"><label>Email login</label><input id="admMail" type="email" autocomplete="off" inputmode="email" autocapitalize="off" placeholder="nama@gmail.com"></div>
+  <div class="field" id="admPwWrap"><label>Password sementara</label><input id="admPw" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div>
   <div class="field" id="admRoleWrap"><label>Role (izin)</label><div class="seg" id="admRole" style="margin-bottom:0"><button data-r="admin1">Admin 1</button><button data-r="admin2">Admin 2</button></div></div>
   <div class="toggle-row" style="margin:4px 0 16px"><div><p>Akses Developer</p><small>Menambah Alat Developer (Info Sistem). Cukup aktif atau nonaktif, tanpa masa berlaku.</small></div><button class="sw" id="admDev" aria-pressed="false"></button></div>
   <button class="btn" id="admSave">Simpan</button>
@@ -797,7 +798,16 @@ function bmMain(REAL){
       if (ok) toast(ok);
     }).catch(function(e){ toast('Gagal menyimpan: ' + (e && e.message || e)); }).then(function(){ busy = false; return refresh(); });
   }
-  var NEED_FN = 'Butuh fungsi server admin-manage yang belum dipasang';
+  function fnCall(body){
+    return REAL.c.functions.invoke('admin-manage', { body: body }).then(function(r){
+      if (r.error) {
+        var ctx = r.error.context, p = ctx && typeof ctx.json === 'function' ? ctx.json().then(function(j){ return j && j.error; }, function(){ return null; }) : Promise.resolve(null);
+        return p.then(function(m){ throw new Error(m || (/not found|404/i.test(r.error.message || '') ? 'fungsi admin-manage belum dipasang di Supabase' : (r.error.message || 'gagal'))); });
+      }
+      if (r.data && r.data.error) throw new Error(r.data.error);
+      return { data: [{}], error: null };
+    });
+  }
 
   /* ---------- render ---------- */
   function renderHome(){
@@ -1182,10 +1192,11 @@ function bmMain(REAL){
   function renderAdmSheet(){
     var a = admEdit ? acct(admEdit) : null, isOwnerRow = !!(a && a.role === 'owner');
     $('admTitle').textContent = a ? 'Ubah akun' : 'Tambah admin';
-    $('admSub').textContent = a ? a.mail : 'Akun baru dibuat dengan email dan password sementara. '+(REAL?'Pembuatan akun login butuh fungsi server yang belum aktif.':'Versi uji: belum dibuat di server.');
+    $('admSub').textContent = a ? a.mail : 'Akun baru dibuat dengan email dan password sementara. '+(REAL?'Akun login dibuat otomatis dengan password sementara. Beri tahu email dan passwordnya ke admin baru.':'Versi uji: belum dibuat di server.');
     $('admName').value = a ? a.name : ($('admName').value || '');
     $('admMail').value = a ? a.mail : ($('admMail').value || ''); $('admMail').readOnly = !!a;
     $('admRoleWrap').style.display = isOwnerRow ? 'none' : 'block';
+    $('admPwWrap').style.display = !a ? 'block' : 'none';
     markOn('#admRole button', function(b){ return b.getAttribute('data-r') === admRole; });
     $('admDev').classList.toggle('on', admDev); $('admDev').setAttribute('aria-pressed', admDev);
     $('admOwner').style.display = a && !isOwnerRow && a.active ? 'block' : 'none';
@@ -1214,7 +1225,14 @@ function bmMain(REAL){
     var name = $('admName').value.trim(), a = admEdit ? acct(admEdit) : null;
     if (!name) return toast('Nama wajib diisi');
     if (REAL) {
-      if (!a) return toast(NEED_FN + ', jadi akun login baru belum bisa dibuat');
+      if (!a) {
+        var mail2 = $('admMail').value.trim().toLowerCase(), pw = $('admPw').value;
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail2)) return toast('Email tidak valid');
+        if (S.admins.some(function(x){ return x.mail === mail2; })) return toast('Email itu sudah terdaftar');
+        if (pw.length < 8) return toast('Password sementara minimal 8 karakter');
+        $('ovAdm').classList.remove('on'); $('admPw').value = '';
+        return srv(function(){ return fnCall({ action: 'create', email: mail2, name: name, role: admRole === 'admin2' ? 'admin2' : 'admin1', is_dev: admDev, password: pw }); }, 'Admin ditambahkan. Beri tahu email dan password sementaranya.');
+      }
       var upd = { display_name: name, is_dev: admDev, updated_at: new Date().toISOString() };
       if (a.role !== 'owner') upd.role = admRole === 'admin2' ? 'admin2' : 'admin1';
       addLog('sys', 'Mengubah akun ' + name);
@@ -1238,7 +1256,12 @@ function bmMain(REAL){
   });
   $('admOff').addEventListener('click', function(){
     var a = acct(admEdit); if (!a || a.role === 'owner' || getRole() !== 'owner') return;
-    if (REAL) return toast(NEED_FN + ', jadi akun belum bisa diblokir dari login');
+    if (REAL) {
+      var goOn = !a.active;
+      var run = function(){ $('ovAdm').classList.remove('on'); srv(function(){ return fnCall({ action: 'set_active', email: a.mail, active: goOn }); }, goOn ? 'Akun aktif kembali' : 'Akun dinonaktifkan'); };
+      if (goOn) return run();
+      return confirmBox('Nonaktifkan akun?', a.name + ' tidak bisa masuk lagi sampai diaktifkan kembali.', run);
+    }
     if (a.active) confirmBox('Nonaktifkan akun?', a.name + ' tidak bisa masuk lagi sampai diaktifkan kembali.', function(){
       a.active = false; addLog('sys', 'Menonaktifkan akun ' + a.name); save(); $('ovAdm').classList.remove('on'); renderAll(); toast('Akun dinonaktifkan');
     });
