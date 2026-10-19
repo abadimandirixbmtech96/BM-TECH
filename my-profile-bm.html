@@ -408,6 +408,15 @@
   .segmented-tabs .seg-txt { padding-left: 0; }
   .segmented-tabs .seg-txt .tab-btn { position: absolute; top: 0; height: 100%; flex: none; }
   .segmented-tabs.holding .seg-lens { --lsx: 1.1; --lsy: 1.2; }
+  #boot { position: fixed; inset: 0; z-index: 200; background: var(--bg); display: grid; place-items: center; padding: 24px; }
+  #boot[hidden], #bootBtns[hidden] { display: none; }
+  .bootbox { text-align: center; max-width: 320px; }
+  .bootbox p { color: var(--muted); font-size: 14px; line-height: 1.5; margin: 14px 0 18px; }
+  .bootspin { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent-yellow); margin: 0 auto; animation: bspin .8s linear infinite; }
+  .bootbox.err .bootspin { display: none; }
+  .bootbtns { display: grid; gap: 10px; }
+  @keyframes bspin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .bootspin { animation: none; } }
 </style>
 <script src="/bm-theme.js"></script>
 </head>
@@ -566,7 +575,7 @@
   <p id="admSub"></p>
   <div class="field"><label>Nama</label><input id="admName" maxlength="40" autocomplete="off"></div>
   <div class="field"><label>Email login</label><input id="admMail" type="email" autocomplete="off" inputmode="email" autocapitalize="off" placeholder="nama@gmail.com"></div>
-  <div class="field" id="admRoleWrap"><label>Role</label><div class="seg" id="admRole" style="margin-bottom:0"><button data-r="admin1">Admin 1</button><button data-r="admin2">Admin 2</button></div></div>
+  <div class="field" id="admRoleWrap"><label>Role (izin)</label><div class="seg" id="admRole" style="margin-bottom:0"><button data-r="admin1">Admin 1</button><button data-r="admin2">Admin 2</button></div></div>
   <div class="toggle-row" style="margin:4px 0 16px"><div><p>Akses Developer</p><small>Menambah Alat Developer (Info Sistem). Cukup aktif atau nonaktif, tanpa masa berlaku.</small></div><button class="sw" id="admDev" aria-pressed="false"></button></div>
   <button class="btn" id="admSave">Simpan</button>
   <button class="btn ghost" id="admOwner" style="margin-top:10px">Jadikan Owner</button>
@@ -574,6 +583,7 @@
   <button class="btn ghost" id="admCancel" style="margin-top:10px">Batal</button>
 </div></div>
 
+<div id="boot" hidden><div class="bootbox" id="bootBox"><div class="bootspin"></div><p id="bootMsg">Memuat…</p><div class="bootbtns" id="bootBtns" hidden><button class="btn" id="bootRetry">Coba lagi</button><button class="btn" id="bootBack">Kembali</button></div></div></div>
 <div class="toast" id="toast"></div>
 <div class="ov" id="ov"><div class="dlg"><h3 id="dTitle"></h3><p id="dText"></p><div class="row-b"><button class="btn ghost" id="dNo">Batal</button><button class="btn" id="dYes">OK</button></div></div></div>
 <div class="ov sheet" id="ovTest"><div class="sh">
@@ -585,14 +595,15 @@
   <button class="btn" id="btnTestClose">Selesai</button>
 </div></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-(function(){
+function bmMain(REAL){
   /* ============================================================
      MODE UJI. Satu-satunya tempat yang perlu diganti saat login diaktifkan:
        TEST_MODE = false  →  akun & role dibaca dari server (hasil login), panel uji dimatikan.
      Seluruh sisa kode hanya membaca akun lewat me() dan role lewat getRole().
      ============================================================ */
-  var TEST_MODE = true;
+  var TEST_MODE = !REAL;
   var STORE_KEY = 'bmtech_myprofile_test_v3';
 
   var ROLE_LABEL = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };
@@ -685,8 +696,9 @@
     s.perms.owner = clone(DEFAULTS.owner);   // hak Owner selalu penuh
     return s;
   }
-  var S = loadStore();
-  function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
+  function realStore(){ return { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, extraLogs: [] }; }
+  var S = REAL ? realStore() : loadStore();
+  function save(){ if (REAL) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
 
   /* ---------- satu pintu untuk akun & role ---------- */
   function acct(id){ for (var i = 0; i < S.admins.length; i++) if (S.admins[i].id === id) return S.admins[i]; return null; }
@@ -698,10 +710,10 @@
     if (k === 'role') return getRole() === 'owner';
     var p = S.perms[getRole()]; return !!(p && p[k]);
   }
-  function roleLabel(a){ return ROLE_LABEL[a.role] + (a.dev ? ' + Dev' : ''); }
+  function roleLabel(a){ return a.dev && a.role !== 'owner' ? 'Admin + Dev' : ROLE_LABEL[a.role] + (a.dev ? ' + Dev' : ''); }   // izin Admin + Dev mengikuti Admin 1
   function groupOf(a){ return a.role === 'owner' ? 'Owner' : 'Admin'; }
   function nameOfId(id){ var a = acct(id); return a ? a.name : 'Admin'; }
-  function allLogs(){ return S.extraLogs.concat(LOGS); }
+  function allLogs(){ return REAL ? S.extraLogs : S.extraLogs.concat(LOGS); }
   function permCount(a){ return FEATURES.filter(function(f){ return S.perms[a.role][f.k]; }).length; }
   function devicesOf(id){ return S.devices[id] || []; }
   function isOnline(id){ return S.logins.some(function(l){ return l.a === id && l.now; }); }
@@ -721,7 +733,71 @@
   function fmtDate(ts){ try { return new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
   function hhmm(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   var DAY = 86400000;
-  function addLog(kind, text){ S.extraLogs.unshift({ a: S.me, k: kind, t: text, m: hhmm() }); }
+  function addLog(kind, text){
+    S.extraLogs.unshift({ a: S.me, k: kind, t: text, m: hhmm() });
+    if (REAL) { try { REAL.c.from('activity_log').insert({ actor_email: REAL.email, kind: kind, detail: text }).then(function(){}, function(){}); } catch (e) {} }
+  }
+  /* ---------- mode login: baca & tulis ke Supabase ---------- */
+  function fmtT(ts){ try { return new Date(ts).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ''); } catch (e) { return ''; } }
+  async function reload(){
+    var c = REAL.c, em = REAL.email;
+    var q = await Promise.all([
+      c.from('admin_roles').select('*'),
+      c.from('role_permissions').select('*'),
+      c.from('announcements').select('*').order('created_at', { ascending: false }),
+      c.from('announcement_seen').select('announcement_id'),
+      c.from('login_log').select('*').order('logged_at', { ascending: false }).limit(60),
+      c.from('activity_log').select('*').order('created_at', { ascending: false }).limit(120)
+    ]);
+    for (var i = 0; i < q.length; i++) if (q[i].error) throw q[i].error;
+    var admins = q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: r.role, dev: !!r.is_dev, active: r.active !== false }; });
+    if (!admins.some(function(a){ return a.id === em; })) admins.push({ id: em, mail: em, name: em.split('@')[0], role: 'admin2', dev: false, active: true });
+    var perms = clone(DEFAULTS);
+    q[1].data.forEach(function(r){ if (perms[r.role] && r.feature in perms[r.role]) perms[r.role][r.feature] = r.allowed ? 1 : 0; });
+    perms.owner = clone(DEFAULTS.owner);
+    var EXPS = [1, 3, 7, 14, 30];
+    var ann = q[2].data.map(function(r){
+      var exp = 0, ex = r.expires_at ? Date.parse(r.expires_at) : null;
+      if (ex) { var dd = (ex - Date.parse(r.updated_at || r.created_at)) / DAY; exp = EXPS.reduce(function(b, x){ return Math.abs(x - dd) < Math.abs(b - dd) ? x : b; }, 1); }
+      return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: r.targets || [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at) };
+    });
+    var myLid = ''; try { myLid = sessionStorage.getItem('bm-login-id') || ''; } catch (e) {}
+    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id }; });
+    var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 6).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid }; });
+    var dv = {}; dv[em] = mine;
+    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv;
+    S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
+    S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: r.kind, t: r.detail, m: fmtT(r.created_at) }; });
+  }
+  var loaded = false, busy = false;
+  function bootShow(msg, err){ $('boot').hidden = false; $('bootBox').classList.toggle('err', !!err); $('bootMsg').textContent = msg; $('bootBtns').hidden = !err; }
+  function leave(){ if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} } history.back(); }
+  function withTimeout(p, ms){ return Promise.race([p, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('koneksi terlalu lama, coba lagi')); }, ms); })]); }
+  function refresh(){
+    return withTimeout(reload(), 15000).then(function(){
+      loaded = true; $('boot').hidden = true; renderAll(); renderHist();
+    }).catch(function(e){
+      var m = (e && e.message) || String(e);
+      if (!loaded) bootShow('Tidak bisa memuat data profil: ' + m + '. Pastikan Anda login sebagai admin dan terhubung ke internet.', true);
+      else toast('Gagal memuat data: ' + m);
+    });
+  }
+  if (REAL) {
+    $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
+    $('bootBack').addEventListener('click', leave);
+    try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') bootShow('Sesi login berakhir. Login lagi di Dashboard, lalu buka Profil.', true); }); } catch (e) {}
+  }
+  /* jalankan permintaan ke server, lalu muat ulang tampilan. Baris 0 = ditolak server (izin/RLS). */
+  function srv(p, ok){
+    if (busy) return Promise.resolve(toast('Sedang menyimpan, tunggu sebentar'));
+    busy = true;
+    return Promise.resolve().then(p).then(function(r){
+      if (r && r.error) throw r.error;
+      if (r && Array.isArray(r.data) && !r.data.length) throw new Error('ditolak server, tidak ada izin');
+      if (ok) toast(ok);
+    }).catch(function(e){ toast('Gagal menyimpan: ' + (e && e.message || e)); }).then(function(){ busy = false; return refresh(); });
+  }
+  var NEED_FN = 'Butuh fungsi server admin-manage yang belum dipasang';
 
   /* ---------- render ---------- */
   function renderHome(){
@@ -744,7 +820,7 @@
       $('teamWrap').innerHTML = '<div class="sec">Tim</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var last = allLogs().filter(function(l){ return l.a === m.id; })[0];
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + esc(m.name) + tag + '</p><small>' + esc(ROLE_LABEL[m.role]) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
+        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + esc(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
       }).join('') + '</div>';
     } else $('teamWrap').innerHTML = '';
   }
@@ -781,7 +857,7 @@
   function renderAkses(){
     var a = me(), r = getRole(), isOwner = r === 'owner';
     $('aksesHint').textContent = isOwner
-      ? 'Semua Owner dan Admin bisa melihat semua data. Izin di bawah hanya membatasi siapa yang boleh mengubah, menghapus, dan mengelola. Hak Owner selalu penuh. Perubahan langsung berlaku.'
+      ? 'Semua Owner dan Admin bisa melihat semua data. Izin di bawah hanya membatasi siapa yang boleh mengubah, menghapus, dan mengelola. Admin + Dev memakai izin kolom Admin 1, ditambah Info Sistem. Hak Owner selalu penuh. Perubahan langsung berlaku.'
       : 'Anda bisa melihat semua data. Ini yang boleh Anda lakukan sebagai ' + (a ? roleLabel(a) : 'Admin') + '. Hanya Owner yang bisa mengubahnya.';
     $('btnReset').style.display = isOwner ? 'block' : 'none';
     if (isOwner) {
@@ -797,7 +873,7 @@
       $('aksesCard').innerHTML = h + '</div>';
       $('admCard').innerHTML = '<div class="sec">Akun admin</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left"><div class="mini">' + esc(initials(m.name)) + '</div><div style="min-width:0"><p>' + esc(m.name) + tag + '</p><small style="word-break:break-all">' + esc(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(ROLE_LABEL[m.role]) : 'Nonaktif') + '</span></button>';
+        return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left"><div class="mini">' + esc(initials(m.name)) + '</div><div style="min-width:0"><p>' + esc(m.name) + tag + '</p><small style="word-break:break-all">' + esc(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(roleLabel(m)) : 'Nonaktif') + '</span></button>';
       }).join('') + '</div><button class="btn ghost" id="admAdd">Tambah admin</button>' +
       '<p class="hint" style="margin-top:12px">Ketuk akun untuk mengubah role, akses Developer, atau menonaktifkannya. Peran Owner bisa diserahkan ke akun lain lewat tombol "Jadikan Owner". Selalu ada minimal satu Owner aktif. Versi uji: akun belum dibuat di server.</p>';
     } else {
@@ -812,9 +888,9 @@
     var a = me(); if (!a) return;
     var list = devicesOf(a.id);
     $('devList').innerHTML = list.length ? list.map(function(d, i){
-      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(d.n) + '</p><small>' + esc(d.s) + '</small></div>' + (d.me ? '' : '<button class="go" data-i="' + i + '">Keluarkan</button>') + '</div>';
+      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(d.n) + '</p><small>' + esc(d.s) + '</small></div>' + (d.me || REAL ? '' : '<button class="go" data-i="' + i + '">Keluarkan</button>') + '</div>';
     }).join('') : '<div class="empty">Belum ada perangkat tercatat.</div>';
-    $('btnAll').style.display = list.length > 1 ? 'block' : 'none';
+    $('btnAll').style.display = (REAL || list.length > 1) ? 'block' : 'none';
   }
   function renderBadge(){
     var a = me();
@@ -847,6 +923,7 @@
   $('btnSave').addEventListener('click', function(){
     var n = $('inName').value.trim(), a = me(); if (!a) return;
     if (!n) return toast('Nama tidak boleh kosong');
+    if (REAL) return srv(function(){ return REAL.c.rpc('set_my_name', { p_name: n }); }, 'Profil disimpan');
     a.name = n; save(); renderAll(); toast('Profil disimpan');
   });
   $('btnPw').addEventListener('click', function(){
@@ -854,6 +931,18 @@
     if (!a) return toast('Isi password lama');
     if (b.length < 8) return toast('Password baru minimal 8 karakter');
     if (b !== c) return toast('Ulangi password tidak sama');
+    if (REAL) {
+      (async function(){
+        try {
+          var r1 = await REAL.c.auth.signInWithPassword({ email: REAL.email, password: a });
+          if (r1.error) return toast('Password lama salah');
+          var r2 = await REAL.c.auth.updateUser({ password: b });
+          if (r2.error) return toast('Gagal: ' + r2.error.message);
+          $('pw0').value = $('pw1').value = $('pw2').value = ''; addLog('sys', 'Mengubah password'); toast('Password diperbarui');
+        } catch (e) { toast('Gagal mengubah password'); }
+      })();
+      return;
+    }
     $('pw0').value = $('pw1').value = $('pw2').value = ''; toast('Password diperbarui (demo, belum tersimpan)');
   });
   $('logChips').addEventListener('click', function(e){
@@ -866,6 +955,11 @@
     var b = e.target.closest('.sw'); if (!b || b.disabled || getRole() !== 'owner') return;
     var r = b.getAttribute('data-r'), k = b.getAttribute('data-k');
     if (!S.perms[r] || r === 'owner' || k === 'role') return;
+    if (REAL) {
+      var nv = !S.perms[r][k], tt = FEATURES.filter(function(f){ return f.k === k; })[0].t, msg = ROLE_LABEL[r] + ': ' + tt + ' ' + (nv ? 'diizinkan' : 'dicabut');
+      addLog('sys', 'Mengubah izin ' + msg.replace(/^[^:]+: /, ROLE_LABEL[r] + ': '));
+      return srv(function(){ return REAL.c.from('role_permissions').update({ allowed: nv, updated_at: new Date().toISOString() }).eq('role', r).eq('feature', k).select(); }, msg);
+    }
     S.perms[r][k] = S.perms[r][k] ? 0 : 1;
     addLog('sys', 'Mengubah izin ' + ROLE_LABEL[r] + ': ' + FEATURES.filter(function(f){ return f.k === k; })[0].t + ' ' + (S.perms[r][k] ? 'diizinkan' : 'dicabut'));
     save(); renderAkses(); renderHome(); renderLog();
@@ -873,7 +967,12 @@
   });
   $('btnReset').addEventListener('click', function(){
     if (getRole() !== 'owner') return;
-    confirmBox('Kembalikan ke bawaan?', 'Hak akses Admin 1 dan Admin 2 kembali ke pengaturan awal.', function(){
+    confirmBox('Kembalikan ke bawaan?', 'Hak akses Admin 1, Admin 2, dan Admin + Dev kembali ke pengaturan awal.', function(){
+      if (REAL) {
+        var rows = []; ['admin1', 'admin2'].forEach(function(r){ Object.keys(DEFAULTS[r]).forEach(function(k){ rows.push({ role: r, feature: k, allowed: !!DEFAULTS[r][k] }); }); });
+        addLog('sys', 'Mengembalikan hak akses ke bawaan');
+        return srv(function(){ return REAL.c.from('role_permissions').upsert(rows, { onConflict: 'role,feature' }); }, 'Hak akses dikembalikan');
+      }
       S.perms = clone(DEFAULTS); save(); renderAkses(); renderHome(); toast('Hak akses dikembalikan');
     });
   });
@@ -885,10 +984,15 @@
   });
   $('btnAll').addEventListener('click', function(){
     confirmBox('Keluar dari semua perangkat lain?', 'Hanya perangkat ini yang tetap masuk.', function(){
+      if (REAL) { REAL.c.auth.signOut({ scope: 'others' }).then(function(r){ toast(r && r.error ? 'Gagal: ' + r.error.message : 'Perangkat lain dikeluarkan'); }); return; }
       var a = me(); if (!a) return; S.devices[a.id] = devicesOf(a.id).filter(function(d){ return d.me; }); save(); renderSec(); renderHome(); toast('Perangkat lain dikeluarkan');
     });
   });
-  $('btnBack').addEventListener('click', function(){ if (TEST_MODE) toast('Kembali ke Dashboard (mode uji)'); else history.back(); });
+  $('btnBack').addEventListener('click', function(){
+    if (TEST_MODE) return toast('Kembali ke Dashboard (mode uji)');
+    if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
+    history.back();
+  });
 
   /* ---------- panel mode uji ---------- */
   function renderTestSheet(){
@@ -1001,6 +1105,25 @@
     var a = validate(); if (!a || !me()) return;
     var now = Date.now(), old = f.id ? S.ann.filter(function(x){ return x.id === f.id; })[0] : null;
     if (old && !canManage(old)) return toast('Hanya pembuat atau Owner yang bisa mengubah');
+    if (REAL) {
+      var row = { kind: a.kind, title: a.title, message: a.msg, version: a.ver || null, targets: a.targets.slice(), status: status, expires_at: status === 'aktif' && f.exp ? new Date(now + f.exp * DAY).toISOString() : null, updated_at: new Date(now).toISOString() };
+      if (busy) return toast('Sedang menyimpan, tunggu sebentar');
+      busy = true;
+      var req;
+      if (old) req = REAL.c.from('announcements').update(row).eq('id', old.id).select();
+      else { row.created_by = REAL.email; req = REAL.c.from('announcements').insert(row).select(); }
+      req.then(function(r){
+        if (r.error) throw r.error;
+        if (!r.data || !r.data.length) throw new Error('ditolak server, tidak ada izin');
+        if (status === 'aktif') return REAL.c.from('announcement_seen').upsert({ announcement_id: r.data[0].id, email: REAL.email }, { onConflict: 'announcement_id,email', ignoreDuplicates: true });
+      }).then(function(r){
+        if (r && r.error) throw r.error;
+        if (status === 'aktif') addLog('sys', 'Menerbitkan pengumuman ' + (row.version ? 'v' + row.version + ' ' : '') + '"' + row.title + '"');
+        f = newForm(); renderForm();
+        toast(status === 'aktif' ? 'Diterbitkan. Muncul di Dashboard saat pertama dibuka.' : 'Draf disimpan');
+      }).catch(function(e){ toast('Gagal menyimpan: ' + (e && e.message || e)); }).then(function(){ busy = false; return refresh(); });
+      return;
+    }
     var rec = old || { id: 'a' + now, createdAt: now, by: S.me };
     rec.kind = a.kind; rec.title = a.title; rec.msg = a.msg; rec.ver = a.ver;
     rec.targets = a.targets.slice(); rec.exp = f.exp; rec.status = status;
@@ -1036,11 +1159,17 @@
       f = { id: rec.id, kind: rec.kind, title: rec.title, msg: rec.msg, ver: rec.ver || '', targets: rec.targets.slice(), exp: rec.exp || 0 };
       renderForm(); $('pgAnn').scrollTop = 0;
     } else if (act === 'toggle') {
+      if (REAL) {
+        var on = annStatus(rec) === 'Aktif';
+        if (!on) addLog('sys', 'Mengaktifkan pengumuman "' + rec.title + '"');
+        return srv(function(){ return REAL.c.from('announcements').update(on ? { status: 'nonaktif', expires_at: null, updated_at: new Date().toISOString() } : { status: 'aktif', expires_at: rec.exp ? new Date(Date.now() + rec.exp * DAY).toISOString() : null, updated_at: new Date().toISOString() }).eq('id', rec.id).select(); }, on ? 'Pengumuman dinonaktifkan' : 'Pengumuman aktif');
+      }
       if (annStatus(rec) === 'Aktif') { rec.status = 'nonaktif'; rec.expiry = null; }
       else { rec.status = 'aktif'; rec.expiry = rec.exp ? Date.now() + rec.exp * DAY : null; addLog('sys', 'Mengaktifkan pengumuman "' + rec.title + '"'); }
       save(); renderHist(); renderAll(); toast(rec.status === 'aktif' ? 'Pengumuman aktif' : 'Pengumuman dinonaktifkan');
     } else if (act === 'del') {
       confirmBox('Hapus pengumuman?', '"' + rec.title + '" akan dihapus dari riwayat.', function(){
+        if (REAL) { if (f.id === id) f = newForm(); renderForm(); return srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus'); }
         S.ann = S.ann.filter(function(x){ return x.id !== id; }); if (f.id === id) f = newForm();
         save(); renderForm(); renderHist(); renderAll(); toast('Pengumuman dihapus');
       });
@@ -1053,7 +1182,7 @@
   function renderAdmSheet(){
     var a = admEdit ? acct(admEdit) : null, isOwnerRow = !!(a && a.role === 'owner');
     $('admTitle').textContent = a ? 'Ubah akun' : 'Tambah admin';
-    $('admSub').textContent = a ? a.mail : 'Akun baru dibuat dengan email dan password sementara. Versi uji: belum dibuat di server.';
+    $('admSub').textContent = a ? a.mail : 'Akun baru dibuat dengan email dan password sementara. '+(REAL?'Pembuatan akun login butuh fungsi server yang belum aktif.':'Versi uji: belum dibuat di server.');
     $('admName').value = a ? a.name : ($('admName').value || '');
     $('admMail').value = a ? a.mail : ($('admMail').value || ''); $('admMail').readOnly = !!a;
     $('admRoleWrap').style.display = isOwnerRow ? 'none' : 'block';
@@ -1084,6 +1213,14 @@
     if (getRole() !== 'owner') return;
     var name = $('admName').value.trim(), a = admEdit ? acct(admEdit) : null;
     if (!name) return toast('Nama wajib diisi');
+    if (REAL) {
+      if (!a) return toast(NEED_FN + ', jadi akun login baru belum bisa dibuat');
+      var upd = { display_name: name, is_dev: admDev, updated_at: new Date().toISOString() };
+      if (a.role !== 'owner') upd.role = admRole === 'admin2' ? 'admin2' : 'admin1';
+      addLog('sys', 'Mengubah akun ' + name);
+      $('ovAdm').classList.remove('on');
+      return srv(function(){ return REAL.c.from('admin_roles').update(upd).eq('email', a.mail).select(); }, 'Akun diperbarui');
+    }
     if (a) {
       a.name = name; a.dev = admDev; if (a.role !== 'owner') a.role = admRole === 'admin2' ? 'admin2' : 'admin1';
       addLog('sys', 'Mengubah akun ' + a.name + ' (' + roleLabel(a) + ')');
@@ -1101,6 +1238,7 @@
   });
   $('admOff').addEventListener('click', function(){
     var a = acct(admEdit); if (!a || a.role === 'owner' || getRole() !== 'owner') return;
+    if (REAL) return toast(NEED_FN + ', jadi akun belum bisa diblokir dari login');
     if (a.active) confirmBox('Nonaktifkan akun?', a.name + ' tidak bisa masuk lagi sampai diaktifkan kembali.', function(){
       a.active = false; addLog('sys', 'Menonaktifkan akun ' + a.name); save(); $('ovAdm').classList.remove('on'); renderAll(); toast('Akun dinonaktifkan');
     });
@@ -1108,6 +1246,10 @@
   });
   $('admOwner').addEventListener('click', function(){
     var t = acct(admEdit), cur = me(); if (!t || !cur || cur.role !== 'owner' || t.role === 'owner' || !t.active) return;
+    if (REAL) { confirmBox('Serahkan peran Owner?', t.name + ' menjadi Owner. Anda menjadi Admin 1 dan tidak bisa mengatur hak akses lagi.', function(){
+      $('ovAdm').classList.remove('on'); closeAllPages(); logFilter = 'saya';
+      srv(function(){ return REAL.c.rpc('transfer_owner', { new_email: t.mail }); }, 'Peran Owner dipindahkan ke ' + t.name);
+    }); return; }
     confirmBox('Serahkan peran Owner?', t.name + ' menjadi Owner. Anda menjadi Admin 1 dan tidak bisa mengatur hak akses lagi.', function(){
       t.role = 'owner'; cur.role = 'admin1';
       if (ownersCount() < 1) { t.role = 'admin1'; cur.role = 'owner'; return toast('Harus ada minimal satu Owner'); }
@@ -1122,13 +1264,13 @@
     try { bytes = (localStorage.getItem(STORE_KEY) || '').length; } catch (e) {}
     var aktif = S.ann.filter(function(x){ return annStatus(x) === 'Aktif'; }).length;
     return [
-      ['Versi halaman', '0.6 (uji)'],
+      ['Versi halaman', REAL ? '0.7' : '0.7 (uji)'],
       ['Mode', TEST_MODE ? 'Uji, tanpa login' : 'Login'],
       ['Akun', a ? a.name + ' · ' + a.mail : '-'],
       ['Role terbaca', a ? roleLabel(a) : '-'],
       ['Koneksi', navigator.onLine ? 'Online' : 'Offline'],
       ['Layar', window.innerWidth + '×' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x'],
-      ['Data uji tersimpan', bytes + ' karakter'],
+      REAL ? ['Data', 'Supabase'] : ['Data uji tersimpan', bytes + ' karakter'],
       ['Pengumuman', S.ann.length + ' total, ' + aktif + ' aktif']
     ];
   }
@@ -1142,8 +1284,21 @@
   });
   function resetTest(){ S = freshStore(); f = newForm(); logFilter = 'saya'; admEdit = null; save(); renderForm(); renderHist(); renderAll(); }
 
-  renderForm(); renderHist(); renderAll();
+  if (REAL) { $('infoReset').style.display = 'none'; bootShow('Memuat…', false); refresh(); } else { renderForm(); renderHist(); renderAll(); }
+}
+
+(async function(){
+  var R = null;
+  try {
+    if (location.search.indexOf('uji=1') < 0 && window.supabase) {
+      var c = window.supabase.createClient('https://zgzmbneqqzxnptbmlhsz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E', { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
+      var r = await c.auth.getSession();
+      if (r.data && r.data.session) R = { c: c, email: String(r.data.session.user.email || '').toLowerCase() };
+    }
+  } catch (e) { R = null; }
+  bmMain(R);
 })();
+
 </script>
 
 <script>
