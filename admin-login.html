@@ -2,8 +2,31 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+
+<!-- Anti-clickjacking: halaman disembunyikan sampai terbukti tidak berada di dalam iframe -->
+<style id="antiClickjack">html{display:none!important}</style>
+<noscript><style>html{display:block!important}</style></noscript>
+<script>
+  (function(){
+    if (window.top === window.self) {
+      var s = document.getElementById("antiClickjack");
+      if (s && s.parentNode) { s.parentNode.removeChild(s); }
+    } else {
+      try { window.top.location.href = window.self.location.href; } catch (e) {}
+    }
+  })();
+</script>
+
+<!-- Content Security Policy: batasi dari mana script, gaya, gambar, dan koneksi boleh dimuat -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://zgzmbneqqzxnptbmlhsz.supabase.co; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'self'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="color-scheme" content="light">
+<meta name="format-detection" content="telephone=no">
+
 <link rel="manifest" href="/manifest-admin.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png">
 <link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png">
@@ -16,10 +39,9 @@
 
 <title>Login-administrator</title>
 
-<!-- FIXED WEB FONT -->
+<!-- WEB FONT -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <style>
@@ -28,13 +50,25 @@
    RESET
 ========================= */
 
-*{
+*,
+*::before,
+*::after{
   margin:0;
   padding:0;
   box-sizing:border-box;
+
+  /* Hilangkan highlight biru saat disentuh/diklik (mobile & desktop) */
+  -webkit-tap-highlight-color:transparent;
 }
 
-html,
+html{
+  width:100%;
+  height:100%;
+  -webkit-text-size-adjust:100%;
+  -moz-text-size-adjust:100%;
+  text-size-adjust:100%;
+}
+
 body{
   width:100%;
   min-height:100%;
@@ -46,29 +80,87 @@ body{
 ========================= */
 
 :root{
-
   --text:#292825;
-
   --muted:#77736c;
-
   --label:#55524c;
-
   --background:#f5f4f1;
-
   --card:rgba(218,216,210,.78);
-
   --input:rgba(248,247,244,.82);
-
   --border:rgba(170,168,161,.42);
-
   --button:#e7e5e0;
-
   --button-text:#77736d;
-
   --green:#5f8f68;
-
   --green-dark:#527d5a;
+  --focus-ring:rgba(95,143,104,.55);
+}
 
+
+/* =========================
+   NO SELECT / NO HIGHLIGHT
+   Teks dekoratif tidak bisa diblok; kolom isian tetap bisa diketik.
+========================= */
+
+html,
+body{
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
+
+  -webkit-touch-callout:none;
+}
+
+::selection{
+  background:transparent;
+  color:inherit;
+}
+
+::-moz-selection{
+  background:transparent;
+  color:inherit;
+}
+
+img,
+svg{
+  -webkit-user-drag:none;
+  user-drag:none;
+  -webkit-user-select:none;
+  user-select:none;
+  pointer-events:none;
+}
+
+.back-button svg,
+.eye-button svg{
+  pointer-events:none;
+}
+
+/* Kolom isian wajib bisa dipilih (Safari/iOS tidak mengizinkan mengetik jika none) */
+.input{
+  -webkit-user-select:text;
+  -moz-user-select:text;
+  -ms-user-select:text;
+  user-select:text;
+}
+
+.input::selection{
+  background:rgba(95,143,104,.22);
+  color:inherit;
+}
+
+.input::-moz-selection{
+  background:rgba(95,143,104,.22);
+  color:inherit;
+}
+
+/* Hilangkan outline biru bawaan browser; ganti ring hijau halus hanya untuk keyboard */
+button:focus,
+input:focus{
+  outline:none;
+}
+
+button:focus-visible{
+  outline:2px solid var(--focus-ring);
+  outline-offset:3px;
 }
 
 
@@ -77,32 +169,36 @@ body{
 ========================= */
 
 body{
-
   font-family:
     "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
     Arial,
     sans-serif;
 
   color:var(--text);
 
   background:
-
     radial-gradient(
       circle at 10% 0%,
       rgba(255,255,255,.9),
       transparent 35%
     ),
-
     radial-gradient(
       circle at 95% 90%,
       rgba(226,223,216,.55),
       transparent 38%
     ),
-
     var(--background);
 
   overflow-x:hidden;
 
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
 }
 
 
@@ -110,50 +206,29 @@ body{
    SUBTLE LIQUID GLASS
 ========================= */
 
-body::before{
-
+body::before,
+body::after{
   content:"";
-
   position:fixed;
+  border-radius:50%;
+  background:rgba(255,255,255,.5);
+  filter:blur(55px);
+  pointer-events:none;
+  z-index:0;
+}
 
+body::before{
   width:380px;
   height:380px;
-
   top:-210px;
   right:-170px;
-
-  border-radius:50%;
-
-  background:
-    rgba(255,255,255,.5);
-
-  filter:blur(55px);
-
-  pointer-events:none;
-
 }
 
 body::after{
-
-  content:"";
-
-  position:fixed;
-
   width:330px;
   height:330px;
-
   bottom:-190px;
   left:-150px;
-
-  border-radius:50%;
-
-  background:
-    rgba(255,255,255,.5);
-
-  filter:blur(55px);
-
-  pointer-events:none;
-
 }
 
 
@@ -162,23 +237,24 @@ body::after{
 ========================= */
 
 .page{
-
   width:100%;
-
   max-width:460px;
 
   min-height:100vh;
   min-height:100dvh;
 
-  margin:auto;
+  margin:0 auto;
 
-  padding:
-    24px
-    20px
-    30px;
+  padding-top:calc(24px + env(safe-area-inset-top, 0px));
+  padding-right:calc(20px + env(safe-area-inset-right, 0px));
+  padding-bottom:calc(30px + env(safe-area-inset-bottom, 0px));
+  padding-left:calc(20px + env(safe-area-inset-left, 0px));
 
   position:relative;
+  z-index:1;
 
+  display:flex;
+  flex-direction:column;
 }
 
 
@@ -187,92 +263,77 @@ body::after{
 ========================= */
 
 .back-button{
+  flex:0 0 auto;
 
   width:48px;
   height:48px;
 
   border-radius:16px;
 
-  border:
-    1px solid rgba(255,255,255,.9);
+  border:1px solid rgba(255,255,255,.9);
 
-  background:
-    rgba(232,230,225,.58);
+  background:rgba(232,230,225,.58);
 
   color:#5f5c56;
 
   display:flex;
-
   align-items:center;
   justify-content:center;
 
   cursor:pointer;
 
   box-shadow:
-
-    0 8px 24px
-    rgba(70,67,60,.08),
-
-    inset 0 1px 3px
-    rgba(255,255,255,.95);
-
-  backdrop-filter:blur(18px);
+    0 8px 24px rgba(70,67,60,.08),
+    inset 0 1px 3px rgba(255,255,255,.95);
 
   -webkit-backdrop-filter:blur(18px);
+  backdrop-filter:blur(18px);
+
+  -webkit-appearance:none;
+  appearance:none;
 
   transition:
     transform .2s ease,
     background .2s ease;
-
 }
 
 .back-button:hover{
-
-  background:
-    rgba(245,243,239,.78);
-
+  background:rgba(245,243,239,.78);
 }
 
 .back-button:active{
-
   transform:scale(.94);
-
 }
 
 .back-button svg{
-
   width:24px;
   height:24px;
-
   fill:none;
-
   stroke:currentColor;
-
   stroke-width:2;
-
   stroke-linecap:round;
-
   stroke-linejoin:round;
-
 }
 
 
 /* =========================
    CONTENT
+   margin auto = otomatis di tengah layar tinggi,
+   tetap bisa di-scroll di layar pendek tanpa terpotong
 ========================= */
 
 .content{
-
   width:100%;
 
   display:flex;
-
   flex-direction:column;
-
   align-items:center;
 
-  padding-top:72px;
+  margin-top:auto;
+  margin-bottom:auto;
 
+  padding-top:clamp(24px, 6vh, 56px);
+  padding-bottom:8px;
 }
 
 
@@ -281,51 +342,36 @@ body::after{
 ========================= */
 
 .logo{
-
   width:92px;
   height:92px;
+  flex:0 0 auto;
 
   border-radius:50%;
-
   overflow:hidden;
 
   display:flex;
-
   align-items:center;
-
   justify-content:center;
 
-  margin-bottom:48px;
+  margin-bottom:clamp(28px, 5vh, 48px);
 
-  background:
-    rgba(255,255,255,.65);
+  background:rgba(255,255,255,.65);
 
-  border:
-    1px solid rgba(255,255,255,.92);
+  border:1px solid rgba(255,255,255,.92);
 
   box-shadow:
-
-    0 15px 40px
-    rgba(70,67,60,.09),
-
-    inset 0 1px 4px
-    rgba(255,255,255,.95);
-
-  backdrop-filter:blur(20px);
+    0 15px 40px rgba(70,67,60,.09),
+    inset 0 1px 4px rgba(255,255,255,.95);
 
   -webkit-backdrop-filter:blur(20px);
-
+  backdrop-filter:blur(20px);
 }
 
 .logo img{
-
   width:100%;
   height:100%;
-
   object-fit:cover;
-
   display:block;
-
 }
 
 
@@ -334,38 +380,35 @@ body::after{
 ========================= */
 
 .login-card{
-
   width:100%;
 
-  padding:
-    42px
-    30px
-    32px;
+  padding:42px 30px 32px;
 
   border-radius:30px;
 
-  background:
-    var(--card);
+  background:var(--card);
 
-  border:
-    1px solid rgba(255,255,255,.86);
+  border:1px solid rgba(255,255,255,.86);
 
   box-shadow:
+    0 22px 55px rgba(70,67,60,.10),
+    inset 0 1px 3px rgba(255,255,255,.85);
 
-    0 22px 55px
-    rgba(70,67,60,.10),
+  -webkit-backdrop-filter:blur(25px) saturate(105%);
+  backdrop-filter:blur(25px) saturate(105%);
+}
 
-    inset 0 1px 3px
-    rgba(255,255,255,.85);
-
-  backdrop-filter:
-    blur(25px)
-    saturate(105%);
-
-  -webkit-backdrop-filter:
-    blur(25px)
-    saturate(105%);
-
+/* Browser lama tanpa backdrop-filter: pakai latar hampir solid agar tetap terbaca */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .login-card{
+    background:rgba(228,226,221,.97);
+  }
+  .back-button{
+    background:rgba(232,230,225,.95);
+  }
+  .logo{
+    background:rgba(255,255,255,.9);
+  }
 }
 
 
@@ -374,70 +417,47 @@ body::after{
 ========================= */
 
 .title{
-
   text-align:center;
-
   margin-bottom:36px;
-
 }
 
 .title h1{
-
   font-size:29px;
-
   line-height:1.25;
-
   font-weight:700;
-
   letter-spacing:-.8px;
-
   color:#292825;
-
+  overflow-wrap:anywhere;
 }
 
 .title p{
-
   margin-top:11px;
-
   font-size:15px;
-
   line-height:1.5;
-
   font-weight:400;
-
   color:#817d76;
-
 }
 
 
 /* =========================
-   FIELD
+   FORM & FIELD
 ========================= */
 
+.form{
+  width:100%;
+}
+
 .field{
-
   margin-bottom:22px;
-
 }
 
 .field label{
-
   display:block;
-
-  margin:
-    0
-    0
-    10px
-    4px;
-
+  margin:0 0 10px 4px;
   font-size:15px;
-
   line-height:1.4;
-
   font-weight:600;
-
   color:var(--label);
-
 }
 
 
@@ -446,63 +466,66 @@ body::after{
 ========================= */
 
 .input{
-
   width:100%;
-
   height:64px;
 
-  padding:
-    0
-    18px;
+  padding:0 18px;
 
-  border:
-    1px solid var(--border);
-
+  border:1px solid var(--border);
   border-radius:18px;
 
-  background:
-    var(--input);
-
-  outline:none;
+  background:var(--input);
 
   color:#292825;
+  caret-color:#292825;
 
-  font-family:
-    "Inter",
-    Arial,
-    sans-serif;
-
-  font-size:16px;
-
+  font-family:inherit;
+  font-size:16px; /* minimal 16px agar iOS tidak zoom otomatis */
   font-weight:500;
+
+  -webkit-appearance:none;
+  -moz-appearance:none;
+  appearance:none;
 
   transition:
     border .2s ease,
     background .2s ease,
     box-shadow .2s ease;
-
 }
 
 .input::placeholder{
-
   color:#aaa69f;
-
   font-weight:400;
-
 }
 
 .input:focus{
+  border-color:rgba(100,96,88,.5);
+  background:rgba(255,255,253,.9);
+  box-shadow:0 0 0 4px rgba(100,96,88,.055);
+}
 
-  border-color:
-    rgba(100,96,88,.5);
+/* Hilangkan warna biru/kuning autofill browser */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover,
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active{
+  -webkit-text-fill-color:#292825;
+  caret-color:#292825;
+  -webkit-box-shadow:0 0 0 1000px #f8f7f4 inset;
+  box-shadow:0 0 0 1000px #f8f7f4 inset;
+  border-color:var(--border);
+  transition:background-color 99999s ease-in-out 0s;
+}
 
-  background:
-    rgba(255,255,253,.9);
+.input:autofill{
+  -webkit-text-fill-color:#292825;
+  box-shadow:0 0 0 1000px #f8f7f4 inset;
+}
 
-  box-shadow:
-    0 0 0 4px
-    rgba(100,96,88,.055);
-
+/* Hilangkan ikon bawaan Edge/IE pada kolom password */
+.input::-ms-reveal,
+.input::-ms-clear{
+  display:none;
 }
 
 
@@ -511,38 +534,27 @@ body::after{
 ========================= */
 
 .password-box{
-
   width:100%;
-
   position:relative;
-
 }
 
 .password-box .input{
-
   padding-right:58px;
-
 }
 
 .eye-button{
-
   position:absolute;
-
   right:12px;
-
   top:50%;
-
   transform:translateY(-50%);
 
   width:40px;
   height:40px;
 
   border:0;
-
   background:transparent;
 
   display:flex;
-
   align-items:center;
   justify-content:center;
 
@@ -550,23 +562,30 @@ body::after{
 
   cursor:pointer;
 
+  -webkit-appearance:none;
+  appearance:none;
 }
 
 .eye-button svg{
-
   width:22px;
   height:22px;
-
   fill:none;
-
   stroke:currentColor;
-
   stroke-width:1.8;
-
   stroke-linecap:round;
-
   stroke-linejoin:round;
+}
 
+.eye-button .icon-hide{
+  display:none;
+}
+
+.eye-button[data-visible="true"] .icon-show{
+  display:none;
+}
+
+.eye-button[data-visible="true"] .icon-hide{
+  display:block;
 }
 
 
@@ -575,49 +594,37 @@ body::after{
 ========================= */
 
 .login-button{
-
   width:100%;
-
   height:61px;
 
   margin-top:4px;
 
   border-radius:18px;
 
-  border:
-    1px solid rgba(255,255,255,.88);
+  border:1px solid rgba(255,255,255,.88);
 
-  background:
-    var(--button);
+  background:var(--button);
 
-  color:
-    var(--button-text);
+  color:var(--button-text);
 
-  font-family:
-    "Inter",
-    Arial,
-    sans-serif;
-
+  font-family:inherit;
   font-size:17px;
-
   font-weight:600;
 
   cursor:not-allowed;
 
+  -webkit-appearance:none;
+  appearance:none;
+
   box-shadow:
-
-    0 7px 20px
-    rgba(70,67,60,.07),
-
-    inset 0 1px 3px
-    rgba(255,255,255,.9);
+    0 7px 20px rgba(70,67,60,.07),
+    inset 0 1px 3px rgba(255,255,255,.9);
 
   transition:
     background .25s ease,
     color .25s ease,
     box-shadow .25s ease,
     transform .2s ease;
-
 }
 
 
@@ -626,38 +633,27 @@ body::after{
 ========================= */
 
 .login-button.active{
-
-  background:
-    var(--green);
-
+  background:var(--green);
   color:#fff;
-
   cursor:pointer;
-
-  border-color:
-    rgba(255,255,255,.45);
+  border-color:rgba(255,255,255,.45);
 
   box-shadow:
-
-    0 10px 25px
-    rgba(76,115,83,.18),
-
-    inset 0 1px 2px
-    rgba(255,255,255,.28);
-
+    0 10px 25px rgba(76,115,83,.18),
+    inset 0 1px 2px rgba(255,255,255,.28);
 }
 
 .login-button.active:hover{
-
-  background:
-    var(--green-dark);
-
+  background:var(--green-dark);
 }
 
 .login-button.active:active{
-
   transform:scale(.985);
+}
 
+.login-button:disabled{
+  cursor:progress;
+  opacity:.8;
 }
 
 
@@ -666,33 +662,22 @@ body::after{
 ========================= */
 
 .status{
-
   min-height:20px;
-
   margin-top:16px;
-
   text-align:center;
-
   font-size:13px;
-
   line-height:1.5;
-
   font-weight:500;
-
   color:#858078;
-
+  overflow-wrap:anywhere;
 }
 
 .status.error{
-
   color:#a85f5a;
-
 }
 
 .status.success{
-
   color:#5f8f68;
-
 }
 
 
@@ -701,25 +686,14 @@ body::after{
 ========================= */
 
 .access{
-
   margin-top:26px;
-
   padding-top:21px;
-
-  border-top:
-    1px solid
-    rgba(110,106,98,.15);
-
+  border-top:1px solid rgba(110,106,98,.15);
   text-align:center;
-
   font-size:12px;
-
   line-height:1.5;
-
   font-weight:400;
-
   color:#918c84;
-
 }
 
 
@@ -728,89 +702,160 @@ body::after{
 ========================= */
 
 .footer{
-
   margin-top:25px;
-
   text-align:center;
-
   font-size:12px;
-
   font-weight:400;
-
   color:#99938b;
+}
 
+.noscript-msg{
+  padding:24px;
+  text-align:center;
+  font-size:15px;
+  color:#a85f5a;
 }
 
 
 /* =========================
-   SMALL SCREEN
+   RESPONSIVE — LAYAR KECIL (<= 380px)
 ========================= */
 
-@media(max-width:380px){
+@media (max-width:380px){
 
   .page{
-
-    padding-left:16px;
-    padding-right:16px;
-
-  }
-
-  .content{
-
-    padding-top:55px;
-
+    padding-left:calc(16px + env(safe-area-inset-left, 0px));
+    padding-right:calc(16px + env(safe-area-inset-right, 0px));
   }
 
   .logo{
-
     width:82px;
     height:82px;
-
-    margin-bottom:38px;
-
   }
 
   .login-card{
-
-    padding:
-      32px
-      20px
-      27px;
-
+    padding:32px 20px 27px;
     border-radius:26px;
-
   }
 
   .title{
-
     margin-bottom:30px;
-
   }
 
   .title h1{
-
     font-size:26px;
-
   }
 
   .title p{
-
     font-size:14px;
-
   }
 
   .input{
-
     height:60px;
-
   }
 
   .login-button{
-
     height:58px;
+  }
+}
 
+
+/* =========================
+   RESPONSIVE — LAYAR SANGAT KECIL (<= 340px)
+========================= */
+
+@media (max-width:340px){
+
+  .login-card{
+    padding:26px 16px 22px;
+    border-radius:22px;
   }
 
+  .title h1{
+    font-size:23px;
+  }
+
+  .field label{
+    font-size:14px;
+  }
+
+  .input{
+    height:56px;
+    padding-left:14px;
+    border-radius:16px;
+  }
+
+  .login-button{
+    height:54px;
+    font-size:16px;
+  }
+}
+
+
+/* =========================
+   RESPONSIVE — LAYAR PENDEK / LANDSCAPE HP
+========================= */
+
+@media (max-height:700px){
+
+  .logo{
+    width:72px;
+    height:72px;
+    margin-bottom:22px;
+  }
+
+  .login-card{
+    padding-top:28px;
+    padding-bottom:24px;
+  }
+
+  .title{
+    margin-bottom:22px;
+  }
+
+  .field{
+    margin-bottom:16px;
+  }
+
+  .input{
+    height:56px;
+  }
+
+  .login-button{
+    height:56px;
+  }
+
+  .access{
+    margin-top:18px;
+    padding-top:14px;
+  }
+
+  .footer{
+    margin-top:16px;
+  }
+}
+
+
+/* =========================
+   RESPONSIVE — TABLET & DESKTOP
+========================= */
+
+@media (min-width:768px){
+
+  .page{
+    max-width:500px;
+  }
+}
+
+@media (min-width:1600px){
+
+  .page{
+    max-width:540px;
+  }
+
+  .title h1{
+    font-size:32px;
+  }
 }
 
 
@@ -818,14 +863,14 @@ body::after{
    REDUCE MOTION
 ========================= */
 
-@media(prefers-reduced-motion:reduce){
+@media (prefers-reduced-motion:reduce){
 
-  *{
-
+  *,
+  *::before,
+  *::after{
     transition:none!important;
-
+    animation:none!important;
   }
-
 }
 
 </style>
@@ -834,13 +879,14 @@ body::after{
 
 <body>
 
+<noscript>
+  <div class="noscript-msg">JavaScript is required to sign in.</div>
+</noscript>
 
 <main class="page">
 
 
-  <!-- =========================
-       BACK
-  ========================== -->
+  <!-- BACK -->
 
   <button
     class="back-button"
@@ -848,408 +894,712 @@ body::after{
     type="button"
     aria-label="Back"
   >
-
-    <svg viewBox="0 0 24 24">
-
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
       <path d="M19 12H5"></path>
-
       <path d="M12 19L5 12L12 5"></path>
-
     </svg>
-
   </button>
 
 
   <div class="content">
 
 
-    <!-- =========================
-         LOGO
-    ========================== -->
+    <!-- LOGO -->
 
     <div class="logo">
-
       <img
         src="logo-login.jpg"
         alt="Logo"
+        draggable="false"
+        decoding="async"
       >
-
     </div>
 
 
-    <!-- =========================
-         LOGIN CARD
-    ========================== -->
+    <!-- LOGIN CARD -->
 
     <section class="login-card">
 
-
       <div class="title">
-
-        <h1>
-          Welcome Back
-        </h1>
-
-        <p>
-          Please enter your account details
-        </p>
-
+        <h1>Welcome Back</h1>
+        <p>Please enter your account details</p>
       </div>
 
 
-      <!-- EMAIL -->
+      <form
+        class="form"
+        id="loginForm"
+        novalidate
+        autocomplete="on"
+        action="javascript:void(0)"
+      >
 
-      <div class="field">
+        <!-- EMAIL -->
 
-        <label for="email">
-          Email
-        </label>
+        <div class="field">
 
-        <input
-          class="input"
-          id="email"
-          type="email"
-          placeholder="Enter your email"
-          autocomplete="email"
-        >
-
-      </div>
-
-
-      <!-- PASSWORD -->
-
-      <div class="field">
-
-        <label for="password">
-          Password
-        </label>
-
-        <div class="password-box">
+          <label for="email">Email</label>
 
           <input
             class="input"
-            id="password"
-            type="password"
-            placeholder="Enter your password"
-            autocomplete="current-password"
+            id="email"
+            name="username"
+            type="text"
+            inputmode="email"
+            placeholder="Enter your email"
+            autocomplete="username"
+            autocapitalize="none"
+            autocorrect="off"
+            spellcheck="false"
+            maxlength="254"
+            enterkeyhint="next"
+            aria-describedby="status"
+            required
           >
-
-          <button
-            class="eye-button"
-            id="eyeButton"
-            type="button"
-            aria-label="Show password"
-          >
-
-            <svg viewBox="0 0 24 24">
-
-              <path
-                d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z">
-              </path>
-
-              <circle
-                cx="12"
-                cy="12"
-                r="2.5">
-              </circle>
-
-            </svg>
-
-          </button>
 
         </div>
 
-      </div>
+
+        <!-- PASSWORD -->
+
+        <div class="field">
+
+          <label for="password">Password</label>
+
+          <div class="password-box">
+
+            <input
+              class="input"
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
+              maxlength="72"
+              enterkeyhint="go"
+              aria-describedby="status"
+              required
+            >
+
+            <button
+              class="eye-button"
+              id="eyeButton"
+              type="button"
+              aria-label="Show password"
+              aria-pressed="false"
+              data-visible="false"
+            >
+
+              <svg class="icon-show" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path>
+                <circle cx="12" cy="12" r="2.5"></circle>
+              </svg>
+
+              <svg class="icon-hide" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M3 3L21 21"></path>
+                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"></path>
+                <path d="M9.8 5.2A10.2 10.2 0 0 1 12 5c6 0 9.5 7 9.5 7a16 16 0 0 1-3.2 3.9"></path>
+                <path d="M6.2 6.2C3.9 7.9 2.5 12 2.5 12s3.5 7 9.5 7c1.2 0 2.3-.2 3.3-.6"></path>
+              </svg>
+
+            </button>
+
+          </div>
+
+        </div>
 
 
-      <!-- LOGIN BUTTON -->
+        <!-- LOGIN BUTTON -->
 
-      <button
-        class="login-button"
-        id="loginButton"
-        type="button"
-      >
-        Login
-      </button>
+        <button
+          class="login-button"
+          id="loginButton"
+          type="submit"
+          aria-disabled="true"
+        >
+          Login
+        </button>
+
+      </form>
 
 
       <!-- STATUS -->
 
       <div
         class="status"
-        id="status">
-      </div>
+        id="status"
+        role="status"
+        aria-live="polite"
+      ></div>
 
 
       <!-- ACCESS -->
 
       <div class="access">
-
         Authorized access only
-
       </div>
-
 
     </section>
 
 
     <div class="footer">
-
       Secure access
-
     </div>
-
 
   </div>
 
 </main>
 
 
-<!-- Supabase Client SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
-  const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
-  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
-      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
-      storage: window.localStorage,
-      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
-    }
-  });
-</script>
+<!-- Supabase Client SDK (versi dikunci agar tidak berubah diam-diam) -->
+<script
+  src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
 
 <script>
+"use strict";
 
 /* ==========================================
-   AUTHENTICATION
-   Login & pengecekan akses admin sekarang sepenuhnya
-   ditangani oleh Supabase Auth + fungsi is_admin() di server
-   (lihat fungsi login() di bawah). Tidak ada lagi email/password
-   yang tersimpan di file ini.
+   KONFIGURASI
+   Anon key memang publik by design; keamanan data
+   bergantung pada Row Level Security (RLS) dan is_admin() di Supabase.
 ========================================== */
+
+var SUPABASE_URL      = "https://zgzmbneqqzxnptbmlhsz.supabase.co";
+var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E";
+
+var DASHBOARD_URL  = "dashboard-admin.html";
+var BACK_URL       = "https://dashboard-bm-tech.vercel.app/";
+
+var EMAIL_MAX      = 254;
+var PASSWORD_MAX   = 72;      /* batas aman bcrypt di Supabase */
+var REQUEST_TIMEOUT_MS = 15000;
+
+var MAX_FAILS_BEFORE_LOCK = 5;
+var BASE_LOCK_SECONDS     = 30;
+var MAX_LOCK_SECONDS      = 900;
+var GUARD_KEY             = "bmtech-login-guard";
+
+
+/* ==========================================
+   PENYIMPANAN AMAN
+   Jika localStorage diblokir (mis. mode privat Safari),
+   pakai memori sementara agar login tetap jalan.
+========================================== */
+
+var safeStorage = (function(){
+
+  try{
+    var testKey = "__bm_test__";
+    window.localStorage.setItem(testKey, "1");
+    window.localStorage.removeItem(testKey);
+    return window.localStorage;
+  }catch(e){
+
+    var mem = {};
+
+    return {
+      getItem:function(k){ return Object.prototype.hasOwnProperty.call(mem,k) ? mem[k] : null; },
+      setItem:function(k,v){ mem[k] = String(v); },
+      removeItem:function(k){ delete mem[k]; }
+    };
+
+  }
+
+})();
+
+
+/* ==========================================
+   SUPABASE CLIENT
+========================================== */
+
+var supabaseClient = null;
+
+try{
+
+  if(window.supabase && typeof window.supabase.createClient === "function"){
+
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth:{
+        persistSession:true,
+        autoRefreshToken:true,
+        detectSessionInUrl:false,   /* jangan baca token dari URL di halaman login */
+        storage:safeStorage,
+        storageKey:"bmtech-auth"    /* sama di semua halaman agar sesi terbaca */
+      }
+    });
+
+  }
+
+}catch(e){
+  supabaseClient = null;
+}
 
 
 /* ==========================================
    ELEMENTS
 ========================================== */
 
-const emailInput =
-  document.getElementById("email");
+var form          = document.getElementById("loginForm");
+var emailInput    = document.getElementById("email");
+var passwordInput = document.getElementById("password");
+var eyeButton     = document.getElementById("eyeButton");
+var loginButton   = document.getElementById("loginButton");
+var statusBox     = document.getElementById("status");
+var backButton    = document.getElementById("backButton");
 
-const passwordInput =
-  document.getElementById("password");
+var isSubmitting  = false;
+var lockTimer     = null;
 
-const eyeButton =
-  document.getElementById("eyeButton");
 
-const loginButton =
-  document.getElementById("loginButton");
+/* ==========================================
+   ANTI KLIK KANAN, DRAG, DAN BLOK TEKS
+   Catatan: ini hanya kosmetik, bukan perlindungan keamanan.
+   Di perangkat sentuh, menu tahan-lama pada kolom isian tetap
+   dibiarkan agar fungsi tempel (paste) tidak rusak.
+========================================== */
 
-const status =
-  document.getElementById("status");
+var isTouchOnly = false;
 
-const backButton =
-  document.getElementById("backButton");
+try{
+  isTouchOnly = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+}catch(e){}
+
+document.addEventListener("contextmenu", function(event){
+
+  var t = event.target;
+  var inField = t && t.tagName === "INPUT";
+
+  if(isTouchOnly && inField){
+    return;
+  }
+
+  event.preventDefault();
+
+}, false);
+
+document.addEventListener("dragstart", function(event){
+  event.preventDefault();
+}, false);
+
+document.addEventListener("selectstart", function(event){
+
+  var t = event.target;
+
+  if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")){
+    return;
+  }
+
+  event.preventDefault();
+
+}, false);
+
+
+/* ==========================================
+   VALIDASI & SANITASI INPUT
+========================================== */
+
+/* Hanya karakter email yang sah. Tanda kutip, spasi, titik koma,
+   tanda lebih/kurang, garis miring, dsb. otomatis dibuang. */
+
+var EMAIL_ALLOWED_CHARS = /[^A-Za-z0-9@._%+\-]/g;
+
+var EMAIL_PATTERN = /^[A-Za-z0-9._%+\-]{1,64}@[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?)+$/;
+
+var CONTROL_CHARS = /[\u0000-\u001F\u007F-\u009F\u2028\u2029\u200B-\u200F\uFEFF]/;
+
+function sanitizeEmail(value){
+
+  var v = String(value);
+
+  try{
+    v = v.normalize("NFKC");   /* huruf lebar penuh -> ASCII biasa */
+  }catch(e){}
+
+  return v
+    .replace(EMAIL_ALLOWED_CHARS, "")
+    .slice(0, EMAIL_MAX);
+
+}
+
+function isValidEmail(email){
+
+  if(typeof email !== "string"){ return false; }
+  if(email.length < 6 || email.length > EMAIL_MAX){ return false; }
+  if(email.indexOf("..") !== -1){ return false; }
+
+  return EMAIL_PATTERN.test(email);
+
+}
+
+function isValidPassword(password){
+
+  if(typeof password !== "string"){ return false; }
+  if(password.length < 1 || password.length > PASSWORD_MAX){ return false; }
+  if(CONTROL_CHARS.test(password)){ return false; }
+
+  return true;
+
+}
+
+/* Bersihkan kolom email saat mengetik / menempel, jaga posisi kursor */
+
+var composing = false;
+
+function cleanEmailField(){
+
+  if(composing){ return; }
+
+  var before = emailInput.value;
+  var clean  = sanitizeEmail(before);
+
+  if(clean === before){ return; }
+
+  var pos = emailInput.selectionStart;
+  var removed = before.length - clean.length;
+
+  emailInput.value = clean;
+
+  try{
+    if(typeof pos === "number"){
+      var np = Math.max(0, pos - removed);
+      emailInput.setSelectionRange(np, np);
+    }
+  }catch(e){}
+
+}
+
+emailInput.addEventListener("compositionstart", function(){ composing = true; });
+
+emailInput.addEventListener("compositionend", function(){
+  composing = false;
+  cleanEmailField();
+  updateLoginButton();
+});
+
+emailInput.addEventListener("input", function(){
+  cleanEmailField();
+  updateLoginButton();
+});
+
+emailInput.addEventListener("blur", function(){
+  cleanEmailField();
+});
+
+passwordInput.addEventListener("input", function(){
+  updateLoginButton();
+});
+
+
+/* ==========================================
+   STATUS HELPERS
+========================================== */
+
+function setStatus(message, type){
+
+  statusBox.className = "status" + (type ? " " + type : "");
+  statusBox.textContent = message || "";
+
+}
+
+function setButtonReady(){
+
+  var email    = emailInput.value;
+  var password = passwordInput.value;
+  var ready    = !!email && password.length > 0 && !isLocked() && !isSubmitting;
+
+  if(ready){
+    loginButton.classList.add("active");
+    loginButton.setAttribute("aria-disabled", "false");
+  }else{
+    loginButton.classList.remove("active");
+    loginButton.setAttribute("aria-disabled", "true");
+  }
+
+}
+
+function updateLoginButton(){
+  setButtonReady();
+}
+
+
+/* ==========================================
+   PEMBATAS PERCOBAAN LOGIN (sisi browser)
+   Hanya penghalang tambahan. Perlindungan brute-force
+   yang sebenarnya harus aktif di Supabase Auth (rate limit / CAPTCHA).
+========================================== */
+
+function readGuard(){
+
+  try{
+
+    var raw = safeStorage.getItem(GUARD_KEY);
+
+    if(!raw){ return { fails:0, until:0, level:0 }; }
+
+    var g = JSON.parse(raw);
+
+    return {
+      fails: Number(g.fails) || 0,
+      until: Number(g.until) || 0,
+      level: Number(g.level) || 0
+    };
+
+  }catch(e){
+    return { fails:0, until:0, level:0 };
+  }
+
+}
+
+function writeGuard(g){
+
+  try{
+    safeStorage.setItem(GUARD_KEY, JSON.stringify(g));
+  }catch(e){}
+
+}
+
+function clearGuard(){
+
+  try{
+    safeStorage.removeItem(GUARD_KEY);
+  }catch(e){}
+
+}
+
+function secondsLeft(){
+
+  var g = readGuard();
+  var left = Math.ceil((g.until - Date.now()) / 1000);
+
+  return left > 0 ? left : 0;
+
+}
+
+function isLocked(){
+  return secondsLeft() > 0;
+}
+
+function registerFailure(){
+
+  var g = readGuard();
+
+  g.fails += 1;
+
+  if(g.fails >= MAX_FAILS_BEFORE_LOCK){
+
+    var seconds = Math.min(
+      BASE_LOCK_SECONDS * Math.pow(2, g.level),
+      MAX_LOCK_SECONDS
+    );
+
+    g.until = Date.now() + seconds * 1000;
+    g.level += 1;
+    g.fails = 0;
+
+  }
+
+  writeGuard(g);
+
+}
+
+function formatTime(total){
+
+  var m = Math.floor(total / 60);
+  var s = total % 60;
+
+  return m + ":" + (s < 10 ? "0" : "") + s;
+
+}
+
+function startLockCountdown(){
+
+  if(lockTimer){
+    clearInterval(lockTimer);
+    lockTimer = null;
+  }
+
+  function tick(){
+
+    var left = secondsLeft();
+
+    if(left <= 0){
+
+      clearInterval(lockTimer);
+      lockTimer = null;
+
+      setStatus("", "");
+      setButtonReady();
+
+      return;
+
+    }
+
+    setStatus("Too many attempts. Try again in " + formatTime(left) + ".", "error");
+    setButtonReady();
+
+  }
+
+  tick();
+
+  if(secondsLeft() > 0){
+    lockTimer = setInterval(tick, 1000);
+  }
+
+}
 
 
 /* ==========================================
    BACK TO DASHBOARD
 ========================================== */
 
-backButton.addEventListener(
-  "click",
-  function(){
+backButton.addEventListener("click", function(){
 
-    window.location.href =
-      "https://dashboard-bm-tech.vercel.app/";
+  window.location.href = BACK_URL;
 
-  }
-);
-
-
-/* ==========================================
-   BUTTON STATE
-========================================== */
-
-function updateLoginButton(){
-
-  const email =
-    emailInput.value.trim();
-
-  const password =
-    passwordInput.value.trim();
-
-
-  if(email && password){
-
-    loginButton.classList.add("active");
-
-  }else{
-
-    loginButton.classList.remove("active");
-
-  }
-
-}
-
-
-/* Watch email */
-
-emailInput.addEventListener(
-  "input",
-  updateLoginButton
-);
-
-
-/* Watch password */
-
-passwordInput.addEventListener(
-  "input",
-  updateLoginButton
-);
+});
 
 
 /* ==========================================
    SHOW / HIDE PASSWORD
 ========================================== */
 
-eyeButton.addEventListener(
-  "click",
-  function(){
+function setPasswordVisible(visible){
 
-    const isHidden =
-      passwordInput.type === "password";
+  passwordInput.type = visible ? "text" : "password";
+
+  eyeButton.setAttribute("data-visible", visible ? "true" : "false");
+  eyeButton.setAttribute("aria-pressed", visible ? "true" : "false");
+  eyeButton.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+
+}
+
+eyeButton.addEventListener("click", function(){
+
+  setPasswordVisible(passwordInput.type === "password");
+
+});
+
+/* Sembunyikan password lagi jika tab ditinggalkan */
+
+document.addEventListener("visibilitychange", function(){
+
+  if(document.hidden){
+    setPasswordVisible(false);
+  }
+
+});
+
+window.addEventListener("pagehide", function(){
+  setPasswordVisible(false);
+});
 
 
-    passwordInput.type =
-      isHidden
-        ? "text"
-        : "password";
+/* ==========================================
+   ENTER DI KOLOM EMAIL -> PINDAH KE PASSWORD
+========================================== */
 
+emailInput.addEventListener("keydown", function(event){
 
-    eyeButton.setAttribute(
-      "aria-label",
-      isHidden
-        ? "Hide password"
-        : "Show password"
-    );
+  if(event.key === "Enter"){
 
-
-    if(isHidden){
-
-      eyeButton.innerHTML = `
-
-        <svg viewBox="0 0 24 24">
-
-          <path
-            d="M3 3L21 21">
-          </path>
-
-          <path
-            d="M10.6 10.6a2 2 0 0 0 2.8 2.8">
-          </path>
-
-          <path
-            d="M9.8 5.2A10.2 10.2 0 0 1 12 5c6 0 9.5 7 9.5 7a16 16 0 0 1-3.2 3.9">
-          </path>
-
-          <path
-            d="M6.2 6.2C3.9 7.9 2.5 12 2.5 12s3.5 7 9.5 7c1.2 0 2.3-.2 3.3-.6">
-          </path>
-
-        </svg>
-
-      `;
-
-    }else{
-
-      eyeButton.innerHTML = `
-
-        <svg viewBox="0 0 24 24">
-
-          <path
-            d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z">
-          </path>
-
-          <circle
-            cx="12"
-            cy="12"
-            r="2.5">
-          </circle>
-
-        </svg>
-
-      `;
-
-    }
+    event.preventDefault();
+    passwordInput.focus();
 
   }
-);
+
+});
+
+
+/* ==========================================
+   UTILITAS
+========================================== */
+
+function withTimeout(promise, ms){
+
+  return new Promise(function(resolve, reject){
+
+    var timer = setTimeout(function(){
+      reject(new Error("timeout"));
+    }, ms);
+
+    promise.then(
+      function(value){ clearTimeout(timer); resolve(value); },
+      function(error){ clearTimeout(timer); reject(error); }
+    );
+
+  });
+
+}
+
+function finishAttempt(){
+
+  isSubmitting = false;
+  loginButton.disabled = false;
+  loginButton.textContent = "Login";
+
+  setButtonReady();
+
+}
+
+function goToDashboard(){
+
+  /* replace: halaman login tidak tersisa di riwayat tombol Back */
+  window.location.replace(DASHBOARD_URL);
+
+}
 
 
 /* ==========================================
    LOGIN
 ========================================== */
 
-loginButton.addEventListener(
-  "click",
-  login
-);
-
-
-/* Enter on password */
-
-passwordInput.addEventListener(
-  "keydown",
-  function(event){
-
-    if(event.key === "Enter"){
-
-      login();
-
-    }
-
-  }
-);
-
-
-/* Enter on email */
-
-emailInput.addEventListener(
-  "keydown",
-  function(event){
-
-    if(event.key === "Enter"){
-
-      passwordInput.focus();
-
-    }
-
-  }
-);
-
-
-/* ==========================================
-   LOGIN FUNCTION (Supabase Auth)
-========================================== */
-
 async function login(){
 
-  const email =
-    emailInput.value
-      .trim()
-      .toLowerCase();
+  if(isSubmitting){ return; }
 
-  const password =
-    passwordInput.value;
+  if(!supabaseClient){
 
+    setStatus("Unable to load the login service. Check your connection and reload.", "error");
+    return;
 
-  /* Don't submit empty form */
+  }
+
+  if(isLocked()){
+
+    startLockCountdown();
+    return;
+
+  }
+
+  var email    = sanitizeEmail(emailInput.value).toLowerCase();
+  var password = passwordInput.value;
+
+  emailInput.value = email;
 
   if(!email || !password){
+    return;
+  }
 
+  if(!isValidEmail(email)){
+
+    setStatus("Please enter a valid email address.", "error");
+    emailInput.focus();
+    return;
+
+  }
+
+  if(!isValidPassword(password)){
+
+    setStatus("Email or password is incorrect.", "error");
+    passwordInput.value = "";
+    updateLoginButton();
+    passwordInput.focus();
     return;
 
   }
@@ -1257,154 +1607,213 @@ async function login(){
 
   /* Loading */
 
+  isSubmitting = true;
   loginButton.disabled = true;
-
-  loginButton.textContent =
-    "Checking...";
-
-
-  status.className =
-    "status";
-
-  status.textContent =
-    "";
+  loginButton.textContent = "Checking...";
+  setButtonReady();
+  setStatus("", "");
 
 
-  /* 1. Login ke Supabase Auth */
+  try{
 
-  const { data: authData, error: authError } =
-    await supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: password
-    });
+    /* 1. Login ke Supabase Auth */
+
+    var authResult = await withTimeout(
+      supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      }),
+      REQUEST_TIMEOUT_MS
+    );
+
+    if(authResult.error){
+
+      var status = authResult.error.status;
+
+      /* Gangguan server / jaringan: bukan salah password, jangan dihitung gagal */
+
+      if(status && status >= 500){
+
+        setStatus("Server is busy. Please try again shortly.", "error");
+
+      }else if(status === 429){
+
+        registerFailure();
+        setStatus("Too many requests. Please wait a moment and try again.", "error");
+
+      }else{
+
+        registerFailure();
+
+        setStatus("Email or password is incorrect.", "error");
+        passwordInput.value = "";
+        updateLoginButton();
+
+      }
+
+      finishAttempt();
+
+      if(isLocked()){ startLockCountdown(); }
+
+      return;
+
+    }
 
 
-  /* GAGAL: email/password salah */
+    /* 2. Cek hak akses admin di server lewat is_admin() */
 
-  if(authError){
+    var adminResult = await withTimeout(
+      supabaseClient.rpc("is_admin"),
+      REQUEST_TIMEOUT_MS
+    );
 
-    status.classList.add("error");
+    if(adminResult.error){
 
-    status.textContent =
-      "Email or password is incorrect.";
+      /* Gagal memverifikasi: jangan beri akses, tapi jangan salahkan password */
 
-    loginButton.disabled = false;
-    loginButton.textContent = "Login";
+      try{ await supabaseClient.auth.signOut(); }catch(e){}
 
-    return;
+      setStatus("Unable to verify access. Please try again.", "error");
+      finishAttempt();
+
+      return;
+
+    }
+
+    if(adminResult.data !== true){
+
+      /* Bukan admin: bersihkan sesi dan beri pesan yang sama
+         dengan password salah agar akun valid tidak bisa ditebak */
+
+      try{ await supabaseClient.auth.signOut(); }catch(e){}
+
+      registerFailure();
+
+      setStatus("Email or password is incorrect.", "error");
+      passwordInput.value = "";
+      updateLoginButton();
+      finishAttempt();
+
+      if(isLocked()){ startLockCountdown(); }
+
+      return;
+
+    }
+
+
+    /* SUCCESS */
+
+    clearGuard();
+
+    passwordInput.value = "";
+    setStatus("Login successful.", "success");
+
+    setTimeout(goToDashboard, 400);
+
+  }catch(error){
+
+    if(error && error.message === "timeout"){
+      setStatus("The request took too long. Please try again.", "error");
+    }else{
+      setStatus("Network error. Check your connection and try again.", "error");
+    }
+
+    finishAttempt();
 
   }
-
-
-  /* 2. Login berhasil di Supabase, sekarang cek hak akses admin
-        lewat fungsi is_admin() di server (bukan di browser) */
-
-  const { data: adminCheck, error: adminError } =
-    await supabaseClient.rpc('is_admin');
-
-
-  /* Kalau bukan admin, langsung sign out — jangan biarkan
-     session non-admin menggantung di browser */
-
-  if(adminError || !adminCheck){
-
-    await supabaseClient.auth.signOut();
-
-    status.classList.add("error");
-
-    status.textContent =
-      "Akun ini tidak memiliki akses admin.";
-
-    loginButton.disabled = false;
-    loginButton.textContent = "Login";
-
-    return;
-
-  }
-
-
-  /* SUCCESS */
-
-  status.classList.add("success");
-
-  status.textContent =
-    "Login successful.";
-
-
-  setTimeout(
-    function(){
-
-      window.location.href =
-        "dashboard-admin.html";
-
-    },
-    500
-  );
 
 }
 
 
-/* ==========================================
-   INITIAL BUTTON STATE
-========================================== */
+/* Submit lewat tombol Login ATAU Enter di kolom password */
 
-updateLoginButton();
+form.addEventListener("submit", function(event){
+
+  event.preventDefault();
+  login();
+
+});
 
 
 /* ==========================================
    CEK SESI YANG SUDAH ADA
-   Kalau user sudah login & terverifikasi admin sebelumnya,
-   langsung lempar ke dashboard tanpa perlu isi form lagi.
+   Jika sudah login sebagai admin, langsung ke dashboard.
+   Sesi HANYA dihapus bila server memastikan akun bukan admin;
+   gangguan jaringan tidak akan mengeluarkan pengguna.
 ========================================== */
 
 (async function checkExistingSession(){
 
-  const { data: { session } } =
-    await supabaseClient.auth.getSession();
-
-  if(!session){
+  if(!supabaseClient){
     return;
   }
 
-  const { data: adminCheck } =
-    await supabaseClient.rpc('is_admin');
+  try{
 
-  if(adminCheck){
+    var sessionResult = await supabaseClient.auth.getSession();
+    var session = sessionResult && sessionResult.data && sessionResult.data.session;
 
-    window.location.href = "dashboard-admin.html";
+    if(!session){
+      return;
+    }
 
-  } else {
+    var adminResult = await supabaseClient.rpc("is_admin");
 
-    /* Session ada tapi bukan admin (mis. sisa login lama) — bersihkan */
+    if(adminResult.error){
+      return;   /* gagal cek (mis. offline): biarkan sesi, tampilkan form login */
+    }
 
-    await supabaseClient.auth.signOut();
+    if(adminResult.data === true){
 
+      goToDashboard();
+
+    }else{
+
+      await supabaseClient.auth.signOut();
+
+    }
+
+  }catch(e){
+    /* abaikan: form login tetap bisa dipakai */
   }
 
 })();
 
+
+/* ==========================================
+   KEADAAN AWAL
+========================================== */
+
+if(!supabaseClient){
+  setStatus("Unable to load the login service. Check your connection and reload.", "error");
+}
+
+if(isLocked()){
+  startLockCountdown();
+}
+
+updateLoginButton();
+
 </script>
 
 <script>
-  // Minta browser TIDAK menghapus localStorage (sesi login) saat perangkat
-  // kekurangan memori. Penting khusus untuk PWA iOS yang di-"Add to Home
-  // Screen" — tanpa ini, iOS kadang membersihkan local storage app yang
-  // jarang dibuka dan memaksa login ulang. Aman dipanggil berkali-kali,
-  // dan tidak memunculkan dialog izin apapun ke pengguna.
+  /* Minta browser tidak menghapus penyimpanan sesi saat memori perangkat menipis
+     (penting untuk PWA iOS "Add to Home Screen"). Aman dipanggil berulang. */
   if (navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist().catch(() => {});
+    navigator.storage.persist().catch(function(){});
   }
 </script>
+
 <script>
-  // Daftarkan Service Worker — WAJIB supaya app-shell tersedia offline dan
-  // supaya iOS mengenali halaman ini sebagai PWA yang bisa di-cache.
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.error('Gagal mendaftarkan service worker:', err);
+  /* Service Worker: agar app-shell tersedia offline dan dikenali sebagai PWA. */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("/sw.js").catch(function(err){
+        console.error("Gagal mendaftarkan service worker:", err);
       });
     });
   }
 </script>
+
 </body>
 </html>
