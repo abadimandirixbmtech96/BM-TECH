@@ -137,7 +137,6 @@
   .dev .dot { width: 40px; height: 40px; }
   .dev div p { margin: 0 0 2px; font-size: 14.5px; font-weight: 700; }
   .dev div small { color: var(--muted); font-size: 12px; }
-  .dev .go { margin-left: auto; color: var(--danger); font-weight: 700; font-size: 13px; padding: 8px 4px; }
   .toggle-row { display: flex; align-items: center; gap: 12px; justify-content: space-between; }
   .toggle-row p { margin: 0 0 2px; font-weight: 700; font-size: 14.5px; }
   .toggle-row small { color: var(--muted); font-size: 12px; line-height: 1.4; display: block; max-width: 230px; }
@@ -564,10 +563,8 @@
   </div>
   <div class="card" id="infoList" style="padding:4px 18px"></div>
   <button class="btn ghost" id="infoCopy" style="margin-bottom:10px">Salin ringkasan</button>
-  <button class="btn danger" id="infoReset">Atur ulang data uji</button>
 </div></div>
 
-<div class="ov" id="ovAnn"><div class="dlg" id="ovAnnBox"></div></div>
 <div class="ov" id="ovPrev"><div class="pv" id="ovPrevBox"></div></div>
 
 <div class="ov sheet" id="ovAdm"><div class="sh">
@@ -581,31 +578,18 @@
   <button class="btn" id="admSave">Simpan</button>
   <button class="btn ghost" id="admOwner" style="margin-top:10px">Jadikan Owner</button>
   <button class="btn danger" id="admOff" style="margin-top:10px">Nonaktifkan akun</button>
+  <button class="btn danger" id="admDel" style="margin-top:10px">Hapus akun permanen</button>
   <button class="btn ghost" id="admCancel" style="margin-top:10px">Batal</button>
 </div></div>
 
 <div id="boot" hidden><div class="bootbox" id="bootBox"><div class="bootspin"></div><p id="bootMsg">Memuat…</p><div class="bootbtns" id="bootBtns" hidden><button class="btn" id="bootRetry">Coba lagi</button><button class="btn" id="bootBack">Kembali</button></div></div></div>
 <div class="toast" id="toast"></div>
 <div class="ov" id="ov"><div class="dlg"><h3 id="dTitle"></h3><p id="dText"></p><div class="row-b"><button class="btn ghost" id="dNo">Batal</button><button class="btn" id="dYes">OK</button></div></div></div>
-<div class="ov sheet" id="ovTest"><div class="sh">
-  <h3>Mode uji — tanpa login</h3>
-  <p>Pilih akun untuk melihat tampilan dan fungsinya. Setelah login diaktifkan, akun dan role otomatis dari email yang masuk dan panel ini hilang. Tema dan font mengikuti dashboard.</p>
-  <div id="acctSw"></div>
-  <button class="btn ghost" id="btnSimDash" style="margin-bottom:10px">Simulasi: buka Dashboard (popup pengumuman)</button>
-  <button class="btn ghost" id="btnTestReset" style="margin-bottom:10px">Atur ulang data uji</button>
-  <button class="btn" id="btnTestClose">Selesai</button>
-</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 function bmMain(REAL){
-  /* ============================================================
-     MODE UJI. Satu-satunya tempat yang perlu diganti saat login diaktifkan:
-       TEST_MODE = false  →  akun & role dibaca dari server (hasil login), panel uji dimatikan.
-     Seluruh sisa kode hanya membaca akun lewat me() dan role lewat getRole().
-     ============================================================ */
-  var TEST_MODE = !REAL;
-  var STORE_KEY = 'bmtech_myprofile_test_v3';
+  /* Halaman Profil: akun, role, izin, pengumuman, dan log dibaca/ditulis ke Supabase lewat sesi login Dashboard. */
 
   var ROLE_LABEL = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };
   var FEATURES = [
@@ -620,43 +604,11 @@ function bmMain(REAL){
     admin1: { tulis:1, hapus:1, pulih:0, ekspor:1, role:0 },
     admin2: { tulis:1, hapus:0, pulih:0, ekspor:0, role:0 }
   };
-  /* Empat akun nyata: Owner, Admin 1, Admin 2, dan Admin + Dev (izin sama dengan Admin 1, ditambah Alat Developer). */
-  var SEED = [
-    { id: 'u1', mail: 'badrulmunirfilm@gmail.com',          name: 'Owner',   role: 'owner',  dev: false, active: true },
-    { id: 'u2', mail: 'gila7515@gmail.com',                 name: 'Admin 1', role: 'admin1', dev: false, active: true },
-    { id: 'u3', mail: 'abadimandirixbmtech96@gmail.com',    name: 'Admin 2', role: 'admin2', dev: false, active: true },
-    { id: 'u4', mail: 'reynaldtesla@gmail.com',             name: 'Reynald', role: 'admin1', dev: true,  active: true }
-  ];
   var SHORTCUTS = [
     { k: 'ann',      t: 'Pengumuman',       ic: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a4 4 0 010 6M17.5 6.5a8 8 0 010 11"/>' },
     { k: 'role',     t: 'Tambah Admin',     ic: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 19v-1a4 4 0 014-4h5a4 4 0 014 4v1M19 8v6M16 11h6"/>' },
     { k: 'role',     t: 'Kelola Admin',     ic: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>' }
   ];
-  var LOGS = [
-    { a: 'u4', k: 'sys', t: 'Memperbarui halaman Profil (v0.6 uji)', m: '09:40' },
-    { a: 'u2', k: 'add', t: 'Menambah data di BUKU BESAR — Canteng Kuswanto', m: '09:16' },
-    { a: 'u3', k: 'add', t: 'Menambah data di BUKU KASBON — Mail, sisa Rp 300.000', m: '08:55' },
-    { a: 'u1', k: 'sys', t: 'Mengunduh Backup Semua Data (JSON)', m: '08:15' },
-    { a: 'u1', k: 'sys', t: 'Masuk dari perangkat ini', m: '08:12' },
-    { a: 'u4', k: 'add', t: 'Menambah data di BUKU BESAR — Velg putih', m: '07:58' },
-    { a: 'u4', k: 'del', t: 'Memindahkan 1 data ke Sampah (BUKU HUTANG PIUTANG)', m: 'Kemarin 20:14' },
-    { a: 'u3', k: 'add', t: 'Menambah data di BUKU BESAR — Dayat x amin', m: 'Kemarin 17:40' },
-    { a: 'u1', k: 'del', t: 'Menghapus permanen 3 data dari Sampah', m: 'Kemarin 10:11' }
-  ];
-  var LOGIN_SEED = [
-    { a: 'u1', m: '08:12',         d: 'Android · Chrome · HP ini',      now: true },
-    { a: 'u3', m: '08:50',         d: 'Android · Chrome · Tablet toko', now: true },
-    { a: 'u2', m: '09:05',         d: 'Android · Chrome · HP ini',      now: true },
-    { a: 'u4', m: 'Kemarin 20:05', d: 'Windows · Chrome · Laptop dev',  now: false },
-    { a: 'u3', m: 'Kemarin 17:31', d: 'Android · Chrome · Tablet toko', now: false },
-    { a: 'u1', m: 'Kemarin 07:48', d: 'Android · Chrome · HP ini',      now: false }
-  ];
-  var DEV_DEFAULT = {
-    u1: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Laptop kasir', s: 'Windows · Chrome · 2 jam lalu', me: false }],
-    u2: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }],
-    u3: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Tablet toko', s: 'Android · Chrome · kemarin', me: false }],
-    u4: [{ n: 'HP ini', s: 'Android · Chrome · aktif sekarang', me: true }, { n: 'Laptop dev', s: 'Windows · Chrome · 1 jam lalu', me: false }]
-  };
   var ICO = {
     add: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
     del: '<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
@@ -666,40 +618,8 @@ function bmMain(REAL){
     x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
-  /* ---------- penyimpanan data uji (aman bila localStorage diblokir) ---------- */
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  function freshStore(){ return { me: 'u1', admins: clone(SEED), perms: clone(DEFAULTS), devices: clone(DEV_DEFAULT), logins: clone(LOGIN_SEED), ann: [], seen: {}, extraLogs: [] }; }
-  function validAdmin(a){ return a && typeof a.id === 'string' && typeof a.mail === 'string' && typeof a.name === 'string' && ROLE_LABEL[a.role] && typeof a.dev === 'boolean' && typeof a.active === 'boolean'; }
-  function loadStore(){
-    var s = freshStore();
-    try {
-      var raw = localStorage.getItem(STORE_KEY);
-      if (raw) {
-        var o = JSON.parse(raw);
-        if (o && typeof o === 'object') {
-          if (Array.isArray(o.admins)) {
-            var list = o.admins.filter(validAdmin);
-            if (list.some(function(a){ return a.role === 'owner' && a.active; })) s.admins = list;   // wajib ada minimal satu Owner aktif
-          }
-          ['owner', 'admin1', 'admin2'].forEach(function(r){
-            if (o.perms && o.perms[r]) Object.keys(DEFAULTS[r]).forEach(function(k){ if (o.perms[r][k] === 0 || o.perms[r][k] === 1) s.perms[r][k] = o.perms[r][k]; });
-          });
-          if (o.devices && typeof o.devices === 'object') s.devices = o.devices;
-          if (Array.isArray(o.logins)) s.logins = o.logins.filter(function(l){ return l && typeof l.a === 'string' && typeof l.m === 'string' && typeof l.d === 'string'; }).slice(0, 40);
-          if (Array.isArray(o.ann)) s.ann = o.ann.filter(function(a){ return a && typeof a.id === 'string' && typeof a.title === 'string' && Array.isArray(a.targets); });
-          if (o.seen && typeof o.seen === 'object') s.seen = o.seen;
-          if (Array.isArray(o.extraLogs)) s.extraLogs = o.extraLogs.slice(0, 80);
-          if (typeof o.me === 'string') s.me = o.me;
-        }
-      }
-    } catch (e) {}
-    if (!s.admins.some(function(a){ return a.id === s.me && a.active; })) s.me = (s.admins.filter(function(a){ return a.active; })[0] || s.admins[0]).id;
-    s.perms.owner = clone(DEFAULTS.owner);   // hak Owner selalu penuh
-    return s;
-  }
-  function realStore(){ return { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, extraLogs: [] }; }
-  var S = REAL ? realStore() : loadStore();
-  function save(){ if (REAL) return; try { localStorage.setItem(STORE_KEY, JSON.stringify(S)); } catch (e) {} }
+  var S = { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, extraLogs: [] };
 
   /* ---------- satu pintu untuk akun & role ---------- */
   function acct(id){ for (var i = 0; i < S.admins.length; i++) if (S.admins[i].id === id) return S.admins[i]; return null; }
@@ -714,7 +634,7 @@ function bmMain(REAL){
   function roleLabel(a){ return a.dev && a.role !== 'owner' ? 'Admin + Dev' : ROLE_LABEL[a.role] + (a.dev ? ' + Dev' : ''); }   // izin Admin + Dev mengikuti Admin 1
   function groupOf(a){ return a.role === 'owner' ? 'Owner' : 'Admin'; }
   function nameOfId(id){ var a = acct(id); return a ? a.name : 'Admin'; }
-  function allLogs(){ return REAL ? S.extraLogs : S.extraLogs.concat(LOGS); }
+  function allLogs(){ return S.extraLogs; }
   function permCount(a){ return FEATURES.filter(function(f){ return S.perms[a.role][f.k]; }).length; }
   function devicesOf(id){ return S.devices[id] || []; }
   function isOnline(id){ return S.logins.some(function(l){ return l.a === id && l.now; }); }
@@ -736,7 +656,7 @@ function bmMain(REAL){
   var DAY = 86400000;
   function addLog(kind, text){
     S.extraLogs.unshift({ a: S.me, k: kind, t: text, m: hhmm() });
-    if (REAL) { try { REAL.c.from('activity_log').insert({ actor_email: REAL.email, kind: kind, detail: text }).then(function(){}, function(){}); } catch (e) {} }
+    try { REAL.c.from('activity_log').insert({ actor_email: REAL.email, kind: kind, detail: text }).then(function(){}, function(){}); } catch (e) {}
   }
   /* ---------- mode login: baca & tulis ke Supabase ---------- */
   function fmtT(ts){ try { return new Date(ts).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ''); } catch (e) { return ''; } }
@@ -783,11 +703,9 @@ function bmMain(REAL){
       else toast('Gagal memuat data: ' + m);
     });
   }
-  if (REAL) {
-    $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
-    $('bootBack').addEventListener('click', leave);
-    try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') bootShow('Sesi login berakhir. Login lagi di Dashboard, lalu buka Profil.', true); }); } catch (e) {}
-  }
+  $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
+  $('bootBack').addEventListener('click', leave);
+  try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') bootShow('Sesi login berakhir. Login lagi di Dashboard, lalu buka Profil.', true); }); } catch (e) {}
   /* jalankan permintaan ke server, lalu muat ulang tampilan. Baris 0 = ditolak server (izin/RLS). */
   function srv(p, ok){
     if (busy) return Promise.resolve(toast('Sedang menyimpan, tunggu sebentar'));
@@ -897,14 +815,14 @@ function bmMain(REAL){
   function renderSec(){
     var a = me(); if (!a) return;
     var list = devicesOf(a.id);
-    $('devList').innerHTML = list.length ? list.map(function(d, i){
-      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(d.n) + '</p><small>' + esc(d.s) + '</small></div>' + (d.me || REAL ? '' : '<button class="go" data-i="' + i + '">Keluarkan</button>') + '</div>';
+    $('devList').innerHTML = list.length ? list.map(function(d){
+      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada perangkat tercatat.</div>';
-    $('btnAll').style.display = (REAL || list.length > 1) ? 'block' : 'none';
+    $('btnAll').style.display = 'block';
   }
   function renderBadge(){
     var a = me();
-    $('roleBadge').innerHTML = esc(a ? roleLabel(a) : 'Admin') + (TEST_MODE ? ICO.chev : '');
+    $('roleBadge').innerHTML = esc(a ? roleLabel(a) : 'Admin');
     $('roleBadge').className = 'badge' + (a && (a.role === 'owner' || a.dev) ? ' owner' : '');
   }
   function renderAll(){ renderBadge(); renderHome(); renderAkun(); renderLog(); renderAkses(); renderSec(); }
@@ -928,21 +846,18 @@ function bmMain(REAL){
     if (!can(k)) return toast('Tidak ada izin');   // lapisan kedua: izin dicek lagi saat diketuk
     if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
     if (k === 'ann') { renderForm(); renderHist(); return openPage('pgAnn'); }
-    toast('Membuka ' + b.getAttribute('data-t') + ' … (prototipe)');
   });
   $('btnSave').addEventListener('click', function(){
     var n = $('inName').value.trim(), a = me(); if (!a) return;
     if (!n) return toast('Nama tidak boleh kosong');
-    if (REAL) return srv(function(){ return REAL.c.rpc('set_my_name', { p_name: n }); }, 'Profil disimpan');
-    a.name = n; save(); renderAll(); toast('Profil disimpan');
+    return srv(function(){ return REAL.c.rpc('set_my_name', { p_name: n }); }, 'Profil disimpan');
   });
   $('btnPw').addEventListener('click', function(){
     var a = $('pw0').value, b = $('pw1').value, c = $('pw2').value;
     if (!a) return toast('Isi password lama');
     if (b.length < 8) return toast('Password baru minimal 8 karakter');
     if (b !== c) return toast('Ulangi password tidak sama');
-    if (REAL) {
-      (async function(){
+    (async function(){
         try {
           var r1 = await REAL.c.auth.signInWithPassword({ email: REAL.email, password: a });
           if (r1.error) return toast('Password lama salah');
@@ -950,10 +865,7 @@ function bmMain(REAL){
           if (r2.error) return toast('Gagal: ' + r2.error.message);
           $('pw0').value = $('pw1').value = $('pw2').value = ''; addLog('sys', 'Mengubah password'); toast('Password diperbarui');
         } catch (e) { toast('Gagal mengubah password'); }
-      })();
-      return;
-    }
-    $('pw0').value = $('pw1').value = $('pw2').value = ''; toast('Password diperbarui (demo, belum tersimpan)');
+    })();
   });
   $('logChips').addEventListener('click', function(e){
     var b = e.target.closest('.chip'); if (!b) return;
@@ -965,71 +877,31 @@ function bmMain(REAL){
     var b = e.target.closest('.sw'); if (!b || b.disabled || getRole() !== 'owner') return;
     var r = b.getAttribute('data-r'), k = b.getAttribute('data-k');
     if (!S.perms[r] || r === 'owner' || k === 'role') return;
-    if (REAL) {
+    {
       var nv = !S.perms[r][k], tt = FEATURES.filter(function(f){ return f.k === k; })[0].t, msg = ROLE_LABEL[r] + ': ' + tt + ' ' + (nv ? 'diizinkan' : 'dicabut');
       addLog('sys', 'Mengubah izin ' + msg.replace(/^[^:]+: /, ROLE_LABEL[r] + ': '));
       return srv(function(){ return REAL.c.from('role_permissions').update({ allowed: nv, updated_at: new Date().toISOString() }).eq('role', r).eq('feature', k).select(); }, msg);
     }
-    S.perms[r][k] = S.perms[r][k] ? 0 : 1;
-    addLog('sys', 'Mengubah izin ' + ROLE_LABEL[r] + ': ' + FEATURES.filter(function(f){ return f.k === k; })[0].t + ' ' + (S.perms[r][k] ? 'diizinkan' : 'dicabut'));
-    save(); renderAkses(); renderHome(); renderLog();
-    toast(ROLE_LABEL[r] + ': ' + FEATURES.filter(function(f){ return f.k === k; })[0].t + ' ' + (S.perms[r][k] ? 'diizinkan' : 'dicabut'));
   });
   $('btnReset').addEventListener('click', function(){
     if (getRole() !== 'owner') return;
     confirmBox('Kembalikan ke bawaan?', 'Hak akses Admin 1, Admin 2, dan Admin + Dev kembali ke pengaturan awal.', function(){
-      if (REAL) {
+      {
         var rows = []; ['admin1', 'admin2'].forEach(function(r){ Object.keys(DEFAULTS[r]).forEach(function(k){ rows.push({ role: r, feature: k, allowed: !!DEFAULTS[r][k] }); }); });
         addLog('sys', 'Mengembalikan hak akses ke bawaan');
         return srv(function(){ return REAL.c.from('role_permissions').upsert(rows, { onConflict: 'role,feature' }); }, 'Hak akses dikembalikan');
       }
-      S.perms = clone(DEFAULTS); save(); renderAkses(); renderHome(); toast('Hak akses dikembalikan');
     });
-  });
-  $('devList').addEventListener('click', function(e){
-    var b = e.target.closest('.go'); if (!b) return;
-    var a = me(); if (!a) return;
-    var i = +b.getAttribute('data-i'), d = devicesOf(a.id)[i]; if (!d) return;
-    confirmBox('Keluarkan perangkat?', d.n + ' akan diminta login ulang.', function(){ S.devices[a.id].splice(i, 1); save(); renderSec(); renderHome(); toast('Perangkat dikeluarkan'); });
   });
   $('btnAll').addEventListener('click', function(){
     confirmBox('Keluar dari semua perangkat lain?', 'Hanya perangkat ini yang tetap masuk.', function(){
-      if (REAL) { REAL.c.auth.signOut({ scope: 'others' }).then(function(r){ toast(r && r.error ? 'Gagal: ' + r.error.message : 'Perangkat lain dikeluarkan'); }); return; }
-      var a = me(); if (!a) return; S.devices[a.id] = devicesOf(a.id).filter(function(d){ return d.me; }); save(); renderSec(); renderHome(); toast('Perangkat lain dikeluarkan');
+      REAL.c.auth.signOut({ scope: 'others' }).then(function(r){ toast(r && r.error ? 'Gagal: ' + r.error.message : 'Perangkat lain dikeluarkan'); });
     });
   });
   $('btnBack').addEventListener('click', function(){
-    if (TEST_MODE) return toast('Kembali ke Dashboard (mode uji)');
     if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
     history.back();
   });
-
-  /* ---------- panel mode uji ---------- */
-  function renderTestSheet(){
-    $('acctSw').innerHTML = S.admins.filter(function(m){ return m.active; }).map(function(m){
-      return '<button class="acct' + (m.id === S.me ? ' on' : '') + '" data-id="' + esc(m.id) + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><b>' + esc(m.name) + '</b><small>' + esc(roleLabel(m)) + ' · ' + esc(m.mail) + '</small></div></button>';
-    }).join('');
-  }
-  if (TEST_MODE) {
-    $('roleBadge').addEventListener('click', function(){ renderTestSheet(); $('ovTest').classList.add('on'); });
-    $('btnTestClose').addEventListener('click', function(){ $('ovTest').classList.remove('on'); });
-    $('ovTest').addEventListener('click', function(e){ if (e.target === $('ovTest')) $('ovTest').classList.remove('on'); });
-    $('acctSw').addEventListener('click', function(e){
-      var b = e.target.closest('.acct'); if (!b) return;
-      var nid = b.getAttribute('data-id');
-      if (nid !== S.me) {
-        S.logins.forEach(function(l){ if (/HP ini$/.test(l.d)) l.now = false; });
-        S.logins.unshift({ a: nid, m: hhmm(), d: 'Android · Chrome · HP ini', now: true }); S.logins = S.logins.slice(0, 40);
-      }
-      S.me = nid; save();
-      closeAllPages(); $('ovAdm').classList.remove('on'); logFilter = 'saya'; renderAll(); renderTestSheet();
-    });
-    $('btnSimDash').addEventListener('click', function(){
-      $('ovTest').classList.remove('on');
-      setTimeout(function(){ if (!maybePopup()) toast('Tidak ada pengumuman baru untuk akun ini'); }, 200);
-    });
-    $('btnTestReset').addEventListener('click', function(){ resetTest(); renderTestSheet(); toast('Data uji diatur ulang'); });
-  }
 
   /* ================= PENGUMUMAN ================= */
   function openPage(id){ $(id).classList.add('on'); document.body.classList.add('pgopen'); $(id).scrollTop = 0; }
@@ -1044,30 +916,13 @@ function bmMain(REAL){
     fix:    { t: 'Perbaikan', cls: 'k-fx', ic: '<path d="M5 12.5l4.5 4.5L19 7.5"/>' },
     info:   { t: 'Info',      cls: 'k-in', ic: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>' }
   };
-  /* Popup ala iklan browser: tombol X di pojok. mode: real (di Dashboard) | live (pratinjau di form) | preview (layar penuh) */
+  /* Popup ala iklan browser: tombol X di pojok. mode: live (pratinjau di form) | preview (layar penuh) */
   function annPopupHtml(a, mode){
     var k = KIND[a.kind] || KIND.info;
-    var act = mode === 'real' ? 'data-act="close"' : (mode === 'preview' ? 'data-act="closeprev"' : 'tabindex="-1" style="pointer-events:none"');
+    var act = mode === 'preview' ? 'data-act="closeprev"' : 'tabindex="-1" style="pointer-events:none"';
     return '<div class="ann-p ' + k.cls + '"><button class="ann-x2" ' + act + ' aria-label="Tutup">' + ICO.x + '</button>' +
       '<div class="big">' + svg(k.ic) + '</div><div class="kt">' + k.t + (a.ver ? ' · v' + esc(a.ver) : '') + '</div><h3>' + esc(a.title || 'Judul pengumuman') + '</h3><p>' + esc(a.msg || 'Isi pesan akan tampil di sini.') + '</p></div>';
   }
-  function annActive(a){ return a.status === 'aktif' && (!a.expiry || Date.now() < a.expiry); }
-  function annFor(a){
-    var seen = S.seen[a.id] || [], g = groupOf(a);
-    return S.ann.filter(function(x){ return annActive(x) && x.targets.indexOf(g) >= 0 && seen.indexOf(x.id) < 0; });
-  }
-  /* Meniru Dashboard: dipanggil sekali saat Dashboard dibuka. Langsung dicatat "sudah dilihat" untuk akun ini, jadi tidak muncul lagi. */
-  function maybePopup(){
-    var a = me(); if (!a || document.querySelector('.ov.on')) return false;
-    var list = annFor(a); if (!list.length) return false;
-    var first = list[0];
-    S.seen[a.id] = (S.seen[a.id] || []).concat([first.id]); save();
-    $('ovAnnBox').innerHTML = annPopupHtml(first, 'real'); $('ovAnn').classList.add('on');
-    return true;
-  }
-  $('ovAnn').addEventListener('click', function(e){
-    if (e.target === $('ovAnn') || e.target.closest('[data-act=close]')) $('ovAnn').classList.remove('on');
-  });
   $('ovPrev').addEventListener('click', function(e){ if (e.target === $('ovPrev') || e.target.closest('[data-act=closeprev]')) $('ovPrev').classList.remove('on'); });
 
   $('devWrap').addEventListener('click', function(e){
@@ -1115,7 +970,7 @@ function bmMain(REAL){
     var a = validate(); if (!a || !me()) return;
     var now = Date.now(), old = f.id ? S.ann.filter(function(x){ return x.id === f.id; })[0] : null;
     if (old && !canManage(old)) return toast('Hanya pembuat atau Owner yang bisa mengubah');
-    if (REAL) {
+    {
       var row = { kind: a.kind, title: a.title, message: a.msg, version: a.ver || null, targets: a.targets.slice(), status: status, expires_at: status === 'aktif' && f.exp ? new Date(now + f.exp * DAY).toISOString() : null, updated_at: new Date(now).toISOString() };
       if (busy) return toast('Sedang menyimpan, tunggu sebentar');
       busy = true;
@@ -1134,14 +989,6 @@ function bmMain(REAL){
       }).catch(function(e){ toast('Gagal menyimpan: ' + (e && e.message || e)); }).then(function(){ busy = false; return refresh(); });
       return;
     }
-    var rec = old || { id: 'a' + now, createdAt: now, by: S.me };
-    rec.kind = a.kind; rec.title = a.title; rec.msg = a.msg; rec.ver = a.ver;
-    rec.targets = a.targets.slice(); rec.exp = f.exp; rec.status = status;
-    rec.expiry = status === 'aktif' && f.exp ? now + f.exp * DAY : null;
-    if (!old) S.ann.unshift(rec);
-    if (status === 'aktif') { addLog('sys', 'Menerbitkan pengumuman ' + (rec.ver ? 'v' + rec.ver + ' ' : '') + '"' + rec.title + '"'); S.seen[S.me] = (S.seen[S.me] || []).concat([rec.id]); }
-    save(); f = newForm(); renderForm(); renderHist(); renderAll();
-    toast(status === 'aktif' ? 'Diterbitkan. Muncul di Dashboard saat pertama dibuka.' : 'Draf disimpan');
   }
   $('annPub').addEventListener('click', function(){ commit('aktif'); });
   $('annDraft').addEventListener('click', function(){ commit('draf'); });
@@ -1169,19 +1016,15 @@ function bmMain(REAL){
       f = { id: rec.id, kind: rec.kind, title: rec.title, msg: rec.msg, ver: rec.ver || '', targets: rec.targets.slice(), exp: rec.exp || 0 };
       renderForm(); $('pgAnn').scrollTop = 0;
     } else if (act === 'toggle') {
-      if (REAL) {
+      {
         var on = annStatus(rec) === 'Aktif';
         if (!on) addLog('sys', 'Mengaktifkan pengumuman "' + rec.title + '"');
         return srv(function(){ return REAL.c.from('announcements').update(on ? { status: 'nonaktif', expires_at: null, updated_at: new Date().toISOString() } : { status: 'aktif', expires_at: rec.exp ? new Date(Date.now() + rec.exp * DAY).toISOString() : null, updated_at: new Date().toISOString() }).eq('id', rec.id).select(); }, on ? 'Pengumuman dinonaktifkan' : 'Pengumuman aktif');
       }
-      if (annStatus(rec) === 'Aktif') { rec.status = 'nonaktif'; rec.expiry = null; }
-      else { rec.status = 'aktif'; rec.expiry = rec.exp ? Date.now() + rec.exp * DAY : null; addLog('sys', 'Mengaktifkan pengumuman "' + rec.title + '"'); }
-      save(); renderHist(); renderAll(); toast(rec.status === 'aktif' ? 'Pengumuman aktif' : 'Pengumuman dinonaktifkan');
     } else if (act === 'del') {
       confirmBox('Hapus pengumuman?', '"' + rec.title + '" akan dihapus dari riwayat.', function(){
-        if (REAL) { if (f.id === id) f = newForm(); renderForm(); return srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus'); }
-        S.ann = S.ann.filter(function(x){ return x.id !== id; }); if (f.id === id) f = newForm();
-        save(); renderForm(); renderHist(); renderAll(); toast('Pengumuman dihapus');
+        if (f.id === id) f = newForm(); renderForm();
+        srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus');
       });
     }
   });
@@ -1201,6 +1044,7 @@ function bmMain(REAL){
     $('admDev').classList.toggle('on', admDev); $('admDev').setAttribute('aria-pressed', admDev);
     $('admOwner').style.display = a && !isOwnerRow && a.active ? 'block' : 'none';
     $('admOff').style.display = a && !isOwnerRow ? 'block' : 'none';
+    $('admDel').style.display = a && !isOwnerRow && a.id !== S.me ? 'block' : 'none';
     $('admOff').textContent = a && !a.active ? 'Aktifkan kembali akun' : 'Nonaktifkan akun';
   }
   function openAdm(id){
@@ -1224,7 +1068,7 @@ function bmMain(REAL){
     if (getRole() !== 'owner') return;
     var name = $('admName').value.trim(), a = admEdit ? acct(admEdit) : null;
     if (!name) return toast('Nama wajib diisi');
-    if (REAL) {
+    {
       if (!a) {
         var mail2 = $('admMail').value.trim().toLowerCase(), pw = $('admPw').value;
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail2)) return toast('Email tidak valid');
@@ -1239,61 +1083,43 @@ function bmMain(REAL){
       $('ovAdm').classList.remove('on');
       return srv(function(){ return REAL.c.from('admin_roles').update(upd).eq('email', a.mail).select(); }, 'Akun diperbarui');
     }
-    if (a) {
-      a.name = name; a.dev = admDev; if (a.role !== 'owner') a.role = admRole === 'admin2' ? 'admin2' : 'admin1';
-      addLog('sys', 'Mengubah akun ' + a.name + ' (' + roleLabel(a) + ')');
-      toast('Akun diperbarui');
-    } else {
-      var mail = $('admMail').value.trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return toast('Email tidak valid');
-      if (S.admins.some(function(x){ return x.mail.toLowerCase() === mail; })) return toast('Email itu sudah terdaftar');
-      var rec = { id: 'u' + Date.now(), mail: mail, name: name, role: admRole === 'admin2' ? 'admin2' : 'admin1', dev: admDev, active: true };
-      S.admins.push(rec); S.devices[rec.id] = [];
-      addLog('add', 'Menambah akun admin ' + rec.name + ' (' + roleLabel(rec) + ')');
-      toast('Admin ditambahkan (uji)');
-    }
-    save(); $('ovAdm').classList.remove('on'); renderAll();
   });
   $('admOff').addEventListener('click', function(){
     var a = acct(admEdit); if (!a || a.role === 'owner' || getRole() !== 'owner') return;
-    if (REAL) {
+    {
       var goOn = !a.active;
       var run = function(){ $('ovAdm').classList.remove('on'); srv(function(){ return fnCall({ action: 'set_active', email: a.mail, active: goOn }); }, goOn ? 'Akun aktif kembali' : 'Akun dinonaktifkan'); };
       if (goOn) return run();
       return confirmBox('Nonaktifkan akun?', a.name + ' tidak bisa masuk lagi sampai diaktifkan kembali.', run);
     }
-    if (a.active) confirmBox('Nonaktifkan akun?', a.name + ' tidak bisa masuk lagi sampai diaktifkan kembali.', function(){
-      a.active = false; addLog('sys', 'Menonaktifkan akun ' + a.name); save(); $('ovAdm').classList.remove('on'); renderAll(); toast('Akun dinonaktifkan');
+  });
+  $('admDel').addEventListener('click', function(){
+    var a = acct(admEdit); if (!a || a.role === 'owner' || a.id === S.me || getRole() !== 'owner') return;
+    confirmBox('Hapus akun permanen?', a.name + ' (' + a.mail + ') dihapus dari daftar admin dan akun loginnya dihapus. Tidak bisa dibatalkan.', function(){
+      $('ovAdm').classList.remove('on');
+      addLog('del', 'Menghapus akun admin ' + a.name);
+      srv(function(){ return fnCall({ action: 'delete', email: a.mail }); }, 'Akun dihapus');
     });
-    else { a.active = true; addLog('sys', 'Mengaktifkan kembali akun ' + a.name); save(); $('ovAdm').classList.remove('on'); renderAll(); toast('Akun aktif kembali'); }
   });
   $('admOwner').addEventListener('click', function(){
     var t = acct(admEdit), cur = me(); if (!t || !cur || cur.role !== 'owner' || t.role === 'owner' || !t.active) return;
-    if (REAL) { confirmBox('Serahkan peran Owner?', t.name + ' menjadi Owner. Anda menjadi Admin 1 dan tidak bisa mengatur hak akses lagi.', function(){
+    { confirmBox('Serahkan peran Owner?', t.name + ' menjadi Owner. Anda menjadi Admin 1 dan tidak bisa mengatur hak akses lagi.', function(){
       $('ovAdm').classList.remove('on'); closeAllPages(); logFilter = 'saya';
       srv(function(){ return REAL.c.rpc('transfer_owner', { new_email: t.mail }); }, 'Peran Owner dipindahkan ke ' + t.name);
     }); return; }
-    confirmBox('Serahkan peran Owner?', t.name + ' menjadi Owner. Anda menjadi Admin 1 dan tidak bisa mengatur hak akses lagi.', function(){
-      t.role = 'owner'; cur.role = 'admin1';
-      if (ownersCount() < 1) { t.role = 'admin1'; cur.role = 'owner'; return toast('Harus ada minimal satu Owner'); }
-      S.extraLogs.unshift({ a: cur.id, k: 'sys', t: 'Menyerahkan peran Owner kepada ' + t.name, m: hhmm() });
-      save(); $('ovAdm').classList.remove('on'); closeAllPages(); logFilter = 'saya'; renderAll(); toast('Peran Owner dipindahkan ke ' + t.name);
-    });
   });
 
   /* --- Info Sistem (khusus akun dengan akses Developer) --- */
   function infoRows(){
-    var a = me(), bytes = 0;
-    try { bytes = (localStorage.getItem(STORE_KEY) || '').length; } catch (e) {}
+    var a = me();
     var aktif = S.ann.filter(function(x){ return annStatus(x) === 'Aktif'; }).length;
     return [
-      ['Versi halaman', REAL ? '0.7' : '0.7 (uji)'],
-      ['Mode', TEST_MODE ? 'Uji, tanpa login' : 'Login'],
+      ['Versi halaman', '1.0'],
       ['Akun', a ? a.name + ' · ' + a.mail : '-'],
       ['Role terbaca', a ? roleLabel(a) : '-'],
       ['Koneksi', navigator.onLine ? 'Online' : 'Offline'],
       ['Layar', window.innerWidth + '×' + window.innerHeight + ' @' + (window.devicePixelRatio || 1) + 'x'],
-      REAL ? ['Data', 'Supabase'] : ['Data uji tersimpan', bytes + ' karakter'],
+      ['Data', 'Supabase'],
       ['Pengumuman', S.ann.length + ' total, ' + aktif + ' aktif']
     ];
   }
@@ -1302,24 +1128,28 @@ function bmMain(REAL){
     var t = 'BM-TECH Profil — info sistem\n' + infoRows().map(function(x){ return x[0] + ': ' + x[1]; }).join('\n');
     try { navigator.clipboard.writeText(t).then(function(){ toast('Ringkasan disalin'); }, function(){ toast('Gagal menyalin'); }); } catch (e) { toast('Gagal menyalin'); }
   });
-  $('infoReset').addEventListener('click', function(){
-    confirmBox('Atur ulang data uji?', 'Akun, hak akses, pengumuman, dan data uji lain kembali ke awal.', function(){ resetTest(); closeAllPages(); toast('Data uji diatur ulang'); });
-  });
-  function resetTest(){ S = freshStore(); f = newForm(); logFilter = 'saya'; admEdit = null; save(); renderForm(); renderHist(); renderAll(); }
-
-  if (REAL) { $('infoReset').style.display = 'none'; bootShow('Memuat…', false); refresh(); } else { renderForm(); renderHist(); renderAll(); }
+  bootShow('Memuat…', false); refresh();
 }
 
 (async function(){
   var R = null;
   try {
-    if (location.search.indexOf('uji=1') < 0 && window.supabase) {
+    if (window.supabase) {
       var c = window.supabase.createClient('https://zgzmbneqqzxnptbmlhsz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E', { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
       var r = await c.auth.getSession();
       if (r.data && r.data.session) R = { c: c, email: String(r.data.session.user.email || '').toLowerCase() };
     }
   } catch (e) { R = null; }
-  bmMain(R);
+  if (R) return bmMain(R);
+  document.getElementById('boot').hidden = false;
+  document.getElementById('bootBox').classList.add('err');
+  document.getElementById('bootMsg').textContent = 'Belum login. Login dulu di Dashboard, lalu buka Profil dari sana.';
+  document.getElementById('bootBtns').hidden = false;
+  document.getElementById('bootRetry').style.display = 'none';
+  document.getElementById('bootBack').addEventListener('click', function(){
+    if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
+    history.back();
+  });
 })();
 
 </script>
