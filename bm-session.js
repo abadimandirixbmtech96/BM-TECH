@@ -167,12 +167,54 @@
     } catch (e) { /* abaikan */ }
   }
 
+  /* ---------- izin per role: sembunyikan tombol yang tidak boleh dipakai ----------
+     Penjaga sebenarnya ada di database (RLS + has_perm). Ini hanya merapikan tampilan.
+     Bila izin gagal dibaca (offline dll.), tombol TIDAK disembunyikan; server tetap menolak yang tidak berhak. */
+  var PERM_KEYS = ['tulis', 'hapus', 'pulih', 'ekspor'];
+  var PERM_CACHE = 'bm-perms';
+
+  function injectPermCss() {
+    if (document.getElementById('bms-perm-css')) return;
+    var st = document.createElement('style');
+    st.id = 'bms-perm-css';
+    st.textContent =
+      'body.bm-no-hapus #btnSelDelete,body.bm-no-hapus .folder-menu-item[data-menu-action="delete"]{display:none !important}' +
+      'body.bm-no-tulis #btnComposePencil,body.bm-no-tulis #btnSelPin,body.bm-no-tulis #btnSelMove,body.bm-no-tulis #btnCreateCategory,body.bm-no-tulis #btnNoteDetailEdit,body.bm-no-tulis .folder-menu-item[data-menu-action="edit"]{display:none !important}' +
+      'body.bm-no-pulih #btnOpenTrash,body.bm-no-pulih #btnTrashEmptyAll{display:none !important}' +
+      'body.bm-no-ekspor #btnShareExportCsv,body.bm-no-ekspor #rowBackupAll{display:none !important}';
+    document.head.appendChild(st);
+  }
+
+  function setPermClasses(p) {
+    PERM_KEYS.forEach(function (k) { document.body.classList.toggle('bm-no-' + k, p[k] === false); });
+  }
+
+  async function applyPerms(client, email) {
+    try {
+      injectPermCss();
+      email = lower(email);
+      try {
+        var c = JSON.parse(localStorage.getItem(PERM_CACHE) || 'null');
+        if (c && c.email === email) setPermClasses(c);   /* tampil benar sejak awal, tanpa berkedip */
+      } catch (e) {}
+      var res = await Promise.all(PERM_KEYS.map(function (k) { return client.rpc('has_perm', { f: k }); }));
+      var p = { email: email }, anyOk = false;
+      PERM_KEYS.forEach(function (k, i) {
+        var r = res[i];
+        if (r && !r.error && typeof r.data === 'boolean') { p[k] = r.data; anyOk = true; } else { p[k] = true; }
+      });
+      setPermClasses(p);
+      if (anyOk) { try { localStorage.setItem(PERM_CACHE, JSON.stringify(p)); } catch (e) {} }
+    } catch (e) { /* abaikan */ }
+  }
+
   /* ---------- API publik ---------- */
   function afterAdminReady(client, session, opts) {
     try {
       if (!isTop() || !client || !session || !session.user) return;
       var email = lower(session.user.email);
       track(client, email);
+      if (opts && opts.perms) applyPerms(client, email);
       if (opts && opts.popup) announce(client, email);
     } catch (e) { /* abaikan */ }
   }
@@ -182,6 +224,7 @@
     beatClient = null;
     ssDel(K_ID);
     ssDel(K_WHO);
+    try { localStorage.removeItem(PERM_CACHE); } catch (e) {}
   }
 
   window.BMSession = { afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName };
