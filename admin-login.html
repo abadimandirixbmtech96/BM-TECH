@@ -1073,7 +1073,8 @@ body::after{
 var SUPABASE_URL      = "https://zgzmbneqqzxnptbmlhsz.supabase.co";
 var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E";
 
-var DASHBOARD_URL  = "dashboard-admin.html";
+var HOME_URL       = "my-profile-bm.html";   /* tujuan utama setelah login: Profil */
+var DASHBOARD_URL  = "dashboard-admin.html"; /* hanya untuk tautan berbagi yang menunggu dibuka */
 var BACK_URL       = "https://dashboard-bm-tech.vercel.app/";
 
 var EMAIL_MAX      = 254;
@@ -1547,10 +1548,22 @@ function finishAttempt(){
 
 }
 
-function goToDashboard(){
+function goToHome(){
+
+  /* Tujuan utama setelah login adalah Profil.
+     Pengecualian: tautan berbagi (?id=...) yang tadi dibuka sebelum login (berlaku 30 menit)
+     harus tetap sampai ke Dashboard, karena Dashboard yang membuka editornya. */
+  var target = HOME_URL;
+
+  try{
+    var pl = JSON.parse(sessionStorage.getItem("bm-pending-link") || "null");
+    if(pl && typeof pl.s === "string" && (Date.now() - pl.t) < 30 * 60 * 1000){
+      target = DASHBOARD_URL;
+    }
+  }catch(e){}
 
   /* replace: halaman login tidak tersisa di riwayat tombol Back */
-  window.location.replace(DASHBOARD_URL);
+  window.location.replace(target);
 
 }
 
@@ -1708,7 +1721,13 @@ async function login(){
     passwordInput.value = "";
     setStatus("Login successful.", "success");
 
-    setTimeout(goToDashboard, 400);
+    /* login baru = catatan login baru di Profil (penanda perangkat lama dihapus) */
+    try{
+      sessionStorage.removeItem("bm-login-id");
+      sessionStorage.removeItem("bm-login-email");
+    }catch(e){}
+
+    setTimeout(goToHome, 400);
 
   }catch(error){
 
@@ -1737,7 +1756,7 @@ form.addEventListener("submit", function(event){
 
 /* ==========================================
    CEK SESI YANG SUDAH ADA
-   Jika sudah login sebagai admin, langsung ke dashboard.
+   Jika sudah login sebagai admin, langsung ke Profil (halaman utama).
    Sesi HANYA dihapus bila server memastikan akun bukan admin;
    gangguan jaringan tidak akan mengeluarkan pengguna.
 ========================================== */
@@ -1765,7 +1784,7 @@ form.addEventListener("submit", function(event){
 
     if(adminResult.data === true){
 
-      goToDashboard();
+      goToHome();
 
     }else{
 
