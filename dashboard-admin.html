@@ -3170,7 +3170,7 @@
     try { localStorage.setItem(OK_KEY, session.user.id); } catch (e) {}
 
     // Satu struktur dengan Profil: catat login perangkat ini, detak aktif, dan popup pengumuman (sekali per akun)
-    try { if (window.BMSession) BMSession.afterAdminReady(supabaseClient, session, { popup: true }); } catch (e) {}
+    try { if (window.BMSession) BMSession.afterAdminReady(supabaseClient, session, { popup: true, perms: true }); } catch (e) {}
 
     revealApp();
     await ready;
