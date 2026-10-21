@@ -3063,6 +3063,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/bm-session.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
@@ -3173,6 +3174,9 @@
     }
 
     try { localStorage.setItem(OK_KEY, session.user.id); } catch (e) {}
+
+    // Satu struktur dengan Profil: catat login perangkat ini, detak aktif, dan popup pengumuman (sekali per akun)
+    try { if (window.BMSession) BMSession.afterAdminReady(supabaseClient, session, { popup: true }); } catch (e) {}
 
     revealApp();
     await ready;
@@ -6085,6 +6089,8 @@
 
   document.getElementById('settingLogout').addEventListener('click', async () => {
     if (!confirm('Yakin mau logout?')) return;
+    try { if (window.BMSession) BMSession.stop(); } catch (e) {}
+    try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
     await supabaseClient.auth.signOut();
     window.location.href = 'admin-login.html';
   });
@@ -7554,7 +7560,7 @@
     });
   })();
 
-  document.getElementById('btnProfile').addEventListener('click', () => alert('Masih dalam tahap pengembangan'));
+  document.getElementById('btnProfile').addEventListener('click', () => { window.location.href = 'my-profile-bm.html'; });
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
   document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
   document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
