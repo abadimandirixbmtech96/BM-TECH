@@ -3,20 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
 <title>Profil Saya — BM-TECH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --accent-yellow: #F0A529; /* warna sistem: nilainya diatur dari System Management lewat bm-theme.js, sama seperti dashboard */ }
-  /* font ikut pengaturan dashboard (bm-font / bm-font-bold) */
-  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
-  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
-  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
-  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
-  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
-  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
-  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
+  /* warna sistem & font diatur dari System Management lewat bm-theme.js (inline di <html>):
+     --accent, --accent-yellow, --on-accent, --accent-rgb, --accent-glow, --bm-font. Nilai di bawah hanya cadangan. */
+  :root { --accent: #F0A529; --accent-yellow: #F0A529; --on-accent: #1C1B19; }
+  /* font ikut pengaturan dashboard: --bm-font dari bm-theme.js (termasuk font custom BMCustom), bold dari bm-font-bold */
   body.font-bold-mode * { font-weight: 700 !important; }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; }
@@ -25,7 +21,7 @@
     --soft: rgba(118,118,128,.12); --shadow: 0 1px 2px rgba(0,0,0,.05), 0 8px 22px -10px rgba(0,0,0,.16);
     --danger: #e5484d; --ok: #2fa66a;
     background: var(--bg); color: var(--text);
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: var(--bm-font, 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
     min-height: 100vh;
     -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
   }
@@ -66,7 +62,7 @@
   .hero { display: flex; gap: 14px; align-items: center; }
   .hero > div:last-child { min-width: 0; flex: 1; }
   .hero p { word-break: break-all; }
-  .avatar { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: #fff; background: linear-gradient(145deg, color-mix(in srgb, var(--accent-yellow) 70%, #fff), var(--accent-yellow)); flex: none; position: relative; }
+  .avatar { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: var(--on-accent, #fff); background: linear-gradient(145deg, color-mix(in srgb, var(--accent-yellow) 70%, #fff), var(--accent-yellow)); flex: none; position: relative; }
   .avatar .cam { position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; background: var(--card); color: var(--text); display: grid; place-items: center; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
   .avatar .cam svg.i { width: 14px; height: 14px; }
   .hero h2 { margin: 0 0 3px; font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
@@ -92,7 +88,7 @@
   .field input { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--soft); font-size: 15px; outline: none; }
   .field input:focus { border-color: var(--accent-yellow); background: var(--card); }
   .field input[readonly] { opacity: .65; }
-  .btn { display: block; width: 100%; padding: 14px; border-radius: 16px; font-weight: 800; font-size: 15px; background: var(--accent-yellow); color: #fff; }
+  .btn { display: block; width: 100%; padding: 14px; border-radius: 16px; font-weight: 800; font-size: 15px; background: var(--accent-yellow); color: var(--on-accent, #fff); }
   .btn:active { transform: scale(.98); }
   .btn.ghost { background: var(--soft); color: var(--text); }
   .btn.danger { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); }
@@ -100,7 +96,7 @@
 
   .chips { display: flex; gap: 8px; margin-bottom: 12px; }
   .chip { padding: 8px 14px; border-radius: 999px; background: var(--soft); font-size: 13px; font-weight: 700; color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
-  .chip.on { background: var(--accent-yellow); color: #fff; }
+  .chip.on { background: var(--accent-yellow); color: var(--on-accent, #fff); }
   .chip.off { opacity: .45; }
   .chip svg.i { width: 13px; height: 13px; }
   .log { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
@@ -418,17 +414,18 @@
   @media (prefers-reduced-motion: reduce) { .bootspin { animation: none; } }
 </style>
 <script src="/bm-theme.js"></script>
+<script src="/bm-lang.js"></script>
 </head>
 <body>
 <script>
-/* Tema & font ikut dashboard: kunci localStorage yang sama (bm-theme, bm-font, bm-font-bold) */
+/* Tema, font, dan bahasa ikut dashboard lewat kunci localStorage yang sama (bm-theme, bm-font, bm-font-bold, bm-lang).
+   Warna sistem + font (termasuk custom) dipasang bm-theme.js; terjemahan dipasang bm-lang.js. Di sini tinggal tema & bold. */
 (function(){ try {
-  var b = document.body;
-  if (localStorage.getItem('bm-theme') === 'light') b.classList.add('theme-light');
-  var M = { serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis', kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded', custom: 'font-custom' };
-  var f = localStorage.getItem('bm-font');
-  if (f && M[f]) { b.classList.add(M[f]); if (f === 'custom' && window.BMTheme && window.BMTheme.ensureCustom) window.BMTheme.ensureCustom(); }
-  if (localStorage.getItem('bm-font-bold') === 'on') b.classList.add('font-bold-mode');
+  var b = document.body, T = window.BMTheme;
+  var theme = T ? T.get(T.KEYS.theme) : localStorage.getItem('bm-theme');
+  var bold = T ? T.get(T.KEYS.bold) : localStorage.getItem('bm-font-bold');
+  if (theme === 'light') b.classList.add('theme-light');
+  if (bold === 'on') b.classList.add('font-bold-mode');
 } catch (e) {} })();
 </script>
 
@@ -444,14 +441,14 @@
     <div class="card hero">
       <div class="avatar" id="avHome">OW</div>
       <div>
-        <h2 id="hName">Owner</h2>
-        <p id="hMail">owner@contoh.com</p>
+        <h2 id="hName" data-no-i18n>Owner</h2>
+        <p id="hMail" data-no-i18n>owner@contoh.com</p>
         <span class="badge" id="hBadge">Owner</span>
       </div>
     </div>
     <div class="stats">
       <div class="stat"><b id="stAksi">0</b><small>Aksi hari ini</small></div>
-      <div class="stat"><b>08:12</b><small>Login terakhir</small></div>
+      <div class="stat"><b id="stLogin">-</b><small>Login terakhir</small></div>
       <div class="stat"><b id="stDev">1</b><small>Perangkat</small></div>
     </div>
     <div class="sec" style="margin-top:6px">Menu</div>
@@ -468,15 +465,15 @@
     </div>
     <div class="sec" style="margin-top:6px">Data diri</div>
     <div class="card">
-      <div class="field"><label>Nama tampilan</label><input id="inName" autocomplete="off"></div>
+      <div class="field"><label>Nama tampilan</label><input id="inName" maxlength="40" autocomplete="off"></div>
       <div class="field"><label>Email login (tidak bisa diubah)</label><input id="inMail" readonly></div>
       <button class="btn" id="btnSave">Simpan perubahan</button>
     </div>
     <div class="sec">Ganti password</div>
     <div class="card">
-      <div class="field"><label>Password lama</label><input id="pw0" type="password" autocomplete="off"></div>
-      <div class="field"><label>Password baru (min. 8 karakter)</label><input id="pw1" type="password" autocomplete="off"></div>
-      <div class="field"><label>Ulangi password baru</label><input id="pw2" type="password" autocomplete="off"></div>
+      <div class="field"><label>Password lama</label><input id="pw0" type="password" autocomplete="current-password"></div>
+      <div class="field"><label>Password baru (min. 8 karakter)</label><input id="pw1" type="password" autocomplete="new-password"></div>
+      <div class="field"><label>Ulangi password baru</label><input id="pw2" type="password" autocomplete="new-password"></div>
       <button class="btn ghost" id="btnPw">Perbarui password</button>
     </div>
   </section>
@@ -520,7 +517,7 @@
     <h1>Pengumuman</h1>
     <span style="width:44px"></span>
   </div>
-  <p class="hint">Tampil sebagai popup dengan tombol X di Dashboard, satu kali saat tiap akun pertama kali membuka Dashboard setelah terbit. Owner dan Admin mana pun boleh membuat. Versi uji: belum tersimpan di server.</p>
+  <p class="hint">Tampil sebagai popup dengan tombol X di Dashboard, satu kali saat tiap akun pertama kali membuka Dashboard setelah terbit. Owner dan Admin mana pun boleh membuat.</p>
 
   <div class="sec" style="margin-top:6px" id="annFormTitle">Pengumuman baru</div>
   <div class="card">
@@ -643,7 +640,20 @@ function bmMain(REAL){
   var toastT;
   function toast(m){ var t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function(){ t.classList.remove('show'); }, 2300); }
   function initials(n){ var w = String(n).trim().split(/\s+/); return ((w[0] || '?')[0] + (w[1] ? w[1][0] : (w[0] || '')[1] || '')).toUpperCase(); }
-  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  /* data dari pengguna/server: di-escape dan ditandai supaya bm-lang.js tidak ikut menerjemahkannya */
+  function uu(s){ return '<span data-no-i18n>' + esc(s) + '</span>'; }
+  function T(s){ try { return window.BMLang && window.BMLang.active ? window.BMLang.t(s) : s; } catch (e) { return s; } }
+  function hasOwn(o, k){ return Object.prototype.hasOwnProperty.call(o, k); }
+  function logKind(k){ return (k === 'add' || k === 'del') ? k : 'sys'; }
+  function kindOf(k){ return hasOwn(KIND, k) ? KIND[k] : KIND.info; }
+  function shortT(ts){
+    try {
+      var d = new Date(ts), n = new Date();
+      if (d.toDateString() === n.toDateString()) return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+      return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+    } catch (e) { return '-'; }
+  }
   function svg(inner){ return '<svg class="i" viewBox="0 0 24 24">' + inner + '</svg>'; }
   function confirmBox(title, text, yes){
     $('dTitle').textContent = title; $('dText').textContent = text; $('ov').classList.add('on');
@@ -654,9 +664,10 @@ function bmMain(REAL){
   function fmtDate(ts){ try { return new Date(ts).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }); } catch (e) { return ''; } }
   function hhmm(){ var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
   var DAY = 86400000;
+  /* Dicatat HANYA setelah server menerima aksinya (lihat srv), dan ditunggu sebelum data dimuat ulang. */
   function addLog(kind, text){
-    S.extraLogs.unshift({ a: S.me, k: kind, t: text, m: hhmm() });
-    try { REAL.c.from('activity_log').insert({ actor_email: REAL.email, kind: kind, detail: text }).then(function(){}, function(){}); } catch (e) {}
+    kind = logKind(kind);
+    try { return Promise.resolve(REAL.c.from('activity_log').insert({ actor_email: REAL.email, kind: kind, detail: text })).then(function(){}, function(){}); } catch (e) { return Promise.resolve(); }
   }
   /* ---------- mode login: baca & tulis ke Supabase ---------- */
   function fmtT(ts){ try { return new Date(ts).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ''); } catch (e) { return ''; } }
@@ -671,8 +682,9 @@ function bmMain(REAL){
       c.from('activity_log').select('*').order('created_at', { ascending: false }).limit(120)
     ]);
     for (var i = 0; i < q.length; i++) if (q[i].error) throw q[i].error;
-    var admins = q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: r.role, dev: !!r.is_dev, active: r.active !== false }; });
-    if (!admins.some(function(a){ return a.id === em; })) admins.push({ id: em, mail: em, name: em.split('@')[0], role: 'admin2', dev: false, active: true });
+    var admins = q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: hasOwn(ROLE_LABEL, r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false }; });
+    var known = admins.some(function(a){ return a.id === em; });
+    if (!known) admins.push({ id: em, mail: em, name: em.split('@')[0], role: 'admin2', dev: false, active: true });
     var perms = clone(DEFAULTS);
     q[1].data.forEach(function(r){ if (perms[r.role] && r.feature in perms[r.role]) perms[r.role][r.feature] = r.allowed ? 1 : 0; });
     perms.owner = clone(DEFAULTS.owner);
@@ -680,15 +692,15 @@ function bmMain(REAL){
     var ann = q[2].data.map(function(r){
       var exp = 0, ex = r.expires_at ? Date.parse(r.expires_at) : null;
       if (ex) { var dd = (ex - Date.parse(r.updated_at || r.created_at)) / DAY; exp = EXPS.reduce(function(b, x){ return Math.abs(x - dd) < Math.abs(b - dd) ? x : b; }, 1); }
-      return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: r.targets || [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at) };
+      return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: Array.isArray(r.targets) ? r.targets.map(String) : [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at) };
     });
     var myLid = ''; try { myLid = sessionStorage.getItem('bm-login-id') || ''; } catch (e) {}
-    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id }; });
+    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id }; });
     var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 6).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid }; });
     var dv = {}; dv[em] = mine;
-    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv;
+    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.myLid = myLid; S.known = known;
     S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
-    S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: r.kind, t: r.detail, m: fmtT(r.created_at) }; });
+    S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
   }
   var loaded = false, busy = false;
   function bootShow(msg, err){ $('boot').hidden = false; $('bootBox').classList.toggle('err', !!err); $('bootMsg').textContent = msg; $('bootBtns').hidden = !err; }
@@ -696,25 +708,30 @@ function bmMain(REAL){
   function withTimeout(p, ms){ return Promise.race([p, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('koneksi terlalu lama, coba lagi')); }, ms); })]); }
   function refresh(){
     return withTimeout(reload(), 15000).then(function(){
+      if (!S.known) { bootShow('Akun ini tidak terdaftar sebagai admin.', true); return; }
+      var self = acct(S.me);
+      if (self && !self.active) { bootShow('Akun Anda dinonaktifkan. Hubungi Owner.', true); return; }
       loaded = true; $('boot').hidden = true; renderAll(); renderHist();
     }).catch(function(e){
       var m = (e && e.message) || String(e);
-      if (!loaded) bootShow('Tidak bisa memuat data profil: ' + m + '. Pastikan Anda login sebagai admin dan terhubung ke internet.', true);
-      else toast('Gagal memuat data: ' + m);
+      if (!loaded) bootShow('Tidak bisa memuat data profil: ' + T(m) + '. Pastikan Anda login sebagai admin dan terhubung ke internet.', true);
+      else toast('Gagal memuat data: ' + T(m));
     });
   }
   $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
   $('bootBack').addEventListener('click', leave);
   try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') bootShow('Sesi login berakhir. Login lagi di Dashboard, lalu buka Profil.', true); }); } catch (e) {}
   /* jalankan permintaan ke server, lalu muat ulang tampilan. Baris 0 = ditolak server (izin/RLS). */
-  function srv(p, ok){
+  function srv(p, ok, log){
     if (busy) return Promise.resolve(toast('Sedang menyimpan, tunggu sebentar'));
     busy = true;
     return Promise.resolve().then(p).then(function(r){
       if (r && r.error) throw r.error;
       if (r && Array.isArray(r.data) && !r.data.length) throw new Error('ditolak server, tidak ada izin');
+      if (log) return addLog(log[0], log[1]);
+    }).then(function(){
       if (ok) toast(ok);
-    }).catch(function(e){ toast('Gagal menyimpan: ' + (e && e.message || e)); }).then(function(){ busy = false; return refresh(); });
+    }).catch(function(e){ toast('Gagal menyimpan: ' + T(String(e && e.message || e))); }).then(function(){ busy = false; return refresh(); });
   }
   function fnCall(body){
     return REAL.c.functions.invoke('admin-manage', { body: body }).then(function(r){
@@ -734,7 +751,10 @@ function bmMain(REAL){
     $('hName').textContent = a.name; $('hMail').textContent = a.mail; $('hBadge').textContent = roleLabel(a);
     $('hBadge').className = 'badge' + (r === 'owner' || a.dev ? ' owner' : '');
     $('avHome').textContent = initials(a.name);
-    $('stAksi').textContent = allLogs().filter(function(l){ return l.a === a.id && l.m.indexOf('Kemarin') < 0; }).length;
+    var t0 = new Date(); t0.setHours(0, 0, 0, 0);
+    $('stAksi').textContent = allLogs().filter(function(l){ return l.a === a.id && l.ts >= t0.getTime(); }).length;
+    var prevLogin = S.logins.filter(function(l){ return l.a === a.id && l.id !== S.myLid; })[0];
+    $('stLogin').textContent = prevLogin ? shortT(prevLogin.ts) : '-';
     $('stDev').textContent = devicesOf(a.id).length;
     var shown = SHORTCUTS.filter(function(x){ return can(x.k); });
     $('shortcuts').innerHTML = shown.map(function(x){
@@ -748,7 +768,7 @@ function bmMain(REAL){
       $('teamWrap').innerHTML = '<div class="sec">Tim</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var last = allLogs().filter(function(l){ return l.a === m.id; })[0];
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + esc(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
+        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + uu(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
       }).join('') + '</div>';
     } else $('teamWrap').innerHTML = '';
   }
@@ -769,16 +789,16 @@ function bmMain(REAL){
     $('logList').className = 'card'; $('logList').style.padding = '6px 18px';
     var rows = allLogs().filter(function(l){ return logFilter === 'semua' ? true : (a && l.a === a.id); });
     $('logList').innerHTML = rows.length ? rows.map(function(l){
-      return '<div class="log"><div class="dot ' + l.k + '">' + ICO[l.k] + '</div><div><p>' + esc(l.t) + '</p><small>' + (logFilter === 'semua' ? esc(nameOfId(l.a)) + ' · ' : '') + esc(l.m) + '</small></div></div>';
+      return '<div class="log"><div class="dot ' + l.k + '">' + ICO[l.k] + '</div><div><p>' + esc(l.t) + '</p><small>' + (logFilter === 'semua' ? uu(nameOfId(l.a)) + ' · ' : '') + esc(l.m) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada aktivitas.</div>';
   }
   function renderLogins(){
     var now = S.logins.filter(function(l){ return l.now; });
     var h = '<div class="sec" style="margin:4px 4px 8px">Sedang masuk (' + now.length + ')</div><div class="card" style="padding:6px 18px;margin-bottom:6px">' + (now.length ? now.map(function(l){
-      return '<div class="log"><div class="dot on">' + ICO.phone + '</div><div><p>' + esc(nameOfId(l.a)) + ' <span class="onl">online</span></p><small>' + esc(l.d) + ' · sejak ' + esc(l.m) + '</small></div></div>';
+      return '<div class="log"><div class="dot on">' + ICO.phone + '</div><div><p>' + uu(nameOfId(l.a)) + ' <span class="onl">online</span></p><small>' + uu(l.d) + ' · sejak ' + esc(l.m) + '</small></div></div>';
     }).join('') : '<div class="empty">Tidak ada yang sedang masuk.</div>') + '</div>';
     h += '<div class="sec" style="margin:18px 4px 8px">Riwayat login</div><div class="card" style="padding:6px 18px">' + (S.logins.length ? S.logins.map(function(l){
-      return '<div class="log"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(nameOfId(l.a)) + '</p><small>' + esc(l.d) + ' · ' + esc(l.m) + '</small></div></div>';
+      return '<div class="log"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(nameOfId(l.a)) + '</p><small>' + uu(l.d) + ' · ' + esc(l.m) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada riwayat login.</div>') + '</div>';
     $('logList').innerHTML = h;
   }
@@ -801,9 +821,9 @@ function bmMain(REAL){
       $('aksesCard').innerHTML = h + '</div>';
       $('admCard').innerHTML = '<div class="sec">Akun admin</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left"><div class="mini">' + esc(initials(m.name)) + '</div><div style="min-width:0"><p>' + esc(m.name) + tag + '</p><small style="word-break:break-all">' + esc(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(roleLabel(m)) : 'Nonaktif') + '</span></button>';
+        return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left"><div class="mini">' + esc(initials(m.name)) + '</div><div style="min-width:0"><p>' + uu(m.name) + tag + '</p><small style="word-break:break-all">' + uu(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(roleLabel(m)) : 'Nonaktif') + '</span></button>';
       }).join('') + '</div><button class="btn ghost" id="admAdd">Tambah admin</button>' +
-      '<p class="hint" style="margin-top:12px">Ketuk akun untuk mengubah role, akses Developer, atau menonaktifkannya. Peran Owner bisa diserahkan ke akun lain lewat tombol "Jadikan Owner". Selalu ada minimal satu Owner aktif. Versi uji: akun belum dibuat di server.</p>';
+      '<p class="hint" style="margin-top:12px">Ketuk akun untuk mengubah role, akses Developer, atau menonaktifkannya. Peran Owner bisa diserahkan ke akun lain lewat tombol "Jadikan Owner". Selalu ada minimal satu Owner aktif.</p>';
     } else {
       $('aksesCard').innerHTML = FEATURES.map(function(f){
         var on = can(f.k);
@@ -816,7 +836,7 @@ function bmMain(REAL){
     var a = me(); if (!a) return;
     var list = devicesOf(a.id);
     $('devList').innerHTML = list.length ? list.map(function(d){
-      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + esc(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
+      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada perangkat tercatat.</div>';
     $('btnAll').style.display = 'block';
   }
@@ -858,13 +878,15 @@ function bmMain(REAL){
     if (b.length < 8) return toast('Password baru minimal 8 karakter');
     if (b !== c) return toast('Ulangi password tidak sama');
     (async function(){
+        if ($('btnPw').disabled) return;
+        $('btnPw').disabled = true;
         try {
           var r1 = await REAL.c.auth.signInWithPassword({ email: REAL.email, password: a });
           if (r1.error) return toast('Password lama salah');
           var r2 = await REAL.c.auth.updateUser({ password: b });
           if (r2.error) return toast('Gagal: ' + r2.error.message);
           $('pw0').value = $('pw1').value = $('pw2').value = ''; addLog('sys', 'Mengubah password'); toast('Password diperbarui');
-        } catch (e) { toast('Gagal mengubah password'); }
+        } catch (e) { toast('Gagal mengubah password'); } finally { $('btnPw').disabled = false; }
     })();
   });
   $('logChips').addEventListener('click', function(e){
@@ -879,8 +901,7 @@ function bmMain(REAL){
     if (!S.perms[r] || r === 'owner' || k === 'role') return;
     {
       var nv = !S.perms[r][k], tt = FEATURES.filter(function(f){ return f.k === k; })[0].t, msg = ROLE_LABEL[r] + ': ' + tt + ' ' + (nv ? 'diizinkan' : 'dicabut');
-      addLog('sys', 'Mengubah izin ' + msg.replace(/^[^:]+: /, ROLE_LABEL[r] + ': '));
-      return srv(function(){ return REAL.c.from('role_permissions').update({ allowed: nv, updated_at: new Date().toISOString() }).eq('role', r).eq('feature', k).select(); }, msg);
+      return srv(function(){ return REAL.c.from('role_permissions').update({ allowed: nv, updated_at: new Date().toISOString() }).eq('role', r).eq('feature', k).select(); }, msg, ['sys', 'Mengubah izin ' + msg]);
     }
   });
   $('btnReset').addEventListener('click', function(){
@@ -888,8 +909,7 @@ function bmMain(REAL){
     confirmBox('Kembalikan ke bawaan?', 'Hak akses Admin 1, Admin 2, dan Admin + Dev kembali ke pengaturan awal.', function(){
       {
         var rows = []; ['admin1', 'admin2'].forEach(function(r){ Object.keys(DEFAULTS[r]).forEach(function(k){ rows.push({ role: r, feature: k, allowed: !!DEFAULTS[r][k] }); }); });
-        addLog('sys', 'Mengembalikan hak akses ke bawaan');
-        return srv(function(){ return REAL.c.from('role_permissions').upsert(rows, { onConflict: 'role,feature' }); }, 'Hak akses dikembalikan');
+        return srv(function(){ return REAL.c.from('role_permissions').upsert(rows, { onConflict: 'role,feature' }); }, 'Hak akses dikembalikan', ['sys', 'Mengembalikan hak akses ke bawaan']);
       }
     });
   });
@@ -918,10 +938,10 @@ function bmMain(REAL){
   };
   /* Popup ala iklan browser: tombol X di pojok. mode: live (pratinjau di form) | preview (layar penuh) */
   function annPopupHtml(a, mode){
-    var k = KIND[a.kind] || KIND.info;
+    var k = kindOf(a.kind);
     var act = mode === 'preview' ? 'data-act="closeprev"' : 'tabindex="-1" style="pointer-events:none"';
     return '<div class="ann-p ' + k.cls + '"><button class="ann-x2" ' + act + ' aria-label="Tutup">' + ICO.x + '</button>' +
-      '<div class="big">' + svg(k.ic) + '</div><div class="kt">' + k.t + (a.ver ? ' · v' + esc(a.ver) : '') + '</div><h3>' + esc(a.title || 'Judul pengumuman') + '</h3><p>' + esc(a.msg || 'Isi pesan akan tampil di sini.') + '</p></div>';
+      '<div class="big">' + svg(k.ic) + '</div><div class="kt">' + k.t + (a.ver ? ' · v' + esc(a.ver) : '') + '</div><h3>' + (a.title ? uu(a.title) : 'Judul pengumuman') + '</h3><p>' + (a.msg ? uu(a.msg) : 'Isi pesan akan tampil di sini.') + '</p></div>';
   }
   $('ovPrev').addEventListener('click', function(e){ if (e.target === $('ovPrev') || e.target.closest('[data-act=closeprev]')) $('ovPrev').classList.remove('on'); });
 
@@ -983,10 +1003,11 @@ function bmMain(REAL){
         if (status === 'aktif') return REAL.c.from('announcement_seen').upsert({ announcement_id: r.data[0].id, email: REAL.email }, { onConflict: 'announcement_id,email', ignoreDuplicates: true });
       }).then(function(r){
         if (r && r.error) throw r.error;
-        if (status === 'aktif') addLog('sys', 'Menerbitkan pengumuman ' + (row.version ? 'v' + row.version + ' ' : '') + '"' + row.title + '"');
+        var lg = status === 'aktif' ? addLog('sys', 'Menerbitkan pengumuman ' + (row.version ? 'v' + row.version + ' ' : '') + '"' + row.title + '"') : null;
         f = newForm(); renderForm();
         toast(status === 'aktif' ? 'Diterbitkan. Muncul di Dashboard saat pertama dibuka.' : 'Draf disimpan');
-      }).catch(function(e){ toast('Gagal menyimpan: ' + (e && e.message || e)); }).then(function(){ busy = false; return refresh(); });
+        return lg;
+      }).catch(function(e){ toast('Gagal menyimpan: ' + T(String(e && e.message || e))); }).then(function(){ busy = false; return refresh(); });
       return;
     }
   }
@@ -1001,11 +1022,11 @@ function bmMain(REAL){
   function annStatus(a){ if (a.status === 'aktif') return (a.expiry && Date.now() >= a.expiry) ? 'Berakhir' : 'Aktif'; return a.status === 'draf' ? 'Draf' : 'Nonaktif'; }
   function renderHist(){
     $('annHist').innerHTML = S.ann.length ? S.ann.map(function(a){
-      var st = annStatus(a), k = KIND[a.kind] || KIND.info;
-      var sub = k.t + ' · ' + a.targets.join(', ') + ' · oleh ' + esc(nameOfId(a.by)) + (a.expiry ? ' · sampai ' + fmtDate(a.expiry) : '');
+      var st = annStatus(a), k = kindOf(a.kind);
+      var sub = k.t + ' · ' + a.targets.map(esc).join(', ') + ' · oleh ' + uu(nameOfId(a.by)) + (a.expiry ? ' · sampai ' + fmtDate(a.expiry) : '');
       var tg = st === 'Aktif' ? 'Nonaktifkan' : (st === 'Draf' ? 'Terbitkan' : 'Aktifkan');
       var acts = canManage(a) ? '<div class="ha"><button class="mini-btn" data-h="edit" data-id="' + esc(a.id) + '">Ubah</button><button class="mini-btn" data-h="toggle" data-id="' + esc(a.id) + '">' + tg + '</button><button class="mini-btn dg" data-h="del" data-id="' + esc(a.id) + '">Hapus</button></div>' : '';
-      return '<div class="hist"><div class="hr"><b>' + esc(a.title) + (a.ver ? ' <span class="devtag">v' + esc(a.ver) + '</span>' : '') + '</b><span class="tag ' + (st === 'Aktif' ? 'y' : 'n') + '">' + st + '</span></div><small>' + sub + '</small>' + acts + '</div>';
+      return '<div class="hist"><div class="hr"><b>' + uu(a.title) + (a.ver ? ' <span class="devtag">v' + esc(a.ver) + '</span>' : '') + '</b><span class="tag ' + (st === 'Aktif' ? 'y' : 'n') + '">' + st + '</span></div><small>' + sub + '</small>' + acts + '</div>';
     }).join('') : '<div class="empty">Belum ada pengumuman.</div>';
   }
   $('annHist').addEventListener('click', function(e){
@@ -1018,13 +1039,12 @@ function bmMain(REAL){
     } else if (act === 'toggle') {
       {
         var on = annStatus(rec) === 'Aktif';
-        if (!on) addLog('sys', 'Mengaktifkan pengumuman "' + rec.title + '"');
-        return srv(function(){ return REAL.c.from('announcements').update(on ? { status: 'nonaktif', expires_at: null, updated_at: new Date().toISOString() } : { status: 'aktif', expires_at: rec.exp ? new Date(Date.now() + rec.exp * DAY).toISOString() : null, updated_at: new Date().toISOString() }).eq('id', rec.id).select(); }, on ? 'Pengumuman dinonaktifkan' : 'Pengumuman aktif');
+        return srv(function(){ return REAL.c.from('announcements').update(on ? { status: 'nonaktif', expires_at: null, updated_at: new Date().toISOString() } : { status: 'aktif', expires_at: rec.exp ? new Date(Date.now() + rec.exp * DAY).toISOString() : null, updated_at: new Date().toISOString() }).eq('id', rec.id).select(); }, on ? 'Pengumuman dinonaktifkan' : 'Pengumuman aktif', [on ? 'sys' : 'sys', (on ? 'Menonaktifkan pengumuman "' : 'Mengaktifkan pengumuman "') + rec.title + '"']);
       }
     } else if (act === 'del') {
       confirmBox('Hapus pengumuman?', '"' + rec.title + '" akan dihapus dari riwayat.', function(){
         if (f.id === id) f = newForm(); renderForm();
-        srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus');
+        srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus', ['del', 'Menghapus pengumuman "' + rec.title + '"']);
       });
     }
   });
@@ -1035,7 +1055,7 @@ function bmMain(REAL){
   function renderAdmSheet(){
     var a = admEdit ? acct(admEdit) : null, isOwnerRow = !!(a && a.role === 'owner');
     $('admTitle').textContent = a ? 'Ubah akun' : 'Tambah admin';
-    $('admSub').textContent = a ? a.mail : 'Akun baru dibuat dengan email dan password sementara. '+(REAL?'Akun login dibuat otomatis dengan password sementara. Beri tahu email dan passwordnya ke admin baru.':'Versi uji: belum dibuat di server.');
+    $('admSub').textContent = a ? a.mail : 'Akun baru dibuat dengan email dan password sementara. Beri tahu email dan passwordnya ke admin baru.';
     $('admName').value = a ? a.name : ($('admName').value || '');
     $('admMail').value = a ? a.mail : ($('admMail').value || ''); $('admMail').readOnly = !!a;
     $('admRoleWrap').style.display = isOwnerRow ? 'none' : 'block';
@@ -1062,8 +1082,8 @@ function bmMain(REAL){
   });
   $('admRole').addEventListener('click', function(e){ var b = e.target.closest('button'); if (!b) return; admRole = b.getAttribute('data-r'); renderAdmSheet(); });
   $('admDev').addEventListener('click', function(){ admDev = !admDev; renderAdmSheet(); });
-  $('admCancel').addEventListener('click', function(){ $('ovAdm').classList.remove('on'); });
-  $('ovAdm').addEventListener('click', function(e){ if (e.target === $('ovAdm')) $('ovAdm').classList.remove('on'); });
+  $('admCancel').addEventListener('click', function(){ $('admPw').value = ''; $('ovAdm').classList.remove('on'); });
+  $('ovAdm').addEventListener('click', function(e){ if (e.target === $('ovAdm')) { $('admPw').value = ''; $('ovAdm').classList.remove('on'); } });
   $('admSave').addEventListener('click', function(){
     if (getRole() !== 'owner') return;
     var name = $('admName').value.trim(), a = admEdit ? acct(admEdit) : null;
@@ -1075,20 +1095,19 @@ function bmMain(REAL){
         if (S.admins.some(function(x){ return x.mail === mail2; })) return toast('Email itu sudah terdaftar');
         if (pw.length < 8) return toast('Password sementara minimal 8 karakter');
         $('ovAdm').classList.remove('on'); $('admPw').value = '';
-        return srv(function(){ return fnCall({ action: 'create', email: mail2, name: name, role: admRole === 'admin2' ? 'admin2' : 'admin1', is_dev: admDev, password: pw }); }, 'Admin ditambahkan. Beri tahu email dan password sementaranya.');
+        return srv(function(){ return fnCall({ action: 'create', email: mail2, name: name, role: admRole === 'admin2' ? 'admin2' : 'admin1', is_dev: admDev, password: pw }); }, 'Admin ditambahkan. Beri tahu email dan password sementaranya.', ['add', 'Menambahkan admin ' + name]);
       }
       var upd = { display_name: name, is_dev: admDev, updated_at: new Date().toISOString() };
       if (a.role !== 'owner') upd.role = admRole === 'admin2' ? 'admin2' : 'admin1';
-      addLog('sys', 'Mengubah akun ' + name);
       $('ovAdm').classList.remove('on');
-      return srv(function(){ return REAL.c.from('admin_roles').update(upd).eq('email', a.mail).select(); }, 'Akun diperbarui');
+      return srv(function(){ return REAL.c.from('admin_roles').update(upd).eq('email', a.mail).select(); }, 'Akun diperbarui', ['sys', 'Mengubah akun ' + name]);
     }
   });
   $('admOff').addEventListener('click', function(){
     var a = acct(admEdit); if (!a || a.role === 'owner' || getRole() !== 'owner') return;
     {
       var goOn = !a.active;
-      var run = function(){ $('ovAdm').classList.remove('on'); srv(function(){ return fnCall({ action: 'set_active', email: a.mail, active: goOn }); }, goOn ? 'Akun aktif kembali' : 'Akun dinonaktifkan'); };
+      var run = function(){ $('ovAdm').classList.remove('on'); srv(function(){ return fnCall({ action: 'set_active', email: a.mail, active: goOn }); }, goOn ? 'Akun aktif kembali' : 'Akun dinonaktifkan', ['sys', (goOn ? 'Mengaktifkan akun ' : 'Menonaktifkan akun ') + a.name]); };
       if (goOn) return run();
       return confirmBox('Nonaktifkan akun?', a.name + ' tidak bisa masuk lagi sampai diaktifkan kembali.', run);
     }
@@ -1097,15 +1116,14 @@ function bmMain(REAL){
     var a = acct(admEdit); if (!a || a.role === 'owner' || a.id === S.me || getRole() !== 'owner') return;
     confirmBox('Hapus akun permanen?', a.name + ' (' + a.mail + ') dihapus dari daftar admin dan akun loginnya dihapus. Tidak bisa dibatalkan.', function(){
       $('ovAdm').classList.remove('on');
-      addLog('del', 'Menghapus akun admin ' + a.name);
-      srv(function(){ return fnCall({ action: 'delete', email: a.mail }); }, 'Akun dihapus');
+      srv(function(){ return fnCall({ action: 'delete', email: a.mail }); }, 'Akun dihapus', ['del', 'Menghapus akun admin ' + a.name]);
     });
   });
   $('admOwner').addEventListener('click', function(){
     var t = acct(admEdit), cur = me(); if (!t || !cur || cur.role !== 'owner' || t.role === 'owner' || !t.active) return;
     { confirmBox('Serahkan peran Owner?', t.name + ' menjadi Owner. Anda menjadi Admin 1 dan tidak bisa mengatur hak akses lagi.', function(){
       $('ovAdm').classList.remove('on'); closeAllPages(); logFilter = 'saya';
-      srv(function(){ return REAL.c.rpc('transfer_owner', { new_email: t.mail }); }, 'Peran Owner dipindahkan ke ' + t.name);
+      srv(function(){ return REAL.c.rpc('transfer_owner', { new_email: t.mail }); }, 'Peran Owner dipindahkan ke ' + t.name, ['sys', 'Menyerahkan peran Owner ke ' + t.name]);
     }); return; }
   });
 
@@ -1174,7 +1192,7 @@ function bmMain(REAL){
     txt.appendChild(c);
     return c;
   });
-  function syncText(){ tabs.forEach(function(t, i){ if (clones[i].textContent !== t.textContent) clones[i].textContent = t.textContent; }); }
+  function syncText(){ tabs.forEach(function(t, i){ var a = t.querySelector('span'), b = clones[i].querySelector('span'); if (a && b && b.textContent !== a.textContent) b.textContent = a.textContent; }); }
 
   function activeTab(){ return tabs.filter(function(t){ return t.classList.contains('active'); })[0] || tabs[0]; }
   function setLens(x, w){ lens.style.setProperty('--lx', x + 'px'); if (w != null) lens.style.setProperty('--lw', w + 'px'); }
