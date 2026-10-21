@@ -2,7 +2,15 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
+<link rel="manifest" href="/manifest-admin.json">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+<meta name="apple-mobile-web-app-title" content="BM-TECH Admin">
 <meta name="referrer" content="no-referrer">
 <title>Profil Saya — BM-TECH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -431,7 +439,7 @@
 
 <div class="app">
   <div class="head">
-    <button class="round" id="btnBack" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button class="round" id="btnBack" aria-label="Buka Dashboard"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button>
     <h1>Profil Saya</h1>
     <button class="badge" id="roleBadge" aria-label="Role">Owner</button>
   </div>
@@ -496,6 +504,7 @@
   <section class="panel" id="p-keamanan">
     <div class="sec" style="margin-top:6px">Perangkat yang sedang masuk</div>
     <div class="card" id="devList" style="padding:6px 18px"></div>
+    <button class="btn" id="btnLogout" style="margin-bottom:10px">Keluar dari akun ini</button>
     <button class="btn danger" id="btnAll" style="margin-bottom:10px">Keluar dari semua perangkat lain</button>
   </section>
 </div>
@@ -579,11 +588,12 @@
   <button class="btn ghost" id="admCancel" style="margin-top:10px">Batal</button>
 </div></div>
 
-<div id="boot" hidden><div class="bootbox" id="bootBox"><div class="bootspin"></div><p id="bootMsg">Memuat…</p><div class="bootbtns" id="bootBtns" hidden><button class="btn" id="bootRetry">Coba lagi</button><button class="btn" id="bootBack">Kembali</button></div></div></div>
+<div id="boot" hidden><div class="bootbox" id="bootBox"><div class="bootspin"></div><p id="bootMsg">Memuat…</p><div class="bootbtns" id="bootBtns" hidden><button class="btn" id="bootRetry">Coba lagi</button><button class="btn" id="bootBack">Keluar</button></div></div></div>
 <div class="toast" id="toast"></div>
 <div class="ov" id="ov"><div class="dlg"><h3 id="dTitle"></h3><p id="dText"></p><div class="row-b"><button class="btn ghost" id="dNo">Batal</button><button class="btn" id="dYes">OK</button></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/bm-session.js"></script>
 <script>
 function bmMain(REAL){
   /* Halaman Profil: akun, role, izin, pengumuman, dan log dibaca/ditulis ke Supabase lewat sesi login Dashboard. */
@@ -602,6 +612,7 @@ function bmMain(REAL){
     admin2: { tulis:1, hapus:0, pulih:0, ekspor:0, role:0 }
   };
   var SHORTCUTS = [
+    { k: null, a: 'dash', t: 'Dashboard', ic: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>' },
     { k: 'ann',      t: 'Pengumuman',       ic: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a4 4 0 010 6M17.5 6.5a8 8 0 010 11"/>' },
     { k: 'role',     t: 'Tambah Admin',     ic: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 19v-1a4 4 0 014-4h5a4 4 0 014 4v1M19 8v6M16 11h6"/>' },
     { k: 'role',     t: 'Kelola Admin',     ic: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>' }
@@ -704,7 +715,13 @@ function bmMain(REAL){
   }
   var loaded = false, busy = false;
   function bootShow(msg, err){ $('boot').hidden = false; $('bootBox').classList.toggle('err', !!err); $('bootMsg').textContent = msg; $('bootBtns').hidden = !err; }
-  function leave(){ if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} } history.back(); }
+  /* Profil adalah halaman utama setelah login. Dashboard dibuka dari sini; Dashboard punya tombol "Profile" untuk kembali. */
+  function goDash(){ if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} } location.href = 'dashboard-admin.html'; }
+  function toLogin(){
+    try { if (window.BMSession) BMSession.stop(); } catch (e) {}
+    try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
+    Promise.resolve().then(function(){ return REAL.c.auth.signOut(); }).catch(function(){}).then(function(){ location.replace('admin-login.html'); });
+  }
   function withTimeout(p, ms){ return Promise.race([p, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('koneksi terlalu lama, coba lagi')); }, ms); })]); }
   function refresh(){
     return withTimeout(reload(), 15000).then(function(){
@@ -719,8 +736,8 @@ function bmMain(REAL){
     });
   }
   $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
-  $('bootBack').addEventListener('click', leave);
-  try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') bootShow('Sesi login berakhir. Login lagi di Dashboard, lalu buka Profil.', true); }); } catch (e) {}
+  $('bootBack').addEventListener('click', toLogin);
+  try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') location.replace('admin-login.html'); }); } catch (e) {}
   /* jalankan permintaan ke server, lalu muat ulang tampilan. Baris 0 = ditolak server (izin/RLS). */
   function srv(p, ok, log){
     if (busy) return Promise.resolve(toast('Sedang menyimpan, tunggu sebentar'));
@@ -758,7 +775,7 @@ function bmMain(REAL){
     $('stDev').textContent = devicesOf(a.id).length;
     var shown = SHORTCUTS.filter(function(x){ return can(x.k); });
     $('shortcuts').innerHTML = shown.map(function(x){
-      return '<button class="short" data-k="' + (x.k || '') + '" data-t="' + x.t + '">' + svg(x.ic) + '<span>' + x.t + '</span></button>';
+      return '<button class="short" data-k="' + (x.k || '') + '" data-a="' + (x.a || '') + '" data-t="' + x.t + '">' + svg(x.ic) + '<span>' + x.t + '</span></button>';
     }).join('') + '';
     if (a.dev) {
       $('devWrap').innerHTML = '<div class="sec">Alat Developer <span class="devtag">DEV</span></div><div class="grid2">' +
@@ -862,6 +879,7 @@ function bmMain(REAL){
   /* ---------- aksi ---------- */
   $('shortcuts').addEventListener('click', function(e){
     var b = e.target.closest('.short'); if (!b) return;
+    if (b.getAttribute('data-a') === 'dash') return goDash();
     var k = b.getAttribute('data-k') || null;
     if (!can(k)) return toast('Tidak ada izin');   // lapisan kedua: izin dicek lagi saat diketuk
     if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
@@ -918,9 +936,9 @@ function bmMain(REAL){
       REAL.c.auth.signOut({ scope: 'others' }).then(function(r){ toast(r && r.error ? 'Gagal: ' + r.error.message : 'Perangkat lain dikeluarkan'); });
     });
   });
-  $('btnBack').addEventListener('click', function(){
-    if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
-    history.back();
+  $('btnBack').addEventListener('click', goDash);
+  $('btnLogout').addEventListener('click', function(){
+    confirmBox('Keluar dari akun ini?', 'Anda perlu login lagi untuk membuka Profil dan Dashboard.', toLogin);
   });
 
   /* ================= PENGUMUMAN ================= */
@@ -1150,24 +1168,36 @@ function bmMain(REAL){
 }
 
 (async function(){
-  var R = null;
+  /* Pengaman halaman: tanpa sesi admin yang aktif, langsung ke halaman login. Setelah lolos, login dicatat lalu Profil dimuat. */
+  var boot = document.getElementById('boot'), box = document.getElementById('bootBox'), msg = document.getElementById('bootMsg');
+  var btns = document.getElementById('bootBtns'), retry = document.getElementById('bootRetry'), back = document.getElementById('bootBack');
+  function wt(p, ms){ return Promise.race([p, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('timeout')); }, ms); })]); }
+  function toLoginPage(){ location.replace('admin-login.html'); }
+  function fail(text){
+    boot.hidden = false; box.classList.add('err'); msg.textContent = text; btns.hidden = false; retry.style.display = '';
+    retry.onclick = function(){ location.reload(); };
+    back.onclick = toLoginPage;
+  }
+  boot.hidden = false;   /* "Memuat…" selama sesi diperiksa */
+  if (!window.supabase) { fail('Tidak bisa memuat layanan login. Periksa koneksi internet lalu coba lagi.'); return; }
+  var c = null, session = null;
   try {
-    if (window.supabase) {
-      var c = window.supabase.createClient('https://zgzmbneqqzxnptbmlhsz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E', { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
-      var r = await c.auth.getSession();
-      if (r.data && r.data.session) R = { c: c, email: String(r.data.session.user.email || '').toLowerCase() };
-    }
-  } catch (e) { R = null; }
-  if (R) return bmMain(R);
-  document.getElementById('boot').hidden = false;
-  document.getElementById('bootBox').classList.add('err');
-  document.getElementById('bootMsg').textContent = 'Belum login. Login dulu di Dashboard, lalu buka Profil dari sana.';
-  document.getElementById('bootBtns').hidden = false;
-  document.getElementById('bootRetry').style.display = 'none';
-  document.getElementById('bootBack').addEventListener('click', function(){
-    if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
-    history.back();
-  });
+    c = window.supabase.createClient('https://zgzmbneqqzxnptbmlhsz.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E', { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
+    var r = await wt(c.auth.getSession(), 8000);
+    session = r.data && r.data.session;
+  } catch (e) { fail('Koneksi lambat, belum bisa memeriksa sesi login. Coba lagi.'); return; }
+  if (!session) { toLoginPage(); return; }
+  var isAdmin = null, aerr = null;
+  try { var a = await wt(c.rpc('is_admin'), 8000); isAdmin = a.data; aerr = a.error; } catch (e) { aerr = e; }
+  if (aerr) { fail('Belum bisa memverifikasi akses admin. Periksa koneksi lalu coba lagi.'); return; }
+  if (isAdmin !== true) {
+    try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
+    try { await c.auth.signOut(); } catch (e) {}
+    toLoginPage(); return;
+  }
+  var email = String(session.user.email || '').toLowerCase();
+  try { if (window.BMSession) await wt(BMSession.track(c, email), 4000); } catch (e) {}
+  bmMain({ c: c, email: email });
 })();
 
 </script>
