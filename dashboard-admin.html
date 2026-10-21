@@ -2745,12 +2745,6 @@
   </div>
 
   <div class="settings-group">
-    <div class="settings-item" id="settingLogout">
-      <span class="settings-item-title" style="color:#F0555C;">Logout</span>
-      <div class="settings-item-right">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#F0555C" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -6087,13 +6081,6 @@
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
   });
 
-  document.getElementById('settingLogout').addEventListener('click', async () => {
-    if (!confirm('Yakin mau logout?')) return;
-    try { if (window.BMSession) BMSession.stop(); } catch (e) {}
-    try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
-    await supabaseClient.auth.signOut();
-    window.location.href = 'admin-login.html';
-  });
 
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
