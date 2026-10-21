@@ -4,9 +4,10 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v6'; // dinaikkan: lengkapi halaman offline, perbaiki cache editor & pembaruan JS
+const CACHE_NAME = 'bmtech-shell-v7'; // dinaikkan: Profil jadi halaman utama setelah login (+ bm-session.js)
 
 const APP_SHELL = [
+  '/my-profile-bm.html',
   '/dashboard-admin.html',
   '/analisa.html',
   '/daftar-nomor-hp.html',
@@ -26,6 +27,7 @@ const APP_SHELL = [
   '/bm-theme.js',
   '/bm-lang.js',
   '/bm-swipe-back.js',
+  '/bm-session.js',
   '/manifest.json',
   '/manifest-admin.json',
   '/manifest-customer.json',
