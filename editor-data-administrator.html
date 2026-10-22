@@ -346,16 +346,15 @@
   /* ---------- Pembeda 3 kolom barang: warna + bentuk ---------- */
   :root{ --c-in:#2f7fd1; --c-out:#e8832a; --c-stay:#9b6bd3; }
   .lbl-in, .lbl-out, .lbl-stay{ font-weight:800 !important; }
-  .lbl-in{ color:var(--c-in) !important; }
-  .lbl-out{ color:var(--c-out) !important; }
-  .lbl-stay{ color:var(--c-stay) !important; }
+  .lbl-in, .lbl-out, .lbl-stay{ color:var(--ink) !important; }
+  .lbl-in .opt-tag, .lbl-out .opt-tag, .lbl-stay .opt-tag{ color:var(--ink) !important; opacity:1 !important; font-weight:600; }
   .lbl-in::before, .lbl-out::before, .lbl-stay::before{ content:''; display:inline-block; width:11px; height:11px; margin-right:8px; vertical-align:-1px; }
   .lbl-in::before{ background:var(--c-in); border-radius:50%; }                                   /* ● masuk */
   .lbl-out::before{ background:var(--c-out); clip-path:polygon(0 0, 100% 50%, 0 100%); }           /* ▶ keluar */
   .lbl-stay::before{ background:var(--c-stay); border-radius:2px; }                                /* ■ ditinggal */
-  #inputBarang, #detBarangEdit{ border-left:5px solid var(--c-in) !important; }
-  #inputBarangKeluar, #detKeluarEdit{ border-left:5px solid var(--c-out) !important; }
-  #inputStokBarang, #detStokEdit{ border-left:5px solid var(--c-stay) !important; }
+  #inputBarang, #detBarangEdit{ border-color:var(--c-in) !important; }
+  #inputBarangKeluar, #detKeluarEdit{ border-color:var(--c-out) !important; }
+  #inputStokBarang, #detStokEdit{ border-color:var(--c-stay) !important; }
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
   .field label .opt-tag, .detail-row label .opt-tag{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-soft); opacity:0.75; }
@@ -506,6 +505,16 @@
   .pager{ display:flex; gap:8px; flex-shrink:0; }
   .pager .icon-btn{ width:38px; height:38px; }
   .pager .icon-btn:disabled{ opacity:0.35; cursor:default; }
+
+  /* ---------- Tombol kembali & < > : modern + berwarna ---------- */
+  .topbar > .icon-btn:first-child, .pager .icon-btn{
+    border:none; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.16);
+    backdrop-filter:none; -webkit-backdrop-filter:none;
+  }
+  .topbar > .icon-btn:first-child{ width:42px; height:42px; background:var(--accent); color:#14210a; }
+  .pager .icon-btn{ width:40px; height:40px; background:linear-gradient(145deg,#4a9cf0,#2f6fd1); color:#fff; box-shadow:0 4px 12px rgba(47,111,209,0.38); }
+  .topbar > .icon-btn:first-child svg, .pager .icon-btn svg{ width:20px; height:20px; stroke-width:2.8; }
+  .pager .icon-btn:disabled{ background:var(--line-soft); color:var(--ink-soft); box-shadow:none; opacity:0.55; }
   .draft-bar{ display:none; align-items:center; justify-content:space-between; gap:10px; margin:0 0 14px; padding:10px 14px; border-radius:14px; background:var(--accent-soft); border:1.5px dashed var(--accent); font-size:12.5px; font-weight:700; color:var(--accent-ink); }
   body.surface-dark .draft-bar{ color:var(--accent); }
   .draft-bar button{ border:none; background:transparent; color:inherit; font-size:12.5px; font-weight:800; text-decoration:underline; cursor:pointer; padding:4px 6px; flex-shrink:0; }
@@ -821,7 +830,7 @@
   <!-- ============ HOME ============ -->
   <section class="view active" id="view-home">
     <div class="topbar">
-      <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
     </div>
     <div class="scroll px">
       <div class="greet-card">
@@ -846,7 +855,7 @@
   <!-- ============ TAMBAH DATA ============ -->
   <section class="view" id="view-add">
     <div class="topbar">
-      <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
       <div class="topbar-titles"><h2>Tambah Data</h2><span>Isi data sesuai kebutuhan</span></div>
       <div class="pager"><button class="icon-btn" id="btnAddPrev" aria-label="Data sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><button class="icon-btn" id="btnAddNext" aria-label="Data berikutnya" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
     </div>
@@ -900,12 +909,12 @@
 
       <div class="field">
         <label class="lbl-out">Barang Keluar <span class="opt-tag">(opsional · yang dibawa pulang)</span></label>
-        <input type="text" id="inputBarangKeluar" placeholder="Barang yang dibawa pulang customer" autocomplete="off">
+        <input type="text" id="inputBarangKeluar" placeholder="Yang dibawa pulang" autocomplete="off">
       </div>
 
       <div class="field">
-        <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(opsional · sisa yang belum diambil)</span></label>
-        <input type="text" id="inputStokBarang" placeholder="Barang yang masih ditinggal / belum diambil" autocomplete="off">
+        <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(opsional · belum diambil)</span></label>
+        <input type="text" id="inputStokBarang" placeholder="Yang masih ditinggal" autocomplete="off">
       </div>
 
       <div class="field">
@@ -956,7 +965,7 @@
   <!-- ============ DETAIL DATA ============ -->
   <section class="view" id="view-detail">
     <div class="topbar">
-      <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
       <div class="topbar-titles"><h2>Detail Data</h2><span id="detailSubtitle">&nbsp;</span></div>
       <div class="pager"><button class="icon-btn" id="btnDetPrev" aria-label="Data sebelumnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button><button class="icon-btn" id="btnDetNext" aria-label="Data berikutnya"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></div>
     </div>
@@ -990,7 +999,7 @@
           <input type="text" id="detKeluarEdit" style="display:none;">
         </div>
         <div class="detail-row">
-          <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(sisa yang belum diambil)</span></label>
+          <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(belum diambil)</span></label>
           <div class="val" id="detStokView">—</div>
           <input type="text" id="detStokEdit" style="display:none;">
         </div>
@@ -1054,7 +1063,7 @@
   <!-- ============ SETTINGS ============ -->
   <section class="view" id="view-settings">
     <div class="topbar">
-      <button class="icon-btn" id="btnSettingsBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="icon-btn" id="btnSettingsBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
       <div class="topbar-titles"><h2>Pengaturan</h2><span>Tema, judul tabel, dan lainnya</span></div>
     </div>
     <div class="scroll no-nav px">
@@ -1076,7 +1085,7 @@
   <!-- ============ SAMPAH ============ -->
   <section class="view" id="view-trash">
     <div class="topbar">
-      <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
       <div class="topbar-titles"><h2>Sampah</h2><span id="trashSub">Data yang dihapus muncul di sini</span></div>
     </div>
     <div class="scroll no-nav px">
