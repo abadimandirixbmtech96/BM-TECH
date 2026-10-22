@@ -342,9 +342,23 @@
 
 
   /* ---------- Form ---------- */
+
+  /* ---------- Pembeda 3 kolom barang: warna + bentuk ---------- */
+  :root{ --c-in:#2f7fd1; --c-out:#e8832a; --c-stay:#9b6bd3; }
+  .lbl-in, .lbl-out, .lbl-stay{ font-weight:800 !important; }
+  .lbl-in{ color:var(--c-in) !important; }
+  .lbl-out{ color:var(--c-out) !important; }
+  .lbl-stay{ color:var(--c-stay) !important; }
+  .lbl-in::before, .lbl-out::before, .lbl-stay::before{ content:''; display:inline-block; width:11px; height:11px; margin-right:8px; vertical-align:-1px; }
+  .lbl-in::before{ background:var(--c-in); border-radius:50%; }                                   /* ● masuk */
+  .lbl-out::before{ background:var(--c-out); clip-path:polygon(0 0, 100% 50%, 0 100%); }           /* ▶ keluar */
+  .lbl-stay::before{ background:var(--c-stay); border-radius:2px; }                                /* ■ ditinggal */
+  #inputBarang, #detBarangEdit{ border-left:5px solid var(--c-in) !important; }
+  #inputBarangKeluar, #detKeluarEdit{ border-left:5px solid var(--c-out) !important; }
+  #inputStokBarang, #detStokEdit{ border-left:5px solid var(--c-stay) !important; }
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
-  .field label .opt-tag{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-soft); opacity:0.75; }
+  .field label .opt-tag, .detail-row label .opt-tag{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-soft); opacity:0.75; }
   .field .readonly-box{
     padding:13px 14px; border-radius:14px; background:var(--line-soft); color:var(--ink-soft);
     font-size:15px; font-weight:600; display:flex; align-items:center; justify-content:space-between;
@@ -840,7 +854,7 @@
       <div class="draft-bar" id="draftBar"><span>Draft dipulihkan dari perangkat ini</span><button type="button" id="btnDraftDiscard">Buang draft</button></div>
       <div class="hint-card">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>PJ dan Barang wajib diisi. Barang Keluar, Stok Barang, Keterangan, dan Harga boleh menyusul lewat Edit — cocok kalau harga masih menunggu pengerjaan selesai.</span>
+        <span>PJ dan Barang wajib diisi. Barang Keluar, Barang Ditinggal, Keterangan, dan Harga boleh menyusul lewat Edit — cocok kalau harga masih menunggu pengerjaan selesai.</span>
       </div>
 
       <div class="field">
@@ -880,18 +894,18 @@
       </div>
 
       <div class="field">
-        <label>Barang dan Jumlah</label>
+        <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
         <input type="text" id="inputBarang" placeholder="Contoh: Blok kph, askruk blade 3pcs" autocomplete="off">
       </div>
 
       <div class="field">
-        <label>Barang Keluar <span class="opt-tag">(opsional)</span></label>
-        <input type="text" id="inputBarangKeluar" placeholder="Barang yang dibawa keluar" autocomplete="off">
+        <label class="lbl-out">Barang Keluar <span class="opt-tag">(opsional · yang dibawa pulang)</span></label>
+        <input type="text" id="inputBarangKeluar" placeholder="Barang yang dibawa pulang customer" autocomplete="off">
       </div>
 
       <div class="field">
-        <label>Stok Barang <span class="opt-tag">(opsional)</span></label>
-        <input type="text" id="inputStokBarang" placeholder="Sisa stok / barang yang ditinggal" autocomplete="off">
+        <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(opsional · sisa yang belum diambil)</span></label>
+        <input type="text" id="inputStokBarang" placeholder="Barang yang masih ditinggal / belum diambil" autocomplete="off">
       </div>
 
       <div class="field">
@@ -966,17 +980,17 @@
           <input type="text" id="detCustomerEdit" style="display:none;">
         </div>
         <div class="detail-row">
-          <label>Barang dan Jumlah</label>
+          <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
           <div class="val" id="detBarangView">—</div>
           <input type="text" id="detBarangEdit" style="display:none;">
         </div>
         <div class="detail-row">
-          <label>Barang Keluar</label>
+          <label class="lbl-out">Barang Keluar <span class="opt-tag">(yang dibawa pulang)</span></label>
           <div class="val" id="detKeluarView">—</div>
           <input type="text" id="detKeluarEdit" style="display:none;">
         </div>
         <div class="detail-row">
-          <label>Stok Barang</label>
+          <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(sisa yang belum diambil)</span></label>
           <div class="val" id="detStokView">—</div>
           <input type="text" id="detStokEdit" style="display:none;">
         </div>
@@ -1110,9 +1124,9 @@
         <div class="preview-row"><span>Waktu</span><span id="cfWaktu">—</span></div>
         <div class="preview-row"><span>PJ</span><span id="cfPJ">—</span></div>
         <div class="preview-row"><span>Customer</span><span id="cfCustomer">—</span></div>
-        <div class="preview-row"><span>Barang dan Jumlah</span><span id="cfBarang">—</span></div>
-        <div class="preview-row"><span>Barang Keluar</span><span id="cfKeluar">—</span></div>
-        <div class="preview-row"><span>Stok Barang</span><span id="cfStok">—</span></div>
+        <div class="preview-row"><span class="lbl-in">Barang dan Jumlah</span><span id="cfBarang">—</span></div>
+        <div class="preview-row"><span class="lbl-out">Barang Keluar</span><span id="cfKeluar">—</span></div>
+        <div class="preview-row"><span class="lbl-stay">Barang Ditinggal</span><span id="cfStok">—</span></div>
         <div class="preview-row"><span>Keterangan</span><span id="cfKet">—</span></div>
         <div class="preview-row"><span>Harga</span><span id="cfHarga">—</span></div>
         <div class="preview-row"><span>Metode Bayar</span><span id="cfMetode">—</span></div>
