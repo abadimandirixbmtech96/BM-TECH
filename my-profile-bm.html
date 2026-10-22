@@ -526,7 +526,7 @@
     <h1>Pengumuman</h1>
     <span style="width:44px"></span>
   </div>
-  <p class="hint">Tampil sebagai popup dengan tombol X di Dashboard, satu kali saat tiap akun pertama kali membuka Dashboard setelah terbit. Owner dan Admin mana pun boleh membuat.</p>
+  <p class="hint">Muncul sebagai jendela popup (seperti iklan) dengan tombol X, hanya di Dashboard. Tampil satu kali untuk tiap akun, yaitu saat pertama kali membuka Dashboard setelah diterbitkan. Pembuatnya juga akan melihatnya. Owner dan Admin mana pun boleh membuat.</p>
 
   <div class="sec" style="margin-top:6px" id="annFormTitle">Pengumuman baru</div>
   <div class="card">
@@ -626,7 +626,7 @@ function bmMain(REAL){
   };
 
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  var S = { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, extraLogs: [] };
+  var S = { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, annSeen: {}, extraLogs: [] };
 
   /* ---------- satu pintu untuk akun & role ---------- */
   function acct(id){ for (var i = 0; i < S.admins.length; i++) if (S.admins[i].id === id) return S.admins[i]; return null; }
@@ -708,7 +708,9 @@ function bmMain(REAL){
     var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id }; });
     var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 6).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid }; });
     var dv = {}; dv[em] = mine;
-    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.myLid = myLid; S.known = known;
+    var annSeen = {};
+    try { var cr = await c.rpc('announcement_seen_counts'); if (cr && !cr.error && Array.isArray(cr.data)) cr.data.forEach(function(x){ annSeen[String(x.announcement_id)] = x.seen; }); } catch (e) {}
+    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
     S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
     S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
   }
@@ -1017,12 +1019,10 @@ function bmMain(REAL){
       req.then(function(r){
         if (r.error) throw r.error;
         if (!r.data || !r.data.length) throw new Error('ditolak server, tidak ada izin');
-        if (status === 'aktif') return REAL.c.from('announcement_seen').upsert({ announcement_id: r.data[0].id, email: REAL.email }, { onConflict: 'announcement_id,email', ignoreDuplicates: true });
-      }).then(function(r){
-        if (r && r.error) throw r.error;
+      }).then(function(){
         var lg = status === 'aktif' ? addLog('sys', 'Menerbitkan pengumuman ' + (row.version ? 'v' + row.version + ' ' : '') + '"' + row.title + '"') : null;
         f = newForm(); renderForm();
-        toast(status === 'aktif' ? 'Diterbitkan. Muncul di Dashboard saat pertama dibuka.' : 'Draf disimpan');
+        toast(status === 'aktif' ? 'Diterbitkan. Muncul sebagai popup sekali di Dashboard, termasuk untuk Anda.' : 'Draf disimpan');
         return lg;
       }).catch(function(e){ toast('Gagal menyimpan: ' + T(String(e && e.message || e))); }).then(function(){ busy = false; return refresh(); });
       return;
@@ -1040,7 +1040,9 @@ function bmMain(REAL){
   function renderHist(){
     $('annHist').innerHTML = S.ann.length ? S.ann.map(function(a){
       var st = annStatus(a), k = kindOf(a.kind);
-      var sub = k.t + ' · ' + a.targets.map(esc).join(', ') + ' · oleh ' + uu(nameOfId(a.by)) + (a.expiry ? ' · sampai ' + fmtDate(a.expiry) : '');
+      var total = S.admins.filter(function(m){ return m.active && a.targets.indexOf(m.role === 'owner' ? 'Owner' : 'Admin') >= 0; }).length;
+      var seenTxt = st === 'Aktif' ? ' · dilihat ' + Math.min(S.annSeen[String(a.id)] || 0, total) + ' dari ' + total + ' akun' : '';
+      var sub = k.t + ' · ' + a.targets.map(esc).join(', ') + ' · oleh ' + uu(nameOfId(a.by)) + (a.expiry ? ' · sampai ' + fmtDate(a.expiry) : '') + seenTxt;
       var tg = st === 'Aktif' ? 'Nonaktifkan' : (st === 'Draf' ? 'Terbitkan' : 'Aktifkan');
       var acts = canManage(a) ? '<div class="ha"><button class="mini-btn" data-h="edit" data-id="' + esc(a.id) + '">Ubah</button><button class="mini-btn" data-h="toggle" data-id="' + esc(a.id) + '">' + tg + '</button><button class="mini-btn dg" data-h="del" data-id="' + esc(a.id) + '">Hapus</button></div>' : '';
       return '<div class="hist"><div class="hr"><b>' + uu(a.title) + (a.ver ? ' <span class="devtag">v' + esc(a.ver) + '</span>' : '') + '</b><span class="tag ' + (st === 'Aktif' ? 'y' : 'n') + '">' + st + '</span></div><small>' + sub + '</small>' + acts + '</div>';
