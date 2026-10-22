@@ -74,6 +74,23 @@
     } catch (e) { return 'Browser'; }
   }
 
+  function cleanVer(v) { v = String(v || ''); while (/\.0$/.test(v)) v = v.slice(0, -2); return v; }
+  function getDid() {
+    try {
+      var d = localStorage.getItem('bm-device-id');
+      if (d && d.length >= 16) return d;
+      d = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2));
+      localStorage.setItem('bm-device-id', d);
+      return d;
+    } catch (e) { return ''; }
+  }
+  /* Nama singkat dari data lengkap (versi OS sebenarnya, bukan "Android 10" palsu dari user-agent yang disingkat Chrome) */
+  function nameFromInfo(o) {
+    if (!o || !o.b) return '';
+    var n = o.b + (o.bv ? ' ' + major(o.bv) : '') + ' · ' + (o.os || 'Perangkat') + (o.osv ? ' ' + cleanVer(o.osv) : '');
+    if (o.md && o.os === 'Android') n += ' · ' + o.md;
+    return n.slice(0, 100);
+  }
   function wt(p, ms) { return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]); }
 
   /* Detail lengkap perangkat (dikirim ke login_log.info). Hanya informasi yang dibuka browser sendiri; IP dicatat server. */
@@ -100,6 +117,7 @@
       }
     } catch (e) {}
     try { if (navigator.brave && navigator.brave.isBrave && (await wt(navigator.brave.isBrave(), 600))) u.b = 'Brave'; } catch (e) {}
+    o.did = getDid(); o.last = new Date().toISOString();
     o.b = u.b; o.bv = u.bv; o.en = u.en; o.os = u.os; o.osv = u.osv; o.dt = u.dt; o.md = u.md;
     try { o.sc = screen.width + '×' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x'; } catch (e) {}
     try { o.vp = window.innerWidth + '×' + window.innerHeight; } catch (e) {}
@@ -108,18 +126,39 @@
     try { if (navigator.hardwareConcurrency) o.cpu = navigator.hardwareConcurrency; } catch (e) {}
     try { if (navigator.deviceMemory) o.mem = navigator.deviceMemory; } catch (e) {}
     try { o.tp = navigator.maxTouchPoints || 0; } catch (e) {}
-    try { var cn = navigator.connection; if (cn && cn.effectiveType) o.net = cn.effectiveType + (cn.saveData ? ' (hemat data)' : ''); } catch (e) {}
+    try { var cn = navigator.connection; if (cn && cn.effectiveType) o.net = cn.effectiveType + (cn.saveData ? ' (hemat data)' : ''); if (cn.type) o.nt = cn.type; if (cn.downlink) o.dl = cn.downlink; if (cn.rtt != null) o.rtt = cn.rtt; } catch (e) {}
     try { o.pwa = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true ? 'Aplikasi terpasang' : 'Browser'; } catch (e) {}
     try { o.th = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'Gelap' : 'Terang'; } catch (e) {}
+    o.osv = cleanVer(o.osv);
     o.ua = ua.slice(0, 320);
     Object.keys(o).forEach(function (k) { if (o[k] === '' || o[k] == null) delete o[k]; });
     return o;
   }
 
   /* ---------- pencatat login + detak ---------- */
+  /* Bila sesi perangkat ini sudah dicabut dari perangkat lain ("Keluar dari semua perangkat lain"), langsung keluar. */
+  var checking = false;
+  async function checkRevoked() {
+    if (checking || !beatClient) return;
+    checking = true;
+    try {
+      var r = await beatClient.auth.getUser();
+      var st = r && r.error ? r.error.status : 0;
+      if (st === 400 || st === 401 || st === 403) {
+        var c = beatClient;
+        stop();
+        try { await c.auth.signOut({ scope: 'local' }); } catch (e) {}
+        try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
+        try { (window.top || window).location.replace('admin-login.html'); } catch (e) { location.replace('admin-login.html'); }
+      }
+    } catch (e) { /* jaringan putus: abaikan */ }
+    checking = false;
+  }
+
   function beat() {
     var id = ssGet(K_ID);
     if (!beatClient || !id) return;
+    checkRevoked();
     try {
       Promise.resolve(beatClient.from('login_log').update({ last_seen: new Date().toISOString() }).eq('id', id))
         .then(function () {}, function () {});
@@ -133,7 +172,10 @@
       if (!id || who !== email) {
         var info = null;
         try { info = await wt(collectInfo(), 2500); } catch (e) { info = null; }
-        var r = await client.from('login_log').insert({ device: deviceName(), info: info }).select('id').single();
+        var name = nameFromInfo(info) || deviceName();
+        var r = null;
+        try { var t = await client.rpc('touch_login', { p_device: name, p_info: info }); if (t && !t.error && t.data) r = { data: { id: t.data } }; } catch (e) {}
+        if (!r) r = await client.from('login_log').insert({ device: name, info: info }).select('id').single();
         if (r && r.data && r.data.id) { ssSet(K_ID, String(r.data.id)); ssSet(K_WHO, email); }
       }
       beatClient = client;
