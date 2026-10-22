@@ -735,6 +735,15 @@ function bmMain(REAL){
   }
   /* ---------- mode login: baca & tulis ke Supabase ---------- */
   function fmtT(ts){ try { return new Date(ts).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ''); } catch (e) { return ''; } }
+  function cleanV(v){ v = String(v || ''); while (/\.0$/.test(v)) v = v.slice(0, -2); return v; }
+  /* Nama perangkat dibentuk dari data lengkap bila ada (versi OS sebenarnya), bukan dari teks lama yang bisa salah ("Android 10") */
+  function devLabel(l){
+    var i = l.info; if (!i || !i.b) return l.d;
+    var n = i.b + (i.bv ? ' ' + String(i.bv).split('.')[0] : '') + ' · ' + (i.os || 'Perangkat') + (i.osv ? ' ' + cleanV(i.osv) : '');
+    if (i.md && i.os === 'Android') n += ' · ' + i.md;
+    return n;
+  }
+  var NET_TYPE = { wifi: 'Wi-Fi', cellular: 'Seluler (data)', ethernet: 'Kabel (Ethernet)', bluetooth: 'Bluetooth', wimax: 'WiMAX', none: 'Tidak ada', other: 'Lainnya', unknown: 'Tidak diketahui' };
   async function reload(){
     var c = REAL.c, em = REAL.email;
     var q = await Promise.all([
@@ -742,7 +751,7 @@ function bmMain(REAL){
       c.from('role_permissions').select('*'),
       c.from('announcements').select('*').order('created_at', { ascending: false }),
       c.from('announcement_seen').select('announcement_id'),
-      c.from('login_log').select('*').order('logged_at', { ascending: false }).limit(60),
+      c.from('login_log').select('*').order('last_seen', { ascending: false }).limit(60),
       c.from('activity_log').select('*').order('created_at', { ascending: false }).limit(120)
     ]);
     for (var i = 0; i < q.length; i++) if (q[i].error) throw q[i].error;
@@ -759,7 +768,13 @@ function bmMain(REAL){
       return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: Array.isArray(r.targets) ? r.targets.map(String) : [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at) };
     });
     var myLid = ''; try { myLid = sessionStorage.getItem('bm-login-id') || ''; } catch (e) {}
-    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id, info: (r.info && typeof r.info === 'object') ? r.info : null, ip: r.ip || '', seen: fmtT(r.last_seen || r.logged_at) }; });
+    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id, info: (r.info && typeof r.info === 'object') ? r.info : null, ip: r.ip || '', seen: fmtT(r.last_seen || r.logged_at), seenTs: Date.parse(r.last_seen || r.logged_at) }; });
+    var kicked = 0; try { kicked = parseInt(localStorage.getItem('bm-kicked-at') || '0', 10) || 0; } catch (e) {}
+    logins.forEach(function(l){
+      if (l.info && l.info.last) { l.m = fmtT(l.info.last); l.ts = Date.parse(l.info.last) || l.ts; }
+      l.d = devLabel(l);
+      if (kicked && l.id !== myLid && l.a === em && l.seenTs <= kicked) { l.now = false; l.out = true; }
+    });
     var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 8).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid, l: l }; });
     var dv = {}; dv[em] = mine;
     var team = logins.filter(function(l){ return l.a !== em; }).slice(0, 8);
@@ -961,7 +976,8 @@ function bmMain(REAL){
     function add(k, v, cls){ if (v !== '' && v != null) rows.push('<div class="rw' + (cls ? ' ' + cls : '') + '"><b>' + k + '</b><span data-no-i18n>' + esc(v) + '</span></div>'); }
     add('Browser', i.b ? i.b + (i.bv ? ' ' + i.bv : '') : n);
     add('Mesin browser', i.en);
-    add('Sistem operasi', i.os ? i.os + (i.osv ? ' ' + i.osv : '') : '');
+    add('Sistem operasi', i.os);
+    add('Versi OS', i.osv ? cleanV(i.osv) : '');
     add('Jenis perangkat', i.dt);
     add('Model', i.md);
     add('Arsitektur', i.ar);
@@ -969,10 +985,12 @@ function bmMain(REAL){
     add('Prosesor', i.cpu ? i.cpu + ' inti' : '');
     add('Memori', i.mem ? '≥ ' + i.mem + ' GB' : '');
     add('Layar sentuh', i.tp == null ? '' : (i.tp > 0 ? i.tp + ' titik sentuh' : 'Tidak ada'));
-    add('Jaringan', i.net); add('Mode', i.pwa); add('Tema', i.th);
+    add('Jenis jaringan', i.nt ? (NET_TYPE[i.nt] || i.nt) : '');
+    add('Kecepatan jaringan', i.net ? i.net + (i.dl ? ' · ±' + i.dl + ' Mbps' : '') + (i.rtt != null ? ' · ping ' + i.rtt + ' ms' : '') : '');
+    add('Mode', i.pwa); add('Tema', i.th);
     add('Bahasa', i.lg); add('Zona waktu', i.tz);
     add('Alamat IP', l.ip);
-    add('Masuk', l.m); add('Terakhir aktif', l.seen);
+    add('Masuk terakhir', l.m); add('Terakhir aktif', l.seen);
     add('Merek browser', i.br);
     add('User-Agent', i.ua, 'ua');
     if (!l.info) add('Detail lengkap', 'Tidak tercatat (login lama sebelum fitur ini)');
@@ -981,7 +999,7 @@ function bmMain(REAL){
   var CHEV = '<svg class="i chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
   function devItem(d, who){
     var l = d.l; if (!l) return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
-    var sub = (who ? uu(who) + ' · ' : '') + (d.me ? 'Perangkat ini · ' : '') + (l.now ? '<span class="onl-dot"></span>Aktif sekarang' : 'masuk ' + esc(l.m));
+    var sub = (who ? uu(who) + ' · ' : '') + (d.me ? 'Perangkat ini · ' : '') + (l.now ? '<span class="onl-dot"></span>Aktif sekarang' : (l.out ? 'Sudah dikeluarkan' : 'masuk ' + esc(l.m)));
     return '<details class="dv"><summary><div class="dot sys">' + ICO.phone + '</div><div class="tx"><p>' + uu(l.d) + '</p><small>' + sub + '</small></div>' + CHEV + '</summary><div class="rows">' + devRows(l, l.d) + '</div></details>';
   }
   function renderSec(){
@@ -1109,7 +1127,11 @@ function bmMain(REAL){
   });
   $('btnAll').addEventListener('click', function(){
     confirmBox('Keluar dari semua perangkat lain?', 'Hanya perangkat ini yang tetap masuk.', function(){
-      REAL.c.auth.signOut({ scope: 'others' }).then(function(r){ toast(r && r.error ? 'Gagal: ' + r.error.message : 'Perangkat lain dikeluarkan'); });
+      REAL.c.auth.signOut({ scope: 'others' }).then(function(r){
+        if (r && r.error) return toast('Gagal: ' + r.error.message);
+        try { localStorage.setItem('bm-kicked-at', String(Date.now())); } catch (e) {}
+        toast('Perangkat lain dikeluarkan'); return refresh();
+      });
     });
   });
   $('btnLogout').addEventListener('click', function(){
