@@ -2483,7 +2483,13 @@
   document.getElementById('btnBukaKonfirmasi').addEventListener('click', () => {
     const pj = document.getElementById('inputPJ').value.trim();
     const customer = document.getElementById('inputCustomer').value.trim();
-    const barang = expandJumlahBarang(document.getElementById('inputBarang').value).trim();
+    let barang = expandJumlahBarang(document.getElementById('inputBarang').value).trim();
+    if (pickupApplied.length) { // form pengambilan: nama barang yang diambil sudah tercatat di tanggal titipannya
+      const known = new Set();
+      pickupApplied.forEach(g => g.c.items.forEach(i => known.add(i.key.replace(/#\d+$/, ''))));
+      const cleaned = splitList(barang).filter(t => isDateToken(t) || !known.has(itemKey(t))).join(', ');
+      if (cleaned) barang = cleaned;
+    }
     document.getElementById('inputBarang').value = barang;
     const barangKeluar = normalizeBJ(document.getElementById('inputBarangKeluar').value.trim());
     const stokBarang = normalizeBJ(document.getElementById('inputStokBarang').value.trim());
@@ -2919,7 +2925,7 @@
     return notes;
   }
 
-  // ---------- cari barang yang masih ditinggal untuk Customer (PJ hanya untuk urutan & penanda) ----------
+  // ---------- cari barang yang masih ditinggal untuk PJ + Customer (keduanya harus sama) ----------
   // Barang bawaan pada baris pengambilan lama (dibuat sebelum ada `stokCarry`): tebak dari data titipan asalnya
   function resolveCarry(r, idx){
     if (Array.isArray(r.stokCarry)) return r.stokCarry;
@@ -2947,7 +2953,7 @@
 
   async function findPickupCandidates(pj, customer){
     const npj = pjKey(pj), ncu = normText(customer);
-    if (!ncu) return [];
+    if (!npj || !ncu) return [];
     const sources = [{ noteId: 'self', recs: records }];
     const notes = await fetchFolderNotesLight(false);
     notes.forEach(n => { if (n.id !== currentNoteId) sources.push({ noteId: n.id, recs: n.records }); });
@@ -2958,7 +2964,7 @@
     sources.forEach(src => {
       (src.recs || []).forEach(r => {
         if (!r || !r.id) return;
-        if (normText(r.customer) !== ncu) return;
+        if (pjKey(r.pj) !== npj || normText(r.customer) !== ncu) return;
         // Baris pengambilan/pembayaran juga bisa menitipkan barang BARU di Stok Barang-nya
         // (mis. ambil blok kph + titip blok CRF di hari yang sama). Hanya barang barunya yang dihitung.
         const isPickupRow = !!(r.ambilDari && r.ambilDari.length);
@@ -2983,8 +2989,6 @@
         out.push({
           noteId: src.noteId, recordId: r.id, out: !!parsedR.out,
           created_at: r.created_at,
-          pj: r.pj || '',
-          diffPJ: !!npj && pjKey(r.pj) !== npj,
           carry: isPickupRow ? (rr.stokCarry || []).slice() : [],
           bukti: Array.isArray(r.bukti) ? r.bukti.filter(Boolean) : [],
           tgl: fmtTitik(r.created_at),
@@ -2994,7 +2998,7 @@
         });
       });
     });
-    out.sort((a, b) => (Number(a.diffPJ) - Number(b.diffPJ)) || (new Date(a.created_at) - new Date(b.created_at)));
+    out.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
     return out;
   }
 
@@ -3008,7 +3012,7 @@
     pickupCandidates = found;
     if (oldKeys !== newKeys) {
       pickupChecked = new Set();
-      if (found.length === 1 && !found[0].diffPJ) found[0].items.forEach(it => pickupChecked.add(itemCk(found[0], it)));
+      if (found.length === 1) found[0].items.forEach(it => pickupChecked.add(itemCk(found[0], it)));
       const still = new Set(found.map(c => c.noteId + '|' + c.recordId));
       pickupApplied = pickupApplied.filter(g => still.has(g.c.noteId + '|' + g.c.recordId));
       if (!pickupApplied.length) gid('pickupDone').textContent = '';
@@ -3037,7 +3041,7 @@
     gid('pickupList').innerHTML = pickupCandidates.map((c, ci) => `
       <div class="pickup-rec">
         <div class="pickup-rec-head">
-          <span>${c.out ? 'Dibawa, belum bayar' : 'Dititip'} ${escapeHtml(fmtHariLengkap(c.created_at))}${c.diffPJ ? ' \u00B7 PJ ' + escapeHtml(c.pj) : ''}</span>
+          <span>${c.out ? 'Dibawa, belum bayar' : 'Dititip'} ${escapeHtml(fmtHariLengkap(c.created_at))}</span>
           <span class="pk-right">
             ${c.bukti && c.bukti.length ? `<button type="button" class="pk-bukti" data-c="${ci}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="1.8"/><path d="m21 16-5-5-8 8"/></svg>Bukti${c.bukti.length > 1 ? ' (' + c.bukti.length + ')' : ''}</button>` : ''}
             <span class="pk-badge ${c.paid ? 'paid' : (c.somePaid ? 'part' : '')}">${c.paid ? 'Sudah dibayar \u2713' : (c.somePaid ? 'Sebagian dibayar' : 'Belum dibayar')}</span>
@@ -3137,13 +3141,15 @@
     const nBarang = chosenNames.length;
 
     // Barang dan Jumlah = HANYA tanggal barang masuk; nama barang masuk ke Keterangan
-    const dt = datesText(groups);
-    const restBarang = gid('inputBarang').value.trim().replace(/^(?:\s*\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\s*[,;]?)+\s*/, '').trim();
-    gid('inputBarang').value = restBarang ? dt + ', ' + restBarang : dt; // barang baru yang sudah diketik tetap dipertahankan
-
-    // Barang BARU yang sudah diketik di Stok Barang (bukan sisa titipan lama) dipertahankan
+    // Nama barang yang sudah tercatat sebagai titipan (mis. blok CRF) BUKAN barang baru:
+    // tidak ditulis lagi di Barang dan Jumlah / Stok Barang, cukup tanggal titipannya.
     const candKeys = new Set();
     pickupCandidates.forEach(c => c.items.forEach(i => candKeys.add(i.key.replace(/#\d+$/, ''))));
+    const dt = datesText(groups);
+    const restBarang = splitList(gid('inputBarang').value.trim().replace(/^(?:\s*\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\s*[,;]?)+\s*/, ''))
+      .filter(t => !isDateToken(t) && !candKeys.has(itemKey(t))).join(', ');
+    gid('inputBarang').value = restBarang ? dt + ', ' + restBarang : dt; // hanya barang BARU yang tetap dipertahankan
+
     const extras = splitList(gid('inputStokBarang').value).map(stripCentang)
       .filter(t => t && !isTidakAdaText(t) && !isBJWhole(t) && !candKeys.has(itemKey(t)));
 
@@ -3178,7 +3184,7 @@
     const seq = ++pickupLookupSeq;
     const pj = gid('inputPJ').value.trim();
     const cu = gid('inputCustomer').value.trim();
-    if (!cu) { setPickupCandidates([]); return; }
+    if (!pj || !cu) { setPickupCandidates([]); return; }
     let found = [];
     try { found = await findPickupCandidates(pj, cu); } catch (e) { console.warn('[pickup] pencarian gagal:', e); }
     if (seq !== pickupLookupSeq) return; // ada pencarian yang lebih baru
