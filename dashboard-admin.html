@@ -3138,7 +3138,7 @@
           sessionStorage.setItem('bm-pending-link', JSON.stringify({ s: window.location.search, t: Date.now() }));
         }
       } catch (e) {}
-      window.location.href = 'admin-login.html';
+      (window.top || window).location.href = 'admin-login.html';
       return;
     }
 
@@ -3163,7 +3163,7 @@
     if (!isAdmin) {
       try { localStorage.removeItem(OK_KEY); } catch (e) {}
       await supabaseClient.auth.signOut();
-      window.location.href = 'admin-login.html';
+      (window.top || window).location.href = 'admin-login.html';
       return;
     }
 
@@ -7547,7 +7547,23 @@
     });
   })();
 
-  document.getElementById('btnProfile').addEventListener('click', () => { window.location.href = 'my-profile-bm.html'; });
+  // Beralih ke Profil. Bila Dashboard sedang berjalan di dalam Profil (tanpa reload), minta Profil menampilkan dirinya;
+  // bila dibuka sendiri (mis. tautan langsung), pindah halaman seperti biasa.
+  document.getElementById('btnProfile').addEventListener('click', () => {
+    if (window.parent !== window) {
+      try {
+        document.getElementById('drawer').classList.remove('open'); document.getElementById('drawerOverlay').classList.remove('open');
+        window.parent.postMessage({ type: 'bm-nav', to: 'profile' }, window.location.origin);
+        return;
+      } catch (e) {}
+    }
+    window.location.href = 'my-profile-bm.html';
+  });
+  // Profil memberi tahu bahwa Dashboard kembali terlihat: segarkan daftar tanpa reload halaman.
+  window.addEventListener('message', (e) => {
+    if (e.source !== window.parent || e.origin !== window.location.origin) return;
+    if (e.data && e.data.type === 'bm-visible') { try { loadCategories(); } catch (err) {} }
+  });
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
   document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
   document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
