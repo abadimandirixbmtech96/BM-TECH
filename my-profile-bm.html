@@ -51,6 +51,37 @@
   .badge.owner { background: color-mix(in srgb, var(--accent-yellow) 18%, transparent); color: var(--accent-yellow); }
   .badge svg.i { width: 12px; height: 12px; stroke-width: 2.4; }
 
+  /* ---------- profil kustom + detail perangkat ---------- */
+  .avatar.photo { background-size: cover; background-position: center; }
+  button.avatar { padding: 0; }
+  .hero .bio { margin: 0 0 8px; font-size: 13.5px; color: var(--text); opacity: .85; word-break: break-word; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swc { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; box-shadow: inset 0 0 0 2px var(--card); display: grid; place-items: center; font-size: 15px; color: #fff; }
+  .swc.on { border-color: var(--text); }
+  .swc.def { background: var(--soft); color: var(--muted); }
+  .cnt-l { text-align: right; font-size: 11px; color: var(--muted); margin: -8px 4px 12px; }
+  details.dv { border-bottom: 1px solid var(--line); }
+  details.dv:last-child { border-bottom: 0; }
+  details.dv > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 12px 0; cursor: pointer; }
+  details.dv > summary::-webkit-details-marker { display: none; }
+  details.dv .dot { width: 40px; height: 40px; }
+  details.dv .tx { min-width: 0; flex: 1; }
+  details.dv .tx p { margin: 0 0 2px; font-size: 14.5px; font-weight: 700; word-break: break-word; }
+  details.dv .tx small { color: var(--muted); font-size: 12px; }
+  details.dv .chev { width: 18px; height: 18px; color: var(--muted); transition: transform .2s; flex: none; }
+  details.dv[open] .chev { transform: rotate(180deg); }
+  details.dv .rows { padding: 0 0 12px 52px; display: grid; gap: 7px; }
+  details.dv .rw { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.4; }
+  details.dv .rw b { flex: 0 0 104px; font-weight: 600; color: var(--muted); }
+  details.dv .rw span { flex: 1; min-width: 0; word-break: break-word; }
+  details.dv .rw.ua span { font-family: ui-monospace, Menlo, monospace; font-size: 11px; opacity: .8; word-break: break-all; }
+  .onl-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 5px; }
+
+  /* ---------- Dashboard tertanam: beralih tanpa memuat ulang halaman ---------- */
+  #dashHub { position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%; border: 0; background: var(--bg); transform: translateX(100%); visibility: hidden; pointer-events: none; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s; }
+  #dashHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
+  @media (prefers-reduced-motion: reduce) { #dashHub, #dashHub.on { transition: none; } }
+
   /* ---------- dock: navigasi liquid glass di paling bawah ---------- */
   .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 28px 16px calc(env(safe-area-inset-bottom, 0px) + 12px); pointer-events: none; background: linear-gradient(to top, var(--bg) 40%, transparent); }
   .dock-in { max-width: 448px; margin: 0 auto; pointer-events: auto; }
@@ -439,7 +470,6 @@
 
 <div class="app">
   <div class="head">
-    <button class="round" id="btnBack" aria-label="Buka Dashboard"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></button>
     <h1>Profil Saya</h1>
     <button class="badge" id="roleBadge" aria-label="Role">Owner</button>
   </div>
@@ -451,6 +481,7 @@
       <div>
         <h2 id="hName" data-no-i18n>Owner</h2>
         <p id="hMail" data-no-i18n>owner@contoh.com</p>
+        <p class="bio" id="hBio" data-no-i18n hidden></p>
         <span class="badge" id="hBadge">Owner</span>
       </div>
     </div>
@@ -468,12 +499,17 @@
   <!-- AKUN -->
   <section class="panel" id="p-akun">
     <div class="card" style="text-align:center">
-      <div class="avatar" id="avAkun" style="margin:0 auto 10px;width:84px;height:84px;font-size:30px"><span id="avAkunTxt">OW</span><span class="cam"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></div>
+      <button class="avatar" id="avAkun" type="button" aria-label="Ganti foto profil" style="margin:0 auto 10px;width:96px;height:96px;font-size:34px"><span id="avAkunTxt">OW</span><span class="cam"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
+      <input type="file" id="avFile" accept="image/*" hidden>
       <span class="badge" id="aBadge">Owner</span>
+      <div style="margin-top:10px"><button class="mini-btn dg" id="avDel" type="button" hidden>Hapus foto</button></div>
     </div>
     <div class="sec" style="margin-top:6px">Data diri</div>
     <div class="card">
       <div class="field"><label>Nama tampilan</label><input id="inName" maxlength="40" autocomplete="off"></div>
+      <div class="field"><label>Bio singkat</label><input id="inBio" maxlength="120" autocomplete="off" placeholder="Contoh: Kasir &amp; admin bengkel"></div>
+      <div class="cnt-l"><span id="bioCnt">0</span>/120</div>
+      <div class="field"><label>Warna profil</label><div class="swatches" id="swatches"></div></div>
       <div class="field"><label>Email login (tidak bisa diubah)</label><input id="inMail" readonly></div>
       <button class="btn" id="btnSave">Simpan perubahan</button>
     </div>
@@ -503,7 +539,11 @@
   <!-- KEAMANAN -->
   <section class="panel" id="p-keamanan">
     <div class="sec" style="margin-top:6px">Perangkat yang sedang masuk</div>
-    <div class="card" id="devList" style="padding:6px 18px"></div>
+    <div class="card" id="devList" style="padding:2px 18px"></div>
+    <div id="teamDevWrap" hidden>
+      <div class="sec">Login anggota tim</div>
+      <div class="card" id="teamDevList" style="padding:2px 18px"></div>
+    </div>
     <button class="btn" id="btnLogout" style="margin-bottom:10px">Keluar dari akun ini</button>
     <button class="btn danger" id="btnAll" style="margin-bottom:10px">Keluar dari semua perangkat lain</button>
   </section>
@@ -643,6 +683,20 @@ function bmMain(REAL){
   function nameOfId(id){ var a = acct(id); return a ? a.name : 'Admin'; }
   function allLogs(){ return S.extraLogs; }
   function permCount(a){ return FEATURES.filter(function(f){ return S.perms[a.role][f.k]; }).length; }
+  /* ---------- foto & warna profil ---------- */
+  function ink(hex){ var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) > 160 ? '#1C1B19' : '#fff'; }
+  function paint(el, txt, name, avatar, accent){
+    if (avatar) { el.classList.add('photo'); el.style.backgroundImage = 'url("' + avatar + '")'; el.style.backgroundColor = ''; txt.textContent = ''; }
+    else {
+      el.classList.remove('photo'); el.style.backgroundImage = accent ? 'linear-gradient(145deg, color-mix(in srgb, ' + accent + ' 70%, #fff), ' + accent + ')' : '';
+      el.style.color = accent ? ink(accent) : ''; txt.textContent = initials(name);
+    }
+  }
+  function miniHtml(m){
+    if (m.avatar) return '<div class="mini" style="background:url(&quot;' + m.avatar + '&quot;) center/cover"></div>';
+    var st = m.accent ? ' style="background:' + m.accent + ';color:' + ink(m.accent) + '"' : '';
+    return '<div class="mini"' + st + '>' + esc(initials(m.name)) + '</div>';
+  }
   function devicesOf(id){ return S.devices[id] || []; }
   function isOnline(id){ return S.logins.some(function(l){ return l.a === id && l.now; }); }
 
@@ -692,7 +746,7 @@ function bmMain(REAL){
       c.from('activity_log').select('*').order('created_at', { ascending: false }).limit(120)
     ]);
     for (var i = 0; i < q.length; i++) if (q[i].error) throw q[i].error;
-    var admins = q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: hasOwn(ROLE_LABEL, r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false }; });
+    var admins = q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: hasOwn(ROLE_LABEL, r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false, bio: r.bio || '', accent: /^#[0-9a-fA-F]{6}$/.test(r.accent || '') ? r.accent : '', avatar: /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(r.avatar || '') ? r.avatar : '' }; });
     var known = admins.some(function(a){ return a.id === em; });
     if (!known) admins.push({ id: em, mail: em, name: em.split('@')[0], role: 'admin2', dev: false, active: true });
     var perms = clone(DEFAULTS);
@@ -705,19 +759,56 @@ function bmMain(REAL){
       return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: Array.isArray(r.targets) ? r.targets.map(String) : [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at) };
     });
     var myLid = ''; try { myLid = sessionStorage.getItem('bm-login-id') || ''; } catch (e) {}
-    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id }; });
-    var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 6).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid }; });
+    var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id, info: (r.info && typeof r.info === 'object') ? r.info : null, ip: r.ip || '', seen: fmtT(r.last_seen || r.logged_at) }; });
+    var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 8).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid, l: l }; });
     var dv = {}; dv[em] = mine;
+    var team = logins.filter(function(l){ return l.a !== em; }).slice(0, 8);
     var annSeen = {};
     try { var cr = await c.rpc('announcement_seen_counts'); if (cr && !cr.error && Array.isArray(cr.data)) cr.data.forEach(function(x){ annSeen[String(x.announcement_id)] = x.seen; }); } catch (e) {}
-    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
+    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.teamLogins = team; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
     S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
     S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
   }
   var loaded = false, busy = false;
   function bootShow(msg, err){ $('boot').hidden = false; $('bootBox').classList.toggle('err', !!err); $('bootMsg').textContent = msg; $('bootBtns').hidden = !err; }
   /* Profil adalah halaman utama setelah login. Dashboard dibuka dari sini; Dashboard punya tombol "Profile" untuk kembali. */
-  function goDash(){ if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} } location.href = 'dashboard-admin.html'; }
+  /* Dashboard dimuat sekali sebagai lapisan di atas Profil (iframe satu origin). Beralih = menggeser lapisan, tanpa reload.
+     Dashboard memakai sesi login yang sama; tombol "Profile" di Dashboard mengirim pesan 'bm-nav' ke sini. */
+  var hub = null, hubOn = false, hubPushed = false;
+  function ensureHub(){
+    if (hub) return hub;
+    hub = document.createElement('iframe');
+    hub.id = 'dashHub'; hub.name = 'bm-dash-hub'; hub.title = 'Dashboard';
+    hub.setAttribute('aria-hidden', 'true');
+    hub.src = 'dashboard-admin.html';
+    document.body.appendChild(hub);
+    return hub;
+  }
+  function showHub(on){
+    if (on === hubOn) return;
+    hubOn = on;
+    var f = ensureHub();
+    f.classList.toggle('on', on);
+    f.setAttribute('aria-hidden', on ? 'false' : 'true');
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+    if (on) { try { f.contentWindow.postMessage({ type: 'bm-visible' }, location.origin); } catch (e) {} try { f.contentWindow.focus(); } catch (e) {} }
+    else { refresh(); window.scrollTo(0, 0); }
+  }
+  function goDash(){
+    if (window.parent !== window) { try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
+    if (!hubPushed) { try { history.pushState({ bmHub: 1 }, ''); hubPushed = true; } catch (e) {} }
+    showHub(true);
+  }
+  window.addEventListener('popstate', function(){ hubPushed = !!(history.state && history.state.bmHub); if (hubOn && !hubPushed) showHub(false); });
+  window.addEventListener('message', function(e){
+    if (!hub || e.source !== hub.contentWindow || e.origin !== location.origin) return;
+    if (e.data && e.data.type === 'bm-nav' && e.data.to === 'profile') showHub(false);
+  });
+  /* muat Dashboard di belakang layar setelah Profil tampil, supaya saat dibuka langsung siap */
+  (function(){
+    var go = function(){ try { if (navigator.connection && navigator.connection.saveData) return; } catch (e) {} ensureHub(); };
+    if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 1500);
+  })();
   function toLogin(){
     try { if (window.BMSession) BMSession.stop(); } catch (e) {}
     try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
@@ -768,7 +859,8 @@ function bmMain(REAL){
     var r = a.role;
     $('hName').textContent = a.name; $('hMail').textContent = a.mail; $('hBadge').textContent = roleLabel(a);
     $('hBadge').className = 'badge' + (r === 'owner' || a.dev ? ' owner' : '');
-    $('avHome').textContent = initials(a.name);
+    paint($('avHome'), $('avHome'), a.name, a.avatar, a.accent);
+    $('hBio').textContent = a.bio; $('hBio').hidden = !a.bio;
     var t0 = new Date(); t0.setHours(0, 0, 0, 0);
     $('stAksi').textContent = allLogs().filter(function(l){ return l.a === a.id && l.ts >= t0.getTime(); }).length;
     var prevLogin = S.logins.filter(function(l){ return l.a === a.id && l.id !== S.myLid; })[0];
@@ -786,15 +878,29 @@ function bmMain(REAL){
       $('teamWrap').innerHTML = '<div class="sec">Tim</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var last = allLogs().filter(function(l){ return l.a === m.id; })[0];
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<div class="team' + (m.active ? '' : ' off') + '"><div class="mini">' + esc(initials(m.name)) + '</div><div><p>' + uu(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
+        return '<div class="team' + (m.active ? '' : ' off') + '">' + miniHtml(m) + '<div><p>' + uu(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
       }).join('') + '</div>';
     } else $('teamWrap').innerHTML = '';
   }
+  var SWATCHES = ['#F0A529', '#EF4444', '#EC4899', '#8B5CF6', '#3B82F6', '#06B6D4', '#22C55E', '#64748B'];
+  var draft = { avatar: '', accent: '', newAv: false, clear: false }, dirty = false;
+  function paintDraft(){
+    var a = me(); if (!a) return;
+    paint($('avAkun'), $('avAkunTxt'), $('inName').value.trim() || a.name, draft.avatar, draft.accent);
+    $('avDel').hidden = !draft.avatar;
+    $('swatches').innerHTML = '<button type="button" class="swc def' + (!draft.accent ? ' on' : '') + '" data-c="" aria-label="Warna bawaan">⟲</button>' + SWATCHES.map(function(c){
+      return '<button type="button" class="swc' + (draft.accent.toLowerCase() === c.toLowerCase() ? ' on' : '') + '" data-c="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>';
+    }).join('');
+  }
   function renderAkun(){
     var a = me(); if (!a) return;
-    $('inName').value = a.name; $('inMail').value = a.mail;
+    $('inMail').value = a.mail;
     $('aBadge').textContent = roleLabel(a); $('aBadge').className = 'badge' + (a.role === 'owner' || a.dev ? ' owner' : '');
-    $('avAkunTxt').textContent = initials(a.name);
+    if (!dirty) {   /* jangan menimpa ketikan yang belum disimpan */
+      $('inName').value = a.name; $('inBio').value = a.bio; $('bioCnt').textContent = a.bio.length;
+      draft = { avatar: a.avatar, accent: a.accent, newAv: false, clear: false };
+    }
+    paintDraft();
   }
   var logFilter = 'saya';
   function renderLog(){
@@ -839,7 +945,7 @@ function bmMain(REAL){
       $('aksesCard').innerHTML = h + '</div>';
       $('admCard').innerHTML = '<div class="sec">Akun admin</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left"><div class="mini">' + esc(initials(m.name)) + '</div><div style="min-width:0"><p>' + uu(m.name) + tag + '</p><small style="word-break:break-all">' + uu(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(roleLabel(m)) : 'Nonaktif') + '</span></button>';
+        return '<button class="team' + (m.active ? '' : ' off') + '" data-id="' + esc(m.id) + '" style="width:100%;text-align:left">' + miniHtml(m) + '<div style="min-width:0"><p>' + uu(m.name) + tag + '</p><small style="word-break:break-all">' + uu(m.mail) + '</small></div><span class="tag ' + (m.active ? 'y' : 'n') + '" style="margin-left:auto">' + (m.active ? esc(roleLabel(m)) : 'Nonaktif') + '</span></button>';
       }).join('') + '</div><button class="btn ghost" id="admAdd">Tambah admin</button>' +
       '<p class="hint" style="margin-top:12px">Ketuk akun untuk mengubah role, akses Developer, atau menonaktifkannya. Peran Owner bisa diserahkan ke akun lain lewat tombol "Jadikan Owner". Selalu ada minimal satu Owner aktif.</p>';
     } else {
@@ -850,12 +956,41 @@ function bmMain(REAL){
       $('admCard').innerHTML = '';
     }
   }
+  function devRows(l, n){
+    var i = l.info || {}, rows = [];
+    function add(k, v, cls){ if (v !== '' && v != null) rows.push('<div class="rw' + (cls ? ' ' + cls : '') + '"><b>' + k + '</b><span data-no-i18n>' + esc(v) + '</span></div>'); }
+    add('Browser', i.b ? i.b + (i.bv ? ' ' + i.bv : '') : n);
+    add('Mesin browser', i.en);
+    add('Sistem operasi', i.os ? i.os + (i.osv ? ' ' + i.osv : '') : '');
+    add('Jenis perangkat', i.dt);
+    add('Model', i.md);
+    add('Arsitektur', i.ar);
+    add('Layar', i.sc); add('Jendela', i.vp);
+    add('Prosesor', i.cpu ? i.cpu + ' inti' : '');
+    add('Memori', i.mem ? '≥ ' + i.mem + ' GB' : '');
+    add('Layar sentuh', i.tp == null ? '' : (i.tp > 0 ? i.tp + ' titik sentuh' : 'Tidak ada'));
+    add('Jaringan', i.net); add('Mode', i.pwa); add('Tema', i.th);
+    add('Bahasa', i.lg); add('Zona waktu', i.tz);
+    add('Alamat IP', l.ip);
+    add('Masuk', l.m); add('Terakhir aktif', l.seen);
+    add('Merek browser', i.br);
+    add('User-Agent', i.ua, 'ua');
+    if (!l.info) add('Detail lengkap', 'Tidak tercatat (login lama sebelum fitur ini)');
+    return rows.join('');
+  }
+  var CHEV = '<svg class="i chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+  function devItem(d, who){
+    var l = d.l; if (!l) return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
+    var sub = (who ? uu(who) + ' · ' : '') + (d.me ? 'Perangkat ini · ' : '') + (l.now ? '<span class="onl-dot"></span>Aktif sekarang' : 'masuk ' + esc(l.m));
+    return '<details class="dv"><summary><div class="dot sys">' + ICO.phone + '</div><div class="tx"><p>' + uu(l.d) + '</p><small>' + sub + '</small></div>' + CHEV + '</summary><div class="rows">' + devRows(l, l.d) + '</div></details>';
+  }
   function renderSec(){
     var a = me(); if (!a) return;
     var list = devicesOf(a.id);
-    $('devList').innerHTML = list.length ? list.map(function(d){
-      return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
-    }).join('') : '<div class="empty">Belum ada perangkat tercatat.</div>';
+    $('devList').innerHTML = list.length ? list.map(function(d){ return devItem(d, ''); }).join('') : '<div class="empty">Belum ada perangkat tercatat.</div>';
+    var tl = getRole() === 'owner' ? (S.teamLogins || []) : [];
+    $('teamDevWrap').hidden = !tl.length;
+    $('teamDevList').innerHTML = tl.map(function(l){ return devItem({ l: l, n: l.d, s: '', me: false }, nameOfId(l.a)); }).join('');
     $('btnAll').style.display = 'block';
   }
   function renderBadge(){
@@ -886,10 +1021,50 @@ function bmMain(REAL){
     if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
     if (k === 'ann') { renderForm(); renderHist(); return openPage('pgAnn'); }
   });
+  $('inName').addEventListener('input', function(){ dirty = true; paintDraft(); });
+  $('inBio').addEventListener('input', function(){ dirty = true; $('bioCnt').textContent = $('inBio').value.length; });
+  $('swatches').addEventListener('click', function(e){
+    var b = e.target.closest('.swc'); if (!b) return;
+    draft.accent = b.getAttribute('data-c') || ''; dirty = true; paintDraft();
+  });
+  $('avAkun').addEventListener('click', function(){ $('avFile').click(); });
+  $('avDel').addEventListener('click', function(){ draft.avatar = ''; draft.newAv = false; draft.clear = true; dirty = true; paintDraft(); });
+  /* foto: dipotong persegi & dikecilkan di perangkat (maks ±55 KB), tidak ada berkas asli yang diunggah */
+  function shrink(file){
+    return new Promise(function(res, rej){
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function(){
+        try {
+          var out = '';
+          [[192, .86], [192, .7], [160, .66], [128, .6], [96, .55]].some(function(t){
+            var cv = document.createElement('canvas'); cv.width = cv.height = t[0];
+            var side = Math.min(img.width, img.height), sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+            cv.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, t[0], t[0]);
+            out = cv.toDataURL('image/jpeg', t[1]); return out.length <= 55000;
+          });
+          URL.revokeObjectURL(url);
+          if (out.length > 55000) rej(new Error('foto terlalu besar')); else res(out);
+        } catch (e) { rej(e); }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error('berkas bukan gambar')); };
+      img.src = url;
+    });
+  }
+  $('avFile').addEventListener('change', function(){
+    var f = this.files && this.files[0]; this.value = '';
+    if (!f) return;
+    if (!/^image\//.test(f.type)) return toast('Pilih berkas gambar');
+    shrink(f).then(function(d){ draft.avatar = d; draft.newAv = true; draft.clear = false; dirty = true; paintDraft(); })
+      .catch(function(e){ toast('Foto gagal dipakai: ' + T(String(e && e.message || e))); });
+  });
   $('btnSave').addEventListener('click', function(){
     var n = $('inName').value.trim(), a = me(); if (!a) return;
     if (!n) return toast('Nama tidak boleh kosong');
-    return srv(function(){ return REAL.c.rpc('set_my_name', { p_name: n }); }, 'Profil disimpan');
+    var bio = $('inBio').value.trim(), d = draft;
+    return srv(function(){
+      return REAL.c.rpc('set_my_profile', { p_name: n, p_bio: bio, p_accent: d.accent || '', p_avatar: d.newAv ? d.avatar : '', p_clear_avatar: !!d.clear && !d.newAv })
+        .then(function(r){ if (!r.error) dirty = false; return r; });
+    }, 'Profil disimpan');
   });
   $('btnPw').addEventListener('click', function(){
     var a = $('pw0').value, b = $('pw1').value, c = $('pw2').value;
@@ -937,7 +1112,6 @@ function bmMain(REAL){
       REAL.c.auth.signOut({ scope: 'others' }).then(function(r){ toast(r && r.error ? 'Gagal: ' + r.error.message : 'Perangkat lain dikeluarkan'); });
     });
   });
-  $('btnBack').addEventListener('click', goDash);
   $('btnLogout').addEventListener('click', function(){
     confirmBox('Keluar dari akun ini?', 'Anda perlu login lagi untuk membuka Profil dan Dashboard.', toLogin);
   });
