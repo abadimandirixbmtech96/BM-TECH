@@ -9,7 +9,7 @@
  *
  * Aturan aman:
  *  - Semua kegagalan jaringan/izin ditelan diam-diam: modul ini tidak boleh mengganggu halaman.
- *  - Tidak berjalan di dalam iframe (editor / panel), hanya di jendela utama.
+ *  - Tidak berjalan di dalam iframe (editor / panel), hanya di jendela utama dan di Dashboard yang tertanam di Profil (name=bm-dash-hub; tanpa pencatatan login ganda).
  *  - Tidak memakai kunci service_role. Semua akses lewat sesi admin + RLS di server.
  */
 (function () {
@@ -29,21 +29,91 @@
   function isTop() { return window.parent === window; }
   function lower(s) { return String(s || '').trim().toLowerCase(); }
 
-  /* Nama perangkat singkat untuk log: "Chrome · Android" */
+  /* ---------- identifikasi perangkat ---------- */
+  function m1(ua, re) { var m = ua.match(re); return m ? m[1] : ''; }
+  function dotted(v) { return String(v || '').replace(/_/g, '.'); }
+  function major(v) { return String(v || '').split('.')[0]; }
+
+  function parseUA(ua) {
+    var r = { b: 'Browser', bv: '', en: '', os: 'Perangkat', osv: '', dt: 'Komputer', md: '' };
+    /* browser (urutan penting: Edge/Opera/Samsung membawa kata "Chrome" juga) */
+    if (/Edg(e|A|iOS)?\//.test(ua)) { r.b = 'Edge'; r.bv = m1(ua, /Edg(?:e|A|iOS)?\/([\d.]+)/); }
+    else if (/OPR\/|OPT\//.test(ua)) { r.b = 'Opera'; r.bv = m1(ua, /OP[RT]\/([\d.]+)/); }
+    else if (/SamsungBrowser\//.test(ua)) { r.b = 'Samsung Internet'; r.bv = m1(ua, /SamsungBrowser\/([\d.]+)/); }
+    else if (/Firefox\/|FxiOS\//.test(ua)) { r.b = 'Firefox'; r.bv = m1(ua, /(?:Firefox|FxiOS)\/([\d.]+)/); }
+    else if (/CriOS\//.test(ua)) { r.b = 'Chrome'; r.bv = m1(ua, /CriOS\/([\d.]+)/); }
+    else if (/Chrome\//.test(ua)) { r.b = 'Chrome'; r.bv = m1(ua, /Chrome\/([\d.]+)/); }
+    else if (/Safari\//.test(ua)) { r.b = 'Safari'; r.bv = m1(ua, /Version\/([\d.]+)/); }
+    /* mesin render */
+    r.en = /Firefox\/|FxiOS\//.test(ua) && !/iPhone|iPad/.test(ua) ? 'Gecko'
+      : /iPhone|iPad|iPod/.test(ua) ? 'WebKit'
+      : /Chrome\/|CriOS\/|Edg/.test(ua) ? 'Blink'
+      : /AppleWebKit\//.test(ua) ? 'WebKit' : '';
+    /* sistem operasi + jenis perangkat */
+    if (/iPhone|iPod/.test(ua)) { r.os = 'iOS'; r.osv = dotted(m1(ua, /OS (\d+[_\d]*)/)); r.dt = 'Ponsel'; r.md = 'iPhone'; }
+    else if (/iPad/.test(ua)) { r.os = 'iPadOS'; r.osv = dotted(m1(ua, /OS (\d+[_\d]*)/)); r.dt = 'Tablet'; r.md = 'iPad'; }
+    else if (/Android/.test(ua)) {
+      r.os = 'Android'; r.osv = m1(ua, /Android ([\d.]+)/);
+      r.dt = /Mobile/.test(ua) ? 'Ponsel' : 'Tablet';
+      var md = m1(ua, /;\s*([^;)]+?)\s+Build\//) || m1(ua, /Android [\d.]+;\s*([^;)]+?)\s*\)/);
+      r.md = md && md !== 'K' ? md : '';
+    }
+    else if (/Windows/.test(ua)) { r.os = 'Windows'; r.osv = /Windows NT 10/.test(ua) ? '10/11' : dotted(m1(ua, /Windows NT ([\d.]+)/)); }
+    else if (/Mac OS X|Macintosh/.test(ua)) { r.os = 'macOS'; r.osv = dotted(m1(ua, /Mac OS X (\d+[_.\d]*)/)); }
+    else if (/CrOS/.test(ua)) { r.os = 'ChromeOS'; }
+    else if (/Linux/.test(ua)) { r.os = 'Linux'; }
+    return r;
+  }
+
   function deviceName() {
+    try {
+      var u = parseUA(navigator.userAgent || '');
+      var out = u.b + (u.bv ? ' ' + major(u.bv) : '') + ' · ' + u.os + (u.osv ? ' ' + (u.os === 'Windows' || u.os === 'macOS' ? u.osv : major(u.osv)) : '');
+      if (u.md && u.os === 'Android') out += ' · ' + u.md;
+      return out.slice(0, 100);
+    } catch (e) { return 'Browser'; }
+  }
+
+  function wt(p, ms) { return Promise.race([p, new Promise(function (r) { setTimeout(function () { r(null); }, ms); })]); }
+
+  /* Detail lengkap perangkat (dikirim ke login_log.info). Hanya informasi yang dibuka browser sendiri; IP dicatat server. */
+  async function collectInfo() {
     var ua = navigator.userAgent || '';
-    var os = /iPhone/.test(ua) ? 'iPhone'
-      : /iPad/.test(ua) ? 'iPad'
-      : /Android/.test(ua) ? 'Android'
-      : /Windows/.test(ua) ? 'Windows'
-      : /Mac OS X|Macintosh/.test(ua) ? 'Mac'
-      : /Linux/.test(ua) ? 'Linux' : 'Perangkat';
-    var br = /Edg\//.test(ua) ? 'Edge'
-      : /OPR\/|Opera/.test(ua) ? 'Opera'
-      : /Firefox|FxiOS/.test(ua) ? 'Firefox'
-      : /CriOS|Chrome\//.test(ua) ? 'Chrome'
-      : /Safari\//.test(ua) ? 'Safari' : 'Browser';
-    return (br + ' · ' + os).slice(0, 60);
+    var u = parseUA(ua), o = {};
+    try {
+      var d = navigator.userAgentData;
+      if (d && d.getHighEntropyValues) {
+        var h = await wt(d.getHighEntropyValues(['platformVersion', 'architecture', 'bitness', 'model', 'uaFullVersion', 'fullVersionList', 'platform']), 1200);
+        if (h) {
+          if (h.model) u.md = h.model;
+          if (h.architecture) o.ar = h.architecture + (h.bitness ? ' ' + h.bitness + '-bit' : '');
+          if (h.uaFullVersion && u.b === 'Chrome') u.bv = h.uaFullVersion;
+          if (h.platformVersion) {
+            if (u.os === 'Windows') u.osv = parseInt(major(h.platformVersion), 10) >= 13 ? '11' : '10';
+            else if (u.os === 'macOS' || u.os === 'Android' || u.os === 'ChromeOS') u.osv = h.platformVersion;
+          }
+          if (h.fullVersionList) {
+            var fv = h.fullVersionList.filter(function (x) { return !/Not.?A.?Brand/i.test(x.brand); }).map(function (x) { return x.brand + ' ' + x.version; });
+            if (fv.length) o.br = fv.join(', ').slice(0, 160);
+          }
+        }
+      }
+    } catch (e) {}
+    try { if (navigator.brave && navigator.brave.isBrave && (await wt(navigator.brave.isBrave(), 600))) u.b = 'Brave'; } catch (e) {}
+    o.b = u.b; o.bv = u.bv; o.en = u.en; o.os = u.os; o.osv = u.osv; o.dt = u.dt; o.md = u.md;
+    try { o.sc = screen.width + '×' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x'; } catch (e) {}
+    try { o.vp = window.innerWidth + '×' + window.innerHeight; } catch (e) {}
+    try { o.lg = (navigator.languages && navigator.languages.length ? navigator.languages.slice(0, 3).join(', ') : navigator.language) || ''; } catch (e) {}
+    try { o.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+    try { if (navigator.hardwareConcurrency) o.cpu = navigator.hardwareConcurrency; } catch (e) {}
+    try { if (navigator.deviceMemory) o.mem = navigator.deviceMemory; } catch (e) {}
+    try { o.tp = navigator.maxTouchPoints || 0; } catch (e) {}
+    try { var cn = navigator.connection; if (cn && cn.effectiveType) o.net = cn.effectiveType + (cn.saveData ? ' (hemat data)' : ''); } catch (e) {}
+    try { o.pwa = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true ? 'Aplikasi terpasang' : 'Browser'; } catch (e) {}
+    try { o.th = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'Gelap' : 'Terang'; } catch (e) {}
+    o.ua = ua.slice(0, 320);
+    Object.keys(o).forEach(function (k) { if (o[k] === '' || o[k] == null) delete o[k]; });
+    return o;
   }
 
   /* ---------- pencatat login + detak ---------- */
@@ -61,7 +131,9 @@
       email = lower(email);
       var id = ssGet(K_ID), who = ssGet(K_WHO);
       if (!id || who !== email) {
-        var r = await client.from('login_log').insert({ device: deviceName() }).select('id').single();
+        var info = null;
+        try { info = await wt(collectInfo(), 2500); } catch (e) { info = null; }
+        var r = await client.from('login_log').insert({ device: deviceName(), info: info }).select('id').single();
         if (r && r.data && r.data.id) { ssSet(K_ID, String(r.data.id)); ssSet(K_WHO, email); }
       }
       beatClient = client;
@@ -211,9 +283,10 @@
   /* ---------- API publik ---------- */
   function afterAdminReady(client, session, opts) {
     try {
-      if (!isTop() || !client || !session || !session.user) return;
+      var inHub = window.name === 'bm-dash-hub';   /* Dashboard yang berjalan di dalam Profil (tanpa reload) */
+      if ((!isTop() && !inHub) || !client || !session || !session.user) return;
       var email = lower(session.user.email);
-      track(client, email);
+      if (isTop()) track(client, email);
       if (opts && opts.perms) applyPerms(client, email);
       if (opts && opts.popup) announce(client, email);
     } catch (e) { /* abaikan */ }
@@ -227,5 +300,5 @@
     try { localStorage.removeItem(PERM_CACHE); } catch (e) {}
   }
 
-  window.BMSession = { afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName };
+  window.BMSession = { afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName, collectInfo: collectInfo, parseUA: parseUA };
 })();
