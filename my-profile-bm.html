@@ -451,6 +451,88 @@
   .bootbtns { display: grid; gap: 10px; }
   @keyframes bspin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) { .bootspin { animation: none; } }
+
+  /* ============================================================
+     MAHKOTA per role: Owner emas, Admin 1 perak, Admin 2 perunggu
+     ============================================================ */
+  .crown { position: absolute; z-index: 3; pointer-events: none; left: 50%; top: 2px; width: 34%; max-width: 44px; aspect-ratio: 1; transform: translate(-50%, -68%) rotate(-9deg); filter: drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+  .crown .cr, .crown-i .cr { display: block; width: 100%; height: 100%; }
+  .crown-i { display: inline-block; width: 15px; height: 15px; flex: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+  .mini { position: relative; cursor: pointer; }
+  .mini .crown { width: 17px; max-width: none; left: auto; right: -5px; top: 3px; transform: translate(0, -55%) rotate(16deg); }
+  .avatar .pv { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; z-index: 0; pointer-events: none; }
+  .avatar .cam { z-index: 2; }
+
+  /* ---------- kartu profil dengan banner (Home) ---------- */
+  .hcard { padding: 0; }
+  .banner { position: relative; aspect-ratio: 8 / 3; width: 100%; border-radius: 22px 22px 0 0; overflow: hidden;
+    background: radial-gradient(130% 150% at 88% -25%, rgba(255,255,255,.38), rgba(255,255,255,0) 58%),
+                linear-gradient(135deg, color-mix(in srgb, var(--bn, var(--accent-yellow)) 90%, #fff), color-mix(in srgb, var(--bn, var(--accent-yellow)) 74%, #000)); }
+  .banner:not(.has)::before { content: ''; position: absolute; right: -34px; top: -46px; width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,.16); }
+  .banner:not(.has)::after { content: ''; position: absolute; left: 12%; bottom: -70px; width: 150px; height: 150px; border-radius: 50%; background: rgba(0,0,0,.10); }
+  .banner.has { cursor: pointer; }
+  .banner img, .banner video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+  .hcard-b { padding: 0 18px 18px; }
+  .hcard-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .hcard .avatar { width: 84px; height: 84px; margin-top: -42px; font-size: 28px; box-shadow: 0 0 0 4px var(--card); cursor: pointer; }
+  .hcard h2 { margin: 12px 0 2px; font-size: 21px; font-weight: 800; letter-spacing: -.01em; word-break: break-word; }
+  .hcard p { margin: 0 0 6px; font-size: 13px; color: var(--muted); word-break: break-all; }
+  .hcard p.bio { color: var(--text); opacity: .85; font-size: 13.5px; word-break: break-word; }
+  .edit-btn { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 9px 14px; border-radius: 999px; background: var(--soft); font-weight: 700; font-size: 13px; }
+  .edit-btn svg.i { width: 15px; height: 15px; stroke-width: 2; }
+  .edit-btn:active { transform: scale(.96); }
+  .bn-prev { border-radius: 16px; }
+  #p-akun .avatar { cursor: pointer; }
+  .team > div:nth-child(2) { min-width: 0; flex: 1; }
+  button.team { width: 100%; text-align: left; }
+  .team .rc { width: 16px; height: 16px; transform: rotate(-90deg); color: var(--muted); }
+
+  /* ---------- sheet profil anggota tim (Owner) ---------- */
+  .sh-prof { max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .pf .pf-b { border-radius: 18px; }
+  .pf .pf-row { margin-top: -42px; padding-left: 14px; }
+  .pf .pf-a { width: 84px; height: 84px; font-size: 28px; box-shadow: 0 0 0 4px var(--card); cursor: pointer; }
+  .pf .pf-n { margin: 12px 0 6px; font-size: 20px; font-weight: 800; letter-spacing: -.01em; word-break: break-word; }
+  .pf .pf-bd { margin-bottom: 8px; }
+  .pf .pf-m { margin: 0 0 6px; color: var(--muted); font-size: 13px; word-break: break-all; }
+  .pf .pf-bio { margin: 0 0 8px; color: var(--text); opacity: .85; font-size: 13.5px; word-break: break-word; }
+  .pf .pf-kv { margin: 12px 0 16px; border-top: 1px solid var(--line); }
+
+  /* ---------- viewer foto/video: Liquid Glass ---------- */
+  .lb { position: fixed; inset: 0; z-index: 120; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px 16px; -webkit-user-select: none; user-select: none; overscroll-behavior: contain; }
+  .lb.on { display: flex; }
+  .lb-bg { position: absolute; inset: 0; opacity: 0;
+    background: radial-gradient(120% 70% at 50% 0%, rgba(255,255,255,.22), rgba(255,255,255,0) 62%), rgba(12,13,18,.46);
+    -webkit-backdrop-filter: blur(0px) saturate(1); backdrop-filter: blur(0px) saturate(1);
+    transition: opacity .42s ease, backdrop-filter .5s ease, -webkit-backdrop-filter .5s ease; }
+  .lb.show .lb-bg { opacity: 1; -webkit-backdrop-filter: blur(28px) saturate(1.7); backdrop-filter: blur(28px) saturate(1.7); }
+  .lb-stage { position: relative; z-index: 2; width: 300px; height: 300px; border-radius: 36px; transform-origin: 50% 50%; will-change: transform;
+    transition: transform .52s cubic-bezier(.32,.72,0,1), border-radius .52s cubic-bezier(.32,.72,0,1), opacity .3s ease;
+    box-shadow: 0 30px 70px -12px rgba(0,0,0,.6), 0 8px 22px rgba(0,0,0,.35); background: rgba(255,255,255,.08); }
+  .lb-media { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; background: #111; }
+  .lb-media img, .lb-media video { width: 100%; height: 100%; object-fit: cover; display: block; -webkit-user-drag: none; }
+  .lb-ini { width: 100%; height: 100%; display: grid; place-items: center; font-size: 84px; font-weight: 800; color: #fff; background: linear-gradient(145deg, #bbb, #777); }
+  .lb-stage::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.5), inset 0 7px 14px rgba(255,255,255,.26), inset 0 -9px 18px rgba(0,0,0,.2);
+    background: linear-gradient(155deg, rgba(255,255,255,.22) 0%, rgba(255,255,255,0) 38%); }
+  .lb-stage .crown { width: 22%; max-width: 70px; top: 4px; }
+  .lb-cap { position: relative; z-index: 2; margin-top: 22px; max-width: min(92vw, 420px); padding: 12px 20px; border-radius: 22px; text-align: center; color: #fff;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.34); box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 10px 26px rgba(0,0,0,.25);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+    opacity: 0; transform: translateY(14px) scale(.96); transition: opacity .4s ease .12s, transform .5s cubic-bezier(.32,.72,0,1) .1s; }
+  .lb.show .lb-cap { opacity: 1; transform: none; }
+  .lb-cap b { display: block; font-size: 17px; font-weight: 800; word-break: break-word; }
+  .lb-cap .lb-role { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12px; font-weight: 700; opacity: .9; }
+  .lb-cap small { display: block; margin-top: 6px; font-size: 13px; opacity: .85; line-height: 1.4; word-break: break-word; }
+  .lb-x { position: absolute; z-index: 3; top: calc(env(safe-area-inset-top, 0px) + 14px); right: 16px; width: 44px; height: 44px; border-radius: 50%; color: #fff; display: grid; place-items: center;
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.38); box-shadow: inset 0 1px 1px rgba(255,255,255,.45);
+    -webkit-backdrop-filter: blur(16px) saturate(1.5); backdrop-filter: blur(16px) saturate(1.5);
+    opacity: 0; transform: scale(.8); transition: opacity .35s ease .08s, transform .45s cubic-bezier(.32,1.4,.5,1) .08s; }
+  .lb.show .lb-x { opacity: 1; transform: none; }
+  body.lbopen { overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) {
+    .lb-bg, .lb-stage, .lb-cap, .lb-x { transition-duration: .01s !important; transition-delay: 0s !important; }
+  }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -468,6 +550,12 @@
 } catch (e) {} })();
 </script>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <linearGradient id="cg-owner" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE98A"/><stop offset=".55" stop-color="#F5B301"/><stop offset="1" stop-color="#B97800"/></linearGradient>
+  <linearGradient id="cg-admin1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#C3CAD5"/><stop offset="1" stop-color="#7F8896"/></linearGradient>
+  <linearGradient id="cg-admin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6C18F"/><stop offset=".55" stop-color="#C9772F"/><stop offset="1" stop-color="#8A4B16"/></linearGradient>
+</defs></svg>
+
 <div class="app">
   <div class="head">
     <h1>Profil Saya</h1>
@@ -476,9 +564,13 @@
 
   <!-- HOME -->
   <section class="panel on" id="p-home">
-    <div class="card hero">
-      <div class="avatar" id="avHome">OW</div>
-      <div>
+    <div class="card hcard">
+      <div class="banner" id="hBanner" data-view="banner" role="button" aria-label="Lihat banner"></div>
+      <div class="hcard-b">
+        <div class="hcard-top">
+          <div class="avatar" id="avHome" data-view="avatar" role="button" aria-label="Lihat foto profil">OW</div>
+          <button class="edit-btn" id="btnEditProfile" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span>Edit profil</span></button>
+        </div>
         <h2 id="hName" data-no-i18n>Owner</h2>
         <p id="hMail" data-no-i18n>owner@contoh.com</p>
         <p class="bio" id="hBio" data-no-i18n hidden></p>
@@ -499,10 +591,18 @@
   <!-- AKUN -->
   <section class="panel" id="p-akun">
     <div class="card" style="text-align:center">
-      <button class="avatar" id="avAkun" type="button" aria-label="Ganti foto profil" style="margin:0 auto 10px;width:96px;height:96px;font-size:34px"><span id="avAkunTxt">OW</span><span class="cam"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
-      <input type="file" id="avFile" accept="image/*" hidden>
+      <button class="avatar" id="avAkun" type="button" data-view="avatar" data-uid="draft" aria-label="Lihat foto profil" style="margin:16px auto 10px;width:96px;height:96px;font-size:34px"><span id="avAkunTxt">OW</span><span class="cam" aria-label="Ganti foto atau video"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
+      <input type="file" id="avFile" accept="image/*,video/*" hidden>
       <span class="badge" id="aBadge">Owner</span>
+      <p class="hint" style="margin:10px 0 0;text-align:center">Ketuk foto untuk melihat, ketuk ikon kamera untuk ganti. Bisa foto atau video (maks 4 detik, otomatis dikompres).</p>
       <div style="margin-top:10px"><button class="mini-btn dg" id="avDel" type="button" hidden>Hapus foto</button></div>
+    </div>
+    <div class="sec" style="margin-top:6px">Banner profil</div>
+    <div class="card">
+      <div class="banner bn-prev" id="bnPrev" data-view="banner" data-uid="draft" role="button" aria-label="Lihat banner"></div>
+      <p class="hint" style="margin:10px 0 12px">Foto atau video rasio 8:3. Video dipotong maks 5 detik dan otomatis dikompres. Perubahan baru tersimpan setelah menekan Simpan perubahan.</p>
+      <input type="file" id="bnFile" accept="image/*,video/*" hidden>
+      <div class="row-b"><button class="btn ghost" id="bnPick" type="button">Ganti banner</button><button class="btn danger" id="bnDel" type="button" style="display:none">Hapus banner</button></div>
     </div>
     <div class="sec" style="margin-top:6px">Data diri</div>
     <div class="card">
@@ -628,6 +728,17 @@
   <button class="btn ghost" id="admCancel" style="margin-top:10px">Batal</button>
 </div></div>
 
+<div class="lb" id="lb" aria-hidden="true">
+  <div class="lb-bg"></div>
+  <button class="lb-x" id="lbX" type="button" aria-label="Tutup"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="lb-stage" id="lbStage"><div class="lb-media" id="lbMedia"></div></div>
+  <div class="lb-cap" id="lbCap"></div>
+</div>
+
+<div class="ov sheet" id="ovProf"><div class="sh sh-prof" id="profBox"></div></div>
+
+<div class="ov" id="ovBusy"><div class="dlg"><div class="bootspin"></div><h3 id="busyT" style="margin-top:14px">Mengompres…</h3><p id="busyP">0%</p></div></div>
+
 <div id="boot" hidden><div class="bootbox" id="bootBox"><div class="bootspin"></div><p id="bootMsg">Memuat…</p><div class="bootbtns" id="bootBtns" hidden><button class="btn" id="bootRetry">Coba lagi</button><button class="btn" id="bootBack">Keluar</button></div></div></div>
 <div class="toast" id="toast"></div>
 <div class="ov" id="ov"><div class="dlg"><h3 id="dTitle"></h3><p id="dText"></p><div class="row-b"><button class="btn ghost" id="dNo">Batal</button><button class="btn" id="dYes">OK</button></div></div></div>
@@ -666,7 +777,7 @@ function bmMain(REAL){
   };
 
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  var S = { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, annSeen: {}, extraLogs: [] };
+  var S = { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, annSeen: {}, extraLogs: [], media: {}, mediaDirty: true };
 
   /* ---------- satu pintu untuk akun & role ---------- */
   function acct(id){ for (var i = 0; i < S.admins.length; i++) if (S.admins[i].id === id) return S.admins[i]; return null; }
@@ -685,17 +796,32 @@ function bmMain(REAL){
   function permCount(a){ return FEATURES.filter(function(f){ return S.perms[a.role][f.k]; }).length; }
   /* ---------- foto & warna profil ---------- */
   function ink(hex){ var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255; return (0.299 * r + 0.587 * g + 0.114 * b) > 160 ? '#1C1B19' : '#fff'; }
-  function paint(el, txt, name, avatar, accent){
+  /* paint: foto/inisial + (opsional) video profil + mahkota sesuai role. Poster video selalu tersimpan sebagai foto biasa. */
+  function paint(el, txt, name, avatar, accent, vid, role){
     if (avatar) { el.classList.add('photo'); el.style.backgroundImage = 'url("' + avatar + '")'; el.style.backgroundColor = ''; txt.textContent = ''; }
     else {
       el.classList.remove('photo'); el.style.backgroundImage = accent ? 'linear-gradient(145deg, color-mix(in srgb, ' + accent + ' 70%, #fff), ' + accent + ')' : '';
       el.style.color = accent ? ink(accent) : ''; txt.textContent = initials(name);
     }
+    var cur = null;
+    Array.prototype.slice.call(el.children).forEach(function(ch){
+      if (ch.classList.contains('crown')) el.removeChild(ch);
+      else if (ch.classList.contains('pv')) { if (vid && ch._s === vid) cur = ch; else el.removeChild(ch); }
+    });
+    if (vid && !cur) {
+      var v = document.createElement('video');
+      v.className = 'pv'; v._s = vid; v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+      v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.src = vid;
+      el.insertBefore(v, el.firstChild);
+      var pr = v.play(); if (pr && pr.catch) pr.catch(function(){});
+    }
+    if (role) el.insertAdjacentHTML('beforeend', crownHtml(role));
   }
   function miniHtml(m){
-    if (m.avatar) return '<div class="mini" style="background:url(&quot;' + m.avatar + '&quot;) center/cover"></div>';
+    var at = ' data-view="avatar" data-uid="' + esc(m.id) + '"', cr = crownHtml(m.role);
+    if (m.avatar) return '<div class="mini"' + at + ' style="background:url(&quot;' + m.avatar + '&quot;) center/cover">' + cr + '</div>';
     var st = m.accent ? ' style="background:' + m.accent + ';color:' + ink(m.accent) + '"' : '';
-    return '<div class="mini"' + st + '>' + esc(initials(m.name)) + '</div>';
+    return '<div class="mini"' + at + st + '>' + esc(initials(m.name)) + cr + '</div>';
   }
   function devicesOf(id){ return S.devices[id] || []; }
   function isOnline(id){ return S.logins.some(function(l){ return l.a === id && l.now; }); }
@@ -747,7 +873,7 @@ function bmMain(REAL){
   async function reload(){
     var c = REAL.c, em = REAL.email;
     var q = await Promise.all([
-      c.from('admin_roles').select('*'),
+      c.from('admin_roles').select('email,role,display_name,is_dev,active,bio,accent,avatar'),
       c.from('role_permissions').select('*'),
       c.from('announcements').select('*').order('created_at', { ascending: false }),
       c.from('announcement_seen').select('announcement_id'),
@@ -755,7 +881,17 @@ function bmMain(REAL){
       c.from('activity_log').select('*').order('created_at', { ascending: false }).limit(120)
     ]);
     for (var i = 0; i < q.length; i++) if (q[i].error) throw q[i].error;
-    var admins = q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: hasOwn(ROLE_LABEL, r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false, bio: r.bio || '', accent: /^#[0-9a-fA-F]{6}$/.test(r.accent || '') ? r.accent : '', avatar: /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(r.avatar || '') ? r.avatar : '' }; });
+    /* video profil + banner berukuran besar: hanya milik sendiri yang dimuat tiap refresh; milik orang lain dimuat saat dibuka (getMedia) */
+    var keepMe = S.media[em];
+    S.media = {};
+    if (S.mediaDirty || !keepMe) {
+      try {
+        var mr = await c.from('admin_roles').select('avatar_video,banner').eq('email', em).limit(1);
+        if (!mr.error) { var m0 = (mr.data && mr.data[0]) || {}; S.media[em] = { avatar_video: okVid(m0.avatar_video), banner: okBn(m0.banner) }; S.mediaDirty = false; }
+      } catch (e) {}
+    }
+    if (!S.media[em] && keepMe) S.media[em] = keepMe;
+    var admins =q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: hasOwn(ROLE_LABEL, r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false, bio: r.bio || '', accent: /^#[0-9a-fA-F]{6}$/.test(r.accent || '') ? r.accent : '', avatar: /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(r.avatar || '') ? r.avatar : '' }; });
     var known = admins.some(function(a){ return a.id === em; });
     if (!known) admins.push({ id: em, mail: em, name: em.split('@')[0], role: 'admin2', dev: false, active: true });
     var perms = clone(DEFAULTS);
@@ -872,9 +1008,12 @@ function bmMain(REAL){
   function renderHome(){
     var a = me(); if (!a) return;
     var r = a.role;
-    $('hName').textContent = a.name; $('hMail').textContent = a.mail; $('hBadge').textContent = roleLabel(a);
+    var mm = S.media[a.id] || {};
+    $('hName').textContent = a.name; $('hMail').textContent = a.mail; $('hBadge').innerHTML = badgeHtml(a);
     $('hBadge').className = 'badge' + (r === 'owner' || a.dev ? ' owner' : '');
-    paint($('avHome'), $('avHome'), a.name, a.avatar, a.accent);
+    $('avHome').setAttribute('data-uid', a.id); $('hBanner').setAttribute('data-uid', a.id);
+    paint($('avHome'), $('avHome'), a.name, a.avatar, a.accent, mm.avatar_video, a.role);
+    paintBanner($('hBanner'), mm.banner || '', a.accent);
     $('hBio').textContent = a.bio; $('hBio').hidden = !a.bio;
     var t0 = new Date(); t0.setHours(0, 0, 0, 0);
     $('stAksi').textContent = allLogs().filter(function(l){ return l.a === a.id && l.ts >= t0.getTime(); }).length;
@@ -893,16 +1032,19 @@ function bmMain(REAL){
       $('teamWrap').innerHTML = '<div class="sec">Tim</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
         var last = allLogs().filter(function(l){ return l.a === m.id; })[0];
         var tag = m.dev ? ' <span class="devtag">DEV</span>' : '';
-        return '<div class="team' + (m.active ? '' : ' off') + '">' + miniHtml(m) + '<div><p>' + uu(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span></div>';
+        return '<button type="button" class="team' + (m.active ? '' : ' off') + '" data-prof="' + esc(m.id) + '">' + miniHtml(m) + '<div><p>' + uu(m.name) + tag + '</p><small>' + esc(roleLabel(m)) + ' · ' + (m.active ? (isOnline(m.id) ? '<span class="onl">Sedang masuk</span>' : (last ? 'Terakhir: ' + esc(last.m) : 'Belum ada aktivitas')) : 'Nonaktif') + '</small></div><span class="cnt">' + permCount(m) + ' izin</span>' + ICO.chev.replace('class="i"', 'class="i rc"') + '</button>';
       }).join('') + '</div>';
     } else $('teamWrap').innerHTML = '';
   }
   var SWATCHES = ['#F0A529', '#EF4444', '#EC4899', '#8B5CF6', '#3B82F6', '#06B6D4', '#22C55E', '#64748B'];
-  var draft = { avatar: '', accent: '', newAv: false, clear: false }, dirty = false;
+  var draft = { avatar: '', accent: '', newAv: false, clear: false, vid: '', ovid: '', vidNew: false, bn: '', obn: '', bnNew: false }, dirty = false;
   function paintDraft(){
     var a = me(); if (!a) return;
-    paint($('avAkun'), $('avAkunTxt'), $('inName').value.trim() || a.name, draft.avatar, draft.accent);
-    $('avDel').hidden = !draft.avatar;
+    paint($('avAkun'), $('avAkunTxt'), $('inName').value.trim() || a.name, draft.avatar, draft.accent, draft.vid, a.role);
+    $('avDel').hidden = !draft.avatar && !draft.vid;
+    $('avDel').textContent = draft.vid ? 'Hapus video' : 'Hapus foto';
+    paintBanner($('bnPrev'), draft.bn, draft.accent);
+    $('bnDel').style.display = draft.bn ? 'block' : 'none';
     $('swatches').innerHTML = '<button type="button" class="swc def' + (!draft.accent ? ' on' : '') + '" data-c="" aria-label="Warna bawaan">⟲</button>' + SWATCHES.map(function(c){
       return '<button type="button" class="swc' + (draft.accent.toLowerCase() === c.toLowerCase() ? ' on' : '') + '" data-c="' + c + '" style="background:' + c + '" aria-label="Warna ' + c + '"></button>';
     }).join('');
@@ -910,10 +1052,11 @@ function bmMain(REAL){
   function renderAkun(){
     var a = me(); if (!a) return;
     $('inMail').value = a.mail;
-    $('aBadge').textContent = roleLabel(a); $('aBadge').className = 'badge' + (a.role === 'owner' || a.dev ? ' owner' : '');
+    $('aBadge').innerHTML = badgeHtml(a); $('aBadge').className = 'badge' + (a.role === 'owner' || a.dev ? ' owner' : '');
     if (!dirty) {   /* jangan menimpa ketikan yang belum disimpan */
+      var mm = S.media[a.id] || {};
       $('inName').value = a.name; $('inBio').value = a.bio; $('bioCnt').textContent = a.bio.length;
-      draft = { avatar: a.avatar, accent: a.accent, newAv: false, clear: false };
+      draft = { avatar: a.avatar, accent: a.accent, newAv: false, clear: false, vid: mm.avatar_video || '', ovid: mm.avatar_video || '', vidNew: false, bn: mm.banner || '', obn: mm.banner || '', bnNew: false };
     }
     paintDraft();
   }
@@ -1013,7 +1156,7 @@ function bmMain(REAL){
   }
   function renderBadge(){
     var a = me();
-    $('roleBadge').innerHTML = esc(a ? roleLabel(a) : 'Admin');
+    $('roleBadge').innerHTML = a ? badgeHtml(a) : 'Admin';
     $('roleBadge').className = 'badge' + (a && (a.role === 'owner' || a.dev) ? ' owner' : '');
   }
   function renderAll(){ renderBadge(); renderHome(); renderAkun(); renderLog(); renderAkses(); renderSec(); }
@@ -1045,8 +1188,9 @@ function bmMain(REAL){
     var b = e.target.closest('.swc'); if (!b) return;
     draft.accent = b.getAttribute('data-c') || ''; dirty = true; paintDraft();
   });
-  $('avAkun').addEventListener('click', function(){ $('avFile').click(); });
-  $('avDel').addEventListener('click', function(){ draft.avatar = ''; draft.newAv = false; draft.clear = true; dirty = true; paintDraft(); });
+  /* ketuk foto = lihat (viewer); hanya ikon kamera yang membuka pemilih berkas */
+  $('avAkun').addEventListener('click', function(e){ if (e.target.closest('.cam')) $('avFile').click(); });
+  $('avDel').addEventListener('click', function(){ draft.avatar = ''; draft.newAv = false; draft.clear = true; draft.vid = ''; draft.vidNew = false; dirty = true; paintDraft(); });
   /* foto: dipotong persegi & dikecilkan di perangkat (maks ±55 KB), tidak ada berkas asli yang diunggah */
   function shrink(file){
     return new Promise(function(res, rej){
@@ -1069,19 +1213,57 @@ function bmMain(REAL){
     });
   }
   $('avFile').addEventListener('change', function(){
-    var f = this.files && this.files[0]; this.value = '';
-    if (!f) return;
-    if (!/^image\//.test(f.type)) return toast('Pilih berkas gambar');
-    shrink(f).then(function(d){ draft.avatar = d; draft.newAv = true; draft.clear = false; dirty = true; paintDraft(); })
-      .catch(function(e){ toast('Foto gagal dipakai: ' + T(String(e && e.message || e))); });
+    var fl = this.files && this.files[0]; this.value = '';
+    if (!fl) return;
+    if (isVidFile(fl)) {
+      if (fl.size > MAXSRC) return toast('Video terlalu besar (maks 120 MB)');
+      busyOn('Mengompres video profil…');
+      compressVideo(fl, AV_VID, busyPct).then(function(r){
+        draft.avatar = r.poster; draft.newAv = true; draft.clear = false; draft.vid = r.data; draft.vidNew = true; dirty = true; paintDraft();
+        toast('Video siap (' + kbOf(r.data.length) + ' KB). Tekan Simpan perubahan.');
+      }).catch(function(e){ toast('Video gagal dipakai: ' + T(String(e && e.message || e))); }).then(busyOff);
+    } else if (isImgFile(fl)) {
+      shrink(fl).then(function(d){
+        /* mengganti ke foto biasa = video lama dibuang dari server saat disimpan */
+        draft.avatar = d; draft.newAv = true; draft.clear = false; draft.vid = ''; draft.vidNew = false; dirty = true; paintDraft();
+      }).catch(function(e){ toast('Foto gagal dipakai: ' + T(String(e && e.message || e))); });
+    } else toast('Pilih foto atau video');
+  });
+  $('bnPick').addEventListener('click', function(){ $('bnFile').click(); });
+  $('bnDel').addEventListener('click', function(){ draft.bn = ''; draft.bnNew = false; dirty = true; paintDraft(); });
+  $('bnFile').addEventListener('change', function(){
+    var fl = this.files && this.files[0]; this.value = '';
+    if (!fl) return;
+    if (isVidFile(fl)) {
+      if (fl.size > MAXSRC) return toast('Video terlalu besar (maks 120 MB)');
+      busyOn('Mengompres video banner…');
+      compressVideo(fl, BN_VID, busyPct).then(function(r){
+        draft.bn = r.data; draft.bnNew = true; dirty = true; paintDraft();
+        toast('Banner video siap (' + kbOf(r.data.length) + ' KB). Tekan Simpan perubahan.');
+      }).catch(function(e){ toast('Banner gagal dipakai: ' + T(String(e && e.message || e))); }).then(busyOff);
+    } else if (isImgFile(fl)) {
+      imgCover(fl, BN_IMG, BN_IMG_MAX).then(function(d){ draft.bn = d; draft.bnNew = true; dirty = true; paintDraft(); toast('Banner siap (' + kbOf(d.length) + ' KB). Tekan Simpan perubahan.'); })
+        .catch(function(e){ toast('Banner gagal dipakai: ' + T(String(e && e.message || e))); });
+    } else toast('Pilih foto atau video');
   });
   $('btnSave').addEventListener('click', function(){
     var n = $('inName').value.trim(), a = me(); if (!a) return;
     if (!n) return toast('Nama tidak boleh kosong');
     var bio = $('inBio').value.trim(), d = draft;
+    /* media: dibuang dari server bila dihapus ATAU digantikan (video → foto); ditimpa bila diganti dengan yang baru */
+    var clearVid = !d.vid && !!d.ovid, clearBn = !d.bn && !!d.obn;
+    var sendVid = d.vidNew && d.vid ? d.vid : null, sendBn = d.bnNew && d.bn ? d.bn : null;
+    var mediaArgs = (clearVid || clearBn || sendVid || sendBn) ? { p_avatar_video: sendVid, p_clear_avatar_video: clearVid && !sendVid, p_banner: sendBn, p_clear_banner: clearBn && !sendBn } : null;
     return srv(function(){
       return REAL.c.rpc('set_my_profile', { p_name: n, p_bio: bio, p_accent: d.accent || '', p_avatar: d.newAv ? d.avatar : '', p_clear_avatar: !!d.clear && !d.newAv })
-        .then(function(r){ if (!r.error) dirty = false; return r; });
+        .then(function(r){
+          if (r.error || !mediaArgs) return r;
+          return REAL.c.rpc('set_my_media', mediaArgs).then(function(r2){
+            if (r2.error) return { error: { message: 'media gagal disimpan (' + (r2.error.message || 'error') + '). Pastikan profile-media.sql sudah dijalankan di Supabase' } };
+            return r2;
+          });
+        })
+        .then(function(r){ S.mediaDirty = true; if (!r.error) dirty = false; return r; });
     }, 'Profil disimpan');
   });
   $('btnPw').addEventListener('click', function(){
@@ -1361,6 +1543,285 @@ function bmMain(REAL){
     var t = 'BM-TECH Profil — info sistem\n' + infoRows().map(function(x){ return x[0] + ': ' + x[1]; }).join('\n');
     try { navigator.clipboard.writeText(t).then(function(){ toast('Ringkasan disalin'); }, function(){ toast('Gagal menyalin'); }); } catch (e) { toast('Gagal menyalin'); }
   });
+  /* ================= MAHKOTA, KOMPRESI MEDIA, VIEWER KACA, PROFIL TIM ================= */
+  var CROWN_TITLE = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };
+  function crk(r){ return r === 'owner' || r === 'admin1' || r === 'admin2' ? r : 'admin2'; }
+  function crownSvg(role){
+    var k = crk(role);
+    return '<svg class="cr" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<path d="M2.8 8.6l4.5 3.7L12 4.8l4.7 7.5 4.5-3.7-1.9 10H4.7z" fill="url(#cg-' + k + ')" stroke="rgba(0,0,0,.28)" stroke-width=".7" stroke-linejoin="round"/>' +
+      '<path d="M5.2 16.4h13.6" stroke="rgba(0,0,0,.22)" stroke-width="1.1" stroke-linecap="round"/>' +
+      '<circle cx="12" cy="4.6" r="1.35" fill="#fff" fill-opacity=".92"/><circle cx="2.8" cy="8.4" r="1.15" fill="#fff" fill-opacity=".85"/><circle cx="21.2" cy="8.4" r="1.15" fill="#fff" fill-opacity=".85"/></svg>';
+  }
+  function crownHtml(role){ return '<span class="crown" title="' + CROWN_TITLE[crk(role)] + '">' + crownSvg(role) + '</span>'; }
+  function badgeHtml(a){ return '<span class="crown-i">' + crownSvg(a.role) + '</span><span>' + esc(roleLabel(a)) + '</span>'; }
+
+  /* data dari server divalidasi sebelum dipakai sebagai src */
+  function okVid(s){ return typeof s === 'string' && s.length < 260000 && /^data:video\/(webm|mp4);base64,[A-Za-z0-9+\/=]+$/.test(s) ? s : ''; }
+  function okBn(s){ return typeof s === 'string' && s.length < 470000 && /^data:(image\/(jpeg|png|webp)|video\/(webm|mp4));base64,[A-Za-z0-9+\/=]+$/.test(s) ? s : ''; }
+  function kbOf(len){ return Math.round(len * 0.75 / 1024); }
+
+  function mediaNode(data, poster){
+    var n;
+    if (data.indexOf('data:video') === 0) {
+      n = document.createElement('video'); n.muted = true; n.loop = true; n.autoplay = true; n.playsInline = true;
+      n.setAttribute('playsinline', ''); n.setAttribute('muted', ''); if (poster) n.poster = poster; n.src = data;
+      var pr = n.play(); if (pr && pr.catch) pr.catch(function(){});
+    } else { n = document.createElement('img'); n.alt = ''; n.draggable = false; n.src = data; }
+    return n;
+  }
+  function paintBanner(el, data, accent){
+    if (!el) return;
+    el.style.setProperty('--bn', accent || 'var(--accent-yellow)');
+    el.classList.toggle('has', !!data);
+    if (el._d === data) return;      /* sama: jangan bangun ulang (video tidak ulang dari awal) */
+    el._d = data; el.innerHTML = '';
+    if (data) el.appendChild(mediaNode(data));
+  }
+  /* media milik akun lain dimuat sesuai kebutuhan, dibuang tiap refresh */
+  function getMedia(id){
+    if (S.media[id]) return Promise.resolve(S.media[id]);
+    return Promise.resolve(REAL.c.from('admin_roles').select('avatar_video,banner').eq('email', id).limit(1)).then(function(r){
+      if (!r || r.error) return { avatar_video: '', banner: '' };
+      var d = (r.data && r.data[0]) || {};
+      return (S.media[id] = { avatar_video: okVid(d.avatar_video), banner: okBn(d.banner) });
+    }, function(){ return { avatar_video: '', banner: '' }; });
+  }
+
+  /* ---------- kompresi di perangkat (tidak ada berkas asli yang diunggah) ---------- */
+  var MAXSRC = 120 * 1024 * 1024;
+  var AV_VID = { ladder: [[240, 240, 260000], [200, 200, 170000], [160, 160, 110000], [128, 128, 70000]], maxSec: 4, maxLen: 190000, poster: { w: 192, h: 192, qs: [.85, .7, .6, .5], max: 55000 } };
+  var BN_VID = { ladder: [[480, 180, 360000], [400, 150, 250000], [320, 120, 160000], [256, 96, 100000]], maxSec: 5, maxLen: 420000 };
+  var BN_IMG = [[640, 240, .8], [640, 240, .65], [480, 180, .6], [400, 150, .55], [320, 120, .5]];
+  var BN_IMG_MAX = 120000;
+  function isVidFile(f){ return /^video\//.test(f.type) || (!f.type && /\.(mp4|mov|webm|mkv|3gp|m4v)$/i.test(f.name)); }
+  function isImgFile(f){ return /^image\//.test(f.type); }
+  function coverDraw(ctx, src, sw, sh, w, h){ var k = Math.max(w / sw, h / sh), dw = sw * k, dh = sh * k; ctx.drawImage(src, (w - dw) / 2, (h - dh) / 2, dw, dh); }
+  function pickMime(){
+    try { var L = ['video/webm;codecs=vp8', 'video/webm;codecs=vp9', 'video/webm', 'video/mp4']; for (var i = 0; i < L.length; i++) if (MediaRecorder.isTypeSupported(L[i])) return L[i]; } catch (e) {}
+    return '';
+  }
+  function busyOn(t){ $('busyT').textContent = t; $('busyP').textContent = '0%'; $('ovBusy').classList.add('on'); }
+  function busyPct(p){ $('busyP').textContent = Math.round(Math.max(0, Math.min(1, p)) * 100) + '%'; }
+  function busyOff(){ $('ovBusy').classList.remove('on'); }
+
+  /* gambar: potong tengah rasio w:h, turunkan kualitas/ukuran bertahap sampai muat batas */
+  function imgCover(file, ladder, maxLen){
+    return new Promise(function(res, rej){
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function(){
+        try {
+          var out = '';
+          ladder.some(function(s){
+            var cv = document.createElement('canvas'); cv.width = s[0]; cv.height = s[1];
+            var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, s[0], s[1]);
+            coverDraw(cx, img, img.width, img.height, s[0], s[1]);
+            out = cv.toDataURL('image/jpeg', s[2]); return out.length <= maxLen;
+          });
+          URL.revokeObjectURL(url);
+          if (out.length > maxLen) rej(new Error('gambar terlalu besar')); else res(out);
+        } catch (e) { URL.revokeObjectURL(url); rej(e); }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error('berkas bukan gambar')); };
+      img.src = url;
+    });
+  }
+
+  /* video: diputar tanpa suara ke canvas kecil lalu direkam ulang (MediaRecorder) dengan bitrate rendah.
+     Dipotong ke maxSec. Jika hasil masih di atas batas, diulang dengan resolusi & bitrate lebih rendah. */
+  function compressVideo(file, cfg, onPct){
+    return new Promise(function(resolve, reject){
+      var mime = pickMime();
+      if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream || !mime) return reject(new Error('browser ini belum mendukung kompres video'));
+      var url = URL.createObjectURL(file), v = document.createElement('video');
+      v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto';
+      v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.src = url;
+      var base = mime.split(';')[0], poster = '', step = 0, dead = false, end = cfg.maxSec;
+      function cleanup(){ dead = true; try { v.pause(); } catch (e) {} v.removeAttribute('src'); try { v.load(); } catch (e) {} URL.revokeObjectURL(url); }
+      function fail(m){ if (dead) return; cleanup(); reject(new Error(m)); }
+      function mkPoster(){
+        if (!cfg.poster || poster || !v.videoWidth) return;
+        var P = cfg.poster, cv = document.createElement('canvas'); cv.width = P.w; cv.height = P.h;
+        var cx = cv.getContext('2d'); cx.fillStyle = '#000'; cx.fillRect(0, 0, P.w, P.h);
+        coverDraw(cx, v, v.videoWidth, v.videoHeight, P.w, P.h);
+        for (var i = 0; i < P.qs.length; i++) { poster = cv.toDataURL('image/jpeg', P.qs[i]); if (poster.length <= P.max) break; }
+      }
+      function attempt(){
+        var s = cfg.ladder[step], w = s[0], h = s[1];
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        var cx = cv.getContext('2d'); cx.fillStyle = '#000'; cx.fillRect(0, 0, w, h);
+        var rec, chunks = [], stopped = false, raf = 0, guard = 0;
+        try { rec = new MediaRecorder(cv.captureStream(24), { mimeType: mime, videoBitsPerSecond: s[2] }); } catch (e) { return fail('gagal memulai kompresi'); }
+        rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
+        function finish(){
+          if (stopped) return; stopped = true; clearTimeout(guard); cancelAnimationFrame(raf);
+          try { v.pause(); } catch (e) {}
+          if (rec.state !== 'inactive') { try { rec.stop(); } catch (e) { fail('kompresi terhenti'); } }
+        }
+        rec.onstop = function(){
+          if (dead) return;
+          var blob = new Blob(chunks, { type: base });
+          if (blob.size < 800) return fail('hasil kompresi kosong, coba video lain');
+          var fr = new FileReader();
+          fr.onload = function(){
+            if (dead) return;
+            var d = String(fr.result);
+            if (d.length <= cfg.maxLen) { mkPoster(); if (cfg.poster && !poster) return fail('gagal membuat cuplikan foto'); cleanup(); resolve({ data: d, poster: poster }); }
+            else if (step + 1 < cfg.ladder.length) { step++; attempt(); }
+            else fail('video masih terlalu besar setelah dikompres, pakai klip yang lebih pendek');
+          };
+          fr.onerror = function(){ fail('gagal membaca hasil kompresi'); };
+          fr.readAsDataURL(blob);
+        };
+        function tick(){
+          if (stopped || dead) return;
+          if (v.readyState >= 2) {
+            coverDraw(cx, v, v.videoWidth, v.videoHeight, w, h);
+            if (!poster && v.currentTime >= Math.min(.4, end / 2)) mkPoster();
+          }
+          var ct = v.currentTime;
+          if (onPct) onPct(Math.min(1, ct / end));
+          if (ct >= end || v.ended) return finish();
+          raf = requestAnimationFrame(tick);
+        }
+        guard = setTimeout(finish, (end + 8) * 1000);
+        v.onended = finish;
+        try { v.currentTime = 0; } catch (e) {}
+        rec.start(250);
+        var pr = v.play();
+        if (pr && pr.then) pr.then(function(){ raf = requestAnimationFrame(tick); }, function(){ stopped = true; clearTimeout(guard); try { rec.stop(); } catch (e) {} fail('video tidak bisa diputar untuk dikompres'); });
+        else raf = requestAnimationFrame(tick);
+      }
+      v.onerror = function(){ fail('video tidak bisa dibaca di perangkat ini'); };
+      v.onloadedmetadata = function(){
+        if (!v.videoWidth || !v.videoHeight) return fail('video tidak valid');
+        if (isFinite(v.duration) && v.duration > 0) end = Math.min(cfg.maxSec, v.duration);
+        attempt();
+      };
+    });
+  }
+
+  /* ---------- viewer foto/video (Liquid Glass) ---------- */
+  var LB = { open: false, from: null, pushed: false, tm: 0, uid: '', t: null, kind: '' };
+  function lbRadius(kind){ return kind === 'avatar' ? '36px' : '24px'; }
+  function inView(r){ return r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth; }
+  function showLB(spec){
+    var lb = $('lb'), st = $('lbStage'), md = $('lbMedia');
+    clearTimeout(LB.tm);
+    md.innerHTML = ''; md.appendChild(spec.node);
+    Array.prototype.slice.call(st.querySelectorAll('.crown')).forEach(function(c){ st.removeChild(c); });
+    if (spec.kind === 'avatar') st.insertAdjacentHTML('beforeend', crownHtml(spec.role));
+    $('lbCap').innerHTML = spec.cap;
+    var vw = window.innerWidth, vh = window.innerHeight, W, H;
+    if (spec.kind === 'avatar') { W = H = Math.max(160, Math.min(vw - 72, vh * 0.46, 340)); }
+    else { W = Math.min(vw - 32, 540); H = W * 3 / 8; }
+    st.style.width = W + 'px'; st.style.height = H + 'px';
+    LB.open = true; LB.from = spec.from; LB.kind = spec.kind;
+    lb.classList.add('on'); lb.setAttribute('aria-hidden', 'false'); document.body.classList.add('lbopen');
+    st.style.transition = 'none'; st.style.transform = 'none'; st.style.opacity = '';
+    var t = st.getBoundingClientRect(), f = spec.from && spec.from.getBoundingClientRect();
+    LB.t = { left: t.left, top: t.top, width: t.width, height: t.height };
+    if (f && f.width > 0 && f.height > 0 && inView(f)) {
+      st.style.transform = 'translate(' + (f.left + f.width / 2 - (t.left + t.width / 2)) + 'px,' + (f.top + f.height / 2 - (t.top + t.height / 2)) + 'px) scale(' + (f.width / t.width) + ',' + (f.height / t.height) + ')';
+      st.style.borderRadius = spec.kind === 'avatar' ? '50%' : '22px';
+    } else { st.style.transform = 'scale(.82)'; st.style.opacity = '0'; st.style.borderRadius = lbRadius(spec.kind); }
+    void st.offsetWidth;
+    st.style.transition = ''; st.style.transform = 'none'; st.style.opacity = ''; st.style.borderRadius = lbRadius(spec.kind);
+    lb.classList.add('show');
+    try { history.pushState({ bmLb: 1 }, ''); LB.pushed = true; } catch (e) { LB.pushed = false; }
+  }
+  function closeLB(viaPop){
+    if (!LB.open) return;
+    LB.open = false;
+    var lb = $('lb'), st = $('lbStage'), f = LB.from && LB.from.isConnected ? LB.from.getBoundingClientRect() : null, t = LB.t;
+    lb.classList.remove('show');
+    if (f && t && f.width > 0 && f.height > 0 && inView(f)) {
+      st.style.transform = 'translate(' + (f.left + f.width / 2 - (t.left + t.width / 2)) + 'px,' + (f.top + f.height / 2 - (t.top + t.height / 2)) + 'px) scale(' + (f.width / t.width) + ',' + (f.height / t.height) + ')';
+      st.style.borderRadius = LB.kind === 'avatar' ? '50%' : '22px';
+    } else { st.style.transform = 'scale(.88)'; st.style.opacity = '0'; }
+    LB.tm = setTimeout(function(){
+      lb.classList.remove('on'); lb.setAttribute('aria-hidden', 'true'); $('lbMedia').innerHTML = '';
+      document.body.classList.remove('lbopen');
+    }, 500);
+    if (!viaPop && LB.pushed) { LB.pushed = false; try { history.back(); } catch (e) {} } else LB.pushed = false;
+  }
+  function openViewer(kind, uid, from){
+    var isD = uid === 'draft', a = isD ? me() : acct(uid);
+    if (!a) return;
+    var name = isD ? ($('inName').value.trim() || a.name) : a.name, bio = isD ? $('inBio').value.trim() : a.bio;
+    var accent = isD ? draft.accent : a.accent;
+    var med = isD ? { avatar_video: draft.vid, banner: draft.bn } : (S.media[a.id] || null);
+    var node, cap, lazy = false;
+    if (kind === 'banner') {
+      if (!med || !med.banner) return;
+      node = mediaNode(med.banner);
+      cap = '<b>' + uu(name) + '</b><span class="lb-role">Banner profil</span>';
+    } else {
+      var poster = isD ? draft.avatar : a.avatar;
+      if (med && med.avatar_video) node = mediaNode(med.avatar_video, poster);
+      else if (poster) node = mediaNode(poster);
+      else {
+        node = document.createElement('div'); node.className = 'lb-ini'; node.textContent = initials(name);
+        if (accent) { node.style.background = accent; node.style.color = ink(accent); }
+      }
+      lazy = !isD && !med;
+      cap = '<b>' + uu(name) + '</b><span class="lb-role">' + badgeHtml(a) + '</span>' + (bio ? '<small>' + uu(bio) + '</small>' : '');
+    }
+    LB.uid = uid;
+    showLB({ kind: kind, node: node, cap: cap, from: from, role: a.role });
+    if (lazy) getMedia(a.id).then(function(m){
+      if (LB.open && LB.uid === uid && m.avatar_video) { var md = $('lbMedia'); md.innerHTML = ''; md.appendChild(mediaNode(m.avatar_video, a.avatar)); }
+    });
+  }
+  /* capture: semua gambar profil yang punya data-view membuka viewer, dan tidak memicu aksi baris di bawahnya */
+  document.addEventListener('click', function(e){
+    var el = e.target.closest && e.target.closest('[data-view]');
+    if (!el || LB.open) return;
+    if (e.target.closest('.cam')) return;
+    var kind = el.getAttribute('data-view');
+    if (kind === 'banner' && !el.classList.contains('has')) return;
+    e.preventDefault(); e.stopPropagation();
+    openViewer(kind, el.getAttribute('data-uid') || S.me, el);
+  }, true);
+  $('lb').addEventListener('click', function(e){ if (!e.target.closest('#lbStage')) closeLB(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && LB.open) closeLB(); });
+  window.addEventListener('popstate', function(){ if (LB.open) { LB.pushed = false; closeLB(true); } });
+
+  /* ---------- profil anggota tim (khusus Owner) ---------- */
+  var profId = null;
+  function openProfile(id){
+    if (getRole() !== 'owner') return;
+    var a = acct(id); if (!a) return;
+    profId = id;
+    var last = allLogs().filter(function(l){ return l.a === a.id; })[0];
+    var lg = S.logins.filter(function(l){ return l.a === a.id; });
+    var status = !a.active ? 'Nonaktif' : (isOnline(a.id) ? '<span class="onl">Sedang masuk</span>' : 'Offline');
+    var lastAct = last ? last.m : (lg[0] ? lg[0].m : '-');
+    function kv(k, v){ return '<div class="kv"><span>' + k + '</span><span>' + v + '</span></div>'; }
+    $('profBox').innerHTML = '<div class="pf">' +
+      '<div class="banner pf-b" id="pfB" data-view="banner" data-uid="' + esc(a.id) + '" role="button" aria-label="Lihat banner"></div>' +
+      '<div class="pf-row"><div class="avatar pf-a" id="pfA" data-view="avatar" data-uid="' + esc(a.id) + '" role="button" aria-label="Lihat foto profil">?</div></div>' +
+      '<h3 class="pf-n">' + uu(a.name) + (a.dev ? ' <span class="devtag">DEV</span>' : '') + '</h3>' +
+      '<div class="pf-bd"><span class="badge' + (a.role === 'owner' || a.dev ? ' owner' : '') + '">' + badgeHtml(a) + '</span></div>' +
+      '<p class="pf-m">' + uu(a.mail) + '</p>' + (a.bio ? '<p class="pf-bio">' + uu(a.bio) + '</p>' : '') +
+      '<div class="pf-kv">' + kv('Status', status) + kv('Aktivitas terakhir', esc(lastAct)) + kv('Login tercatat', String(lg.length)) + kv('Izin', permCount(a) + ' dari ' + FEATURES.length) + '</div>' +
+      '<div class="row-b"><button class="btn ghost" id="pfClose" type="button">Tutup</button>' + (a.id !== S.me ? '<button class="btn" id="pfManage" type="button">Kelola akun</button>' : '') + '</div></div>';
+    paint($('pfA'), $('pfA'), a.name, a.avatar, a.accent, '', a.role);
+    paintBanner($('pfB'), '', a.accent);
+    $('ovProf').classList.add('on');
+    getMedia(a.id).then(function(m){
+      if (profId !== a.id || !$('ovProf').classList.contains('on') || !$('pfA')) return;
+      paintBanner($('pfB'), m.banner, a.accent);
+      paint($('pfA'), $('pfA'), a.name, a.avatar, a.accent, m.avatar_video, a.role);
+    });
+  }
+  $('teamWrap').addEventListener('click', function(e){ var b = e.target.closest('[data-prof]'); if (b) openProfile(b.getAttribute('data-prof')); });
+  $('ovProf').addEventListener('click', function(e){
+    if (e.target === $('ovProf') || e.target.closest('#pfClose')) { $('ovProf').classList.remove('on'); return; }
+    if (e.target.closest('#pfManage') && getRole() === 'owner' && profId) { var id = profId; $('ovProf').classList.remove('on'); goTab('akses'); openAdm(id); }
+  });
+  $('btnEditProfile').addEventListener('click', function(){ goTab('akun'); });
+
   bootShow('Memuat…', false); refresh();
 }
 
