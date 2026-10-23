@@ -1633,7 +1633,11 @@ function bmMain(REAL){
     return new Promise(function(resolve, reject){
       var mime = pickMime();
       if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream || !mime) return reject(new Error('browser ini belum mendukung kompres video'));
-      var url = URL.createObjectURL(file), v = document.createElement('video');
+      /* berkas dari pemilih file Android sering tanpa tipe MIME; WebView butuh tipe itu untuk memilih decoder, jadi dibungkus ulang */
+      var MT = { mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', '3gp': 'video/3gpp', mkv: 'video/x-matroska' };
+      var ext = (/\.([a-z0-9]+)$/i.exec(file.name || '') || [])[1];
+      var stype = /^video\//.test(file.type) ? file.type : (MT[String(ext || '').toLowerCase()] || 'video/mp4');
+      var url = URL.createObjectURL(new Blob([file], { type: stype })), v = document.createElement('video');
       v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto';
       v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.src = url;
       var base = mime.split(';')[0], poster = '', step = 0, dead = false, end = cfg.maxSec;
@@ -1692,7 +1696,11 @@ function bmMain(REAL){
         if (pr && pr.then) pr.then(function(){ raf = requestAnimationFrame(tick); }, function(){ stopped = true; clearTimeout(guard); try { rec.stop(); } catch (e) {} fail('video tidak bisa diputar untuk dikompres'); });
         else raf = requestAnimationFrame(tick);
       }
-      v.onerror = function(){ fail('video tidak bisa dibaca di perangkat ini'); };
+      v.onerror = function(){
+        var code = v.error ? v.error.code : 0;
+        if (code === 4 || code === 3) fail('format video tidak didukung WebView (kode ' + code + ', ' + stype + '). Biasanya karena H.265/HEVC: rekam ulang dengan format "paling kompatibel" (H.264) atau pakai video lain');
+        else fail('video tidak bisa dibaca (kode ' + code + ', ' + stype + ', ' + kbOf(file.size * 1.33) + ' KB)');
+      };
       v.onloadedmetadata = function(){
         if (!v.videoWidth || !v.videoHeight) return fail('video tidak valid');
         if (isFinite(v.duration) && v.duration > 0) end = Math.min(cfg.maxSec, v.duration);
