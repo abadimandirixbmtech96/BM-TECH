@@ -138,7 +138,6 @@ svg{
   pointer-events:none;
 }
 
-.back-button svg,
 .eye-button svg{
   pointer-events:none;
 }
@@ -275,64 +274,6 @@ body::after{
 
 
 /* =========================
-   BACK BUTTON
-========================= */
-
-.back-button{
-  flex:0 0 auto;
-
-  width:clamp(40px, calc(var(--vh) * .06), 48px);
-  height:clamp(40px, calc(var(--vh) * .06), 48px);
-
-  border-radius:16px;
-
-  border:1px solid rgba(255,255,255,.9);
-
-  background:rgba(232,230,225,.58);
-
-  color:#5f5c56;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  cursor:pointer;
-
-  box-shadow:
-    0 8px 24px rgba(70,67,60,.08),
-    inset 0 1px 3px rgba(255,255,255,.95);
-
-  -webkit-backdrop-filter:blur(18px);
-  backdrop-filter:blur(18px);
-
-  -webkit-appearance:none;
-  appearance:none;
-
-  transition:
-    transform .2s ease,
-    background .2s ease;
-}
-
-.back-button:hover{
-  background:rgba(245,243,239,.78);
-}
-
-.back-button:active{
-  transform:scale(.94);
-}
-
-.back-button svg{
-  width:24px;
-  height:24px;
-  fill:none;
-  stroke:currentColor;
-  stroke-width:2;
-  stroke-linecap:round;
-  stroke-linejoin:round;
-}
-
-
-/* =========================
    CONTENT
    margin auto = otomatis di tengah layar tinggi,
    tetap bisa di-scroll di layar pendek tanpa terpotong
@@ -419,9 +360,6 @@ body::after{
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   .login-card{
     background:rgba(228,226,221,.97);
-  }
-  .back-button{
-    background:rgba(232,230,225,.95);
   }
   .logo{
     background:rgba(255,255,255,.9);
@@ -1117,21 +1055,6 @@ body::after{
 <main class="page">
 
 
-  <!-- BACK -->
-
-  <button
-    class="back-button"
-    id="backButton"
-    type="button"
-    aria-label="Back"
-  >
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M19 12H5"></path>
-      <path d="M12 19L5 12L12 5"></path>
-    </svg>
-  </button>
-
-
   <div class="content">
 
 
@@ -1327,7 +1250,6 @@ var SUPABASE_URL      = "https://zgzmbneqqzxnptbmlhsz.supabase.co";
 var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E";
 
 var DASHBOARD_URL  = "dashboard-admin.html";
-var BACK_URL       = "https://dashboard-bm-tech.vercel.app/";
 
 var EMAIL_MAX      = 254;
 var PASSWORD_MAX   = 72;      /* batas aman bcrypt di Supabase */
@@ -1405,7 +1327,6 @@ var passwordInput = document.getElementById("password");
 var eyeButton     = document.getElementById("eyeButton");
 var loginButton   = document.getElementById("loginButton");
 var statusBox     = document.getElementById("status");
-var backButton    = document.getElementById("backButton");
 var loginCard     = document.querySelector(".login-card");
 var verifyBox     = document.getElementById("verify");
 var verifyTitle   = document.getElementById("verifyTitle");
@@ -1712,17 +1633,6 @@ function startLockCountdown(){
   }
 
 }
-
-
-/* ==========================================
-   BACK TO DASHBOARD
-========================================== */
-
-backButton.addEventListener("click", function(){
-
-  window.location.href = BACK_URL;
-
-});
 
 
 /* ==========================================
