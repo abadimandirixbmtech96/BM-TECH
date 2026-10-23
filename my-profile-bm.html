@@ -1221,7 +1221,7 @@ function bmMain(REAL){
       compressVideo(fl, AV_VID, busyPct).then(function(r){
         draft.avatar = r.poster; draft.newAv = true; draft.clear = false; draft.vid = r.data; draft.vidNew = true; dirty = true; paintDraft();
         toast('Video siap (' + kbOf(r.data.length) + ' KB). Tekan Simpan perubahan.');
-      }).catch(function(e){ toast('Video gagal dipakai: ' + T(String(e && e.message || e))); }).then(busyOff);
+      }).catch(function(e){ busyOff(); confirmBox('Video gagal dipakai', String(e && e.message || e), function(){}); }).then(busyOff);
     } else if (isImgFile(fl)) {
       shrink(fl).then(function(d){
         /* mengganti ke foto biasa = video lama dibuang dari server saat disimpan */
@@ -1240,7 +1240,7 @@ function bmMain(REAL){
       compressVideo(fl, BN_VID, busyPct).then(function(r){
         draft.bn = r.data; draft.bnNew = true; dirty = true; paintDraft();
         toast('Banner video siap (' + kbOf(r.data.length) + ' KB). Tekan Simpan perubahan.');
-      }).catch(function(e){ toast('Banner gagal dipakai: ' + T(String(e && e.message || e))); }).then(busyOff);
+      }).catch(function(e){ busyOff(); confirmBox('Banner video gagal dipakai', String(e && e.message || e), function(){}); }).then(busyOff);
     } else if (isImgFile(fl)) {
       imgCover(fl, BN_IMG, BN_IMG_MAX).then(function(d){ draft.bn = d; draft.bnNew = true; dirty = true; paintDraft(); toast('Banner siap (' + kbOf(d.length) + ' KB). Tekan Simpan perubahan.'); })
         .catch(function(e){ toast('Banner gagal dipakai: ' + T(String(e && e.message || e))); });
