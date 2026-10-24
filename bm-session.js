@@ -144,6 +144,14 @@
     try {
       var r = await beatClient.auth.getUser();
       var st = r && r.error ? r.error.status : 0;
+      /* Owner bisa menandai satu perangkat "harus keluar": perangkat ini mengakhiri sesinya sendiri */
+      if (!st) {
+        var lid = ssGet(K_ID);
+        if (lid) {
+          var row = await beatClient.from('login_log').select('info').eq('id', lid).maybeSingle();
+          if (row && row.data && row.data.info && row.data.info.out === true) st = 403;
+        }
+      }
       if (st === 400 || st === 401 || st === 403) {
         var c = beatClient;
         stop();
@@ -263,6 +271,7 @@
       var queue = (q[0].data || []).filter(function (a) {
         if (seen[String(a.id)]) return false;
         if (a.expires_at && Date.parse(a.expires_at) <= now) return false;
+        if (a.publish_at && Date.parse(a.publish_at) > now) return false;   /* terjadwal: belum waktunya */
         var t = Array.isArray(a.targets) ? a.targets.map(String) : ['Owner', 'Admin'];
         return t.indexOf(group) !== -1;
       }).slice(0, 3);
@@ -342,5 +351,8 @@
     try { localStorage.removeItem(PERM_CACHE); } catch (e) {}
   }
 
-  window.BMSession = { afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName, collectInfo: collectInfo, parseUA: parseUA };
+  /* pratinjau popup tanpa menyimpan apa pun (alat Developer) */
+  function preview(a) { try { showCard(a, function () {}); } catch (e) {} }
+
+  window.BMSession = { preview: preview, afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName, collectInfo: collectInfo, parseUA: parseUA };
 })();
