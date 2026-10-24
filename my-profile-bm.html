@@ -77,6 +77,32 @@
   details.dv .rw.ua span { font-family: ui-monospace, Menlo, monospace; font-size: 11px; opacity: .8; word-break: break-all; }
   .onl-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); margin-right: 5px; }
 
+  /* ---------- fitur Owner & Dev ---------- */
+  .wk { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+  .wk:last-child { border-bottom: 0; }
+  .wk .nm { min-width: 0; flex: 1; }
+  .wk .nm p { margin: 0 0 2px; font-size: 14px; font-weight: 700; word-break: break-word; }
+  .wk .nm small { color: var(--muted); font-size: 12px; }
+  .wk .nums { display: flex; gap: 8px; font-size: 12px; font-weight: 800; flex: none; }
+  .wk .nums span { padding: 4px 9px; border-radius: 999px; background: var(--soft); }
+  .wk .nums .a { color: var(--ok); } .wk .nums .d { color: var(--danger); }
+  .ph { padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; line-height: 1.45; }
+  .ph:last-child { border-bottom: 0; }
+  .ph small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .ph .on { color: var(--ok); font-weight: 800; } .ph .off { color: var(--danger); font-weight: 800; }
+  .hl { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+  .hl:last-child { border-bottom: 0; }
+  .hl span:first-child { color: var(--muted); } .hl span:last-child { font-weight: 700; text-align: right; word-break: break-word; }
+  .lg { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.45; word-break: break-word; }
+  .lg:last-child { border-bottom: 0; }
+  .lg b { font-size: 12.5px; } .lg small { color: var(--muted); display: block; }
+  .lg code { font-family: ui-monospace, Menlo, monospace; font-size: 11px; opacity: .85; }
+  .field select { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--soft); font-size: 15px; outline: none; color: inherit; }
+  .field input[type=datetime-local], .field input[type=date] { min-height: 46px; }
+  .warn { color: var(--danger); font-weight: 800; }
+  .hint.warn { color: var(--danger); }
+  .okc { color: var(--ok); font-weight: 800; }
+
   /* ---------- Dashboard tertanam: beralih tanpa memuat ulang halaman ---------- */
   #dashHub { position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%; border: 0; background: var(--bg); transform: translateX(100%); visibility: hidden; pointer-events: none; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s; }
   #dashHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
@@ -589,6 +615,7 @@
     <div class="sec" style="margin-top:6px">Menu</div>
     <div class="grid2" id="shortcuts"></div>
     <div id="devWrap"></div>
+    <div id="weekWrap"></div>
     <div id="teamWrap"></div>
   </section>
 
@@ -638,6 +665,7 @@
     <div class="card" id="aksesCard"></div>
     <button class="btn ghost" id="btnReset">Kembalikan ke bawaan</button>
     <div id="admCard"></div>
+    <div id="permHistWrap" hidden><div class="sec">Riwayat perubahan izin</div><div class="card" id="permHist" style="padding:4px 18px"></div></div>
   </section>
 
   <!-- KEAMANAN -->
@@ -689,6 +717,7 @@
       <div class="chips wrap" id="fExp" style="margin:0">
         <button class="chip" data-v="0">Tanpa batas</button><button class="chip" data-v="1">1 hari</button><button class="chip" data-v="3">3 hari</button><button class="chip" data-v="7">7 hari</button>
       </div></div>
+    <div class="field" id="fAtWrap" style="margin:14px 0 0" hidden><label>Jadwalkan terbit (khusus Owner, boleh dikosongkan)</label><input type="datetime-local" id="fAt"><div class="cnt2" style="text-align:left">Kosong = terbit saat tombol Terbitkan ditekan. Masa berlaku dihitung dari waktu terbit.</div></div>
   </div>
 
   <div class="sec">Pratinjau langsung</div>
@@ -713,6 +742,49 @@
   </div>
   <div class="card" id="infoList" style="padding:4px 18px"></div>
   <button class="btn ghost" id="infoCopy" style="margin-bottom:10px">Salin ringkasan</button>
+</div></div>
+
+
+<div class="page" id="pgBackup"><div class="app">
+  <div class="head">
+    <button class="round" data-close="pgBackup" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Cadangan</h1>
+    <span class="devtag" style="margin:0">DEV</span>
+  </div>
+  <p class="hint">Backup dibuat di Dashboard: Pengaturan, lalu Backup Semua Data. Waktunya tercatat otomatis di sini.</p>
+  <div class="card" id="bkInfo" style="padding:4px 18px"></div>
+  <div class="sec">Ingatkan setiap</div>
+  <div class="card"><div class="chips wrap" id="bkInt" style="margin:0">
+    <button class="chip" data-v="3">3 hari</button><button class="chip" data-v="7">7 hari</button><button class="chip" data-v="14">14 hari</button><button class="chip" data-v="30">30 hari</button>
+  </div></div>
+  <button class="btn" id="bkOpen" style="margin-top:6px">Buka Dashboard untuk backup</button>
+</div></div>
+
+<div class="page" id="pgHealth"><div class="app">
+  <div class="head">
+    <button class="round" data-close="pgHealth" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Kesehatan Sistem</h1>
+    <span class="devtag" style="margin:0">DEV</span>
+  </div>
+  <button class="btn" id="hcRun" style="margin-bottom:12px">Periksa sekarang</button>
+  <div class="card" id="hcList" style="padding:4px 18px"><div class="empty">Ketuk "Periksa sekarang".</div></div>
+</div></div>
+
+<div class="page" id="pgLogs"><div class="app">
+  <div class="head">
+    <button class="round" data-close="pgLogs" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Log Mentah</h1>
+    <span class="devtag" style="margin:0">DEV</span>
+  </div>
+  <div class="card">
+    <div class="field"><label>Jenis log</label><div class="chips wrap" id="lgKind" style="margin:0"><button class="chip on" data-v="login">Login</button><button class="chip" data-v="activity">Aktivitas</button></div></div>
+    <div class="field"><label>Akun</label><select id="lgWho"><option value="">Semua akun</option></select></div>
+    <div class="field"><label>Dari tanggal</label><input type="date" id="lgFrom"></div>
+    <div class="field"><label>Sampai tanggal</label><input type="date" id="lgTo"></div>
+    <button class="btn" id="lgRun">Tampilkan (maks. 100)</button>
+  </div>
+  <div class="card" id="lgList" style="padding:4px 18px"><div class="empty">Belum ditampilkan.</div></div>
+  <button class="btn ghost" id="lgCopy" style="margin-bottom:10px">Salin hasil</button>
 </div></div>
 
 <div class="ov" id="ovPrev"><div class="pv" id="ovPrevBox"></div></div>
@@ -905,7 +977,7 @@ function bmMain(REAL){
     var ann = q[2].data.map(function(r){
       var exp = 0, ex = r.expires_at ? Date.parse(r.expires_at) : null;
       if (ex) { var dd = (ex - Date.parse(r.updated_at || r.created_at)) / DAY; exp = EXPS.reduce(function(b, x){ return Math.abs(x - dd) < Math.abs(b - dd) ? x : b; }, 1); }
-      return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: Array.isArray(r.targets) ? r.targets.map(String) : [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at) };
+      return { id: r.id, kind: r.kind, title: r.title, msg: r.message, ver: r.version || '', targets: Array.isArray(r.targets) ? r.targets.map(String) : [], status: r.status, expiry: ex, exp: exp, by: String(r.created_by || '').toLowerCase(), createdAt: Date.parse(r.created_at), publishAt: r.publish_at ? Date.parse(r.publish_at) : 0 };
     });
     var myLid = ''; try { myLid = sessionStorage.getItem('bm-login-id') || ''; } catch (e) {}
     var logins = q[4].data.map(function(r){ return { a: String(r.email).toLowerCase(), d: r.device || 'Perangkat', m: fmtT(r.logged_at), ts: Date.parse(r.logged_at), now: Date.now() - Date.parse(r.last_seen || r.logged_at) < 300000, id: r.id, info: (r.info && typeof r.info === 'object') ? r.info : null, ip: r.ip || '', seen: fmtT(r.last_seen || r.logged_at), seenTs: Date.parse(r.last_seen || r.logged_at) }; });
@@ -913,6 +985,7 @@ function bmMain(REAL){
     logins.forEach(function(l){
       if (l.info && l.info.last) { l.m = fmtT(l.info.last); l.ts = Date.parse(l.info.last) || l.ts; }
       l.d = devLabel(l);
+      if (l.info && l.info.out === true) { l.out = true; l.now = false; }
       if (kicked && l.id !== myLid && l.a === em && l.seenTs <= kicked) { l.now = false; l.out = true; }
     });
     var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 8).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid, l: l }; });
@@ -920,6 +993,13 @@ function bmMain(REAL){
     var team = logins.filter(function(l){ return l.a !== em; }).slice(0, 8);
     var annSeen = {};
     try { var cr = await c.rpc('announcement_seen_counts'); if (cr && !cr.error && Array.isArray(cr.data)) cr.data.forEach(function(x){ annSeen[String(x.announcement_id)] = x.seen; }); } catch (e) {}
+    /* data tambahan: gagal membaca tidak boleh mengganggu halaman */
+    var selfA = admins.filter(function(a){ return a.id === em; })[0];
+    var ownerNow = !!(selfA && selfA.role === 'owner'), devNow = !!(selfA && selfA.dev);
+    S.permHist = []; S.week = []; S.settings = {};
+    try { if (ownerNow) { var ph = await c.from('perm_history').select('*').order('id', { ascending: false }).limit(30); if (!ph.error) S.permHist = ph.data || []; } } catch (e) {}
+    try { if (ownerNow) { var wk = await c.rpc('weekly_summary', { p_days: 7 }); if (!wk.error && Array.isArray(wk.data)) S.week = wk.data; } } catch (e) {}
+    try { if (devNow || ownerNow) { var st = await c.from('app_settings').select('*'); if (!st.error) (st.data || []).forEach(function(x){ S.settings[x.key] = x; }); } } catch (e) {}
     S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.teamLogins = team; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
     S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
     S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
@@ -1029,8 +1109,14 @@ function bmMain(REAL){
       return '<button class="short" data-k="' + (x.k || '') + '" data-a="' + (x.a || '') + '" data-t="' + x.t + '">' + svg(x.ic) + '<span>' + x.t + '</span></button>';
     }).join('') + '';
     if (a.dev) {
-      $('devWrap').innerHTML = '<div class="sec">Alat Developer <span class="devtag">DEV</span></div><div class="grid2">' +
-        '<button class="short" data-dev="info">' + svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>') + '<span>Info Sistem</span></button></div>';
+      var bk = backupState();
+      $('devWrap').innerHTML = '<div class="sec">Alat Developer <span class="devtag">DEV</span></div>' +
+        (bk.late ? '<p class="hint warn" style="margin-top:0">' + esc(bk.text) + '</p>' : '') + '<div class="grid2">' +
+        '<button class="short" data-dev="info">' + svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>') + '<span>Info Sistem</span></button>' +
+        '<button class="short" data-dev="backup">' + svg('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>') + '<span>Cadangan</span></button>' +
+        '<button class="short" data-dev="health">' + svg('<path d="M3 12h4l2-5 4 10 2-5h6"/>') + '<span>Kesehatan</span></button>' +
+        '<button class="short" data-dev="logs">' + svg('<path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/>') + '<span>Log Mentah</span></button>' +
+        '<button class="short" data-dev="popup">' + svg('<rect x="4" y="5" width="16" height="12" rx="2"/><path d="M9 21h6M12 17v4"/>') + '<span>Uji Popup</span></button></div>';
     } else $('devWrap').innerHTML = '';
     if (r === 'owner') {
       $('teamWrap').innerHTML = '<div class="sec">Tim</div><div class="card" style="padding:6px 18px">' + S.admins.map(function(m){
@@ -1143,10 +1229,135 @@ function bmMain(REAL){
     return rows.join('');
   }
   var CHEV = '<svg class="i chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+
+  /* ================= FITUR OWNER ================= */
+  var FEAT_NAME = {}; FEATURES.forEach(function(x){ FEAT_NAME[x.k] = x.t; });
+  function renderWeek(){
+    if (getRole() !== 'owner') { $('weekWrap').innerHTML = ''; return; }
+    var w = S.week || [], tA = 0, tD = 0;
+    w.forEach(function(x){ tA += +x.adds || 0; tD += +x.dels || 0; });
+    $('weekWrap').innerHTML = '<div class="sec">Ringkasan 7 hari</div><div class="card" style="padding:4px 18px">' + (w.length ? w.map(function(x){
+      var id = String(x.actor_email || '').toLowerCase(), last = x.last_at ? fmtT(x.last_at) : '-';
+      return '<div class="wk"><div class="nm"><p>' + uu(nameOfId(id)) + '</p><small>Terakhir ' + esc(last) + (+x.syss ? ' · sistem ' + (+x.syss) : '') + '</small></div><div class="nums"><span class="a">+' + (+x.adds || 0) + '</span><span class="d">−' + (+x.dels || 0) + '</span></div></div>';
+    }).join('') + '<div class="wk"><div class="nm"><p>Total tim</p><small>Tambah / hapus</small></div><div class="nums"><span class="a">+' + tA + '</span><span class="d">−' + tD + '</span></div></div>' : '<div class="empty">Belum ada aktivitas 7 hari terakhir.</div>') + '</div>';
+  }
+  function renderPermHist(){
+    var own = getRole() === 'owner';
+    $('permHistWrap').hidden = !own; if (!own) return;
+    var h = S.permHist || [];
+    function tx(v){ return v === true ? '<span class="on">Boleh</span>' : (v === false ? '<span class="off">Tidak</span>' : '–'); }
+    $('permHist').innerHTML = h.length ? h.map(function(x){
+      var who = x.actor_email ? uu(nameOfId(String(x.actor_email).toLowerCase())) : 'Sistem';
+      var what = x.new_allowed === null ? 'mengembalikan ke bawaan' : (x.old_allowed === null ? 'mengatur' : 'mengubah');
+      return '<div class="ph"><b>' + who + '</b> ' + what + ' izin <b>' + esc(ROLE_LABEL[x.role] || x.role) + '</b>: ' + esc(FEAT_NAME[x.feature] || x.feature) + '<br>' + tx(x.old_allowed) + ' → ' + tx(x.new_allowed) + '<small>' + esc(fmtT(x.at)) + '</small></div>';
+    }).join('') : '<div class="empty">Belum ada perubahan izin tercatat.</div>';
+  }
+  /* keluarkan satu perangkat tertentu (Owner) */
+  function kickBtn(l, isMe){
+    if (getRole() !== 'owner' || isMe || l.out) return '';
+    return '<div class="rw"><b></b><span><button type="button" class="mini-btn dg" data-kick="' + esc(l.id) + '">Keluarkan perangkat ini</button></span></div>';
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-kick]'); if (!b) return;
+    var id = b.getAttribute('data-kick');
+    if (getRole() !== 'owner') return toast('Hanya Owner');
+    confirmBox('Keluarkan perangkat ini?', 'Perangkat itu akan keluar sendiri paling lambat sekitar 2 menit (atau saat aplikasinya dibuka). Akun lain tidak terpengaruh.', function(){
+      srv(function(){ return REAL.c.rpc('owner_kick_login', { p_login_id: id }); }, 'Perangkat ditandai keluar', ['sys', 'Mengeluarkan satu perangkat']);
+    });
+  });
+
+  /* ================= ALAT DEVELOPER ================= */
+  function backupState(){
+    var last = S.settings && S.settings.backup_last, it = S.settings && S.settings.backup_interval;
+    var days = it && it.value && +it.value.days || 7;
+    var at = last && last.value && last.value.at ? Date.parse(last.value.at) : 0;
+    var ago = at ? (Date.now() - at) / DAY : Infinity;
+    var late = ago >= days;
+    return { at: at, by: last ? last.updated_by : '', days: days, late: late,
+      text: at ? 'Backup terakhir ' + Math.floor(ago) + ' hari lalu (batas ' + days + ' hari). Buat backup di Dashboard.' : 'Belum ada backup tercatat. Buat backup di Dashboard.' };
+  }
+  function renderBackup(){
+    var b = backupState();
+    $('bkInfo').innerHTML =
+      '<div class="hl"><span>Backup terakhir</span><span>' + (b.at ? esc(fmtT(b.at)) : 'Belum ada') + '</span></div>' +
+      '<div class="hl"><span>Oleh</span><span>' + (b.by ? uu(nameOfId(String(b.by).toLowerCase())) : '-') + '</span></div>' +
+      '<div class="hl"><span>Status</span><span class="' + (b.late ? 'warn' : 'okc') + '">' + (b.late ? 'Perlu backup' : 'Aman') + '</span></div>';
+    markOn('#bkInt .chip', function(c){ return +c.getAttribute('data-v') === b.days; });
+  }
+  $('bkInt').addEventListener('click', function(e){
+    var c = e.target.closest('.chip'); if (!c) return;
+    if (!isDev()) return toast('Akses Developer tidak aktif');
+    var d = +c.getAttribute('data-v');
+    srv(function(){ return REAL.c.rpc('dev_set_backup_interval', { p_days: d }); }, 'Pengingat diatur setiap ' + d + ' hari').then(renderBackup);
+  });
+  $('bkOpen').addEventListener('click', function(){ closePage('pgBackup'); goDash(); });
+
+  function fmtBytes(n){ n = +n || 0; return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1024).toFixed(0) + ' KB'; }
+  $('hcRun').addEventListener('click', function(){
+    if (!isDev()) return toast('Akses Developer tidak aktif');
+    var btn = this; btn.disabled = true; btn.textContent = 'Memeriksa…';
+    var t0 = performance.now(), dev0 = Date.now();
+    Promise.resolve(REAL.c.rpc('system_health')).then(function(r){
+      var ms = Math.round(performance.now() - t0);
+      if (r.error) throw r.error;
+      var j = r.data || {}, srvT = Date.parse(j.now), skew = isNaN(srvT) ? null : Math.round((dev0 - srvT) / 1000);
+      var sess = null; return Promise.resolve(REAL.c.auth.getSession()).then(function(g){ sess = g && g.data && g.data.session; return { j: j, ms: ms, skew: skew, sess: sess }; });
+    }).then(function(o){
+      var j = o.j, h = '';
+      function row(k, v, cls){ h += '<div class="hl"><span>' + k + '</span><span' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</span></div>'; }
+      row('Koneksi database', 'Tersambung', 'okc');
+      row('Waktu respons', o.ms + ' ms', o.ms > 1500 ? 'warn' : 'okc');
+      row('Selisih jam perangkat', o.skew === null ? '-' : (Math.abs(o.skew) > 120 ? '<span class="warn">' + o.skew + ' detik (jam HP tidak tepat)</span>' : o.skew + ' detik'));
+      row('Ukuran database', fmtBytes(j.db_bytes) + ' dari 500 MB (paket gratis)');
+      row('Versi server', esc(j.version || '-'));
+      if (o.sess && o.sess.expires_at) row('Sesi login berakhir', esc(fmtT(o.sess.expires_at * 1000)));
+      (j.tables || []).forEach(function(t){ row(esc(t.t), (+t.n).toLocaleString('id-ID') + ' baris · ' + fmtBytes(t.b)); });
+      $('hcList').innerHTML = h;
+    }).catch(function(e){
+      $('hcList').innerHTML = '<div class="empty warn">Gagal: ' + esc(T(String(e && e.message || e))) + '</div>';
+    }).then(function(){ btn.disabled = false; btn.textContent = 'Periksa sekarang'; });
+  });
+
+  var lgKind = 'login', lgText = '';
+  function renderLogsForm(){
+    $('lgWho').innerHTML = '<option value="">Semua akun</option>' + S.admins.map(function(a){ return '<option value="' + esc(a.mail) + '">' + esc(a.name) + ' (' + esc(a.mail) + ')</option>'; }).join('');
+  }
+  $('lgKind').addEventListener('click', function(e){ var c = e.target.closest('.chip'); if (!c) return; lgKind = c.getAttribute('data-v'); markOn('#lgKind .chip', function(b){ return b === c; }); });
+  $('lgRun').addEventListener('click', function(){
+    if (!isDev()) return toast('Akses Developer tidak aktif');
+    var f1 = $('lgFrom').value, t1 = $('lgTo').value;
+    var args = { p_kind: lgKind, p_email: $('lgWho').value || null, p_from: f1 ? new Date(f1 + 'T00:00:00').toISOString() : null, p_to: t1 ? new Date(t1 + 'T23:59:59').toISOString() : null, p_limit: 100 };
+    var btn = this; btn.disabled = true;
+    Promise.resolve(REAL.c.rpc('dev_logs', args)).then(function(r){
+      if (r.error) throw r.error;
+      var rows = Array.isArray(r.data) ? r.data : [];
+      lgText = rows.map(function(x){ return JSON.stringify(x); }).join('\n');
+      $('lgList').innerHTML = rows.length ? rows.map(function(x){
+        if (lgKind === 'login') return '<div class="lg"><b>' + uu(x.email) + '</b> · ' + uu(x.device) + '<small>masuk ' + esc(fmtT(x.logged_at)) + ' · aktif ' + esc(fmtT(x.last_seen)) + ' · IP ' + esc(x.ip || '-') + '</small><code>' + esc(JSON.stringify(x.device_info || {}).slice(0, 400)) + '</code></div>';
+        return '<div class="lg"><b>' + uu(x.actor_email) + '</b> · ' + esc(x.kind) + '<small>' + esc(fmtT(x.created_at)) + '</small>' + uu(x.detail) + '</div>';
+      }).join('') : '<div class="empty">Tidak ada data untuk filter ini.</div>';
+    }).catch(function(e){ $('lgList').innerHTML = '<div class="empty warn">Gagal: ' + esc(T(String(e && e.message || e))) + '</div>'; })
+      .then(function(){ btn.disabled = false; });
+  });
+  $('lgCopy').addEventListener('click', function(){
+    if (!lgText) return toast('Belum ada hasil');
+    try { navigator.clipboard.writeText(lgText).then(function(){ toast('Hasil disalin'); }, function(){ toast('Gagal menyalin'); }); } catch (e) { toast('Gagal menyalin'); }
+  });
+
+  var popI = 0, POP = [
+    { kind: 'update', title: 'Uji popup · Update', message: 'Ini contoh tampilan popup. Tidak disimpan dan tidak dikirim ke siapa pun.', version: '0.0.0' },
+    { kind: 'fix', title: 'Uji popup · Perbaikan', message: 'Contoh popup perbaikan.\nBaris kedua untuk menguji teks panjang yang turun ke bawah.' },
+    { kind: 'info', title: 'Uji popup · Info', message: 'Contoh popup info.' }
+  ];
+  function testPopup(){
+    if (!window.BMSession || !BMSession.preview) return toast('Modul popup belum termuat');
+    BMSession.preview(POP[popI++ % POP.length]);
+  }
+
   function devItem(d, who){
     var l = d.l; if (!l) return '<div class="dev"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(d.n) + '</p><small>' + esc(d.s) + '</small></div></div>';
     var sub = (who ? uu(who) + ' · ' : '') + (d.me ? 'Perangkat ini · ' : '') + (l.now ? '<span class="onl-dot"></span>Aktif sekarang' : (l.out ? 'Sudah dikeluarkan' : 'masuk ' + esc(l.m)));
-    return '<details class="dv"><summary><div class="dot sys">' + ICO.phone + '</div><div class="tx"><p>' + uu(l.d) + '</p><small>' + sub + '</small></div>' + CHEV + '</summary><div class="rows">' + devRows(l, l.d) + '</div></details>';
+    return '<details class="dv"><summary><div class="dot sys">' + ICO.phone + '</div><div class="tx"><p>' + uu(l.d) + '</p><small>' + sub + '</small></div>' + CHEV + '</summary><div class="rows">' + devRows(l, l.d) + kickBtn(l, d.me) + '</div></details>';
   }
   function renderSec(){
     var a = me(); if (!a) return;
@@ -1181,7 +1392,7 @@ function bmMain(REAL){
     $('roleBadge').innerHTML = a ? badgeHtml(a) : 'Admin';
     $('roleBadge').className = 'badge' + (a && (a.role === 'owner' || a.dev) ? ' owner' : '');
   }
-  function renderAll(){ renderBadge(); renderHome(); renderAkun(); renderMail(); renderLog(); renderAkses(); renderSec(); }
+  function renderAll(){ renderBadge(); renderHome(); renderAkun(); renderMail(); renderLog(); renderAkses(); renderSec(); renderWeek(); renderPermHist(); }
 
   /* ---------- tab ---------- */
   var tabs = Array.prototype.slice.call(document.querySelectorAll('#nav > .tab-btn'));
@@ -1350,11 +1561,16 @@ function bmMain(REAL){
   $('devWrap').addEventListener('click', function(e){
     var b = e.target.closest('[data-dev]'); if (!b) return;
     if (!isDev()) return toast('Akses Developer tidak aktif');          // lapisan kedua: dicek lagi saat diketuk
+    var k = b.getAttribute('data-dev');
+    if (k === 'backup') { renderBackup(); return openPage('pgBackup'); }
+    if (k === 'health') return openPage('pgHealth');
+    if (k === 'logs') { renderLogsForm(); return openPage('pgLogs'); }
+    if (k === 'popup') return testPopup();
     renderInfo(); openPage('pgInfo');
   });
 
   /* --- formulir pengumuman --- */
-  function newForm(){ return { id: null, kind: 'update', title: '', msg: '', ver: '', targets: ['Owner', 'Admin'], exp: 0 }; }
+  function newForm(){ return { id: null, kind: 'update', title: '', msg: '', ver: '', targets: ['Owner', 'Admin'], exp: 0, at: '' }; }
   var f = newForm();
   function fAsAnn(){ return { id: 'x', kind: f.kind, title: f.title.trim(), msg: f.msg.trim(), ver: f.ver.trim(), targets: f.targets }; }
   function markOn(sel, fn){ Array.prototype.forEach.call(document.querySelectorAll(sel), function(b){ b.classList.toggle('on', fn(b)); }); }
@@ -1364,6 +1580,7 @@ function bmMain(REAL){
     markOn('#fExp .chip', function(b){ return +b.getAttribute('data-v') === f.exp; });
     markOn('#fTarget .chip', function(b){ return f.targets.indexOf(b.getAttribute('data-v')) >= 0; });
     $('fTitle').value = f.title; $('fMsg').value = f.msg; $('fVer').value = f.ver;
+    $('fAtWrap').hidden = getRole() !== 'owner'; $('fAt').value = f.at || '';
     $('annFormTitle').textContent = f.id ? 'Ubah pengumuman' : 'Pengumuman baru';
     $('annNew').style.display = f.id ? 'block' : 'none';
     renderLive();
@@ -1377,6 +1594,7 @@ function bmMain(REAL){
   });
   $('fTitle').addEventListener('input', function(){ f.title = this.value; renderLive(); });
   $('fMsg').addEventListener('input', function(){ f.msg = this.value; renderLive(); });
+  $('fAt').addEventListener('input', function(){ f.at = this.value; });
   $('fVer').addEventListener('input', function(){ f.ver = this.value; renderLive(); });
   $('annNew').addEventListener('click', function(){ f = newForm(); renderForm(); });
 
@@ -1391,9 +1609,12 @@ function bmMain(REAL){
   function commit(status){
     var a = validate(); if (!a || !me()) return;
     var now = Date.now(), old = f.id ? S.ann.filter(function(x){ return x.id === f.id; })[0] : null;
+    var pubAt = (status === 'aktif' && getRole() === 'owner' && f.at) ? Date.parse(f.at) : 0;
+    if (pubAt && pubAt <= now + 30000) pubAt = 0;   /* waktu lampau/sekarang = terbit langsung */
+    var base = pubAt || now;
     if (old && !canManage(old)) return toast('Hanya pembuat atau Owner yang bisa mengubah');
     {
-      var row = { kind: a.kind, title: a.title, message: a.msg, version: a.ver || null, targets: a.targets.slice(), status: status, expires_at: status === 'aktif' && f.exp ? new Date(now + f.exp * DAY).toISOString() : null, updated_at: new Date(now).toISOString() };
+      var row = { kind: a.kind, title: a.title, message: a.msg, version: a.ver || null, targets: a.targets.slice(), status: status, expires_at: status === 'aktif' && f.exp ? new Date(base + f.exp * DAY).toISOString() : null, publish_at: pubAt ? new Date(pubAt).toISOString() : null, updated_at: new Date(now).toISOString() };
       if (busy) return toast('Sedang menyimpan, tunggu sebentar');
       busy = true;
       var req;
@@ -1405,7 +1626,7 @@ function bmMain(REAL){
       }).then(function(){
         var lg = status === 'aktif' ? addLog('sys', 'Menerbitkan pengumuman ' + (row.version ? 'v' + row.version + ' ' : '') + '"' + row.title + '"') : null;
         f = newForm(); renderForm();
-        toast(status === 'aktif' ? 'Diterbitkan. Muncul sebagai popup sekali di Dashboard, termasuk untuk Anda.' : 'Draf disimpan');
+        toast(status === 'aktif' ? (pubAt ? 'Dijadwalkan terbit ' + fmtT(pubAt) + '. Popup muncul di Dashboard setelah waktu itu.' : 'Diterbitkan. Muncul sebagai popup sekali di Dashboard, termasuk untuk Anda.') : 'Draf disimpan');
         return lg;
       }).catch(function(e){ toast('Gagal menyimpan: ' + T(String(e && e.message || e))); }).then(function(){ busy = false; return refresh(); });
       return;
@@ -1419,14 +1640,14 @@ function bmMain(REAL){
     $('ovPrev').classList.add('on');
   });
 
-  function annStatus(a){ if (a.status === 'aktif') return (a.expiry && Date.now() >= a.expiry) ? 'Berakhir' : 'Aktif'; return a.status === 'draf' ? 'Draf' : 'Nonaktif'; }
+  function annStatus(a){ if (a.status === 'aktif') { if (a.publishAt && Date.now() < a.publishAt) return 'Terjadwal'; return (a.expiry && Date.now() >= a.expiry) ? 'Berakhir' : 'Aktif'; } return a.status === 'draf' ? 'Draf' : 'Nonaktif'; }
   function renderHist(){
     $('annHist').innerHTML = S.ann.length ? S.ann.map(function(a){
       var st = annStatus(a), k = kindOf(a.kind);
       var total = S.admins.filter(function(m){ return m.active && a.targets.indexOf(m.role === 'owner' ? 'Owner' : 'Admin') >= 0; }).length;
       var seenTxt = st === 'Aktif' ? ' · dilihat ' + Math.min(S.annSeen[String(a.id)] || 0, total) + ' dari ' + total + ' akun' : '';
-      var sub = k.t + ' · ' + a.targets.map(esc).join(', ') + ' · oleh ' + uu(nameOfId(a.by)) + (a.expiry ? ' · sampai ' + fmtDate(a.expiry) : '') + seenTxt;
-      var tg = st === 'Aktif' ? 'Nonaktifkan' : (st === 'Draf' ? 'Terbitkan' : 'Aktifkan');
+      var sub = k.t + ' · ' + a.targets.map(esc).join(', ') + (st === 'Terjadwal' ? ' · terbit ' + fmtT(a.publishAt) : '') + ' · oleh ' + uu(nameOfId(a.by)) + (a.expiry ? ' · sampai ' + fmtDate(a.expiry) : '') + seenTxt;
+      var tg = (st === 'Aktif' || st === 'Terjadwal') ? 'Nonaktifkan' : (st === 'Draf' ? 'Terbitkan' : 'Aktifkan');
       var acts = canManage(a) ? '<div class="ha"><button class="mini-btn" data-h="edit" data-id="' + esc(a.id) + '">Ubah</button><button class="mini-btn" data-h="toggle" data-id="' + esc(a.id) + '">' + tg + '</button><button class="mini-btn dg" data-h="del" data-id="' + esc(a.id) + '">Hapus</button></div>' : '';
       return '<div class="hist"><div class="hr"><b>' + uu(a.title) + (a.ver ? ' <span class="devtag">v' + esc(a.ver) + '</span>' : '') + '</b><span class="tag ' + (st === 'Aktif' ? 'y' : 'n') + '">' + st + '</span></div><small>' + sub + '</small>' + acts + '</div>';
     }).join('') : '<div class="empty">Belum ada pengumuman.</div>';
@@ -1436,11 +1657,11 @@ function bmMain(REAL){
     var id = b.getAttribute('data-id'), act = b.getAttribute('data-h');
     var rec = S.ann.filter(function(x){ return x.id === id; })[0]; if (!rec || !canManage(rec)) return;
     if (act === 'edit') {
-      f = { id: rec.id, kind: rec.kind, title: rec.title, msg: rec.msg, ver: rec.ver || '', targets: rec.targets.slice(), exp: rec.exp || 0 };
+      f = { id: rec.id, kind: rec.kind, title: rec.title, msg: rec.msg, ver: rec.ver || '', targets: rec.targets.slice(), exp: rec.exp || 0, at: rec.publishAt && rec.publishAt > Date.now() ? new Date(rec.publishAt - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '' };
       renderForm(); $('pgAnn').scrollTop = 0;
     } else if (act === 'toggle') {
       {
-        var on = annStatus(rec) === 'Aktif';
+        var on = annStatus(rec) === 'Aktif' || annStatus(rec) === 'Terjadwal';
         return srv(function(){ return REAL.c.from('announcements').update(on ? { status: 'nonaktif', expires_at: null, updated_at: new Date().toISOString() } : { status: 'aktif', expires_at: rec.exp ? new Date(Date.now() + rec.exp * DAY).toISOString() : null, updated_at: new Date().toISOString() }).eq('id', rec.id).select(); }, on ? 'Pengumuman dinonaktifkan' : 'Pengumuman aktif', [on ? 'sys' : 'sys', (on ? 'Menonaktifkan pengumuman "' : 'Mengaktifkan pengumuman "') + rec.title + '"']);
       }
     } else if (act === 'del') {
