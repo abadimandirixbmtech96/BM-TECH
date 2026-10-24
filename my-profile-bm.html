@@ -478,9 +478,14 @@
   .hcard h2 { margin: 12px 0 2px; font-size: 21px; font-weight: 800; letter-spacing: -.01em; word-break: break-word; }
   .hcard p { margin: 0 0 6px; font-size: 13px; color: var(--muted); word-break: break-all; }
   .hcard p.bio { color: var(--text); opacity: .85; font-size: 13.5px; word-break: break-word; }
-  .edit-btn { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; padding: 9px 14px; border-radius: 999px; background: var(--soft); font-weight: 700; font-size: 13px; }
-  .edit-btn svg.i { width: 15px; height: 15px; stroke-width: 2; }
-  .edit-btn:active { transform: scale(.96); }
+  .mailrow { display: flex; align-items: center; gap: 8px; }
+  .mailrow span { min-width: 0; word-break: break-all; }
+  .eye { flex: none; width: 32px; height: 32px; border-radius: 50%; display: inline-grid; place-items: center; background: var(--soft); color: var(--muted); }
+  .eye svg.i { width: 17px; height: 17px; stroke-width: 2; }
+  .eye:active { transform: scale(.92); }
+  .mailin { position: relative; }
+  .mailin input { padding-right: 52px; }
+  .mailin .eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); }
   .bn-prev { border-radius: 16px; }
   #p-akun .avatar { cursor: pointer; }
   .team > div:nth-child(2) { min-width: 0; flex: 1; }
@@ -569,10 +574,9 @@
       <div class="hcard-b">
         <div class="hcard-top">
           <div class="avatar" id="avHome" data-view="avatar" role="button" aria-label="Lihat foto profil">OW</div>
-          <button class="edit-btn" id="btnEditProfile" type="button"><svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span>Edit profil</span></button>
         </div>
         <h2 id="hName" data-no-i18n>Owner</h2>
-        <p id="hMail" data-no-i18n>owner@contoh.com</p>
+        <p class="mailrow"><span id="hMail" data-no-i18n>owner@contoh.com</span><button type="button" class="eye" id="eyeH" aria-label="Tampilkan email" aria-pressed="false"></button></p>
         <p class="bio" id="hBio" data-no-i18n hidden></p>
         <span class="badge" id="hBadge">Owner</span>
       </div>
@@ -591,17 +595,17 @@
   <!-- AKUN -->
   <section class="panel" id="p-akun">
     <div class="card" style="text-align:center">
-      <button class="avatar" id="avAkun" type="button" data-view="avatar" data-uid="draft" aria-label="Lihat foto profil" style="margin:16px auto 10px;width:96px;height:96px;font-size:34px"><span id="avAkunTxt">OW</span><span class="cam" aria-label="Ganti foto atau video"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
-      <input type="file" id="avFile" accept="image/*,video/*" hidden>
+      <button class="avatar" id="avAkun" type="button" data-view="avatar" data-uid="draft" aria-label="Lihat foto profil" style="margin:16px auto 10px;width:96px;height:96px;font-size:34px"><span id="avAkunTxt">OW</span><span class="cam" aria-label="Ganti foto"><svg class="i" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span></button>
+      <input type="file" id="avFile" accept="image/*" hidden>
       <span class="badge" id="aBadge">Owner</span>
-      <p class="hint" style="margin:10px 0 0;text-align:center">Ketuk foto untuk melihat, ketuk ikon kamera untuk ganti. Bisa foto atau video (maks 4 detik, otomatis dikompres).</p>
+      <p class="hint" style="margin:10px 0 0;text-align:center">Ketuk foto untuk melihat, ketuk ikon kamera untuk ganti. Foto otomatis dikompres.</p>
       <div style="margin-top:10px"><button class="mini-btn dg" id="avDel" type="button" hidden>Hapus foto</button></div>
     </div>
     <div class="sec" style="margin-top:6px">Banner profil</div>
     <div class="card">
       <div class="banner bn-prev" id="bnPrev" data-view="banner" data-uid="draft" role="button" aria-label="Lihat banner"></div>
-      <p class="hint" style="margin:10px 0 12px">Foto atau video rasio 8:3. Video dipotong maks 5 detik dan otomatis dikompres. Perubahan baru tersimpan setelah menekan Simpan perubahan.</p>
-      <input type="file" id="bnFile" accept="image/*,video/*" hidden>
+      <p class="hint" style="margin:10px 0 12px">Foto rasio 8:3, otomatis dipotong dan dikompres. Perubahan baru tersimpan setelah menekan Simpan perubahan.</p>
+      <input type="file" id="bnFile" accept="image/*" hidden>
       <div class="row-b"><button class="btn ghost" id="bnPick" type="button">Ganti banner</button><button class="btn danger" id="bnDel" type="button" style="display:none">Hapus banner</button></div>
     </div>
     <div class="sec" style="margin-top:6px">Data diri</div>
@@ -610,7 +614,7 @@
       <div class="field"><label>Bio singkat</label><input id="inBio" maxlength="120" autocomplete="off" placeholder="Contoh: Kasir &amp; admin bengkel"></div>
       <div class="cnt-l"><span id="bioCnt">0</span>/120</div>
       <div class="field"><label>Warna profil</label><div class="swatches" id="swatches"></div></div>
-      <div class="field"><label>Email login (tidak bisa diubah)</label><input id="inMail" readonly></div>
+      <div class="field"><label>Email login (tidak bisa diubah)</label><div class="mailin"><input id="inMail" readonly><button type="button" class="eye" id="eyeA" aria-label="Tampilkan email" aria-pressed="false"></button></div></div>
       <button class="btn" id="btnSave">Simpan perubahan</button>
     </div>
     <div class="sec">Ganti password</div>
@@ -652,10 +656,10 @@
 <div class="dock"><div class="dock-in">
   <div class="segmented-tabs" id="nav" role="tablist">
     <button class="tab-btn active" data-tab="home" role="tab"><svg class="i" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg><span>Home</span></button>
-    <button class="tab-btn" data-tab="akun" role="tab"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg><span>Akun</span></button>
     <button class="tab-btn" data-tab="aktivitas" role="tab"><svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span>Aktivitas</span></button>
     <button class="tab-btn" data-tab="akses" role="tab"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg><span>Akses</span></button>
     <button class="tab-btn" data-tab="keamanan" role="tab"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 018 0v3"/></svg><span>Keamanan</span></button>
+    <button class="tab-btn" data-tab="akun" role="tab"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a7.5 7.5 0 000-3l2-1.5-2-3.4-2.4.8a7.5 7.5 0 00-2.6-1.5L14 2h-4l-.4 2.9a7.5 7.5 0 00-2.6 1.5l-2.4-.8-2 3.4 2 1.5a7.5 7.5 0 000 3l-2 1.5 2 3.4 2.4-.8a7.5 7.5 0 002.6 1.5L10 22h4l.4-2.9a7.5 7.5 0 002.6-1.5l2.4.8 2-3.4z"/></svg><span data-no-i18n>Settings</span></button>
   </div>
 </div></div>
 
@@ -1009,7 +1013,7 @@ function bmMain(REAL){
     var a = me(); if (!a) return;
     var r = a.role;
     var mm = S.media[a.id] || {};
-    $('hName').textContent = a.name; $('hMail').textContent = a.mail; $('hBadge').innerHTML = badgeHtml(a);
+    $('hName').textContent = a.name; $('hBadge').innerHTML = badgeHtml(a);
     $('hBadge').className = 'badge' + (r === 'owner' || a.dev ? ' owner' : '');
     $('avHome').setAttribute('data-uid', a.id); $('hBanner').setAttribute('data-uid', a.id);
     paint($('avHome'), $('avHome'), a.name, a.avatar, a.accent, mm.avatar_video, a.role);
@@ -1051,7 +1055,6 @@ function bmMain(REAL){
   }
   function renderAkun(){
     var a = me(); if (!a) return;
-    $('inMail').value = a.mail;
     $('aBadge').innerHTML = badgeHtml(a); $('aBadge').className = 'badge' + (a.role === 'owner' || a.dev ? ' owner' : '');
     if (!dirty) {   /* jangan menimpa ketikan yang belum disimpan */
       var mm = S.media[a.id] || {};
@@ -1154,12 +1157,31 @@ function bmMain(REAL){
     $('teamDevList').innerHTML = tl.map(function(l){ return devItem({ l: l, n: l.d, s: '', me: false }, nameOfId(l.a)); }).join('');
     $('btnAll').style.display = 'block';
   }
+  /* email disembunyikan secara bawaan; ikon mata menampilkan/menyembunyikan */
+  var mailShown = false;
+  var EYE_ON = '<svg class="i" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF = '<svg class="i" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4M6.6 6.7C3.7 8.5 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+  function maskMail(m){
+    var i = String(m).indexOf('@'); if (i < 1) return '••••••••';
+    return m.slice(0, Math.min(2, i)) + '••••••' + m.slice(i);
+  }
+  function renderMail(){
+    var a = me(); if (!a) return;
+    var t = mailShown ? a.mail : maskMail(a.mail), lab = mailShown ? 'Sembunyikan email' : 'Tampilkan email';
+    $('hMail').textContent = t; $('inMail').value = t;
+    ['eyeH', 'eyeA'].forEach(function(id){
+      var b = $(id); b.innerHTML = mailShown ? EYE_OFF : EYE_ON; b.setAttribute('aria-pressed', String(mailShown)); b.setAttribute('aria-label', lab);
+    });
+  }
+  function toggleMail(){ mailShown = !mailShown; renderMail(); }
+  $('eyeH').addEventListener('click', toggleMail);
+  $('eyeA').addEventListener('click', toggleMail);
   function renderBadge(){
     var a = me();
     $('roleBadge').innerHTML = a ? badgeHtml(a) : 'Admin';
     $('roleBadge').className = 'badge' + (a && (a.role === 'owner' || a.dev) ? ' owner' : '');
   }
-  function renderAll(){ renderBadge(); renderHome(); renderAkun(); renderLog(); renderAkses(); renderSec(); }
+  function renderAll(){ renderBadge(); renderHome(); renderAkun(); renderMail(); renderLog(); renderAkses(); renderSec(); }
 
   /* ---------- tab ---------- */
   var tabs = Array.prototype.slice.call(document.querySelectorAll('#nav > .tab-btn'));
@@ -1215,36 +1237,19 @@ function bmMain(REAL){
   $('avFile').addEventListener('change', function(){
     var fl = this.files && this.files[0]; this.value = '';
     if (!fl) return;
-    if (isVidFile(fl)) {
-      if (fl.size > MAXSRC) return toast('Video terlalu besar (maks 120 MB)');
-      busyOn('Mengompres video profil…');
-      compressVideo(fl, AV_VID, busyPct).then(function(r){
-        draft.avatar = r.poster; draft.newAv = true; draft.clear = false; draft.vid = r.data; draft.vidNew = true; dirty = true; paintDraft();
-        toast('Video siap (' + kbOf(r.data.length) + ' KB). Tekan Simpan perubahan.');
-      }).catch(function(e){ busyOff(); confirmBox('Video gagal dipakai', String(e && e.message || e), function(){}); }).then(busyOff);
-    } else if (isImgFile(fl)) {
-      shrink(fl).then(function(d){
-        /* mengganti ke foto biasa = video lama dibuang dari server saat disimpan */
-        draft.avatar = d; draft.newAv = true; draft.clear = false; draft.vid = ''; draft.vidNew = false; dirty = true; paintDraft();
-      }).catch(function(e){ toast('Foto gagal dipakai: ' + T(String(e && e.message || e))); });
-    } else toast('Pilih foto atau video');
+    if (!isImgFile(fl)) return toast('Pilih berkas foto');
+    shrink(fl).then(function(d){
+      draft.avatar = d; draft.newAv = true; draft.clear = false; dirty = true; paintDraft();
+    }).catch(function(e){ toast('Foto gagal dipakai: ' + T(String(e && e.message || e))); });
   });
   $('bnPick').addEventListener('click', function(){ $('bnFile').click(); });
   $('bnDel').addEventListener('click', function(){ draft.bn = ''; draft.bnNew = false; dirty = true; paintDraft(); });
   $('bnFile').addEventListener('change', function(){
     var fl = this.files && this.files[0]; this.value = '';
     if (!fl) return;
-    if (isVidFile(fl)) {
-      if (fl.size > MAXSRC) return toast('Video terlalu besar (maks 120 MB)');
-      busyOn('Mengompres video banner…');
-      compressVideo(fl, BN_VID, busyPct).then(function(r){
-        draft.bn = r.data; draft.bnNew = true; dirty = true; paintDraft();
-        toast('Banner video siap (' + kbOf(r.data.length) + ' KB). Tekan Simpan perubahan.');
-      }).catch(function(e){ busyOff(); confirmBox('Banner video gagal dipakai', String(e && e.message || e), function(){}); }).then(busyOff);
-    } else if (isImgFile(fl)) {
-      imgCover(fl, BN_IMG, BN_IMG_MAX).then(function(d){ draft.bn = d; draft.bnNew = true; dirty = true; paintDraft(); toast('Banner siap (' + kbOf(d.length) + ' KB). Tekan Simpan perubahan.'); })
-        .catch(function(e){ toast('Banner gagal dipakai: ' + T(String(e && e.message || e))); });
-    } else toast('Pilih foto atau video');
+    if (!isImgFile(fl)) return toast('Pilih berkas foto');
+    imgCover(fl, BN_IMG, BN_IMG_MAX).then(function(d){ draft.bn = d; draft.bnNew = true; dirty = true; paintDraft(); toast('Banner siap (' + kbOf(d.length) + ' KB). Tekan Simpan perubahan.'); })
+      .catch(function(e){ toast('Banner gagal dipakai: ' + T(String(e && e.message || e))); });
   });
   $('btnSave').addEventListener('click', function(){
     var n = $('inName').value.trim(), a = me(); if (!a) return;
@@ -1589,18 +1594,10 @@ function bmMain(REAL){
   }
 
   /* ---------- kompresi di perangkat (tidak ada berkas asli yang diunggah) ---------- */
-  var MAXSRC = 120 * 1024 * 1024;
-  var AV_VID = { ladder: [[240, 240, 260000], [200, 200, 170000], [160, 160, 110000], [128, 128, 70000]], maxSec: 4, maxLen: 190000, poster: { w: 192, h: 192, qs: [.85, .7, .6, .5], max: 55000 } };
-  var BN_VID = { ladder: [[480, 180, 360000], [400, 150, 250000], [320, 120, 160000], [256, 96, 100000]], maxSec: 5, maxLen: 420000 };
   var BN_IMG = [[640, 240, .8], [640, 240, .65], [480, 180, .6], [400, 150, .55], [320, 120, .5]];
   var BN_IMG_MAX = 120000;
-  function isVidFile(f){ return /^video\//.test(f.type) || (!f.type && /\.(mp4|mov|webm|mkv|3gp|m4v)$/i.test(f.name)); }
   function isImgFile(f){ return /^image\//.test(f.type); }
   function coverDraw(ctx, src, sw, sh, w, h){ var k = Math.max(w / sw, h / sh), dw = sw * k, dh = sh * k; ctx.drawImage(src, (w - dw) / 2, (h - dh) / 2, dw, dh); }
-  function pickMime(){
-    try { var L = ['video/webm;codecs=vp8', 'video/webm;codecs=vp9', 'video/webm', 'video/mp4']; for (var i = 0; i < L.length; i++) if (MediaRecorder.isTypeSupported(L[i])) return L[i]; } catch (e) {}
-    return '';
-  }
   function busyOn(t){ $('busyT').textContent = t; $('busyP').textContent = '0%'; $('ovBusy').classList.add('on'); }
   function busyPct(p){ $('busyP').textContent = Math.round(Math.max(0, Math.min(1, p)) * 100) + '%'; }
   function busyOff(){ $('ovBusy').classList.remove('on'); }
@@ -1624,88 +1621,6 @@ function bmMain(REAL){
       };
       img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error('berkas bukan gambar')); };
       img.src = url;
-    });
-  }
-
-  /* video: diputar tanpa suara ke canvas kecil lalu direkam ulang (MediaRecorder) dengan bitrate rendah.
-     Dipotong ke maxSec. Jika hasil masih di atas batas, diulang dengan resolusi & bitrate lebih rendah. */
-  function compressVideo(file, cfg, onPct){
-    return new Promise(function(resolve, reject){
-      var mime = pickMime();
-      if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream || !mime) return reject(new Error('browser ini belum mendukung kompres video'));
-      /* berkas dari pemilih file Android sering tanpa tipe MIME; WebView butuh tipe itu untuk memilih decoder, jadi dibungkus ulang */
-      var MT = { mp4: 'video/mp4', m4v: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', '3gp': 'video/3gpp', mkv: 'video/x-matroska' };
-      var ext = (/\.([a-z0-9]+)$/i.exec(file.name || '') || [])[1];
-      var stype = /^video\//.test(file.type) ? file.type : (MT[String(ext || '').toLowerCase()] || 'video/mp4');
-      var url = URL.createObjectURL(new Blob([file], { type: stype })), v = document.createElement('video');
-      v.muted = true; v.defaultMuted = true; v.playsInline = true; v.preload = 'auto';
-      v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.src = url;
-      var base = mime.split(';')[0], poster = '', step = 0, dead = false, end = cfg.maxSec;
-      function cleanup(){ dead = true; try { v.pause(); } catch (e) {} v.removeAttribute('src'); try { v.load(); } catch (e) {} URL.revokeObjectURL(url); }
-      function fail(m){ if (dead) return; cleanup(); reject(new Error(m)); }
-      function mkPoster(){
-        if (!cfg.poster || poster || !v.videoWidth) return;
-        var P = cfg.poster, cv = document.createElement('canvas'); cv.width = P.w; cv.height = P.h;
-        var cx = cv.getContext('2d'); cx.fillStyle = '#000'; cx.fillRect(0, 0, P.w, P.h);
-        coverDraw(cx, v, v.videoWidth, v.videoHeight, P.w, P.h);
-        for (var i = 0; i < P.qs.length; i++) { poster = cv.toDataURL('image/jpeg', P.qs[i]); if (poster.length <= P.max) break; }
-      }
-      function attempt(){
-        var s = cfg.ladder[step], w = s[0], h = s[1];
-        var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-        var cx = cv.getContext('2d'); cx.fillStyle = '#000'; cx.fillRect(0, 0, w, h);
-        var rec, chunks = [], stopped = false, raf = 0, guard = 0;
-        try { rec = new MediaRecorder(cv.captureStream(24), { mimeType: mime, videoBitsPerSecond: s[2] }); } catch (e) { return fail('gagal memulai kompresi'); }
-        rec.ondataavailable = function(e){ if (e.data && e.data.size) chunks.push(e.data); };
-        function finish(){
-          if (stopped) return; stopped = true; clearTimeout(guard); cancelAnimationFrame(raf);
-          try { v.pause(); } catch (e) {}
-          if (rec.state !== 'inactive') { try { rec.stop(); } catch (e) { fail('kompresi terhenti'); } }
-        }
-        rec.onstop = function(){
-          if (dead) return;
-          var blob = new Blob(chunks, { type: base });
-          if (blob.size < 800) return fail('hasil kompresi kosong, coba video lain');
-          var fr = new FileReader();
-          fr.onload = function(){
-            if (dead) return;
-            var d = String(fr.result);
-            if (d.length <= cfg.maxLen) { mkPoster(); if (cfg.poster && !poster) return fail('gagal membuat cuplikan foto'); cleanup(); resolve({ data: d, poster: poster }); }
-            else if (step + 1 < cfg.ladder.length) { step++; attempt(); }
-            else fail('video masih terlalu besar setelah dikompres, pakai klip yang lebih pendek');
-          };
-          fr.onerror = function(){ fail('gagal membaca hasil kompresi'); };
-          fr.readAsDataURL(blob);
-        };
-        function tick(){
-          if (stopped || dead) return;
-          if (v.readyState >= 2) {
-            coverDraw(cx, v, v.videoWidth, v.videoHeight, w, h);
-            if (!poster && v.currentTime >= Math.min(.4, end / 2)) mkPoster();
-          }
-          var ct = v.currentTime;
-          if (onPct) onPct(Math.min(1, ct / end));
-          if (ct >= end || v.ended) return finish();
-          raf = requestAnimationFrame(tick);
-        }
-        guard = setTimeout(finish, (end + 8) * 1000);
-        v.onended = finish;
-        try { v.currentTime = 0; } catch (e) {}
-        rec.start(250);
-        var pr = v.play();
-        if (pr && pr.then) pr.then(function(){ raf = requestAnimationFrame(tick); }, function(){ stopped = true; clearTimeout(guard); try { rec.stop(); } catch (e) {} fail('video tidak bisa diputar untuk dikompres'); });
-        else raf = requestAnimationFrame(tick);
-      }
-      v.onerror = function(){
-        var code = v.error ? v.error.code : 0;
-        if (code === 4 || code === 3) fail('format video tidak didukung WebView (kode ' + code + ', ' + stype + '). Biasanya karena H.265/HEVC: rekam ulang dengan format "paling kompatibel" (H.264) atau pakai video lain');
-        else fail('video tidak bisa dibaca (kode ' + code + ', ' + stype + ', ' + kbOf(file.size * 1.33) + ' KB)');
-      };
-      v.onloadedmetadata = function(){
-        if (!v.videoWidth || !v.videoHeight) return fail('video tidak valid');
-        if (isFinite(v.duration) && v.duration > 0) end = Math.min(cfg.maxSec, v.duration);
-        attempt();
-      };
     });
   }
 
@@ -1828,7 +1743,6 @@ function bmMain(REAL){
     if (e.target === $('ovProf') || e.target.closest('#pfClose')) { $('ovProf').classList.remove('on'); return; }
     if (e.target.closest('#pfManage') && getRole() === 'owner' && profId) { var id = profId; $('ovProf').classList.remove('on'); goTab('akses'); openAdm(id); }
   });
-  $('btnEditProfile').addEventListener('click', function(){ goTab('akun'); });
 
   bootShow('Memuat…', false); refresh();
 }
