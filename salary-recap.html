@@ -309,7 +309,7 @@
   var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
   // Isi URL Web App Google Apps Script di sini (berakhiran /exec). Boleh dikosongkan:
   // halaman akan meminta URL-nya lewat kotak isian dan menyimpannya di perangkat ini.
-  var SCRIPT_URL_CONST = '';
+  var SCRIPT_URL_CONST = 'https://script.google.com/macros/s/AKfycbyW_XIzd4jQkxg9j38LcSiOcwoEKPVvlCnOUrdtDFpaM68CH9VryABw4d6WFws1kI4j/exec';
   var LS_URL = 'bm-salary-script-url';
   var MAX_BYTES = 15 * 1024 * 1024;
   var DASHBOARD = 'dashboard-admin.html';
@@ -386,6 +386,14 @@
     var e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
     var f = function (d) { return DAYS[d.getDay()] + ' ' + d.getDate() + ' ' + MONTHS[d.getMonth()].slice(0, 3); };
     return f(s) + ' – ' + f(e) + ' ' + e.getFullYear();
+  }
+  // Format sama dengan header pekan di dashboard: "22 Okt – 28 Okt 2026"
+  function weekRangeShort(year, month, n) {
+    var s = nthThursday(year, month, n);
+    if (!s) return '';
+    var e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6);
+    var sameYear = s.getFullYear() === e.getFullYear();
+    return s.getDate() + ' ' + MONTHS[s.getMonth()].slice(0, 3) + (sameYear ? '' : ' ' + s.getFullYear()) + ' – ' + e.getDate() + ' ' + MONTHS[e.getMonth()].slice(0, 3) + ' ' + e.getFullYear();
   }
   function currentWeekDefaults() {
     var d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -619,25 +627,29 @@
       $('archive').innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><br>Belum ada rekap gaji di tahun ' + state.viewYear + '.<br>Upload file pertama lewat form di atas.</div>';
       return;
     }
+    // Urutan mengikuti dashboard: bulan terbaru di atas (hanya bulan yang ada datanya),
+    // di dalam bulan pekan terbaru di atas, header pekan berformat "Pekan 4  22 Okt – 28 Okt 2026"
+    var newest = 0;
+    for (var nm = 12; nm >= 1; nm--) { if (all.some(function (f) { return f.month === nm; })) { newest = nm; break; } }
     var html = '';
     for (var m = 12; m >= 1; m--) {
       var items = files.filter(function (f) { return f.month === m; });
       var total = all.filter(function (f) { return f.month === m; }).length;
-      if (q && !items.length) continue;
+      if (!total || (q && !items.length)) continue;
       var key = state.viewYear + '-' + m;
-      var open = q ? true : !!state.openMonths[key];
-      html += '<div class="month' + (open ? ' open' : '') + (total ? '' : ' empty') + '">' +
+      var open = q ? true : (state.openMonths[key] === undefined ? m === newest : !!state.openMonths[key]);
+      html += '<div class="month' + (open ? ' open' : '') + '">' +
         '<button type="button" class="m-head" data-m="' + key + '"><span class="m-num">' + String(m).padStart(2, '0') + '</span>' +
-        '<span class="m-name">' + MONTHS[m - 1] + '<small>' + (total ? total + ' file tersimpan' : 'Belum ada file') + '</small></span>' +
+        '<span class="m-name">' + MONTHS[m - 1] + '<small>' + total + ' file tersimpan</small></span>' +
         '<span class="m-count">' + total + '</span>' +
         '<svg class="m-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>';
-      if (total) {
+      {
         html += '<div class="m-body">';
-        for (var w = 1; w <= 5; w++) {
+        for (var w = 5; w >= 1; w--) {
           var wi = items.filter(function (f) { return f.week === w; });
           if (!wi.length) continue;
-          var rg = weekRangeText(state.viewYear, m, w);
-          html += '<div class="pk">Pekan ' + w + (rg ? ' · ' + esc(rg.replace(/ \d{4}$/, '')) : '') + '</div>';
+          var rg = weekRangeShort(state.viewYear, m, w);
+          html += '<div class="pk">Pekan ' + w + (rg ? ' <span style="text-transform:none;letter-spacing:0;font-weight:600;color:var(--text2)">' + esc(rg) + '</span>' : '') + '</div>';
           wi.forEach(function (f) {
             html += '<div class="file">' + fileIcon(f.orig || f.name) +
               '<div class="meta"><div class="nm">' + esc(f.orig || f.name) + '</div><div class="sub">' + fmtSize(f.size) + ' · diunggah ' + esc(fmtDate(f.created)) + '</div></div>' +
@@ -656,8 +668,9 @@
     var head = e.target.closest('.m-head');
     if (head) {
       var key = head.dataset.m;
-      state.openMonths[key] = !state.openMonths[key];
-      head.parentElement.classList.toggle('open', !!state.openMonths[key]);
+      var nowOpen = !head.parentElement.classList.contains('open');
+      state.openMonths[key] = nowOpen;
+      head.parentElement.classList.toggle('open', nowOpen);
       return;
     }
     var del = e.target.closest('[data-del]');
