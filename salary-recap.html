@@ -420,28 +420,37 @@
     if (!j.ok) throw new Error(j.error || 'Terjadi kesalahan di Google Drive.');
     return j.data;
   }
-  // Upload memakai XHR supaya progres kirim bisa ditampilkan
-  function uploadXhr(payload, onProgress) {
-    return new Promise(async function (resolve, reject) {
+  // Upload lewat fetch dengan batas waktu 2 menit: tidak mungkin menggantung tanpa pesan error
+  function uploadXhr(payload) {
+    return (async function () {
       var url = scriptUrl();
+      if (!url) throw new Error('URL Google Drive belum diatur.');
       var token = await getToken();
-      if (!url) return reject(new Error('URL Google Drive belum diatur.'));
-      if (!token) return reject(new Error('Sesi habis, silakan login ulang.'));
-      var xhr = new XMLHttpRequest();
-      xhr.open('POST', url);
-      xhr.setRequestHeader('Content-Type', 'text/plain;charset=utf-8');
-      xhr.upload.onprogress = function (e) { if (e.lengthComputable) onProgress(e.loaded / e.total); };
-      xhr.onerror = function () { reject(new Error('Koneksi terputus saat mengunggah.')); };
-      xhr.ontimeout = function () { reject(new Error('Waktu unggah habis.')); };
-      xhr.timeout = 180000;
-      xhr.onload = function () {
-        var j;
-        try { j = JSON.parse(xhr.responseText); } catch (e) { return reject(new Error('Respons Google Drive tidak valid.')); }
-        if (!j.ok) return reject(new Error(j.error || 'Gagal menyimpan ke Google Drive.'));
-        resolve(j.data);
-      };
-      xhr.send(JSON.stringify(Object.assign({ action: 'upload', token: token }, payload)));
-    });
+      if (!token) throw new Error('Sesi habis, silakan login ulang.');
+      var ctrl = new AbortController();
+      var timer = setTimeout(function () { ctrl.abort(); }, 120000);
+      var res, txt;
+      try {
+        res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(Object.assign({ action: 'upload', token: token }, payload)),
+          redirect: 'follow',
+          signal: ctrl.signal
+        });
+        txt = await res.text();
+      } catch (e) {
+        throw new Error(e && e.name === 'AbortError'
+          ? 'Google Drive tidak merespons (lebih dari 2 menit). Cek izin dan deployment Apps Script.'
+          : 'Tidak bisa terhubung ke Google Drive. Cek URL Web App dan koneksi.');
+      } finally { clearTimeout(timer); }
+      var j;
+      try { j = JSON.parse(txt); } catch (e) {
+        throw new Error('Google Drive membalas halaman, bukan data. Pastikan Web App di-deploy dengan akses "Siapa saja" (Anyone).');
+      }
+      if (!j.ok) throw new Error(j.error || 'Gagal menyimpan ke Google Drive.');
+      return j.data;
+    })();
   }
   function toBase64(file) {
     return new Promise(function (resolve, reject) {
@@ -549,9 +558,12 @@
       try {
         q.status = 'up'; q.msg = 'Menyiapkan...'; q.progress = 0.02; updateItem(q);
         var b64 = await toBase64(q.file);
-        q.msg = 'Mengunggah...'; updateItem(q);
-        await uploadXhr({ year: y, month: m, week: w, name: q.file.name, mime: q.file.type || 'application/octet-stream', data: b64 },
-          function (p) { q.progress = Math.max(0.05, p * 0.98); updateItem(q); });
+        q.msg = 'Mengirim ke Google Drive... 0 dtk'; q.progress = 0.4; updateItem(q);
+        var t0 = Date.now();
+        var tick = setInterval(function () { q.msg = 'Menunggu Google Drive... ' + Math.round((Date.now() - t0) / 1000) + ' dtk'; updateItem(q); }, 1000);
+        try {
+          await uploadXhr({ year: y, month: m, week: w, name: q.file.name, mime: q.file.type || 'application/octet-stream', data: b64 });
+        } finally { clearInterval(tick); }
         q.status = 'done'; q.progress = 1; q.msg = 'Tersimpan di Drive · ' + fmtSize(q.file.size); ok++;
       } catch (err) {
         q.status = 'err'; q.progress = 1; q.msg = err.message || 'Gagal'; fail++;
