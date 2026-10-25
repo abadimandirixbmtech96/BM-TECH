@@ -150,6 +150,8 @@
         if (lid) {
           var row = await beatClient.from('login_log').select('info').eq('id', lid).maybeSingle();
           if (row && row.data && row.data.info && row.data.info.out === true) st = 403;
+          /* baris login perangkat ini sudah tidak ada (riwayat direset): daftarkan ulang */
+          else if (row && !row.error && row.data === null) { var c0 = beatClient, em0 = ssGet(K_WHO); ssDel(K_ID); ssDel(K_WHO); if (em0) track(c0, em0); }
         }
       }
       if (st === 400 || st === 401 || st === 403) {
