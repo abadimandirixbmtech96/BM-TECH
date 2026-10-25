@@ -937,6 +937,13 @@ function bmMain(REAL){
   }
   /* ---------- mode login: baca & tulis ke Supabase ---------- */
   function fmtT(ts){ try { return new Date(ts).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', ''); } catch (e) { return ''; } }
+  /* perangkat yang sama digabung jadi satu baris: id perangkat > user-agent+model > nama (login lama tanpa detail) */
+  function devKey(l){
+    var i = l.info;
+    if (i && i.did) return l.a + '|did:' + i.did;
+    if (i && i.ua) return l.a + '|ua:' + i.ua + '|' + (i.md || '');
+    return l.a + '|lbl:' + l.d;
+  }
   function cleanV(v){ v = String(v || ''); while (/\.0$/.test(v)) v = v.slice(0, -2); return v; }
   /* Nama perangkat dibentuk dari data lengkap bila ada (versi OS sebenarnya), bukan dari teks lama yang bisa salah ("Android 10") */
   function devLabel(l){
@@ -988,6 +995,15 @@ function bmMain(REAL){
       if (l.info && l.info.out === true) { l.out = true; l.now = false; }
       if (kicked && l.id !== myLid && l.a === em && l.seenTs <= kicked) { l.now = false; l.out = true; }
     });
+    var seenK = {}, mergedL = [];
+    var uaKey = {};   /* login lama (tanpa id perangkat) ikut digabung ke perangkat yang user-agent + modelnya sama */
+    logins.forEach(function(l){ if (l.info && l.info.did && l.info.ua) { var u = l.a + '|' + l.info.ua + '|' + (l.info.md || ''); if (!uaKey[u]) uaKey[u] = devKey(l); } });
+    logins.forEach(function(l){
+      var k = devKey(l);
+      if (!(l.info && l.info.did) && l.info && l.info.ua) { var u = l.a + '|' + l.info.ua + '|' + (l.info.md || ''); if (uaKey[u]) k = uaKey[u]; }
+      var g = seenK[k]; if (g) { g.merged++; return; } l.merged = 1; seenK[k] = l; mergedL.push(l);
+    });
+    logins = mergedL;
     var mine = logins.filter(function(l){ return l.a === em; }).slice(0, 8).map(function(l){ return { n: l.d, s: (l.id === myLid ? 'Perangkat ini · ' : '') + 'masuk ' + l.m, me: l.id === myLid, l: l }; });
     var dv = {}; dv[em] = mine;
     var team = logins.filter(function(l){ return l.a !== em; }).slice(0, 8);
@@ -1002,7 +1018,7 @@ function bmMain(REAL){
     try { if (devNow || ownerNow) { var st = await c.from('app_settings').select('*'); if (!st.error) (st.data || []).forEach(function(x){ S.settings[x.key] = x; }); } } catch (e) {}
     S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.teamLogins = team; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
     S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
-    S.extraLogs = q[5].data.map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
+    S.extraLogs = q[5].data.filter(function(r){ return !/pengumuman/i.test(r.detail || ''); }).map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
   }
   var loaded = false, busy = false;
   function bootShow(msg, err){ $('boot').hidden = false; $('bootBox').classList.toggle('err', !!err); $('bootMsg').textContent = msg; $('bootBtns').hidden = !err; }
@@ -1160,7 +1176,7 @@ function bmMain(REAL){
     $('logList').className = 'card'; $('logList').style.padding = '6px 18px';
     var rows = allLogs().filter(function(l){ return logFilter === 'semua' ? true : (a && l.a === a.id); });
     $('logList').innerHTML = rows.length ? rows.map(function(l){
-      return '<div class="log"><div class="dot ' + l.k + '">' + ICO[l.k] + '</div><div><p>' + esc(l.t) + '</p><small>' + (logFilter === 'semua' ? uu(nameOfId(l.a)) + ' · ' : '') + esc(l.m) + '</small></div></div>';
+      return '<div class="log"><div class="dot ' + l.k + '">' + ICO[l.k] + '</div><div><p>' + esc(l.t) + '</p><small>' + uu(nameOfId(l.a)) + (l.a === S.me ? ' (Anda)' : '') + ' · ' + esc(l.m) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada aktivitas.</div>';
   }
   function renderLogins(){
@@ -1222,7 +1238,8 @@ function bmMain(REAL){
     add('Mode', i.pwa); add('Tema', i.th);
     add('Bahasa', i.lg); add('Zona waktu', i.tz);
     add('Alamat IP', l.ip);
-    add('Masuk terakhir', l.m); add('Terakhir aktif', l.seen);
+    add('Masuk terakhir', l.m);
+    add('Login tercatat', l.merged > 1 ? l.merged + ' kali (digabung jadi satu)' : ''); add('Terakhir aktif', l.seen);
     add('Merek browser', i.br);
     add('User-Agent', i.ua, 'ua');
     if (!l.info) add('Detail lengkap', 'Tidak tercatat (login lama sebelum fitur ini)');
@@ -1624,7 +1641,7 @@ function bmMain(REAL){
         if (r.error) throw r.error;
         if (!r.data || !r.data.length) throw new Error('ditolak server, tidak ada izin');
       }).then(function(){
-        var lg = status === 'aktif' ? addLog('sys', 'Menerbitkan pengumuman ' + (row.version ? 'v' + row.version + ' ' : '') + '"' + row.title + '"') : null;
+        var lg = null;   /* pengumuman tidak dicatat di Aktivitas */
         f = newForm(); renderForm();
         toast(status === 'aktif' ? (pubAt ? 'Dijadwalkan terbit ' + fmtT(pubAt) + '. Popup muncul di Dashboard setelah waktu itu.' : 'Diterbitkan. Muncul sebagai popup sekali di Dashboard, termasuk untuk Anda.') : 'Draf disimpan');
         return lg;
@@ -1667,7 +1684,7 @@ function bmMain(REAL){
     } else if (act === 'del') {
       confirmBox('Hapus pengumuman?', '"' + rec.title + '" akan dihapus dari riwayat.', function(){
         if (f.id === id) f = newForm(); renderForm();
-        srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus', ['del', 'Menghapus pengumuman "' + rec.title + '"']);
+        srv(function(){ return REAL.c.from('announcements').delete().eq('id', id).select(); }, 'Pengumuman dihapus');
       });
     }
   });
