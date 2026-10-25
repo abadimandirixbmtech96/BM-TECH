@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v11'; // dinaikkan: Profil jadi halaman utama setelah login (+ bm-session.js)
+const CACHE_NAME = 'bmtech-shell-v13'; // dinaikkan: Profil jadi halaman utama setelah login (+ bm-session.js)
 
 const APP_SHELL = [
   '/my-profile-bm.html',
