@@ -239,8 +239,8 @@
 
   <main class="scroll">
     <div class="banner" id="setupBanner">
-      <b>Google Drive belum terhubung.</b><br>
-      Deploy file <code>salary-recap-drive.gs</code> sebagai Web App di Google Apps Script, lalu tempel URL <code>/exec</code>-nya di bawah ini.
+      <span id="bannerMsg"><b>Google Drive belum terhubung.</b><br>
+      Deploy file <code>salary-recap-drive.gs</code> sebagai Web App di Google Apps Script, lalu tempel URL <code>/exec</code>-nya di bawah ini.</span>
       <div class="row"><input type="url" id="inpScriptUrl" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"><button id="btnSaveUrl">Simpan</button></div>
     </div>
 
@@ -337,8 +337,9 @@
   };
 
   function scriptUrl() {
-    var v = SCRIPT_URL_CONST;
-    if (!v) { try { v = localStorage.getItem(LS_URL) || ''; } catch (e) {} }
+    var v = '';
+    try { v = localStorage.getItem(LS_URL) || ''; } catch (e) {}
+    if (!v) v = SCRIPT_URL_CONST;
     return /^https:\/\/script\.google(usercontent)?\.com\//.test(v) ? v : '';
   }
 
@@ -401,6 +402,10 @@
     return { year: a.getFullYear(), month: a.getMonth() + 1, week: Math.floor((a.getDate() - 1) / 7) + 1 };
   }
 
+  function showUrlProblem() {
+    $('bannerMsg').innerHTML = '<b>Google Drive tidak bisa dijangkau.</b><br>URL Web App kemungkinan salah salin atau akses deployment belum "Anyone". Di Apps Script: <b>Deploy → Manage deployments</b>, ketuk <b>Salin</b> pada Web app URL, lalu tempel di bawah ini (jangan diketik ulang).';
+    $('setupBanner').classList.add('show');
+  }
   /* ================= API (Google Apps Script) ================= */
   async function getToken() {
     var r = await sb.auth.getSession();
@@ -414,9 +419,9 @@
     var body = JSON.stringify(Object.assign({ action: action, token: token }, payload || {}));
     var res;
     try { res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, redirect: 'follow' }); }
-    catch (e) { throw new Error('Tidak bisa terhubung ke Google Drive. Cek koneksi atau URL Web App.'); }
+    catch (e) { showUrlProblem(); throw new Error('Tidak bisa terhubung ke Google Drive. Cek koneksi atau URL Web App.'); }
     var j;
-    try { j = await res.json(); } catch (e) { throw new Error('Respons Google Drive tidak valid. Pastikan Web App di-deploy untuk "Siapa saja".'); }
+    try { j = await res.json(); } catch (e) { showUrlProblem(); throw new Error('Respons Google Drive tidak valid. Pastikan Web App di-deploy untuk "Siapa saja".'); }
     if (!j.ok) throw new Error(j.error || 'Terjadi kesalahan di Google Drive.');
     return j.data;
   }
@@ -440,12 +445,14 @@
         });
         txt = await res.text();
       } catch (e) {
+        if (!(e && e.name === 'AbortError')) showUrlProblem();
         throw new Error(e && e.name === 'AbortError'
           ? 'Google Drive tidak merespons (lebih dari 2 menit). Cek izin dan deployment Apps Script.'
           : 'Tidak bisa terhubung ke Google Drive. Cek URL Web App dan koneksi.');
       } finally { clearTimeout(timer); }
       var j;
       try { j = JSON.parse(txt); } catch (e) {
+        showUrlProblem();
         throw new Error('Google Drive membalas halaman, bukan data. Pastikan Web App di-deploy dengan akses "Siapa saja" (Anyone).');
       }
       if (!j.ok) throw new Error(j.error || 'Gagal menyimpan ke Google Drive.');
