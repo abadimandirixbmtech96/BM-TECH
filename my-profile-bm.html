@@ -698,7 +698,7 @@
     <h1>Pengumuman</h1>
     <span style="width:44px"></span>
   </div>
-  <p class="hint">Muncul sebagai jendela popup (seperti iklan) dengan tombol X, hanya di Dashboard. Tampil satu kali untuk tiap akun, yaitu saat pertama kali membuka Dashboard setelah diterbitkan. Pembuatnya juga akan melihatnya. Owner dan Admin mana pun boleh membuat.</p>
+  <p class="hint">Pengumuman tampil sebagai jendela popup dengan tombol X, hanya di Dashboard. Popup ditampilkan satu kali untuk setiap akun, yaitu saat Dashboard pertama kali dibuka setelah pengumuman terbit. Pembuat pengumuman juga akan melihatnya. Owner dan Admin mana pun dapat membuat pengumuman.</p>
 
   <div class="sec" style="margin-top:6px" id="annFormTitle">Pengumuman baru</div>
   <div class="card">
@@ -717,7 +717,7 @@
       <div class="chips wrap" id="fExp" style="margin:0">
         <button class="chip" data-v="0">Tanpa batas</button><button class="chip" data-v="1">1 hari</button><button class="chip" data-v="3">3 hari</button><button class="chip" data-v="7">7 hari</button>
       </div></div>
-    <div class="field" id="fAtWrap" style="margin:14px 0 0" hidden><label>Jadwalkan terbit (khusus Owner, boleh dikosongkan)</label><input type="datetime-local" id="fAt"><div class="cnt2" style="text-align:left">Kosong = terbit saat tombol Terbitkan ditekan. Masa berlaku dihitung dari waktu terbit.</div></div>
+    <div class="field" id="fAtWrap" style="margin:14px 0 0" hidden><label>Jadwal terbit (khusus Owner, boleh dikosongkan)</label><input type="datetime-local" id="fAt"><div class="cnt2" style="text-align:left">Jika dikosongkan, pengumuman terbit saat tombol Terbitkan ditekan. Masa berlaku dihitung sejak waktu terbit.</div></div>
   </div>
 
   <div class="sec">Pratinjau langsung</div>
@@ -751,13 +751,13 @@
     <h1>Cadangan</h1>
     <span class="devtag" style="margin:0">DEV</span>
   </div>
-  <p class="hint">Backup dibuat di Dashboard: Pengaturan, lalu Backup Semua Data. Waktunya tercatat otomatis di sini.</p>
+  <p class="hint">Cadangan dibuat di Dashboard melalui Pengaturan, lalu Backup Semua Data. Waktunya dicatat secara otomatis di sini.</p>
   <div class="card" id="bkInfo" style="padding:4px 18px"></div>
-  <div class="sec">Ingatkan setiap</div>
+  <div class="sec">Pengingat setiap</div>
   <div class="card"><div class="chips wrap" id="bkInt" style="margin:0">
     <button class="chip" data-v="3">3 hari</button><button class="chip" data-v="7">7 hari</button><button class="chip" data-v="14">14 hari</button><button class="chip" data-v="30">30 hari</button>
   </div></div>
-  <button class="btn" id="bkOpen" style="margin-top:6px">Buka Dashboard untuk backup</button>
+  <button class="btn" id="bkOpen" style="margin-top:6px">Buka Dashboard untuk membuat cadangan</button>
 </div></div>
 
 <div class="page" id="pgHealth"><div class="app">
@@ -767,13 +767,13 @@
     <span class="devtag" style="margin:0">DEV</span>
   </div>
   <button class="btn" id="hcRun" style="margin-bottom:12px">Periksa sekarang</button>
-  <div class="card" id="hcList" style="padding:4px 18px"><div class="empty">Ketuk "Periksa sekarang".</div></div>
+  <div class="card" id="hcList" style="padding:4px 18px"><div class="empty">Tekan "Periksa sekarang".</div></div>
 </div></div>
 
 <div class="page" id="pgLogs"><div class="app">
   <div class="head">
     <button class="round" data-close="pgLogs" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <h1>Log Mentah</h1>
+    <h1>Catatan Mentah</h1>
     <span class="devtag" style="margin:0">DEV</span>
   </div>
   <div class="card">
@@ -781,9 +781,9 @@
     <div class="field"><label>Akun</label><select id="lgWho"><option value="">Semua akun</option></select></div>
     <div class="field"><label>Dari tanggal</label><input type="date" id="lgFrom"></div>
     <div class="field"><label>Sampai tanggal</label><input type="date" id="lgTo"></div>
-    <button class="btn" id="lgRun">Tampilkan (maks. 100)</button>
+    <button class="btn" id="lgRun">Tampilkan (maksimal 100)</button>
   </div>
-  <div class="card" id="lgList" style="padding:4px 18px"><div class="empty">Belum ditampilkan.</div></div>
+  <div class="card" id="lgList" style="padding:4px 18px"><div class="empty">Belum ada data yang ditampilkan.</div></div>
   <button class="btn ghost" id="lgCopy" style="margin-bottom:10px">Salin hasil</button>
 </div></div>
 
@@ -1131,7 +1131,7 @@ function bmMain(REAL){
         '<button class="short" data-dev="info">' + svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>') + '<span>Info Sistem</span></button>' +
         '<button class="short" data-dev="backup">' + svg('<path d="M12 3v12M7 10l5 5 5-5"/><path d="M4 19h16"/>') + '<span>Cadangan</span></button>' +
         '<button class="short" data-dev="health">' + svg('<path d="M3 12h4l2-5 4 10 2-5h6"/>') + '<span>Kesehatan</span></button>' +
-        '<button class="short" data-dev="logs">' + svg('<path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/>') + '<span>Log Mentah</span></button>' +
+        '<button class="short" data-dev="logs">' + svg('<path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/>') + '<span>Catatan Mentah</span></button>' +
         '<button class="short" data-dev="popup">' + svg('<rect x="4" y="5" width="16" height="12" rx="2"/><path d="M9 21h6M12 17v4"/>') + '<span>Uji Popup</span></button></div>';
     } else $('devWrap').innerHTML = '';
     if (r === 'owner') {
@@ -1171,23 +1171,12 @@ function bmMain(REAL){
     if (!isOwner) logFilter = 'saya';
     $('logChips').innerHTML =
       '<button class="chip' + (logFilter === 'saya' ? ' on' : '') + '" data-f="saya">Aktivitas saya</button>' +
-      (isOwner ? '<button class="chip' + (logFilter === 'semua' ? ' on' : '') + '" data-f="semua">Semua orang</button><button class="chip' + (logFilter === 'login' ? ' on' : '') + '" data-f="login">Login</button>' : '');
-    if (logFilter === 'login' && isOwner) { $('logList').className = ''; $('logList').style.padding = ''; return renderLogins(); }
+      (isOwner ? '<button class="chip' + (logFilter === 'semua' ? ' on' : '') + '" data-f="semua">Semua orang</button>' : '');
     $('logList').className = 'card'; $('logList').style.padding = '6px 18px';
     var rows = allLogs().filter(function(l){ return logFilter === 'semua' ? true : (a && l.a === a.id); });
     $('logList').innerHTML = rows.length ? rows.map(function(l){
       return '<div class="log"><div class="dot ' + l.k + '">' + ICO[l.k] + '</div><div><p>' + esc(l.t) + '</p><small>' + uu(nameOfId(l.a)) + (l.a === S.me ? ' (Anda)' : '') + ' · ' + esc(l.m) + '</small></div></div>';
     }).join('') : '<div class="empty">Belum ada aktivitas.</div>';
-  }
-  function renderLogins(){
-    var now = S.logins.filter(function(l){ return l.now; });
-    var h = '<div class="sec" style="margin:4px 4px 8px">Sedang masuk (' + now.length + ')</div><div class="card" style="padding:6px 18px;margin-bottom:6px">' + (now.length ? now.map(function(l){
-      return '<div class="log"><div class="dot on">' + ICO.phone + '</div><div><p>' + uu(nameOfId(l.a)) + ' <span class="onl">online</span></p><small>' + uu(l.d) + ' · sejak ' + esc(l.m) + '</small></div></div>';
-    }).join('') : '<div class="empty">Tidak ada yang sedang masuk.</div>') + '</div>';
-    h += '<div class="sec" style="margin:18px 4px 8px">Riwayat login</div><div class="card" style="padding:6px 18px">' + (S.logins.length ? S.logins.map(function(l){
-      return '<div class="log"><div class="dot sys">' + ICO.phone + '</div><div><p>' + uu(nameOfId(l.a)) + '</p><small>' + uu(l.d) + ' · ' + esc(l.m) + '</small></div></div>';
-    }).join('') : '<div class="empty">Belum ada riwayat login.</div>') + '</div>';
-    $('logList').innerHTML = h;
   }
   function renderAkses(){
     var a = me(), r = getRole(), isOwner = r === 'owner';
@@ -1239,10 +1228,10 @@ function bmMain(REAL){
     add('Bahasa', i.lg); add('Zona waktu', i.tz);
     add('Alamat IP', l.ip);
     add('Masuk terakhir', l.m);
-    add('Login tercatat', l.merged > 1 ? l.merged + ' kali (digabung jadi satu)' : ''); add('Terakhir aktif', l.seen);
+    add('Jumlah login', l.merged > 1 ? l.merged + ' (dari perangkat yang sama)' : ''); add('Terakhir aktif', l.seen);
     add('Merek browser', i.br);
     add('User-Agent', i.ua, 'ua');
-    if (!l.info) add('Detail lengkap', 'Tidak tercatat (login lama sebelum fitur ini)');
+    if (!l.info) add('Detail lengkap', 'Tidak tersedia (login sebelum fitur ini ada)');
     return rows.join('');
   }
   var CHEV = '<svg class="i chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
@@ -1256,7 +1245,7 @@ function bmMain(REAL){
     $('weekWrap').innerHTML = '<div class="sec">Ringkasan 7 hari</div><div class="card" style="padding:4px 18px">' + (w.length ? w.map(function(x){
       var id = String(x.actor_email || '').toLowerCase(), last = x.last_at ? fmtT(x.last_at) : '-';
       return '<div class="wk"><div class="nm"><p>' + uu(nameOfId(id)) + '</p><small>Terakhir ' + esc(last) + (+x.syss ? ' · sistem ' + (+x.syss) : '') + '</small></div><div class="nums"><span class="a">+' + (+x.adds || 0) + '</span><span class="d">−' + (+x.dels || 0) + '</span></div></div>';
-    }).join('') + '<div class="wk"><div class="nm"><p>Total tim</p><small>Tambah / hapus</small></div><div class="nums"><span class="a">+' + tA + '</span><span class="d">−' + tD + '</span></div></div>' : '<div class="empty">Belum ada aktivitas 7 hari terakhir.</div>') + '</div>';
+    }).join('') + '<div class="wk"><div class="nm"><p>Total seluruh tim</p><small>Tambah / hapus</small></div><div class="nums"><span class="a">+' + tA + '</span><span class="d">−' + tD + '</span></div></div>' : '<div class="empty">Belum ada aktivitas dalam 7 hari terakhir.</div>') + '</div>';
   }
   function renderPermHist(){
     var own = getRole() === 'owner';
@@ -1265,9 +1254,9 @@ function bmMain(REAL){
     function tx(v){ return v === true ? '<span class="on">Boleh</span>' : (v === false ? '<span class="off">Tidak</span>' : '–'); }
     $('permHist').innerHTML = h.length ? h.map(function(x){
       var who = x.actor_email ? uu(nameOfId(String(x.actor_email).toLowerCase())) : 'Sistem';
-      var what = x.new_allowed === null ? 'mengembalikan ke bawaan' : (x.old_allowed === null ? 'mengatur' : 'mengubah');
+      var what = x.new_allowed === null ? 'mengembalikan ke pengaturan awal' : (x.old_allowed === null ? 'menetapkan' : 'mengubah');
       return '<div class="ph"><b>' + who + '</b> ' + what + ' izin <b>' + esc(ROLE_LABEL[x.role] || x.role) + '</b>: ' + esc(FEAT_NAME[x.feature] || x.feature) + '<br>' + tx(x.old_allowed) + ' → ' + tx(x.new_allowed) + '<small>' + esc(fmtT(x.at)) + '</small></div>';
-    }).join('') : '<div class="empty">Belum ada perubahan izin tercatat.</div>';
+    }).join('') : '<div class="empty">Belum ada perubahan izin yang tercatat.</div>';
   }
   /* keluarkan satu perangkat tertentu (Owner) */
   function kickBtn(l, isMe){
@@ -1278,8 +1267,8 @@ function bmMain(REAL){
     var b = e.target.closest('[data-kick]'); if (!b) return;
     var id = b.getAttribute('data-kick');
     if (getRole() !== 'owner') return toast('Hanya Owner');
-    confirmBox('Keluarkan perangkat ini?', 'Perangkat itu akan keluar sendiri paling lambat sekitar 2 menit (atau saat aplikasinya dibuka). Akun lain tidak terpengaruh.', function(){
-      srv(function(){ return REAL.c.rpc('owner_kick_login', { p_login_id: id }); }, 'Perangkat ditandai keluar', ['sys', 'Mengeluarkan satu perangkat']);
+    confirmBox('Keluarkan perangkat ini?', 'Perangkat tersebut akan keluar secara otomatis paling lambat sekitar 2 menit, atau saat aplikasinya dibuka. Perangkat lain tidak terpengaruh.', function(){
+      srv(function(){ return REAL.c.rpc('owner_kick_login', { p_login_id: id }); }, 'Perintah keluar telah dikirim ke perangkat tersebut', ['sys', 'Mengeluarkan satu perangkat']);
     });
   });
 
@@ -1291,14 +1280,14 @@ function bmMain(REAL){
     var ago = at ? (Date.now() - at) / DAY : Infinity;
     var late = ago >= days;
     return { at: at, by: last ? last.updated_by : '', days: days, late: late,
-      text: at ? 'Backup terakhir ' + Math.floor(ago) + ' hari lalu (batas ' + days + ' hari). Buat backup di Dashboard.' : 'Belum ada backup tercatat. Buat backup di Dashboard.' };
+      text: at ? 'Cadangan terakhir dibuat ' + Math.floor(ago) + ' hari lalu (batas ' + days + ' hari). Buat cadangan di Dashboard.' : 'Belum ada cadangan yang tercatat. Buat cadangan di Dashboard.' };
   }
   function renderBackup(){
     var b = backupState();
     $('bkInfo').innerHTML =
-      '<div class="hl"><span>Backup terakhir</span><span>' + (b.at ? esc(fmtT(b.at)) : 'Belum ada') + '</span></div>' +
+      '<div class="hl"><span>Cadangan terakhir</span><span>' + (b.at ? esc(fmtT(b.at)) : 'Belum ada') + '</span></div>' +
       '<div class="hl"><span>Oleh</span><span>' + (b.by ? uu(nameOfId(String(b.by).toLowerCase())) : '-') + '</span></div>' +
-      '<div class="hl"><span>Status</span><span class="' + (b.late ? 'warn' : 'okc') + '">' + (b.late ? 'Perlu backup' : 'Aman') + '</span></div>';
+      '<div class="hl"><span>Status</span><span class="' + (b.late ? 'warn' : 'okc') + '">' + (b.late ? 'Perlu dicadangkan' : 'Aman') + '</span></div>';
     markOn('#bkInt .chip', function(c){ return +c.getAttribute('data-v') === b.days; });
   }
   $('bkInt').addEventListener('click', function(e){
@@ -1324,7 +1313,7 @@ function bmMain(REAL){
       function row(k, v, cls){ h += '<div class="hl"><span>' + k + '</span><span' + (cls ? ' class="' + cls + '"' : '') + '>' + v + '</span></div>'; }
       row('Koneksi database', 'Tersambung', 'okc');
       row('Waktu respons', o.ms + ' ms', o.ms > 1500 ? 'warn' : 'okc');
-      row('Selisih jam perangkat', o.skew === null ? '-' : (Math.abs(o.skew) > 120 ? '<span class="warn">' + o.skew + ' detik (jam HP tidak tepat)</span>' : o.skew + ' detik'));
+      row('Selisih jam perangkat', o.skew === null ? '-' : (Math.abs(o.skew) > 120 ? '<span class="warn">' + o.skew + ' detik (jam perangkat tidak tepat)</span>' : o.skew + ' detik'));
       row('Ukuran database', fmtBytes(j.db_bytes) + ' dari 500 MB (paket gratis)');
       row('Versi server', esc(j.version || '-'));
       if (o.sess && o.sess.expires_at) row('Sesi login berakhir', esc(fmtT(o.sess.expires_at * 1000)));
@@ -1352,18 +1341,18 @@ function bmMain(REAL){
       $('lgList').innerHTML = rows.length ? rows.map(function(x){
         if (lgKind === 'login') return '<div class="lg"><b>' + uu(x.email) + '</b> · ' + uu(x.device) + '<small>masuk ' + esc(fmtT(x.logged_at)) + ' · aktif ' + esc(fmtT(x.last_seen)) + ' · IP ' + esc(x.ip || '-') + '</small><code>' + esc(JSON.stringify(x.device_info || {}).slice(0, 400)) + '</code></div>';
         return '<div class="lg"><b>' + uu(x.actor_email) + '</b> · ' + esc(x.kind) + '<small>' + esc(fmtT(x.created_at)) + '</small>' + uu(x.detail) + '</div>';
-      }).join('') : '<div class="empty">Tidak ada data untuk filter ini.</div>';
+      }).join('') : '<div class="empty">Tidak ada data yang sesuai dengan penyaring ini.</div>';
     }).catch(function(e){ $('lgList').innerHTML = '<div class="empty warn">Gagal: ' + esc(T(String(e && e.message || e))) + '</div>'; })
       .then(function(){ btn.disabled = false; });
   });
   $('lgCopy').addEventListener('click', function(){
-    if (!lgText) return toast('Belum ada hasil');
+    if (!lgText) return toast('Belum ada hasil yang dapat disalin');
     try { navigator.clipboard.writeText(lgText).then(function(){ toast('Hasil disalin'); }, function(){ toast('Gagal menyalin'); }); } catch (e) { toast('Gagal menyalin'); }
   });
 
   var popI = 0, POP = [
     { kind: 'update', title: 'Uji popup · Update', message: 'Ini contoh tampilan popup. Tidak disimpan dan tidak dikirim ke siapa pun.', version: '0.0.0' },
-    { kind: 'fix', title: 'Uji popup · Perbaikan', message: 'Contoh popup perbaikan.\nBaris kedua untuk menguji teks panjang yang turun ke bawah.' },
+    { kind: 'fix', title: 'Uji popup · Perbaikan', message: 'Contoh popup perbaikan.\nBaris kedua digunakan untuk menguji teks yang panjang.' },
     { kind: 'info', title: 'Uji popup · Info', message: 'Contoh popup info.' }
   ];
   function testPopup(){
@@ -1643,7 +1632,7 @@ function bmMain(REAL){
       }).then(function(){
         var lg = null;   /* pengumuman tidak dicatat di Aktivitas */
         f = newForm(); renderForm();
-        toast(status === 'aktif' ? (pubAt ? 'Dijadwalkan terbit ' + fmtT(pubAt) + '. Popup muncul di Dashboard setelah waktu itu.' : 'Diterbitkan. Muncul sebagai popup sekali di Dashboard, termasuk untuk Anda.') : 'Draf disimpan');
+        toast(status === 'aktif' ? (pubAt ? 'Dijadwalkan terbit pada ' + fmtT(pubAt) + '. Popup akan muncul di Dashboard setelah waktu tersebut.' : 'Diterbitkan. Muncul sebagai popup sekali di Dashboard, termasuk untuk Anda.') : 'Draf disimpan');
         return lg;
       }).catch(function(e){ toast('Gagal menyimpan: ' + T(String(e && e.message || e))); }).then(function(){ busy = false; return refresh(); });
       return;
