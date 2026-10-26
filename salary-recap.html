@@ -404,28 +404,38 @@
 
   var diagBusy = false;
   function showUrlProblem() {
-    $('bannerMsg').innerHTML = '<b>Google Drive tidak bisa dijangkau.</b><br>Memeriksa penyebabnya...';
+    $('bannerMsg').innerHTML = '<b>Google Drive tidak bisa dijangkau.</b><br>Menjalankan diagnosa...';
     $('setupBanner').classList.add('show');
     if (diagBusy) return;
     diagBusy = true;
     (async function () {
-      var url = scriptUrl(), msg;
+      var url = scriptUrl(), L = [];
+      var er = function (e) { return (e && e.name ? e.name : 'Error') + ': ' + (e && e.message ? e.message : String(e)); };
+      var cut = function (t) { t = String(t == null ? '' : t).replace(/\s+/g, ' '); return t.length > 120 ? t.slice(0, 120) + '…' : t; };
       try {
-        if (!url) throw new Error('nourl');
-        // no-cors: kalau ini lolos, jaringan dan CSP aman; yang bermasalah adalah akses/CORS Google
-        await fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit' });
-        // lolos -> coba GET biasa untuk melihat apakah Google mengirim data publik
-        var okPublic = false;
-        try { var r = await fetch(url, { cache: 'no-store', credentials: 'omit' }); var t = await r.text(); okPublic = /"ok"\s*:\s*true/.test(t); } catch (e) {}
-        msg = okPublic
-          ? '<b>URL bisa dijangkau dari halaman ini.</b><br>Masalah ada di permintaan upload/daftar. Muat ulang halaman, lalu coba lagi. Kalau tetap gagal, kirim pesan error ini ke pengembang: "GET publik OK, POST gagal".'
-          : '<b>Akses deployment belum publik.</b><br>Google meminta login, jadi halaman tidak bisa memakainya. Di Apps Script: <b>Terapkan → Kelola deployment → ✏ → Yang memiliki akses: Siapa saja → Versi baru → Terapkan</b>. Lalu tes URL <code>/exec</code> di <b>tab penyamaran</b> (harus muncul {"ok":true...} tanpa login).';
-      } catch (e) {
-        msg = !url
-          ? '<b>URL belum diatur.</b><br>Tempel URL Web App (berakhiran /exec) di bawah ini.'
-          : '<b>Koneksi ke Google diblokir dari halaman ini.</b><br>Penyebab paling umum: service worker dashboard (<code>/sw.js</code>) mencegat permintaan ke Google. Tambahkan <code>if (new URL(event.request.url).origin !== self.location.origin) return;</code> di baris pertama listener <code>fetch</code> pada <code>sw.js</code>, lalu naikkan versi cache. Penyebab lain: aturan CSP <code>connect-src</code> di <code>vercel.json</code>, atau pemblokir iklan/VPN.';
-      }
-      $('bannerMsg').innerHTML = msg;
+        L.push('URL: ' + (url ? url.slice(0, 48) + '…' + url.slice(-12) : '(kosong)'));
+        L.push('Service worker mengontrol halaman: ' + (navigator.serviceWorker && navigator.serviceWorker.controller ? 'YA' : 'tidak'));
+        try {
+          var h = await fetch(location.pathname, { cache: 'no-store' });
+          var csp = h.headers.get('content-security-policy');
+          L.push('CSP header halaman: ' + (csp ? cut(csp) : 'tidak ada'));
+        } catch (e) { L.push('Cek CSP gagal: ' + er(e)); }
+        var meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+        L.push('CSP meta: ' + (meta ? cut(meta.content) : 'tidak ada'));
+        if (url) {
+          try {
+            var r1 = await fetch(url + '?t=' + Date.now(), { cache: 'no-store', credentials: 'omit' });
+            L.push('GET (cors): HTTP ' + r1.status + ' → ' + cut(await r1.text()));
+          } catch (e) { L.push('GET (cors) GAGAL: ' + er(e)); }
+          try {
+            var r2 = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'years', token: 'x' }), credentials: 'omit' });
+            L.push('POST (cors): HTTP ' + r2.status + ' → ' + cut(await r2.text()));
+          } catch (e) { L.push('POST (cors) GAGAL: ' + er(e)); }
+          try { await fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit' }); L.push('GET (no-cors): lolos'); }
+          catch (e) { L.push('GET (no-cors) GAGAL: ' + er(e)); }
+        }
+      } catch (e) { L.push('Diagnosa error: ' + er(e)); }
+      $('bannerMsg').innerHTML = '<b>Diagnosa koneksi</b> — kirim screenshot kotak ini ke pengembang:<pre style="white-space:pre-wrap;word-break:break-word;font-size:11px;line-height:1.5;margin-top:8px;user-select:text;-webkit-user-select:text">' + esc(L.join('\n')) + '</pre>';
       diagBusy = false;
     })();
   }
