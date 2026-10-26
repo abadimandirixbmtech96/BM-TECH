@@ -557,7 +557,8 @@
     }).join('');
     var ready = state.queue.filter(function (q) { return q.status === 'wait'; }).length;
     $('btnUpload').disabled = state.uploading || ready === 0;
-    $('btnUploadText').textContent = ready > 1 ? 'Simpan ' + ready + ' File ke Google Drive' : 'Simpan ke Google Drive';
+    var bt = $('btnUploadText');
+    if (bt) bt.textContent = ready > 1 ? 'Simpan ' + ready + ' File ke Google Drive' : 'Simpan ke Google Drive';
   }
   function updateItem(q) {
     var el = document.querySelector('.qi[data-id="' + q.id + '"]');
