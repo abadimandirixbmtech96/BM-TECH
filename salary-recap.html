@@ -402,9 +402,32 @@
     return { year: a.getFullYear(), month: a.getMonth() + 1, week: Math.floor((a.getDate() - 1) / 7) + 1 };
   }
 
+  var diagBusy = false;
   function showUrlProblem() {
-    $('bannerMsg').innerHTML = '<b>Google Drive tidak bisa dijangkau.</b><br>URL Web App kemungkinan salah salin atau akses deployment belum "Anyone". Di Apps Script: <b>Deploy → Manage deployments</b>, ketuk <b>Salin</b> pada Web app URL, lalu tempel di bawah ini (jangan diketik ulang).';
+    $('bannerMsg').innerHTML = '<b>Google Drive tidak bisa dijangkau.</b><br>Memeriksa penyebabnya...';
     $('setupBanner').classList.add('show');
+    if (diagBusy) return;
+    diagBusy = true;
+    (async function () {
+      var url = scriptUrl(), msg;
+      try {
+        if (!url) throw new Error('nourl');
+        // no-cors: kalau ini lolos, jaringan dan CSP aman; yang bermasalah adalah akses/CORS Google
+        await fetch(url, { mode: 'no-cors', cache: 'no-store', credentials: 'omit' });
+        // lolos -> coba GET biasa untuk melihat apakah Google mengirim data publik
+        var okPublic = false;
+        try { var r = await fetch(url, { cache: 'no-store', credentials: 'omit' }); var t = await r.text(); okPublic = /"ok"\s*:\s*true/.test(t); } catch (e) {}
+        msg = okPublic
+          ? '<b>URL bisa dijangkau dari halaman ini.</b><br>Masalah ada di permintaan upload/daftar. Muat ulang halaman, lalu coba lagi. Kalau tetap gagal, kirim pesan error ini ke pengembang: "GET publik OK, POST gagal".'
+          : '<b>Akses deployment belum publik.</b><br>Google meminta login, jadi halaman tidak bisa memakainya. Di Apps Script: <b>Terapkan → Kelola deployment → ✏ → Yang memiliki akses: Siapa saja → Versi baru → Terapkan</b>. Lalu tes URL <code>/exec</code> di <b>tab penyamaran</b> (harus muncul {"ok":true...} tanpa login).';
+      } catch (e) {
+        msg = !url
+          ? '<b>URL belum diatur.</b><br>Tempel URL Web App (berakhiran /exec) di bawah ini.'
+          : '<b>Koneksi ke Google diblokir dari halaman ini.</b><br>Penyebab paling umum: service worker dashboard (<code>/sw.js</code>) mencegat permintaan ke Google. Tambahkan <code>if (new URL(event.request.url).origin !== self.location.origin) return;</code> di baris pertama listener <code>fetch</code> pada <code>sw.js</code>, lalu naikkan versi cache. Penyebab lain: aturan CSP <code>connect-src</code> di <code>vercel.json</code>, atau pemblokir iklan/VPN.';
+      }
+      $('bannerMsg').innerHTML = msg;
+      diagBusy = false;
+    })();
   }
   /* ================= API (Google Apps Script) ================= */
   async function getToken() {
