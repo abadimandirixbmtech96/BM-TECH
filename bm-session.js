@@ -298,20 +298,39 @@
   var PERM_KEYS = ['tulis', 'hapus', 'pulih', 'ekspor'];
   var PERM_CACHE = 'bm-perms';
 
+  function permCss() {
+    return 'body.bm-no-hapus #btnSelDelete,body.bm-no-hapus #btnDetailDelete,body.bm-no-hapus .folder-menu-item[data-menu-action="delete"]{display:none !important}' +
+      'body.bm-no-tulis #btnComposePencil,body.bm-no-tulis #btnSelPin,body.bm-no-tulis #btnSelMove,body.bm-no-tulis #btnCreateCategory,body.bm-no-tulis #btnNoteDetailEdit,body.bm-no-tulis .folder-menu-item[data-menu-action="edit"]{display:none !important}' +
+      'body.bm-no-pulih #btnOpenTrash,body.bm-no-pulih #btnTrashEmptyAll,body.bm-no-pulih #btnEmptyTrash,body.bm-no-pulih [data-act="restore"],body.bm-no-pulih [data-act="purge"]{display:none !important}' +
+      'body.bm-no-ekspor #btnShareExportCsv,body.bm-no-ekspor #rowBackupAll{display:none !important}';
+  }
+
   function injectPermCss() {
     if (document.getElementById('bms-perm-css')) return;
     var st = document.createElement('style');
     st.id = 'bms-perm-css';
-    st.textContent =
-      'body.bm-no-hapus #btnSelDelete,body.bm-no-hapus .folder-menu-item[data-menu-action="delete"]{display:none !important}' +
-      'body.bm-no-tulis #btnComposePencil,body.bm-no-tulis #btnSelPin,body.bm-no-tulis #btnSelMove,body.bm-no-tulis #btnCreateCategory,body.bm-no-tulis #btnNoteDetailEdit,body.bm-no-tulis .folder-menu-item[data-menu-action="edit"]{display:none !important}' +
-      'body.bm-no-pulih #btnOpenTrash,body.bm-no-pulih #btnTrashEmptyAll{display:none !important}' +
-      'body.bm-no-ekspor #btnShareExportCsv,body.bm-no-ekspor #rowBackupAll{display:none !important}';
+    st.textContent = permCss();
     document.head.appendChild(st);
+  }
+
+  /* Editor (iframe satu origin): terapkan aturan izin yang sama ke dalam dokumennya */
+  function applyToFrame(w) {
+    try {
+      var d = w && w.document;
+      if (!d || !d.body || !d.head) return;
+      if (!d.getElementById('bms-perm-css')) {
+        var st = d.createElement('style');
+        st.id = 'bms-perm-css';
+        st.textContent = permCss();
+        d.head.appendChild(st);
+      }
+      PERM_KEYS.forEach(function (k) { d.body.classList.toggle('bm-no-' + k, document.body.classList.contains('bm-no-' + k)); });
+    } catch (e) { /* beda origin / belum siap: abaikan */ }
   }
 
   function setPermClasses(p) {
     PERM_KEYS.forEach(function (k) { document.body.classList.toggle('bm-no-' + k, p[k] === false); });
+    try { var ef = document.getElementById('editorFrame'); if (ef && ef.contentWindow) applyToFrame(ef.contentWindow); } catch (e) {}
   }
 
   async function applyPerms(client, email) {
@@ -356,5 +375,5 @@
   /* pratinjau popup tanpa menyimpan apa pun (alat Developer) */
   function preview(a) { try { showCard(a, function () {}); } catch (e) {} }
 
-  window.BMSession = { preview: preview, afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName, collectInfo: collectInfo, parseUA: parseUA };
+  window.BMSession = { applyToFrame: applyToFrame, preview: preview, afterAdminReady: afterAdminReady, track: track, stop: stop, deviceName: deviceName, collectInfo: collectInfo, parseUA: parseUA };
 })();
