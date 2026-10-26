@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v14'; // dinaikkan: Profil jadi halaman utama setelah login (+ bm-session.js)
+const CACHE_NAME = 'bmtech-shell-v15'; // dinaikkan: Rekap Gaji (Google Drive) tidak boleh dicegat service worker
 
 const APP_SHELL = [
   '/my-profile-bm.html',
@@ -61,11 +61,24 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
+  // Hanya GET yang boleh ditangani service worker ini. POST/PUT/DELETE (upload, API)
+  // tidak boleh dicache dan harus langsung ke server asli.
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   // JANGAN sentuh request ke Supabase (API/auth/realtime/storage) sama
   // sekali — itu harus selalu langsung ke server asli atau gagal dengan
   // benar, biar logic offline-draft di aplikasi yang nanganin, bukan
   // service worker ini. Kalau ini dicache, bisa bahaya (data basi/salah).
   if (url.hostname.endsWith('.supabase.co')) {
+    return;
+  }
+
+  // JANGAN sentuh Google Apps Script (Rekap Gaji -> Google Drive). Respons API
+  // ini tidak boleh dicache, dan pengalihan ke googleusercontent.com harus
+  // ditangani langsung oleh browser.
+  if (url.hostname === 'script.google.com' || url.hostname.endsWith('.googleusercontent.com')) {
     return;
   }
 
