@@ -6643,6 +6643,7 @@
     editorModal.classList.remove('ready');
     editorFrame.onload = function () {
       if (!frameIsBlank(editorFrame)) editorModal.classList.add('ready');
+      try { if (window.BMSession && !frameIsBlank(editorFrame)) BMSession.applyToFrame(editorFrame.contentWindow); } catch (e) {}   // sembunyikan tombol hapus/Sampah sesuai izin role
     };
     editorReadyTimer = setTimeout(() => editorModal.classList.add('ready'), 6000);
     navigateFrame(editorFrame, url);
