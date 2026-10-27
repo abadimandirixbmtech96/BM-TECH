@@ -523,7 +523,7 @@
   function openSheet() {
     if (state.sheetOpen) return;
     state.sheetOpen = true;
-    buildSelectors(); renderWeeks(); renderQueue();
+    buildSelectors(); fixWeek(); renderWeeks(); renderQueue();
     $('sheetBg').classList.add('open');
     document.body.classList.add('sheet-open');
   }
@@ -545,19 +545,39 @@
     $('selMonth').value = state.month;
     $('selYear').value = state.year;
   }
-  function renderWeeks() {
-    var html = '';
+  // Sama dengan dashboard: Pekan N = Kamis ke-N di bulan itu. Hanya pekan yang sudah dimulai yang
+  // bisa dipilih, jadi bulan dengan 4 Kamis hanya menampilkan Pekan 1-4, dan Pekan 5 baru muncul
+  // saat Kamis kelima tiba (bulan yang memang punya 5 Kamis).
+  function availableWeeks(year, month) {
+    var today = new Date(now.getFullYear(), now.getMonth(), now.getDate()), out = [];
     for (var n = 1; n <= 5; n++) {
-      var ok = !!nthThursday(state.year, state.month, n);
-      html += '<button type="button" class="wk' + (state.week === n ? ' on' : '') + '" data-w="' + n + '"' + (ok ? '' : ' disabled') + '><small>Pekan</small>' + n + '</button>';
+      var s = nthThursday(year, month, n);
+      if (s && s <= today) out.push(n);
     }
-    $('weeks').innerHTML = html;
+    return out;
+  }
+  function renderWeeks() {
+    var av = availableWeeks(state.year, state.month);
+    var box = $('weeks');
+    if (!av.length) {
+      box.innerHTML = '';
+      $('wkRange').innerHTML = ICON.cal + 'Belum ada pekan yang dimulai di bulan ini.';
+      return;
+    }
+    box.style.gridTemplateColumns = 'repeat(' + av.length + ', 1fr)';
+    box.innerHTML = av.map(function (n) {
+      return '<button type="button" class="wk' + (state.week === n ? ' on' : '') + '" data-w="' + n + '"><small>Pekan</small>' + n + '</button>';
+    }).join('');
     var r = weekRangeText(state.year, state.month, state.week);
     $('wkRange').innerHTML = r ? ICON.cal + esc(r) : '';
   }
-  function fixWeek() { if (!nthThursday(state.year, state.month, state.week)) state.week = 4; }
-  $('selMonth').addEventListener('change', function () { state.month = +this.value; fixWeek(); renderWeeks(); });
-  $('selYear').addEventListener('change', function () { state.year = +this.value; fixWeek(); renderWeeks(); });
+  function fixWeek() {
+    var av = availableWeeks(state.year, state.month);
+    if (!av.length) state.week = 0;
+    else if (av.indexOf(state.week) === -1) state.week = av[av.length - 1];
+  }
+  $('selMonth').addEventListener('change', function () { state.month = +this.value; fixWeek(); renderWeeks(); renderQueue(); });
+  $('selYear').addEventListener('change', function () { state.year = +this.value; fixWeek(); renderWeeks(); renderQueue(); });
   $('weeks').addEventListener('click', function (e) {
     var b = e.target.closest('.wk');
     if (!b || b.disabled) return;
@@ -592,7 +612,7 @@
     var ready = state.queue.filter(function (q) { return q.status === 'wait'; }).length;
     var btn = $('btnUpload'), txt = $('btnUploadText');
     btn.classList.toggle('busy', state.uploading);
-    btn.disabled = state.uploading || ready === 0;
+    btn.disabled = state.uploading || ready === 0 || !state.week;
     if (txt) txt.textContent = state.uploading ? 'Mengunggah...' : (ready > 1 ? 'Simpan ' + ready + ' File ke Google Drive' : 'Simpan ke Google Drive');
   }
   function updateItem(q) {
@@ -620,6 +640,7 @@
   $('btnUpload').addEventListener('click', async function () {
     if (state.uploading) return;
     if (!scriptUrl()) { closeSheet(); noticeNoUrl(); toast('Hubungkan Google Drive dulu', true); return; }
+    if (!state.week) { toast('Belum ada pekan yang bisa dipilih di bulan ini', true); return; }
     var targets = state.queue.filter(function (q) { return q.status === 'wait'; });
     if (!targets.length) return;
     state.uploading = true;
