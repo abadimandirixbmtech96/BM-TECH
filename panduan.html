@@ -29,6 +29,13 @@
     --accent-soft:rgba(var(--accent-rgb),0.18);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family:var(--app-font); }
+  /* Tanpa blok teks biru, menu tekan-lama, dan cincin fokus saat disentuh */
+  html, body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
+  *::selection{ background:transparent; color:inherit; }
+  .search, .search::selection{ -webkit-user-select:text; user-select:text; }
+  .search::selection{ background:rgba(var(--accent-rgb),0.35); }
+  a, button, summary, input{ outline:none; }
+  a, img{ -webkit-user-drag:none; -webkit-touch-callout:none; }
   body.font-bold-mode *{ font-weight:700 !important; }
   html{ scroll-behavior:smooth; scroll-padding-top:150px; }
   body{ margin:0; background:var(--paper); color:var(--ink); line-height:1.6; font-size:15px; -webkit-text-size-adjust:100%; }
@@ -67,11 +74,6 @@
   }
   .intro b{ font-size:16px; font-weight:800; }
   .intro p{ margin:6px 0 0; font-size:14px; color:var(--ink); }
-  .tools{ display:flex; gap:8px; margin:6px 0 12px; }
-  .tool{
-    flex:1; padding:10px; border-radius:12px; border:2px solid var(--line); background:var(--paper-alt);
-    font-size:13px; font-weight:700; cursor:pointer;
-  }
   #hitCount{ font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:0 2px 10px; min-height:18px; }
 
   /* ---------- Bagian (accordion) ---------- */
@@ -160,7 +162,7 @@
   @keyframes markPulse{ 0%{ background:rgba(var(--accent-rgb),0.9); } 100%{ background:rgba(var(--accent-rgb),0.45); } }
   .head{ animation:dropIn .6s var(--ease) both; }
   .intro{ animation:rise .7s var(--ease) .12s both; }
-  .tools, #hitCount{ animation:rise .7s var(--ease) .2s both; }
+  #hitCount{ animation:rise .7s var(--ease) .2s both; }
   .progress{ position:absolute; left:0; right:0; bottom:-1px; height:3px; background:var(--accent); transform-origin:0 50%; transform:scaleX(0); will-change:transform; }
 
   /* Bagian muncul halus saat di-scroll (hanya bila JS aktif) */
@@ -168,8 +170,8 @@
   .js details.sec.in{ opacity:1; transform:none; transition:opacity .7s ease var(--d,0ms), transform .8s var(--ease) var(--d,0ms); }
 
   /* Tekan tombol terasa kenyal */
-  .tool, .chip, .back-btn, .search{ transition:transform .3s var(--spring), background .25s ease, border-color .25s ease, box-shadow .25s ease, color .25s ease; }
-  .tool:active, .chip:active, .back-btn:active{ transform:scale(.94); }
+  .chip, .back-btn, .search{ transition:transform .3s var(--spring), background .25s ease, border-color .25s ease, box-shadow .25s ease, color .25s ease; }
+  .chip:active, .back-btn:active{ transform:scale(.94); }
   details.sec > summary{ transition:background .25s ease, transform .25s var(--spring); }
   details.sec > summary:active{ transform:scale(.985); background:var(--accent-soft); }
   .search:focus{ box-shadow:0 0 0 4px rgba(var(--accent-rgb),0.22); }
@@ -224,10 +226,6 @@
     <p>Mencatat tiap barang yang <span class="mk in">masuk</span>, yang <span class="mk out">dibawa pulang</span>, dan yang <span class="mk stay">ditinggal</span> oleh customer, lengkap dengan harga dan metode bayarnya. Editor ikut menandai mana barang yang sudah diambil dan mana yang sudah dibayar.</p>
   </div>
 
-  <div class="tools">
-    <button class="tool" id="openAll">Buka semua</button>
-    <button class="tool" id="closeAll">Tutup semua</button>
-  </div>
   <p id="hitCount"></p>
 
   <!-- 1 -->
@@ -650,6 +648,11 @@
   applyTheme();
   window.addEventListener('storage', applyTheme);
 
+  /* Matikan klik kanan / menu tekan-lama dan pemilihan teks (kecuali kolom cari) */
+  document.addEventListener('contextmenu', function (e) { if (!(e.target.closest && e.target.closest('input, textarea'))) e.preventDefault(); });
+  document.addEventListener('selectstart', function (e) { if (!(e.target.closest && e.target.closest('input, textarea'))) e.preventDefault(); });
+  document.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
   /* Tombol kembali: disembunyikan kalau dibuka di dalam Editor (overlay) */
   if (window.self !== window.top) document.getElementById('backBtn').style.display = 'none';
 
@@ -717,13 +720,6 @@
     if (t && t.tagName === 'DETAILS' && !isOpenTarget(t)) animateDet(t, true);
   });
   if (location.hash) { var h0 = document.querySelector(location.hash); if (h0 && h0.tagName === 'DETAILS') forceOpen(h0); }
-
-  document.getElementById('openAll').addEventListener('click', function () {
-    var k = 0; secs.forEach(function (s) { if (s.classList.contains('hidden') || isOpenTarget(s)) return; animateDet(s, true, k++ * 70); });
-  });
-  document.getElementById('closeAll').addEventListener('click', function () {
-    var k = 0; secs.forEach(function (s) { if (s.classList.contains('hidden') || !isOpenTarget(s)) return; animateDet(s, false, k++ * 40); });
-  });
 
   /* Bagian muncul halus saat di-scroll */
   var showAll = function () { secs.forEach(function (s) { s.classList.add('in'); }); };
