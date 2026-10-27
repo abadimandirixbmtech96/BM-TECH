@@ -1,6 +1,7 @@
 /*!
  * bm-theme.js — tema per-device untuk BM-TECH (warna sistem, font, font custom)
- * Dipakai oleh dashboard-admin.html dan system-management.html.
+ * Dipakai oleh dashboard-admin, system-management, my-profile-bm, analisa, daftar-nomor-hp, folder-baru,
+ * salary-recap, dan semua halaman editor (editor-data-*, editor-folder).
  * Semua pengaturan tersimpan lokal di perangkat: localStorage untuk pilihan,
  * IndexedDB untuk file font custom. Tidak ada yang dikirim ke server.
  *

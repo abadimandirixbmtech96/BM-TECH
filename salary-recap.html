@@ -20,8 +20,8 @@
     --surface2: #1A1A1D;
     --border: rgba(255,255,255,.08);
     --accent: #F0A529;
-    --accent-glow: rgba(240,165,41,.26);
-    --accent-soft: rgba(240,165,41,.14);
+    --accent-glow: rgba(var(--accent-rgb, 240, 165, 41), .26);
+    --accent-soft: rgba(var(--accent-rgb, 240, 165, 41), .14);
     --on-accent: #1C1B19;
     --text: #fff;
     --text2: #8A8A90;
@@ -53,6 +53,14 @@
     --sheet: rgba(255,255,255,.96);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
+  body.font-bold-mode * { font-weight: 700 !important; }
   button { touch-action: manipulation; cursor: pointer; border: none; background: none; color: inherit; }
   button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   html, body { height: 100%; }
@@ -61,7 +69,7 @@
 
   .orbs { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .orbs i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .5; }
-  .orbs i:nth-child(1) { width: 300px; height: 300px; background: rgba(240,165,41,.35); top: -90px; right: -80px; }
+  .orbs i:nth-child(1) { width: 300px; height: 300px; background: rgba(var(--accent-rgb, 240, 165, 41), .35); top: -90px; right: -80px; }
   .orbs i:nth-child(2) { width: 280px; height: 280px; background: rgba(91,155,230,.26); bottom: 14%; left: -110px; }
   .orbs i:nth-child(3) { width: 220px; height: 220px; background: rgba(61,214,140,.16); bottom: -60px; right: -40px; }
   body.theme-light .orbs i { opacity: .32; }
@@ -253,6 +261,10 @@
   }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
+<script>window.__bmTC=(document.querySelector('meta[name="theme-color"]')||{}).content;</script>
+<script src="/bm-theme.js"></script>
+<script src="/bm-lang.js"></script>
+<script>(function(){var m=document.querySelector('meta[name="theme-color"]');if(m&&window.__bmTC)m.content=window.__bmTC;})();</script>
 </head>
 <body>
 
@@ -388,6 +400,13 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); };
 
   try { if (localStorage.getItem('bm-theme') === 'light') document.body.classList.add('theme-light'); } catch (e) {}
+  try {
+    var FONT_CLASS = { serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis', kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded', custom: 'font-custom' };
+    var savedFont = localStorage.getItem('bm-font');
+    if (savedFont && FONT_CLASS[savedFont]) document.body.classList.add(FONT_CLASS[savedFont]);
+    if (localStorage.getItem('bm-font-bold') === 'on') document.body.classList.add('font-bold-mode');
+    if (savedFont === 'custom' && window.BMTheme) window.BMTheme.ensureCustom();
+  } catch (e) {}
 
   /* ================= STATE ================= */
   var now = new Date();
@@ -879,7 +898,7 @@
       $('guardText').textContent = 'Koneksi lambat, belum bisa memverifikasi.';
       var b = document.createElement('button');
       b.textContent = 'Coba lagi';
-      b.style.cssText = 'margin-top:6px;padding:10px 22px;border-radius:12px;background:#F0A529;color:#000;font-weight:700;font-size:14px';
+      b.style.cssText = 'margin-top:6px;padding:10px 22px;border-radius:12px;background:var(--accent);color:var(--on-accent,#000);font-weight:700;font-size:14px';
       b.onclick = function () { location.reload(); };
       $('guard').appendChild(b);
       return;

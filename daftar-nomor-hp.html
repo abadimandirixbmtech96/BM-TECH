@@ -55,6 +55,7 @@
   body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
   body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
   body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
   body.font-bold-mode * { font-weight: 700 !important; }
 
   * {
@@ -268,7 +269,7 @@
   }
 
   @media (hover: hover) {
-    .row:hover { border-color: rgba(240, 165, 41, 0.45); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); transform: translateY(-2px); }
+    .row:hover { border-color: rgba(var(--accent-rgb, 240, 165, 41), 0.45); box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); transform: translateY(-2px); }
     .copy-btn:hover { color: var(--accent-yellow); }
   }
   .row:active { transform: scale(0.98); }
@@ -479,6 +480,10 @@
     .list > .state { grid-column: 1 / -1; }
   }
 </style>
+<script>window.__bmTC=(document.querySelector('meta[name="theme-color"]')||{}).content;</script>
+<script src="/bm-theme.js"></script>
+<script src="/bm-lang.js"></script>
+<script>(function(){var m=document.querySelector('meta[name="theme-color"]');if(m&&window.__bmTC)m.content=window.__bmTC;})();</script>
 </head>
 <body>
 <script>
@@ -486,12 +491,13 @@
     try {
       var FONT_CLASS_BY_ID = {
         serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis',
-        kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded'
+        kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded', custom: 'font-custom'
       };
       if (localStorage.getItem('bm-theme') === 'light') document.body.classList.add('theme-light');
       var f = localStorage.getItem('bm-font');
       if (f && FONT_CLASS_BY_ID[f]) document.body.classList.add(FONT_CLASS_BY_ID[f]);
       if (localStorage.getItem('bm-font-bold') === 'on') document.body.classList.add('font-bold-mode');
+      if (f === 'custom' && window.BMTheme) window.BMTheme.ensureCustom();
     } catch (e) {}
   })();
 </script>

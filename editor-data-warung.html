@@ -20,6 +20,14 @@
 <style>
   :root{ --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
   *{ font-family:var(--app-font); }
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
+  body.font-bold-mode * { font-weight: 700 !important; }
 
   :root{
     --paper:#F6F1E7;
@@ -31,9 +39,12 @@
     --glass-bg:rgba(255,255,255,0.6);
     --glass-border:rgba(255,255,255,0.7);
     --glass-shadow:0 8px 32px rgba(80,70,50,0.14);
-    --accent:#C9932F;
-    --accent-ink:#5A430F;
-    --accent-soft:rgba(201,147,47,0.14);
+    --accent:#F0A529;
+    --accent-rgb:240, 165, 41;
+    --accent-ink:#6C4A12;
+    --accent-ink-rgb:108, 74, 18;
+    --on-accent:#1C1B19;
+    --accent-soft:rgba(var(--accent-rgb),0.14);
     --danger:#C24444;
     --danger-soft:rgba(194,68,68,0.12);
     --radius-pill:999px;
@@ -62,14 +73,14 @@
     --glass-bg:rgba(30,28,23,0.6);
     --glass-border:rgba(255,255,255,0.09);
     --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
-    --accent-soft:rgba(201,147,47,0.18);
+    --accent-soft:rgba(var(--accent-rgb),0.18);
     --danger-soft:rgba(194,68,68,0.18);
     --skeleton-a:rgba(255,255,255,0.06);
     --skeleton-b:rgba(255,255,255,0.13);
   }
 
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  ::selection{ background:rgba(201,147,47,0.35); color:inherit; }
+  ::selection{ background:rgba(var(--accent-rgb),0.35); color:inherit; }
   button{ font:inherit; }
   html,body{height:100%;}
   body{
@@ -488,8 +499,57 @@
   });
 </script>
 
+<script src="/bm-theme.js"></script>
+<script src="/bm-lang.js"></script>
 </head>
 <body>
+<script>
+  /* Sinkron dengan System Management & dashboard-admin: tema, warna sistem, font, teks tebal */
+  (function () {
+    var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
+    function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+    function applyAccent() {
+      var B = window.BMTheme, hex;
+      if (!B || !B.getAccent) return;
+      try { hex = B.getAccent(); } catch (e) { return; }
+      if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return;
+      var r = parseInt(hex.substr(1, 2), 16), g = parseInt(hex.substr(3, 2), 16), b = parseInt(hex.substr(5, 2), 16);
+      var ir = Math.round(r * 0.45), ig = Math.round(g * 0.45), ib = Math.round(b * 0.45);
+      var st = document.documentElement.style;
+      st.setProperty('--accent', hex);
+      st.setProperty('--accent-rgb', r + ', ' + g + ', ' + b);
+      st.setProperty('--accent-ink', 'rgb(' + ir + ', ' + ig + ', ' + ib + ')');
+      st.setProperty('--accent-ink-rgb', ir + ', ' + ig + ', ' + ib);
+      var dark = '#1C1B19';
+      var onA = (B.contrast && B.contrast(hex, dark) < B.contrast(hex, '#FFFFFF')) ? '#FFFFFF' : dark;
+      st.setProperty('--on-accent', onA);
+    }
+
+    function applyAppearance() {
+      var cl = document.body.classList;
+      var isDark = ls('bm-theme') !== 'light';
+      cl.toggle('surface-dark', isDark);
+      var meta = document.getElementById('themeColorMeta');
+      if (meta) meta.setAttribute('content', isDark ? '#15140F' : '#F6F1E7');
+
+      Object.keys(FONT_CLASS).forEach(function (k) { cl.remove(FONT_CLASS[k]); });
+      var f = ls('bm-font');
+      if (f && FONT_CLASS[f]) cl.add(FONT_CLASS[f]);
+      cl.toggle('font-bold-mode', ls('bm-font-bold') === 'on');
+
+      applyAccent();
+      if (f === 'custom' && window.BMTheme && window.BMTheme.ensureCustom) {
+        try { window.BMTheme.ensureCustom(); } catch (e) {}
+      }
+    }
+
+    window.bmApplyAppearance = applyAppearance;
+    applyAppearance();
+    window.addEventListener('storage', function (e) { if (!e.key || e.key.indexOf('bm-') === 0) applyAppearance(); });
+    window.addEventListener('pageshow', applyAppearance);
+  })();
+</script>
 <div class="app">
 
   <!-- ============ HOME ============ -->
@@ -645,9 +705,8 @@
       <button class="btn-secondary" id="btnOpenTrash" style="margin-top:10px;">Buka Sampah</button>
 
       <div class="section-label">Tema Tampilan</div>
-      <div class="theme-opt" data-theme="default"><b>Default</b><div class="dot"></div></div>
-      <div class="theme-opt" data-theme="light"><b>Light</b><div class="dot"></div></div>
-      <div class="theme-opt" data-theme="dark"><b>Dark</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="light"><b>Terang</b><div class="dot"></div></div>
+      <div class="theme-opt" data-theme="dark"><b>Gelap</b><div class="dot"></div></div>
     </div>
   </section>
 
@@ -1790,12 +1849,10 @@
     renderHome();
   });
 
-  function getStoredTheme(){ try { return localStorage.getItem('admdash_theme') || 'default'; } catch (e) { return 'default'; } }
-  function setStoredTheme(t){ try { localStorage.setItem('admdash_theme', t); } catch (e) {} }
-  function applyTheme(t){
-    document.body.classList.toggle('surface-dark', t === 'dark');
-    document.getElementById('themeColorMeta').setAttribute('content', t === 'dark' ? '#15140F' : '#F6F1E7');
-  }
+  // Tema mengikuti kunci 'bm-theme' yang sama dengan dashboard-admin (light / dark; kosong = dark)
+  function getStoredTheme(){ try { return localStorage.getItem('bm-theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; } }
+  function setStoredTheme(t){ try { localStorage.setItem('bm-theme', t === 'light' ? 'light' : 'dark'); } catch (e) {} }
+  function applyTheme(t){ window.bmApplyAppearance(); }
   function applyThemeUI(){
     const t = getStoredTheme();
     document.querySelectorAll('.theme-opt').forEach(el => el.classList.toggle('active', el.dataset.theme === t));
@@ -1809,6 +1866,7 @@
     });
   });
   applyTheme(getStoredTheme());
+  applyThemeUI();
 
   // =====================================================================
   // OVERLAY (modal & sheet) HELPERS
