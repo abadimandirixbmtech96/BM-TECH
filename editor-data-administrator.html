@@ -491,6 +491,22 @@
   .pk-badge.paid{ background:rgba(61,170,106,0.18); color:#2d8a55; }
   .pk-badge.part{ background:rgba(var(--accent-rgb),0.2); color:var(--accent-ink); }
   .pk-tag{ margin-left:8px; font-size:11px; font-weight:800; color:#2d8a55; }
+  .pk-tag.tg-stay{ color:#7a4cb8; }
+  .pk-tag.tg-out{ color:#b8620f; }
+  .pk-tag.tg-paid{ color:#1f7a47; }
+  .pk-tag.tg-unpaid{ color:#b03030; }
+  .pickup-ownpaid, .own-paid-edit{ display:flex; gap:10px; align-items:flex-start; margin-top:12px; font-size:13px; font-weight:700; line-height:1.4; cursor:pointer; }
+  .pickup-ownpaid input, .own-paid-edit input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
+  .led-item{ padding:9px 0; border-bottom:1px dashed rgba(128,128,128,0.35); }
+  .led-item:last-child{ border-bottom:none; }
+  .led-item b{ display:block; font-size:15px; font-weight:800; }
+  .led-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .led-tag{ font-size:12px; font-weight:800; padding:3px 10px; border-radius:999px; }
+  .led-tag.w-stay{ background:rgba(155,107,211,0.16); color:#7a4cb8; }
+  .led-tag.w-out{ background:rgba(232,131,42,0.16); color:#b8620f; }
+  .led-tag.w-done{ background:rgba(47,127,209,0.14); color:#1f65ad; }
+  .led-tag.p-ok{ background:rgba(45,138,85,0.16); color:#1f7a47; }
+  .led-tag.p-no{ background:rgba(200,60,60,0.13); color:#b03030; }
   .pickup-item{ display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; }
   .pickup-item input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
   .pickup-item b{ display:block; font-size:14px; font-weight:750; }
@@ -899,6 +915,7 @@
           <button type="button" class="pickup-apply" id="btnPickupApply">Ambil barang</button>
           <button type="button" class="pickup-apply alt" id="btnPickupPay">Bayar saja</button>
         </div>
+        <label class="pickup-ownpaid" id="pickupOwnPaidWrap" style="display:none;"><input type="checkbox" id="pickupOwnPaid"><span id="pickupOwnPaidTxt"></span></label>
         <div class="pickup-done" id="pickupDone"></div>
       </div>
 
@@ -1012,6 +1029,7 @@
           <label>Harga</label>
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
+          <label class="own-paid-edit" id="detOwnPaidWrap" style="display:none;"><input type="checkbox" id="detOwnPaid"><span>Harga ini juga melunasi barang yang ditinggal di baris ini</span></label>
         </div>
         <div class="detail-row">
           <label>Metode Bayar <span class="opt-tag" id="metodeTagDet"></span></label>
@@ -1020,6 +1038,10 @@
             <button type="button" class="metode-chip" data-metode="cash">💵 Cash</button>
             <button type="button" class="metode-chip" data-metode="transfer">🏦 Transfer</button>
           </div>
+        </div>
+        <div class="detail-row" id="detLedgerRow" style="display:none;">
+          <label>Rincian Barang <span class="opt-tag">(posisi &amp; pembayaran per barang)</span></label>
+          <div class="val" id="detLedgerView"></div>
         </div>
         <div class="detail-row" id="detLinkRow" style="display:none;">
           <label>Terhubung</label>
@@ -2509,7 +2531,7 @@
     let barang = expandJumlahBarang(document.getElementById('inputBarang').value).trim();
     if (pickupApplied.length) { // form pengambilan: nama barang yang diambil sudah tercatat di tanggal titipannya
       const known = new Set();
-      pickupApplied.forEach(g => g.c.items.forEach(i => known.add(i.key.replace(/#\d+$/, ''))));
+      pickupApplied.forEach(g => g.c.items.forEach(i => known.add(i.key.replace(/^out:/, '').replace(/#\d+$/, ''))));
       const cleaned = splitList(barang).filter(t => isDateToken(t) || !known.has(itemKey(t))).join(', ');
       if (cleaned) barang = cleaned;
     }
@@ -2547,6 +2569,7 @@
       pendingNewRecord.ambilDari = pickupLinks;
       const carryKeys = carryKeysIn(stokBarang, carryNamesFromApplied());
       if (carryKeys.length) pendingNewRecord.stokCarry = carryKeys;
+      if (document.getElementById('pickupOwnPaid').checked && !isHargaKosong(harga) && ownItemsInForm().length) pendingNewRecord.ownPaid = true;
     }
     document.getElementById('cfLinkRow').style.display = pickupLinks.length ? '' : 'none';
     document.getElementById('cfLink').textContent = pickupLinks.map(l => (l.mode === 'bayar' ? 'Bayar: ' : 'Ambil: ') + (l.label || 'barang') + ' (' + l.tgl + ')').join('; ');
@@ -2606,6 +2629,7 @@
     renderDetailBuktiView(r.bukti);
     setDetailView('detMetodeView', metodeText(r.metode, { cash: r.bayarCash, transfer: r.bayarTransfer }));
     renderLinkInfo(r);
+    renderLedger(r);
 
     exitEditMode();
     goView('detail');
@@ -2627,6 +2651,7 @@
     document.getElementById('detStokEdit').style.display = 'none';
     document.getElementById('detKetEdit').style.display = 'none';
     document.getElementById('detHargaEditWrap').style.display = 'none';
+    document.getElementById('detOwnPaidWrap').style.display = 'none';
     document.getElementById('detBuktiView').style.display = '';
     document.getElementById('detBuktiDropzone').style.display = 'none';
     document.getElementById('detMetodeView').style.display = '';
@@ -2666,6 +2691,9 @@
     document.getElementById('detStokEdit').value = r.stokBarang || '';
     document.getElementById('detKetEdit').value = r.keterangan || '';
     document.getElementById('detHargaEdit').value = hargaToInput(r.harga);
+    const ownN = (r.ambilDari && r.ambilDari.length) ? parseStokItems(r).items.filter(i => !i.carried).length : 0;
+    document.getElementById('detOwnPaidWrap').style.display = ownN ? 'flex' : 'none';
+    document.getElementById('detOwnPaid').checked = !!r.ownPaid;
     document.getElementById('detailActionsView').style.display = 'none';
     document.getElementById('detailActionsEdit').style.display = 'flex';
   });
@@ -2703,6 +2731,11 @@
     } else if (r.pickup) {
       if (!isCentangText(stokBarang)) delete r.pickup;
       else if (r.pickup.hargaAuto && !isCentangText(harga)) r.pickup.hargaAuto = false;
+    }
+    if (r.ambilDari && r.ambilDari.length) {
+      const wasOwn = !!r.ownPaid;
+      if (document.getElementById('detOwnPaid').checked && !isHargaKosong(harga)) r.ownPaid = true; else delete r.ownPaid;
+      if (wasOwn !== !!r.ownPaid && r.pickups) recomputeOrigin(r);
     }
     (r.ambilDari || []).forEach(l => verifyLinks.add(l)); // data pengambilan diedit -> cek ulang data titipan
     scheduleAutosave();
@@ -2821,7 +2854,18 @@
         if (carried) carry[key]--;
         return { key, name: i.name, done: i.done, carried };
       }));
-    return { whole: false, text, items };
+    // Barang yang DIBAWA PULANG di hari titip yang sama (Barang Keluar terisi, tapi masih ada sisa di Stok Barang).
+    // Pembayarannya dilacak sendiri; tidak ikut diberi tanda diambil karena memang sudah keluar.
+    let outItems = [];
+    const isLinkRow = Array.isArray(o.ambilDari) && o.ambilDari.length > 0;
+    if (!isLinkRow && items.length) {
+      const kl = String(o.barangKeluar == null ? '' : o.barangKeluar).trim();
+      if (kl && !isTidakAdaText(stripCentang(kl)) && !isBJWhole(kl)) {
+        outItems = withUniqueKeys(splitList(kl).map(stripCentang).filter(n => n && !isTidakAdaText(n))
+          .map(n => ({ key: 'out:' + itemKey(n), name: n, done: false, dibawa: true })));
+      }
+    }
+    return { whole: false, text, items, outItems };
   }
 
   function takenKeys(o, parsed){
@@ -2843,6 +2887,10 @@
       if (p.payItems == null) all = true; else p.payItems.forEach(k => set.add(k));
     });
     if (all) parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
+    if (o.ownPaid) { // baris pengambilan yang Harga-nya juga melunasi barang yang baru ditinggal
+      parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
+      (parsed.outItems || []).forEach(i => set.add(i.key));
+    }
     return set;
   }
 
@@ -2897,7 +2945,7 @@
 
     const parsedNow = parseStokItems(o);
     const paidSet = paidKeySet(o, parsedNow);
-    const ownItems = parsedNow.items.filter(i => !i.carried);
+    const ownItems = parsedNow.items.filter(i => !i.carried).concat(parsedNow.outItems || []);
     const paid = ownItems.length > 0 && ownItems.every(i => i.done || paidSet.has(i.key));
     if (paid) {
       if (!o.hargaAuto && isHargaKosong(o.harga)) {
@@ -2974,6 +3022,34 @@
     return out;
   }
 
+  // Daftar rincian per barang untuk satu record (dipakai halaman Detail)
+  function buildLedger(r){
+    const parsed = parseStokItems(r);
+    const isPickupRow = !!(r.ambilDari && r.ambilDari.length);
+    const pks = Object.keys(r.pickups || {}).map(k => r.pickups[k]).filter(Boolean).sort((a, b) => new Date(a.at) - new Date(b.at));
+    const baseHarga = r.hargaAuto ? r.hargaBase : r.harga;
+    const paidOnTitip = (!isPickupRow && !isHargaKosong(baseHarga) && !isCentangText(baseHarga)) || (isPickupRow && !!r.ownPaid);
+    const list = parsed.items.filter(i => !i.carried).map(i => ({ i, dibawa: !!parsed.out }))
+      .concat((parsed.outItems || []).map(i => ({ i, dibawa: true })));
+    return list.map(({ i, dibawa }) => {
+      let where, whereCls;
+      if (dibawa) { where = 'Dibawa pulang ' + fmtTitik(r.created_at); whereCls = 'w-out'; }
+      else {
+        const t = pks.find(p => p.mode !== 'bayar' && (p.items == null || p.items.includes(i.key)));
+        if (t) { where = 'Diambil ' + fmtTitik(t.at); whereCls = 'w-done'; }
+        else if (i.done) { where = 'Sudah diambil'; whereCls = 'w-done'; }
+        else { where = 'Masih ditinggal'; whereCls = 'w-stay'; }
+      }
+      let pay = 'Belum dibayar', payCls = 'p-no';
+      if (paidOnTitip) { pay = 'Lunas ' + fmtTitik(r.created_at); payCls = 'p-ok'; }
+      else {
+        const p = pks.find(q => q.paid && (q.payItems == null || q.payItems.includes(i.key)));
+        if (p) { pay = 'Lunas ' + fmtTitik(p.at); payCls = 'p-ok'; }
+      }
+      return { name: i.name, where, whereCls, pay, payCls };
+    });
+  }
+
   async function findPickupCandidates(pj, customer){
     const npj = pjKey(pj), ncu = normText(customer);
     if (!npj || !ncu) return [];
@@ -3005,19 +3081,26 @@
         let items = remainingItemsOf(rr);
         const paidSet = paidKeySet(rr, parsedR);
         if (parsedR.out) items = items.filter(i => !paidSet.has(i.key)); // sudah dibawa & sudah dibayar semua -> tidak perlu muncul lagi
-        if (!items.length) return;
         // Harga berisi ANGKA di baris titip = sudah dibayar lunas saat dititip (DP ditulis di Keterangan, Harga dikosongkan)
-        if (!isPickupRow && !isHargaKosong(r.harga) && !isCentangText(r.harga)) parsedR.items.forEach(i => paidSet.add(i.key));
+        if (!isPickupRow && !isHargaKosong(r.harga) && !isCentangText(r.harga)) {
+          parsedR.items.forEach(i => paidSet.add(i.key));
+          (parsedR.outItems || []).forEach(i => paidSet.add(i.key));
+        }
+        // Dibawa pulang di hari titip yang sama & belum dibayar: hanya bisa "Bayar saja"
+        const dibawa = (parsedR.outItems || []).filter(i => !paidSet.has(i.key));
+        if (!items.length && !dibawa.length) return;
         const paidCnt = items.filter(i => paidSet.has(i.key)).length;
+        const totalCnt = items.length + dibawa.length;
         out.push({
           noteId: src.noteId, recordId: r.id, out: !!parsedR.out,
           created_at: r.created_at,
           carry: isPickupRow ? (rr.stokCarry || []).slice() : [],
           bukti: Array.isArray(r.bukti) ? r.bukti.filter(Boolean) : [],
           tgl: fmtTitik(r.created_at),
-          paid: paidCnt === items.length,
+          paid: paidCnt === totalCnt,
           somePaid: paidCnt > 0,
           items: items.map(i => ({ key: i.key, name: i.name, paid: paidSet.has(i.key) }))
+            .concat(dibawa.map(i => ({ key: i.key, name: i.name, paid: false, out: true })))
         });
       });
     });
@@ -3073,7 +3156,7 @@
         ${c.items.map((it, ii) => `
           <label class="pickup-item">
             <input type="checkbox" data-c="${ci}" data-i="${ii}" ${pickupChecked.has(itemCk(c, it)) ? 'checked' : ''}>
-            <div><b>${escapeHtml(it.name)}</b>${it.paid ? '<span class="pk-tag">dibayar \u2713</span>' : ''}</div>
+            <div><b>${escapeHtml(it.name)}</b><span class="pk-tag ${(it.out || c.out) ? 'tg-out' : 'tg-stay'}">${(it.out || c.out) ? 'dibawa' : 'ditinggal'}</span><span class="pk-tag ${it.paid ? 'tg-paid' : 'tg-unpaid'}">${it.paid ? 'dibayar \u2713' : 'belum dibayar'}</span></div>
           </label>`).join('')}
         ${c.items.length > 4 ? `<button type="button" class="pk-all" data-c="${ci}"></button>` : ''}
       </div>
@@ -3083,7 +3166,7 @@
       const groups = chosenGroups();
       const none = groups.length === 0;
       const allPaid = !none && groups.every(g => g.items.every(i => i.paid));
-      gid('btnPickupApply').disabled = none || groups.every(g => g.c.out); // barang yang sudah dibawa tidak bisa "diambil" lagi
+      gid('btnPickupApply').disabled = none || groups.every(g => g.c.out || g.items.every(i => i.out)); // barang yang sudah dibawa tidak bisa "diambil" lagi
       gid('btnPickupPay').disabled = none || allPaid; // sudah dibayar -> tidak perlu bayar lagi
       gid('btnPickupPay').textContent = allPaid ? 'Sudah dibayar \u2713' : 'Bayar saja';
       gid('pickupList').querySelectorAll('.pk-all').forEach(btn => {
@@ -3154,7 +3237,8 @@
 
   function applyPickupToForm(mode){
     let groups = chosenGroups();
-    if (mode === 'ambil') groups = groups.filter(g => !g.c.out);
+    // Barang yang sudah dibawa pulang tidak bisa "diambil" lagi, hanya bisa dibayar
+    if (mode === 'ambil') groups = groups.filter(g => !g.c.out).map(g => ({ c: g.c, items: g.items.filter(i => !i.out) })).filter(g => g.items.length);
     // "Bayar saja" hanya untuk barang yang BELUM dibayar
     if (mode === 'bayar') groups = groups.map(g => ({ c: g.c, items: g.items.filter(i => !i.paid) })).filter(g => g.items.length);
     if (!groups.length) return;
@@ -3167,7 +3251,7 @@
     // Nama barang yang sudah tercatat sebagai titipan (mis. blok CRF) BUKAN barang baru:
     // tidak ditulis lagi di Barang dan Jumlah / Stok Barang, cukup tanggal titipannya.
     const candKeys = new Set();
-    pickupCandidates.forEach(c => c.items.forEach(i => candKeys.add(i.key.replace(/#\d+$/, ''))));
+    pickupCandidates.forEach(c => c.items.forEach(i => candKeys.add(i.key.replace(/^out:/, '').replace(/#\d+$/, ''))));
     const dt = datesText(groups);
     const restBarang = splitList(gid('inputBarang').value.trim().replace(/^(?:\s*\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\s*[,;]?)+\s*/, ''))
       .filter(t => !isDateToken(t) && !candKeys.has(itemKey(t))).join(', ');
@@ -3177,7 +3261,7 @@
       .filter(t => t && !isTidakAdaText(t) && !isBJWhole(t) && !candKeys.has(itemKey(t)));
 
     if (mode === 'bayar') {
-      const stillAll = [].concat(...groups.map(g => g.c.out ? [] : g.c.items.map(i => i.name)));
+      const stillAll = [].concat(...groups.map(g => g.c.out ? [] : g.c.items.filter(i => !i.out).map(i => i.name)));
       gid('inputBarangKeluar').value = LABEL_TIDAK_ADA;
       gid('inputStokBarang').value = stillAll.concat(extras).join(', ') || LABEL_TIDAK_ADA;
       setKeteranganAuto(ketText('Bayar duluan', chosenNames));
@@ -3187,7 +3271,7 @@
       // Gaya bengkel: Barang Keluar = yang dibawa, Stok Barang = yang masih tersisa
       const chosenKeys = new Set();
       groups.forEach(g => g.items.forEach(i => chosenKeys.add(g.c.noteId + '|' + g.c.recordId + '|' + i.key)));
-      const remain = [].concat(...groups.map(g => g.c.items.filter(i => !chosenKeys.has(g.c.noteId + '|' + g.c.recordId + '|' + i.key)).map(i => i.name)));
+      const remain = [].concat(...groups.map(g => g.c.items.filter(i => !i.out && !chosenKeys.has(g.c.noteId + '|' + g.c.recordId + '|' + i.key)).map(i => i.name)));
       gid('inputBarangKeluar').value = (remain.length || extras.length) ? chosenNames.join(', ') : LABEL_BJ;
       gid('inputStokBarang').value = remain.concat(extras).join(', ') || LABEL_TIDAK_ADA;
       setKeteranganAuto(ketText('Ambil barang', chosenNames));
@@ -3242,8 +3326,9 @@
     el.addEventListener('input', schedulePickupLookup);
     el.addEventListener('blur', schedulePickupLookup);
   });
-  gid('btnPickupApply').addEventListener('click', () => applyPickupToForm('ambil'));
-  gid('btnPickupPay').addEventListener('click', () => applyPickupToForm('bayar'));
+  gid('btnPickupApply').addEventListener('click', () => { applyPickupToForm('ambil'); refreshOwnPaidToggle(); });
+  gid('btnPickupPay').addEventListener('click', () => { applyPickupToForm('bayar'); refreshOwnPaidToggle(); });
+  gid('inputStokBarang').addEventListener('input', refreshOwnPaidToggle);
 
   function resetPickupForm(){
     pickupCandidates = []; pickupApplied = []; pickupChecked = new Set(); pickupMode = 'ambil';
@@ -3253,6 +3338,7 @@
     gid('pickupCard').style.display = 'none';
     gid('pickupList').innerHTML = '';
     gid('pickupDone').textContent = '';
+    gid('pickupOwnPaidWrap').style.display = 'none'; gid('pickupOwnPaid').checked = false;
     folderNotesCache.at = 0; // paksa baca ulang catatan lain saat form dibuka
     fetchFolderNotesLight(true).catch(() => {}); // pemanasan, supaya saran cepat muncul
   }
@@ -3270,9 +3356,9 @@
     const names = [];
     pickupApplied.forEach(g => {
       if (!still.has(g.c.noteId + '|' + g.c.recordId) || g.c.out) return;
-      if (pickupMode === 'bayar') { g.c.items.forEach(i => names.push(i.name)); return; }
+      if (pickupMode === 'bayar') { g.c.items.forEach(i => { if (!i.out) names.push(i.name); }); return; }
       const chosen = new Set(g.items.map(i => i.key));
-      g.c.items.forEach(i => { if (!chosen.has(i.key)) names.push(i.name); });
+      g.c.items.forEach(i => { if (!i.out && !chosen.has(i.key)) names.push(i.name); });
     });
     return names;
   }
@@ -3282,6 +3368,25 @@
     const out = [];
     splitList(stokText).forEach(tok => { const k = itemKey(tok); if (pool[k] > 0) { pool[k]--; out.push(k); } });
     return out;
+  }
+
+  // Barang BARU yang ditinggal di form pengambilan (bukan sisa titipan lama)
+  function ownItemsInForm(){
+    if (!pickupApplied.length) return [];
+    const pool = {};
+    carryNamesFromApplied().forEach(n => { const k = itemKey(n); pool[k] = (pool[k] || 0) + 1; });
+    const own = [];
+    splitList(gid('inputStokBarang').value).map(stripCentang)
+      .filter(t => t && !isTidakAdaText(t) && !isBJWhole(t))
+      .forEach(t => { const k = itemKey(t); if (pool[k] > 0) pool[k]--; else own.push(t); });
+    return own;
+  }
+  function refreshOwnPaidToggle(){
+    const wrap = gid('pickupOwnPaidWrap'); if (!wrap) return;
+    const own = ownItemsInForm();
+    if (!own.length) { wrap.style.display = 'none'; gid('pickupOwnPaid').checked = false; return; }
+    wrap.style.display = 'flex';
+    gid('pickupOwnPaidTxt').textContent = 'Harga ini juga melunasi barang yang baru ditinggal: ' + own.join(', ');
   }
 
   // Tentukan data titip mana yang terhubung dengan data yang sedang dikonfirmasi
@@ -3311,7 +3416,7 @@
   // Nama barang -> kunci unik di record titipan (barang kembar: gardan, gardan#2, ...).
   // Kunci yang sudah dipakai pengambilan/pembayaran LAIN dilewati, jadi dua pengambilan terpisah
   // untuk barang bernama sama tidak saling menimpa.
-  function keysForNames(o, names, ownId, field){
+  function keysForNames(o, names, ownId, field, withOut){
     const parsed = parseStokItems(o);
     const used = new Set();
     Object.keys(o.pickups || {}).forEach(id => {
@@ -3322,7 +3427,8 @@
     const mine = new Set();
     return names.map(n => {
       const base = itemKey(n);
-      const hit = parsed.items.find(i => i.key.replace(/#\d+$/, '') === base && !i.done && !i.carried && !used.has(i.key) && !mine.has(i.key));
+      let hit = parsed.items.find(i => i.key.replace(/#\d+$/, '') === base && !i.done && !i.carried && !used.has(i.key) && !mine.has(i.key));
+      if (!hit && withOut) hit = (parsed.outItems || []).find(i => i.key.replace(/#\d+$/, '') === 'out:' + base && !used.has(i.key) && !mine.has(i.key));
       const k = hit ? hit.key : base;
       mine.add(k);
       return k;
@@ -3353,7 +3459,7 @@
     const mode = parts[0] === 'bayar' ? 'bayar' : 'ambil';
     const paid = parts[1] === '1';
     const names = (job.link.items && job.link.items.length) ? job.link.items.slice() : null;
-    const keys = names ? keysForNames(o, names, pid, mode === 'bayar' ? 'payItems' : 'items') : null;
+    const keys = names ? keysForNames(o, names, pid, mode === 'bayar' ? 'payItems' : 'items', mode === 'bayar') : null;
     const entry = {
       noteId: currentNoteId,
       at: job.rec.created_at,
@@ -3519,6 +3625,25 @@
       if (x.noteId && x.recId) b.addEventListener('click', () => jumpToLinked(x.noteId, x.recId));
       else b.disabled = true;
       val.appendChild(b);
+    });
+  }
+
+  // Rincian per barang: posisi (ditinggal / dibawa / diambil tgl) + pembayaran (lunas tgl / belum)
+  function renderLedger(r){
+    const row = gid('detLedgerRow'), box = gid('detLedgerView');
+    if (!row || !box) return;
+    const rows = buildLedger(r);
+    box.textContent = '';
+    if (!rows.length) { row.style.display = 'none'; return; }
+    row.style.display = '';
+    rows.forEach(x => {
+      const d = document.createElement('div'); d.className = 'led-item';
+      const n = document.createElement('b'); n.textContent = x.name; d.appendChild(n);
+      const t = document.createElement('div'); t.className = 'led-tags';
+      [[x.where, x.whereCls], [x.pay, x.payCls]].forEach(([txt, cls]) => {
+        const sp = document.createElement('span'); sp.className = 'led-tag ' + cls; sp.textContent = txt; t.appendChild(sp);
+      });
+      d.appendChild(t); box.appendChild(d);
     });
   }
 
