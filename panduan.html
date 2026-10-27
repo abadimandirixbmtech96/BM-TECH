@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" id="themeColorMeta" content="#15140F">
+<title>Panduan Editor Data Administrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
+<script>document.documentElement.classList.add('js');</script>
+<script src="/bm-theme.js"></script>
+<style>
+  :root{
+    --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    --paper:#F6F1E7; --paper-alt:#FBF8F2; --ink:#1C1B19; --ink-soft:#6B6459;
+    --line:#E4DDCC; --line-soft:#EDE7D8;
+    --glass-bg:rgba(255,255,255,0.6); --glass-border:rgba(255,255,255,0.7);
+    --accent:#F0A529; --accent-rgb:240,165,41; --accent-ink:#6C4A12; --on-accent:#1C1B19;
+    --accent-soft:rgba(var(--accent-rgb),0.14);
+    --danger:#C24444;
+    --c-in:#2f7fd1; --c-out:#e8832a; --c-stay:#9b6bd3; --c-ok:#2d8a55; --c-no:#c24444;
+    --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+  }
+  body.surface-dark{
+    --paper:#15140F; --paper-alt:#1B1A15; --ink:#EDEAE2; --ink-soft:#9B948A;
+    --line:#332F27; --line-soft:#26241D;
+    --glass-bg:rgba(30,28,23,0.6); --glass-border:rgba(255,255,255,0.09);
+    --accent-soft:rgba(var(--accent-rgb),0.18);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family:var(--app-font); }
+  body.font-bold-mode *{ font-weight:700 !important; }
+  html{ scroll-behavior:smooth; scroll-padding-top:150px; }
+  body{ margin:0; background:var(--paper); color:var(--ink); line-height:1.6; font-size:15px; -webkit-text-size-adjust:100%; }
+  button{ font:inherit; color:inherit; }
+
+  /* ---------- Header lengket ---------- */
+  .head{
+    position:sticky; top:0; z-index:20;
+    padding:calc(var(--safe-top) + 10px) 14px 10px;
+    background:var(--paper); border-bottom:1px solid var(--line);
+  }
+  .head-row{ display:flex; align-items:center; gap:10px; }
+  .back-btn{
+    width:42px; height:42px; flex-shrink:0; border:none; border-radius:14px; cursor:pointer;
+    background:var(--accent); color:#14210a; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.16); text-decoration:none;
+  }
+  .back-btn svg{ width:20px; height:20px; stroke-width:2.8; }
+  .head h1{ margin:0; font-size:19px; font-weight:800; line-height:1.2; }
+  .head small{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); }
+  .search{
+    width:100%; margin-top:10px; padding:11px 14px; border-radius:14px;
+    border:2px solid var(--line); background:var(--paper-alt); color:var(--ink); font-size:14.5px; font-weight:600; outline:none;
+  }
+  .search:focus{ border-color:var(--accent); }
+  .chips{ display:flex; gap:8px; overflow-x:auto; padding:10px 0 2px; scrollbar-width:none; }
+  .chips::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex-shrink:0; padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:700; text-decoration:none;
+    background:var(--accent-soft); color:var(--ink); border:1px solid rgba(var(--accent-rgb),0.35);
+  }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:14px 14px calc(var(--safe-bottom) + 60px); }
+  .intro{
+    padding:16px; border-radius:20px; background:var(--accent-soft); border:1px solid rgba(var(--accent-rgb),0.35); margin-bottom:12px;
+  }
+  .intro b{ font-size:16px; font-weight:800; }
+  .intro p{ margin:6px 0 0; font-size:14px; color:var(--ink); }
+  .tools{ display:flex; gap:8px; margin:6px 0 12px; }
+  .tool{
+    flex:1; padding:10px; border-radius:12px; border:2px solid var(--line); background:var(--paper-alt);
+    font-size:13px; font-weight:700; cursor:pointer;
+  }
+  #hitCount{ font-size:12.5px; font-weight:700; color:var(--ink-soft); margin:0 2px 10px; min-height:18px; }
+
+  /* ---------- Bagian (accordion) ---------- */
+  details.sec{
+    background:var(--paper-alt); border:1px solid var(--line); border-radius:20px; margin-bottom:12px; overflow:hidden;
+  }
+  details.sec > summary{
+    list-style:none; cursor:pointer; padding:15px 16px; display:flex; align-items:center; gap:12px;
+    font-size:16.5px; font-weight:800; line-height:1.3;
+  }
+  details.sec > summary::-webkit-details-marker{ display:none; }
+  .num{
+    width:30px; height:30px; flex-shrink:0; border-radius:10px; background:var(--accent); color:#14210a;
+    display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800;
+  }
+  .caret{ margin-left:auto; width:20px; height:20px; flex-shrink:0; transition:transform .2s; color:var(--ink-soft); }
+  details[open] > summary .caret{ transform:rotate(180deg); }
+  .body{ padding:2px 16px 16px; border-top:1px dashed var(--line); }
+  .body h3{ margin:18px 0 6px; font-size:15px; font-weight:800; }
+  .body p{ margin:8px 0; }
+  .body ul, .body ol{ margin:8px 0; padding-left:22px; }
+  .body li{ margin:5px 0; }
+  .body b{ font-weight:750; }
+
+  /* ---------- Kotak info ---------- */
+  .note{ margin:12px 0; padding:11px 13px; border-radius:14px; font-size:14px; border-left:5px solid var(--c-in); background:rgba(47,127,209,0.10); }
+  .note.tip{ border-left-color:var(--c-ok); background:rgba(45,138,85,0.11); }
+  .note.warn{ border-left-color:var(--c-out); background:rgba(232,131,42,0.12); }
+  .note.danger{ border-left-color:var(--c-no); background:rgba(194,68,68,0.11); }
+  .note b:first-child{ display:block; margin-bottom:2px; }
+
+  /* ---------- Penanda kolom & label ---------- */
+  .mk{ display:inline-flex; align-items:center; gap:7px; font-weight:800; }
+  .mk::before{ content:''; width:11px; height:11px; display:inline-block; flex-shrink:0; }
+  .mk.in::before{ background:var(--c-in); border-radius:50%; }
+  .mk.out::before{ background:var(--c-out); clip-path:polygon(0 0,100% 50%,0 100%); }
+  .mk.stay::before{ background:var(--c-stay); border-radius:2px; }
+  .tag{ display:inline-block; font-size:12px; font-weight:800; padding:2px 9px; border-radius:999px; white-space:nowrap; }
+  .tag.stay{ background:rgba(155,107,211,0.16); color:#8a58c4; }
+  .tag.out{ background:rgba(232,131,42,0.16); color:#c46a14; }
+  .tag.done{ background:rgba(47,127,209,0.15); color:#3b8fe0; }
+  .tag.ok{ background:rgba(45,138,85,0.18); color:#2f9a60; }
+  .tag.no{ background:rgba(200,60,60,0.14); color:#d25555; }
+  kbd, .btnlike{
+    display:inline-block; padding:1px 9px; border-radius:9px; font-size:13px; font-weight:750;
+    background:var(--accent-soft); border:1px solid rgba(var(--accent-rgb),0.45);
+  }
+  code{ padding:1px 7px; border-radius:7px; background:var(--line-soft); font-size:13.5px; font-weight:650; }
+
+  /* ---------- Tabel (bisa digeser) ---------- */
+  .tbl{ overflow-x:auto; margin:10px 0; border:1px solid var(--line); border-radius:14px; }
+  table{ border-collapse:collapse; width:100%; font-size:13.5px; min-width:420px; }
+  th, td{ padding:9px 11px; text-align:left; vertical-align:top; border-bottom:1px solid var(--line); }
+  th{ background:var(--line-soft); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.03em; }
+  tr:last-child td{ border-bottom:none; }
+
+  /* ---------- Langkah bernomor ---------- */
+  ol.steps{ list-style:none; padding:0; counter-reset:s; }
+  ol.steps > li{ counter-increment:s; position:relative; padding:2px 0 2px 38px; margin:12px 0; min-height:28px; }
+  ol.steps > li::before{
+    content:counter(s); position:absolute; left:0; top:0; width:27px; height:27px; border-radius:50%;
+    background:var(--accent); color:#14210a; font-weight:800; font-size:13.5px; display:flex; align-items:center; justify-content:center;
+  }
+  .case{ margin:12px 0; padding:12px 13px; border-radius:16px; border:1px solid var(--line); background:var(--paper); }
+  .case h4{ margin:0 0 6px; font-size:14.5px; font-weight:800; }
+  .day{ display:flex; gap:10px; padding:9px 0; border-top:1px dashed var(--line); }
+  .day:first-of-type{ border-top:none; }
+  .date{
+    flex-shrink:0; width:54px; text-align:center; align-self:flex-start; padding:5px 0; border-radius:10px;
+    background:var(--accent); color:#14210a; font-size:12px; font-weight:800; line-height:1.25;
+  }
+  .day > div:last-child{ min-width:0; font-size:14px; }
+  .day p{ margin:3px 0; }
+  .res{ margin-top:4px; padding:7px 10px; border-radius:10px; background:var(--line-soft); font-size:13px; }
+
+  .faq{ margin:8px 0; border:1px solid var(--line); border-radius:14px; background:var(--paper); }
+  .faq summary{ cursor:pointer; padding:11px 13px; font-weight:750; font-size:14.5px; }
+  .faq div{ padding:0 13px 12px; font-size:14px; }
+
+  .hidden{ display:none !important; }
+
+  /* ================= ANIMASI ================= */
+  :root{ --ease:cubic-bezier(0.22, 1, 0.36, 1); --spring:cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes dropIn{ from{ opacity:0; transform:translate3d(0,-14px,0); } to{ opacity:1; transform:none; } }
+  @keyframes rise{ from{ opacity:0; transform:translate3d(0,14px,0); } to{ opacity:1; transform:none; } }
+  @keyframes markPulse{ 0%{ background:rgba(var(--accent-rgb),0.9); } 100%{ background:rgba(var(--accent-rgb),0.45); } }
+  .head{ animation:dropIn .6s var(--ease) both; }
+  .intro{ animation:rise .7s var(--ease) .12s both; }
+  .tools, #hitCount{ animation:rise .7s var(--ease) .2s both; }
+  .progress{ position:absolute; left:0; right:0; bottom:-1px; height:3px; background:var(--accent); transform-origin:0 50%; transform:scaleX(0); will-change:transform; }
+
+  /* Bagian muncul halus saat di-scroll (hanya bila JS aktif) */
+  .js details.sec{ opacity:0; transform:translate3d(0,24px,0); }
+  .js details.sec.in{ opacity:1; transform:none; transition:opacity .7s ease var(--d,0ms), transform .8s var(--ease) var(--d,0ms); }
+
+  /* Tekan tombol terasa kenyal */
+  .tool, .chip, .back-btn, .search{ transition:transform .3s var(--spring), background .25s ease, border-color .25s ease, box-shadow .25s ease, color .25s ease; }
+  .tool:active, .chip:active, .back-btn:active{ transform:scale(.94); }
+  details.sec > summary{ transition:background .25s ease, transform .25s var(--spring); }
+  details.sec > summary:active{ transform:scale(.985); background:var(--accent-soft); }
+  .search:focus{ box-shadow:0 0 0 4px rgba(var(--accent-rgb),0.22); }
+  .chip.on{ background:var(--accent); color:#14210a; border-color:transparent; transform:translateY(-1px); box-shadow:0 4px 12px rgba(var(--accent-rgb),0.4); }
+
+  /* Panah & isi bagian */
+  .caret{ transition:transform .5s var(--spring); }
+  details.sec.is-open > summary .caret{ transform:rotate(180deg); }
+  details[open] > summary .caret{ transform:none; }
+  details.sec.is-open[open] > summary .caret{ transform:rotate(180deg); }
+  details.sec[open] ol.steps > li, details.sec[open] .day, details.sec[open] .note{ animation:rise .6s var(--ease) both; }
+  details.sec[open] ol.steps > li:nth-child(1), details.sec[open] .day:nth-of-type(1){ animation-delay:.06s; }
+  details.sec[open] ol.steps > li:nth-child(2), details.sec[open] .day:nth-of-type(2){ animation-delay:.12s; }
+  details.sec[open] ol.steps > li:nth-child(3), details.sec[open] .day:nth-of-type(3){ animation-delay:.18s; }
+  details.sec[open] ol.steps > li:nth-child(4){ animation-delay:.24s; }
+  details.sec[open] ol.steps > li:nth-child(5){ animation-delay:.30s; }
+  details.sec[open] ol.steps > li:nth-child(n+6){ animation-delay:.36s; }
+  mark{ animation:markPulse 1.1s ease; }
+  .faq > summary{ transition:background .25s ease; }
+  .faq[open] > summary{ background:var(--accent-soft); }
+
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{ animation:none !important; transition:none !important; }
+    html{ scroll-behavior:auto; }
+    .js details.sec{ opacity:1; transform:none; }
+  }
+  .foot{ text-align:center; font-size:12.5px; color:var(--ink-soft); font-weight:600; margin-top:20px; }
+  mark{ background:rgba(var(--accent-rgb),0.45); color:inherit; border-radius:4px; padding:0 2px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="head-row">
+    <a class="back-btn" id="backBtn" href="editor-data-administrator.html" aria-label="Kembali ke Editor">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg>
+    </a>
+    <div>
+      <h1>Panduan Editor</h1>
+      <small>Cara pakai &amp; semua fitur Data Administrator</small>
+    </div>
+  </div>
+  <input class="search" id="q" type="search" placeholder="Cari di panduan… (mis. bayar saja, sampah, bukti)" autocomplete="off">
+  <nav class="chips" id="chips"></nav>
+  <div class="progress" id="prog"></div>
+</div>
+
+<main class="wrap">
+
+  <div class="intro">
+    <b>Editor ini untuk apa?</b>
+    <p>Mencatat tiap barang yang <span class="mk in">masuk</span>, yang <span class="mk out">dibawa pulang</span>, dan yang <span class="mk stay">ditinggal</span> oleh customer, lengkap dengan harga dan metode bayarnya. Editor ikut menandai mana barang yang sudah diambil dan mana yang sudah dibayar.</p>
+  </div>
+
+  <div class="tools">
+    <button class="tool" id="openAll">Buka semua</button>
+    <button class="tool" id="closeAll">Tutup semua</button>
+  </div>
+  <p id="hitCount"></p>
+
+  <!-- 1 -->
+  <details class="sec" id="mulai" data-title="Mengenal Editor">
+    <summary><span class="num">1</span>Mengenal Editor<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <h3>Tiga menu di bawah layar</h3>
+      <div class="tbl"><table>
+        <tr><th>Menu</th><th>Fungsinya</th></tr>
+        <tr><td><b>Home</b></td><td>Ringkasan angka dan daftar semua data.</td></tr>
+        <tr><td><b>ADD DATA (+)</b></td><td>Tombol bulat di tengah. Untuk menambah data baru.</td></tr>
+        <tr><td><b>Pengaturan</b> (ikon gerigi)</td><td>Judul tabel, bersihkan duplikat, Sampah, dan tema.</td></tr>
+      </table></div>
+      <h3>Tombol di bagian atas</h3>
+      <ul>
+        <li><b>Panah ←</b> (kiri atas): di Home, keluar dari Editor. Di halaman lain, kembali ke Home.</li>
+        <li><b>Tanda ?</b> (kanan atas di Home): membuka panduan ini.</li>
+        <li><b>Panah &lt; dan &gt;</b> (kanan atas di Detail Data): pindah ke data sebelumnya atau berikutnya.</li>
+      </ul>
+      <div class="note tip"><b>Tidak ada tombol “Simpan Semua”</b>Semua perubahan tersimpan otomatis beberapa detik setelah kamu mengubah sesuatu. Lihat bagian <a href="#simpan">Simpan otomatis &amp; offline</a>.</div>
+    </div>
+  </details>
+
+  <!-- 2 -->
+  <details class="sec" id="home" data-title="Halaman Home">
+    <summary><span class="num">2</span>Halaman Home<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <p><b>Sapaan di atas</b> menampilkan <i>Judul Tabel</i> yang kamu isi di Pengaturan. Kalau kosong, tertulis “Admin”.</p>
+      <h3>Empat kartu angka</h3>
+      <div class="tbl"><table>
+        <tr><th>Kartu</th><th>Artinya</th></tr>
+        <tr><td><b>Total Data</b></td><td>Jumlah seluruh data di catatan ini.</td></tr>
+        <tr><td><b>Hari Ini</b></td><td>Data yang dibuat hari ini.</td></tr>
+        <tr><td><b>Total Harga</b></td><td>Jumlah semua Harga yang berisi angka. Harga yang berupa tulisan (misalnya ✓) tidak ikut dijumlahkan.</td></tr>
+        <tr><td><b>Belum Lengkap</b></td><td>Data yang salah satu kolomnya masih kosong: Customer, Barang Keluar, Barang Ditinggal, Keterangan, atau Harga.</td></tr>
+      </table></div>
+      <h3>Daftar data</h3>
+      <ul>
+        <li>Data terbaru ada di <b>paling atas</b>. Nomor 001, 002, dst. mengikuti urutan waktu dibuat.</li>
+        <li>Tiap baris menampilkan nama customer (atau “(tanpa customer)”), PJ, barang, keterangan, lalu tanggal dan jam.</li>
+        <li>Di kanan baris: <b>Harga</b> kalau sudah diisi, atau tulisan <b>Belum lengkap</b> kalau Harga masih kosong. Ada juga lencana metode bayar dan ikon 📷 kalau data punya bukti.</li>
+        <li><b>Ketuk baris</b> untuk membuka Detail Data.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- 3 -->
+  <details class="sec" id="tambah" data-title="Tambah Data isi kolom">
+    <summary><span class="num">3</span>Tambah Data: isi kolom satu per satu<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <p>Ketuk <b>ADD DATA (+)</b>. Tombol Enter/Next di keyboard memindahkan kamu ke kolom berikutnya.</p>
+      <div class="tbl"><table>
+        <tr><th>Kolom</th><th>Cara mengisi</th></tr>
+        <tr><td><b>Nomor, Tanggal, Waktu</b></td><td>Terisi otomatis saat disimpan. Tidak bisa diubah.</td></tr>
+        <tr><td><b>PJ</b> <span class="tag no">wajib</span></td><td>Ketik atau pilih dari saran (nama PJ yang pernah dipakai). Boleh lebih dari satu orang, misalnya <code>Yono x Amin</code>. Urutan nama dan kata “x” atau “dan” tidak berpengaruh: <code>Amin x Yono</code> dianggap PJ yang sama.</td></tr>
+        <tr><td><b>Customer</b> (opsional)</td><td>Tulis nama dengan ejaan yang sama setiap kali. Huruf besar/kecil dan spasi ganda tidak berpengaruh. Nama ini dipakai untuk menemukan titipan lama.</td></tr>
+        <tr><td><span class="mk in">Barang dan Jumlah</span> <span class="tag no">wajib</span></td><td>Barang yang masuk, dipisah koma. Lihat contoh jumlah di bawah.</td></tr>
+        <tr><td><span class="mk out">Barang Keluar</span></td><td>Barang yang dibawa pulang customer.</td></tr>
+        <tr><td><span class="mk stay">Barang Ditinggal</span></td><td>Barang yang masih ada di tempat kamu, belum diambil.</td></tr>
+        <tr><td><b>Keterangan</b></td><td>Catatan bebas, misalnya pekerjaan yang dilakukan.</td></tr>
+        <tr><td><b>Harga</b></td><td>Angka (titik ribuan muncul sendiri) atau tulisan bebas seperti ✓. Boleh dikosongkan dan diisi belakangan.</td></tr>
+        <tr><td><b>Metode Bayar</b></td><td><b>Cash</b>, <b>Transfer</b>, atau keduanya (bayar campur, lalu isi nominal masing-masing). <b>Wajib</b> kalau Harga berisi angka.</td></tr>
+        <tr><td><b>Bukti</b></td><td>Maksimal <b>2 gambar</b>. Pilih lewat <b>Galeri</b>, <b>Kamera</b>, atau tarik &amp; lepas. Tunggu upload selesai sebelum menyimpan.</td></tr>
+      </table></div>
+
+      <h3>Menulis jumlah barang</h3>
+      <p>Tulis jumlah di belakang nama, dan editor memecahnya jadi satu item per barang:</p>
+      <div class="tbl"><table>
+        <tr><th>Kamu ketik</th><th>Hasil</th></tr>
+        <tr><td><code>Blok kph 3pcs</code></td><td>Blok kph, Blok kph, Blok kph</td></tr>
+        <tr><td><code>Askruk x2</code></td><td>Askruk, Askruk</td></tr>
+        <tr><td><code>Head blade 2 unit</code></td><td>Head blade, Head blade</td></tr>
+      </table></div>
+      <p>Satuan yang dikenali: pcs, pc, buah, biji, bh, unit, dan x. Jumlah yang dipecah: 2 sampai 50.</p>
+
+      <h3>Menyimpan</h3>
+      <ol class="steps">
+        <li>Ketuk <span class="btnlike">Simpan Data</span> di bagian bawah form.</li>
+        <li>Muncul layar <b>Konfirmasi Data</b> berisi ringkasan. Periksa dulu.</li>
+        <li>Ketuk <span class="btnlike">Simpan</span>. Kamu kembali ke Home dan data baru ada di paling atas.</li>
+      </ol>
+      <div class="note"><b>Draf otomatis</b>Isian form disimpan sebagai draf di HP. Kalau kamu tidak sengaja keluar atau koneksi terputus, isinya kembali saat form dibuka lagi.</div>
+      <div class="note warn"><b>Metode bayar dan Harga</b>Metode hanya dicatat kalau Harga berisi nominal. Kalau Harga kosong tapi metode dipilih, muncul peringatan: isi Harga, atau lepas pilihan metodenya.</div>
+    </div>
+  </details>
+
+  <!-- 4 -->
+  <details class="sec" id="tigakolom" data-title="Tiga kolom barang masuk keluar ditinggal B&J">
+    <summary><span class="num">4</span>Tiga kolom barang: masuk, keluar, ditinggal<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <p>Tiga kolom ini dibedakan dengan warna dan bentuk, supaya tidak tertukar:</p>
+      <div class="tbl"><table>
+        <tr><th>Judul</th><th>Isinya</th></tr>
+        <tr><td><span class="mk in">Barang dan Jumlah</span><br><small>biru · bulat</small></td><td>Semua barang yang <b>masuk</b> hari itu.</td></tr>
+        <tr><td><span class="mk out">Barang Keluar</span><br><small>oranye · panah</small></td><td>Yang <b>dibawa pulang</b> customer hari itu.</td></tr>
+        <tr><td><span class="mk stay">Barang Ditinggal</span><br><small>ungu · kotak</small></td><td>Sisa yang <b>belum diambil</b>.</td></tr>
+      </table></div>
+
+      <h3>Kata khusus: B&amp;J dan Tidak ada</h3>
+      <p><code>B&amp;J</code> artinya <b>semua barang</b> yang ada di kolom Barang dan Jumlah. Menulis “b&amp;j” huruf kecil otomatis menjadi kapital.</p>
+      <div class="tbl"><table>
+        <tr><th>Situasi</th><th>Barang Keluar</th><th>Barang Ditinggal</th></tr>
+        <tr><td>Semua barang ditinggal</td><td><code>Tidak ada</code></td><td><code>B&amp;J</code> (otomatis)</td></tr>
+        <tr><td>Semua dibawa pulang hari itu</td><td><code>B&amp;J</code></td><td><code>Tidak ada</code> (otomatis)</td></tr>
+        <tr><td>Sebagian dibawa</td><td>nama barang yang dibawa</td><td>nama barang yang tersisa (ketik sendiri)</td></tr>
+      </table></div>
+      <p>Mengisi salah satu dengan <code>B&amp;J</code> atau <code>Tidak ada</code> otomatis mengisi kolom lawannya.</p>
+      <div class="note tip"><b>Tulis nama barang konsisten</b>Editor mencocokkan barang lewat namanya. Tulis nama yang sama di ketiga kolom (huruf besar/kecil tidak masalah), supaya pelacakan barang tidak meleset.</div>
+    </div>
+  </details>
+
+  <!-- 5 -->
+  <details class="sec" id="titipan" data-title="Titipan ambil barang bayar saja">
+    <summary><span class="num">5</span>Titipan: ambil &amp; bayar barang<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <p>Ini fitur terpenting. Saat customer datang lagi untuk mengambil atau membayar barang yang dulu ditinggal, kamu <b>tidak perlu mengetik ulang</b>. Editor mencarikan barangnya.</p>
+
+      <h3>Syarat supaya titipan ditemukan</h3>
+      <ul>
+        <li><b>PJ</b> dan <b>Customer</b> harus sama dengan data titipan lama (aturan PJ dan Customer ada di bagian 3).</li>
+        <li>Data lama masih punya barang yang belum diambil, atau belum dibayar.</li>
+      </ul>
+
+      <h3>Langkah-langkah</h3>
+      <ol class="steps">
+        <li>Buka <b>ADD DATA</b>, isi <b>PJ</b> dan <b>Customer</b>.</li>
+        <li>Muncul kartu <b>📦 Barang masih ditinggal — (nama customer)</b>, dikelompokkan per tanggal titip. Tiap barang punya kotak centang dan dua label:
+          <br><span class="tag stay">ditinggal</span> atau <span class="tag out">dibawa</span> &nbsp;+&nbsp; <span class="tag ok">dibayar ✓</span> atau <span class="tag no">belum dibayar</span>
+        </li>
+        <li>Centang barang yang dibahas hari ini. Kalau hanya ada satu data titipan, semua barangnya langsung tercentang.</li>
+        <li>Pilih tombol:
+          <ul>
+            <li><b>Ambil barang</b>: barang dibawa pulang. Kalau Harga diisi, barangnya sekaligus tercatat lunas.</li>
+            <li><b>Bayar saja</b>: barang dilunasi, tapi <b>tetap ditinggal</b>.</li>
+          </ul>
+        </li>
+        <li>Form terisi sendiri. Tinggal isi <b>Harga</b> dan <b>Metode Bayar</b> bila ada pembayaran, lalu <span class="btnlike">Simpan Data</span>.</li>
+      </ol>
+
+      <h3>Yang terisi otomatis</h3>
+      <div class="tbl"><table>
+        <tr><th>Kolom</th><th>Isinya</th></tr>
+        <tr><td>Barang dan Jumlah</td><td>Tanggal titipan, misalnya <code>20.10.26, 21.10.26</code>. Nama barangnya tidak perlu diketik lagi.</td></tr>
+        <tr><td>Barang Keluar</td><td>Barang yang diambil (atau <code>B&amp;J</code> kalau semua habis).</td></tr>
+        <tr><td>Barang Ditinggal</td><td>Sisa yang belum diambil.</td></tr>
+        <tr><td>Keterangan</td><td><code>Ambil barang (…)</code> atau <code>Bayar duluan (…)</code></td></tr>
+      </table></div>
+
+      <h3>Harga di data pengambilan</h3>
+      <ul>
+        <li><b>Harga kosong</b> berarti <b>belum dibayar</b>. Barang tercatat keluar tapi tetap muncul di kartu untuk dilunasi lewat <i>Bayar saja</i> nanti.</li>
+        <li><b>Angka atau ✓</b> berarti barang yang dipilih hari itu <b>lunas</b>.</li>
+        <li>Kalau semua barang yang dipilih sudah lunas sebelumnya, Harga terisi <b>✓</b> otomatis.</li>
+        <li>Harga di data pengambilan <b>hanya</b> untuk barang yang diambil atau dibayar di data itu.</li>
+      </ul>
+
+      <h3>Menitip barang baru sekaligus</h3>
+      <p>Customer mengambil barang lama, tapi membawa barang baru yang ditinggal? Setelah menekan <i>Ambil barang</i> atau <i>Bayar saja</i>, ketik barang baru di <span class="mk stay">Barang Ditinggal</span> di belakang sisa yang sudah terisi. Tulisanmu tidak akan ditimpa.</p>
+      <ul>
+        <li>Nama barang yang sudah tercatat tidak perlu diketik di Barang dan Jumlah. Kalau terlanjur diketik, otomatis dibuang saat disimpan.</li>
+        <li>Barang baru dianggap <span class="tag no">belum dibayar</span>. Kalau Harga hari itu sudah termasuk barang baru, centang <b>“Harga ini juga melunasi barang yang baru ditinggal”</b>. Kotak ini muncul otomatis di kartu.</li>
+      </ul>
+
+      <h3>Barang yang dibawa pulang tapi belum dibayar</h3>
+      <p>Barang yang dibawa pulang di hari titip yang sama, dengan Harga masih kosong, muncul di kartu sebagai <span class="tag out">dibawa</span> <span class="tag no">belum dibayar</span>. Barang ini hanya bisa dipilih lewat <b>Bayar saja</b>, karena fisiknya sudah keluar.</p>
+
+      <h3>Pertanyaan “Harga ini untuk barang yang mana?”</h3>
+      <p>Kalau saat menyimpan data titip kamu mengisi <span class="mk out">Barang Keluar</span>, <span class="mk stay">Barang Ditinggal</span>, <b>dan</b> Harga berupa angka, editor bertanya:</p>
+      <ul>
+        <li><b>Yang dibawa pulang saja</b></li>
+        <li><b>Yang ditinggal saja</b></li>
+        <li><b>Semua barang</b></li>
+      </ul>
+      <p>Pilihan ini <b>wajib</b> dijawab sebelum data bisa disimpan. Pilihan bisa diubah nanti lewat <b>Edit</b>. Pada data lama yang belum pernah dijawab, Harga dianggap untuk semua barang.</p>
+
+      <h3>Efek otomatis ke data titipan asal</h3>
+      <ul>
+        <li>Barang yang diambil mendapat tanda <b>✓</b> di Barang Ditinggal.</li>
+        <li>Kalau <b>semua</b> barang sudah lunas, Harga data asal menjadi <b>✓</b> otomatis.</li>
+        <li>Berlaku juga untuk titipan di catatan lain di folder yang sama.</li>
+        <li>Di Detail Data muncul kotak <b>Terhubung</b> dan <b>Rincian Barang</b> (bagian 8).</li>
+      </ul>
+
+      <div class="note danger"><b>Salah ambil atau salah catat?</b>Hapus data pengambilannya. Tanda ✓ dan status lunas di data asal otomatis kembali seperti semula, dan barangnya muncul lagi di kartu. Butuh internet. Kalau sedang offline, pembatalan diulang otomatis begitu koneksi kembali.</div>
+      <div class="note warn"><b>Data yang Harga-nya ✓ ketikan manual</b>Data titip dengan Harga ✓ yang kamu ketik sendiri dianggap sudah beres, jadi tidak muncul di kartu.</div>
+    </div>
+  </details>
+
+  <!-- 6 -->
+  <details class="sec" id="contoh" data-title="Contoh kasus lengkap">
+    <summary><span class="num">6</span>Contoh kasus lengkap<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+
+      <div class="case">
+        <h4>Contoh A: ambil + bayar, bawa barang baru, ambil lagi besoknya</h4>
+        <div class="day"><div class="date">tgl 10</div><div>
+          <p><b>Titip.</b> Barang dan Jumlah: <code>blok kph, blok beat, stang seher</code>. Barang Keluar: <code>Tidak ada</code>. Harga kosong.</p>
+          <div class="res">Ketiganya <span class="tag stay">ditinggal</span> <span class="tag no">belum bayar</span></div>
+        </div></div>
+        <div class="day"><div class="date">tgl 15</div><div>
+          <p>Customer datang, membawa barang baru <b>blok tiger</b> dan <b>head Revo</b>. Isi PJ dan Customer, kartu muncul. Tekan <b>Ambil barang</b> (3 barang tercentang), lalu:</p>
+          <ul>
+            <li>Barang Keluar: tambahkan <code>blok tiger</code> (dibawa pulang hari itu).</li>
+            <li>Barang Ditinggal: ketik <code>head revo</code> (ganti “Tidak ada”).</li>
+            <li>Harga <code>500.000</code>, Metode Cash.</li>
+          </ul>
+          <div class="res">Data tgl 10: ketiga barang <span class="tag done">Diambil 15.10.26</span> <span class="tag ok">Lunas 15.10.26</span>, Harga otomatis ✓.<br>Head revo: <span class="tag stay">ditinggal</span> <span class="tag no">belum bayar</span>.</div>
+        </div></div>
+        <div class="day"><div class="date">tgl 16</div><div>
+          <p>Customer kembali. Kartu hanya menampilkan <b>head revo</b>. Tekan <b>Ambil barang</b>, isi Harga <code>200.000</code>.</p>
+          <div class="res">Head revo di data tgl 15: <span class="tag done">Diambil 16.10.26</span> <span class="tag ok">Lunas 16.10.26</span>. Tidak ada barang tersisa untuk customer ini.</div>
+        </div></div>
+      </div>
+
+      <div class="case">
+        <h4>Contoh B: bayar di muka, barang baru ikut dibayar, diambil belakangan</h4>
+        <div class="day"><div class="date">tgl 1</div><div>
+          <p><b>Titip.</b> Barang dan Jumlah: <code>stang blade, blok ninja, askruk grand</code>. <b>Blok ninja</b> langsung dibawa pulang. Barang Keluar: <code>blok ninja</code>, Barang Ditinggal: <code>stang blade, askruk grand</code>. Harga kosong.</p>
+          <div class="res">Stang blade &amp; askruk grand: <span class="tag stay">ditinggal</span> <span class="tag no">belum bayar</span><br>Blok ninja: <span class="tag out">Dibawa 01.10.26</span> <span class="tag no">belum bayar</span></div>
+        </div></div>
+        <div class="day"><div class="date">tgl 2</div><div>
+          <p>Customer datang membawa <b>krengkes</b> dan <b>langsung membayar semuanya</b>. Kartu menampilkan 3 barang lama (termasuk blok ninja yang <i>dibawa</i>). Centang semuanya, tekan <b>Bayar saja</b>, lalu:</p>
+          <ul>
+            <li>Barang Ditinggal: tambahkan <code>krengkes</code> di belakang sisa.</li>
+            <li>Harga <code>900.000</code>, Metode Cash.</li>
+            <li>Centang <b>“Harga ini juga melunasi barang yang baru ditinggal: krengkes”</b>.</li>
+          </ul>
+          <div class="res">Data tgl 1: semuanya <span class="tag ok">Lunas 02.10.26</span>, Harga otomatis ✓. Stang blade &amp; askruk grand tetap <span class="tag stay">ditinggal</span> karena belum diambil.<br>Krengkes: <span class="tag stay">ditinggal</span> <span class="tag ok">Lunas 02.10.26</span></div>
+        </div></div>
+        <div class="day"><div class="date">tgl 5</div><div>
+          <p>Customer mengambil krengkes. Kartu menunjukkan krengkes <span class="tag ok">dibayar ✓</span>. Tekan <b>Ambil barang</b>. Harga terisi ✓ otomatis karena sudah lunas.</p>
+          <div class="res">Krengkes: <span class="tag done">Diambil 05.10.26</span> <span class="tag ok">Lunas 02.10.26</span></div>
+        </div></div>
+      </div>
+
+      <div class="note tip"><b>Intinya</b>Kamu hanya mengisi <i>apa yang terjadi hari ini</i>. Status barang dan pembayaran di data-data lama diperbarui otomatis oleh editor.</div>
+    </div>
+  </details>
+
+  <!-- 7 -->
+  <details class="sec" id="detail" data-title="Detail Edit Hapus">
+    <summary><span class="num">7</span>Detail, Edit &amp; Hapus<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <h3>Membuka Detail</h3>
+      <p>Ketuk salah satu baris di Home. Tombol <b>&lt;</b> dan <b>&gt;</b> di kanan atas pindah ke data sebelumnya atau berikutnya. Tombol yang tidak bisa dipakai tampil pudar. Halaman ini menampilkan semua isi data, Rincian Barang, Terhubung, dan Bukti.</p>
+
+      <h3>Mengedit</h3>
+      <ol class="steps">
+        <li>Ketuk <span class="btnlike">Edit</span>.</li>
+        <li>Ubah kolom yang perlu: PJ, Customer, Barang dan Jumlah, Barang Keluar, Barang Ditinggal, Keterangan, Harga, Metode Bayar, dan Bukti (tambah atau hapus gambar).</li>
+        <li>Ketuk <span class="btnlike">Simpan Perubahan</span>, atau <span class="btnlike">Batal</span> untuk membuang perubahan.</li>
+      </ol>
+      <p>Nomor, Tanggal, dan Waktu tidak bisa diubah. Di mode Edit kadang muncul pilihan tambahan:</p>
+      <ul>
+        <li><b>“Harga ini untuk barang yang mana?”</b>: untuk data titip yang punya Barang Keluar, Barang Ditinggal, dan Harga angka (bagian 5).</li>
+        <li><b>“Harga ini juga melunasi barang yang ditinggal di baris ini”</b>: untuk data pengambilan yang juga menitip barang baru.</li>
+      </ul>
+
+      <h3>Menghapus</h3>
+      <ol class="steps">
+        <li>Ketuk <span class="btnlike">Hapus</span> (tombol merah).</li>
+        <li>Selesaikan <b>puzzle</b>: geser potongan gambar ke lubang yang pas. Posisinya diacak setiap kali.</li>
+        <li>Tombol <b>Ya, Hapus</b> baru aktif setelah puzzle benar.</li>
+      </ol>
+      <div class="note tip"><b>Hapus tidak langsung permanen</b>Data pindah ke <a href="#sampah">Sampah</a> dan bisa dipulihkan selama 30 hari. Kalau yang dihapus adalah data pengambilan, tanda di data titipan asal dibatalkan otomatis.</div>
+    </div>
+  </details>
+
+  <!-- 8 -->
+  <details class="sec" id="rincian" data-title="Rincian Barang Terhubung">
+    <summary><span class="num">8</span>Rincian Barang &amp; Terhubung<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <h3>Rincian Barang</h3>
+      <p>Muncul di Detail Data kalau data itu punya barang yang dilacak. Tiap barang satu baris, berisi dua label: posisi barang dan status bayarnya.</p>
+      <div class="tbl"><table>
+        <tr><th>Label</th><th>Artinya</th></tr>
+        <tr><td><span class="tag stay">Ditinggal</span></td><td>Barang masih ada di tempatmu.</td></tr>
+        <tr><td><span class="tag out">Dibawa 01.10.26</span></td><td>Sudah dibawa pulang customer sejak tanggal itu.</td></tr>
+        <tr><td><span class="tag done">Diambil 05.10.26</span></td><td>Pernah ditinggal, lalu diambil pada tanggal itu.</td></tr>
+        <tr><td><span class="tag ok">Lunas 02.10.26</span></td><td>Sudah dibayar, lengkap dengan tanggal pelunasannya.</td></tr>
+        <tr><td><span class="tag no">Belum bayar</span></td><td>Belum ada pembayaran yang tercatat untuk barang ini.</td></tr>
+      </table></div>
+      <h3>Terhubung</h3>
+      <p>Kotak biru di Detail Data yang menunjukkan data titipan mana yang diambil atau dibayar oleh data ini. <b>Ketuk kotaknya</b> untuk melompat ke data terkait. Kalau data itu ada di catatan lain, catatan tersebut yang dibuka.</p>
+    </div>
+  </details>
+
+  <!-- 9 -->
+  <details class="sec" id="pengaturan" data-title="Pengaturan judul tema duplikat">
+    <summary><span class="num">9</span>Pengaturan<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <div class="tbl"><table>
+        <tr><th>Menu</th><th>Fungsinya</th></tr>
+        <tr><td><b>Judul Tabel</b></td><td>Judul yang tampil sebagai sapaan di Home, misalnya <code>Data Pembelian Barang September</code>. Tersimpan otomatis.</td></tr>
+        <tr><td><b>Bersihkan Data Duplikat</b></td><td>Mencari data yang isi dan waktu buatnya persis sama. Kamu ditanya dulu; duplikatnya dipindahkan ke Sampah dan 1 dari tiap pasang dipertahankan.</td></tr>
+        <tr><td><b>Buka Sampah</b></td><td>Menuju halaman Sampah (bagian 10).</td></tr>
+        <tr><td><b>Tema Tampilan</b></td><td>Pilih <b>Terang</b> atau <b>Gelap</b>.</td></tr>
+        <tr><td><b>Panduan</b></td><td>Membuka halaman ini.</td></tr>
+      </table></div>
+      <p>Warna aksen dan jenis huruf mengikuti pengaturan sistem di dashboard.</p>
+    </div>
+  </details>
+
+  <!-- 10 -->
+  <details class="sec" id="sampah" data-title="Sampah pulihkan hapus permanen">
+    <summary><span class="num">10</span>Sampah<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <p>Buka lewat <b>Pengaturan → Buka Sampah</b>. Data yang dihapus disimpan di sini selama <b>30 hari</b>, lalu hilang permanen sendiri. Tiap data menunjukkan sisa harinya.</p>
+      <ul>
+        <li><b>Pulihkan</b>: mengembalikan data ke daftar. Kalau data itu adalah data pengambilan, hubungannya dengan titipan asal dipasang kembali.</li>
+        <li><b>Hapus Permanen</b>: menghapus satu data selamanya (ada konfirmasi).</li>
+        <li><b>Kosongkan Sampah</b>: menghapus semua isi Sampah selamanya (ada konfirmasi).</li>
+      </ul>
+      <div class="note danger"><b>Tidak bisa dibatalkan</b>Data yang dihapus permanen, atau yang melewati 30 hari, tidak bisa dikembalikan.</div>
+    </div>
+  </details>
+
+  <!-- 11 -->
+  <details class="sec" id="simpan" data-title="Simpan otomatis offline">
+    <summary><span class="num">11</span>Simpan otomatis &amp; offline<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <p>Setiap perubahan (menambah, mengedit, menghapus, mengganti judul) dikirim otomatis sekitar 1 detik setelahnya. Di layar muncul keterangan status:</p>
+      <div class="tbl"><table>
+        <tr><th>Tulisan</th><th>Artinya</th></tr>
+        <tr><td><code>Menyimpan...</code></td><td>Sedang mengirim ke server.</td></tr>
+        <tr><td><code>Tersimpan di HP (offline)</code></td><td>Tidak ada internet. Data aman di HP dan dikirim saat koneksi kembali.</td></tr>
+        <tr><td><code>Koneksi kembali, menyimpan...</code></td><td>Internet pulih dan data yang tertunda sedang dikirim.</td></tr>
+        <tr><td><code>Gagal tersimpan — mencoba lagi</code></td><td>Pengiriman gagal. Editor mengulang sendiri dengan jeda makin lama (maksimal 30 detik).</td></tr>
+      </table></div>
+      <div class="note warn"><b>Jangan buru-buru keluar</b>Kalau kamu menekan tombol kembali saat masih ada data yang belum terkirim, muncul peringatan <b>“Belum Terkirim”</b>. Tunggu sampai terkirim, atau pastikan internet aktif.</div>
+      <p>Data catatan lama (tabel bebas) diimpor otomatis ke format baru, dan data aslinya tetap diarsipkan.</p>
+    </div>
+  </details>
+
+  <!-- 12 -->
+  <details class="sec" id="simbol" data-title="Arti simbol warna istilah">
+    <summary><span class="num">12</span>Arti simbol, warna &amp; istilah<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <div class="tbl"><table>
+        <tr><th>Simbol</th><th>Artinya</th></tr>
+        <tr><td><span class="mk in">Biru ●</span></td><td>Barang dan Jumlah (masuk)</td></tr>
+        <tr><td><span class="mk out">Oranye ▶</span></td><td>Barang Keluar (dibawa pulang)</td></tr>
+        <tr><td><span class="mk stay">Ungu ■</span></td><td>Barang Ditinggal (belum diambil)</td></tr>
+        <tr><td><b>✓</b> di Barang Ditinggal</td><td>Barang itu sudah diambil.</td></tr>
+        <tr><td><b>✓</b> di Harga</td><td>Sudah dibayar. Bisa muncul otomatis saat semua barang lunas.</td></tr>
+        <tr><td><b>📷</b></td><td>Data punya bukti gambar.</td></tr>
+        <tr><td><b>Belum lengkap</b> (merah di Home)</td><td>Harga data itu masih kosong.</td></tr>
+        <tr><td><code>B&amp;J</code></td><td>Semua barang di kolom Barang dan Jumlah.</td></tr>
+        <tr><td><code>Tidak ada</code></td><td>Tidak ada barang untuk kolom itu.</td></tr>
+      </table></div>
+      <h3>Istilah</h3>
+      <ul>
+        <li><b>PJ</b>: penanggung jawab, orang atau tim yang menangani.</li>
+        <li><b>Titipan</b>: barang customer yang ditinggal di tempatmu.</li>
+        <li><b>Data pengambilan</b>: data yang dibuat lewat kartu saran, untuk mengambil atau membayar titipan lama.</li>
+        <li><b>Data asal</b>: data titipan yang diambil atau dibayar oleh data pengambilan.</li>
+        <li><b>Lunas</b>: barang sudah dibayar. <b>Diambil</b>: barang sudah dibawa pulang. Keduanya dicatat terpisah.</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- 13 -->
+  <details class="sec" id="faq" data-title="Masalah umum FAQ solusi">
+    <summary><span class="num">13</span>Masalah umum &amp; solusinya<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+    <div class="body">
+      <details class="faq"><summary>Kartu “Barang masih ditinggal” tidak muncul</summary><div>
+        Periksa berurutan: <b>(1)</b> PJ sama dengan data titipan (urutan nama boleh beda), <b>(2)</b> ejaan Customer sama, <b>(3)</b> data titipan masih punya barang yang belum diambil atau belum dibayar, <b>(4)</b> Harga data titipan bukan ✓ yang kamu ketik sendiri. Kartu juga butuh koneksi internet untuk memeriksa catatan lain di folder yang sama.
+      </div></details>
+      <details class="faq"><summary>Salah mengambil barang. Bagaimana membatalkan?</summary><div>
+        Buka data pengambilannya, ketuk <b>Hapus</b>, lalu selesaikan puzzle. Data titipan asal kembali seperti sebelum diambil. Setelah itu buat ulang data pengambilan yang benar.
+      </div></details>
+      <details class="faq"><summary>Harga di data titipan berubah jadi ✓ sendiri</summary><div>
+        Itu normal. Saat <b>semua</b> barang di data itu sudah lunas lewat data pengambilan, editor mengisi ✓ otomatis. Kalau lunasnya dibatalkan (data pengambilan dihapus), Harga kembali kosong.
+      </div></details>
+      <details class="faq"><summary>Barang yang dibawa pulang tidak ikut ditagih</summary><div>
+        Barang di Barang Keluar baru dilacak pembayarannya kalau data itu <b>masih punya barang ditinggal</b> dan Harga-nya kosong, atau kamu memilih “yang ditinggal saja” saat menyimpan. Pastikan nama barangnya ditulis di kolom Barang Keluar.
+      </div></details>
+      <details class="faq"><summary>Tidak bisa memilih Metode Bayar</summary><div>
+        Metode bayar baru bisa dipilih kalau <b>Harga berisi angka</b>. Isi Harga dulu. Kalau Harga memang kosong, lepas pilihan metodenya.
+      </div></details>
+      <details class="faq"><summary>Bukti gagal diunggah atau tidak bisa menambah gambar</summary><div>
+        Maksimal <b>2 gambar</b> per data. Tunggu sampai upload selesai sebelum menekan Simpan Data. Kalau gagal, pastikan internet aktif lalu pilih ulang gambarnya.
+      </div></details>
+      <details class="faq"><summary>Muncul “Belum Terkirim” atau “Gagal tersimpan”</summary><div>
+        Biarkan halaman terbuka dan pastikan internet aktif. Editor mencoba mengirim ulang sendiri. Selama statusnya <code>Tersimpan di HP (offline)</code>, datamu aman di HP.
+      </div></details>
+      <details class="faq"><summary>Ada data ganda</summary><div>
+        Buka <b>Pengaturan → Bersihkan Data Duplikat</b>. Duplikat dipindahkan ke Sampah, jadi masih bisa dipulihkan.
+      </div></details>
+      <details class="faq"><summary>Tidak sengaja menghapus data</summary><div>
+        Buka <b>Pengaturan → Buka Sampah</b>, lalu ketuk <b>Pulihkan</b> pada data itu. Berlaku selama masih di bawah 30 hari.
+      </div></details>
+    </div>
+  </details>
+
+  <p class="foot">Panduan Editor Data Administrator</p>
+</main>
+
+<script>
+(function () {
+  /* Tema sama dengan Editor (tersimpan di localStorage 'bm-theme') */
+  function ls(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function applyTheme(){
+    var cl = document.body.classList, dark = ls('bm-theme') !== 'light';
+    cl.toggle('surface-dark', dark);
+    cl.toggle('font-bold-mode', ls('bm-font-bold') === 'on');
+    var m = document.getElementById('themeColorMeta'); if (m) m.setAttribute('content', dark ? '#15140F' : '#F6F1E7');
+    var B = window.BMTheme;
+    if (B && B.getAccent) {
+      try {
+        var hex = B.getAccent();
+        if (/^#[0-9a-f]{6}$/i.test(hex || '')) {
+          var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
+          var st = document.documentElement.style;
+          st.setProperty('--accent', hex); st.setProperty('--accent-rgb', r + ',' + g + ',' + b);
+        }
+      } catch (e) {}
+    }
+  }
+  applyTheme();
+  window.addEventListener('storage', applyTheme);
+
+  /* Tombol kembali: disembunyikan kalau dibuka di dalam Editor (overlay) */
+  if (window.self !== window.top) document.getElementById('backBtn').style.display = 'none';
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+  var secs = Array.prototype.slice.call(document.querySelectorAll('details.sec'));
+
+  /* Buka/tutup halus: tinggi, padding, dan transparansi dianimasikan (Web Animations API) */
+  function bodyOf(det){ return det.querySelector(':scope > summary + *'); }
+  function isOpenTarget(det){ return det._a ? det._target : det.open; }
+  function animateDet(det, open, delay){
+    det._target = open;
+    det.classList.toggle('is-open', open);
+    var body = bodyOf(det);
+    if (det._a) { try { det._a.cancel(); } catch (e) {} det._a = null; }
+    if (!body || reduce || !det.animate) { det.open = open; return; }
+    body.style.overflow = 'hidden';
+    var cs, h, pt, pb, anim;
+    if (open) {
+      det.open = true;
+      cs = getComputedStyle(body); h = body.offsetHeight; pt = cs.paddingTop; pb = cs.paddingBottom;
+      anim = body.animate([
+        { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 },
+        { height: h + 'px', paddingTop: pt, paddingBottom: pb, opacity: 1 }
+      ], { duration: 460, easing: EASE, delay: delay || 0, fill: 'backwards' });
+      anim.onfinish = function(){ body.style.overflow = ''; det._a = null; };
+    } else {
+      cs = getComputedStyle(body); h = body.offsetHeight; pt = cs.paddingTop; pb = cs.paddingBottom;
+      anim = body.animate([
+        { height: h + 'px', paddingTop: pt, paddingBottom: pb, opacity: 1 },
+        { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 }
+      ], { duration: 340, easing: EASE, delay: delay || 0, fill: 'both' });
+      anim.onfinish = function(){ det.open = false; body.style.overflow = ''; det._a = null; };
+    }
+    anim.oncancel = function(){ body.style.overflow = ''; };
+    det._a = anim;
+  }
+  function forceOpen(det){ det._target = true; det.open = true; det.classList.add('is-open'); }
+  secs.forEach(function (s) { if (s.open) s.classList.add('is-open'); });
+
+  /* Satu pendengar untuk semua judul bagian & FAQ (tetap jalan walau isi di-render ulang oleh pencarian) */
+  document.addEventListener('click', function (e) {
+    var sm = e.target.closest && e.target.closest('details.sec > summary, details.faq > summary');
+    if (!sm) return;
+    e.preventDefault();
+    var det = sm.parentNode;
+    animateDet(det, !isOpenTarget(det));
+  });
+
+  /* Chip navigasi cepat */
+  var chips = document.getElementById('chips');
+  var chipEls = [];
+  secs.forEach(function (s, i) {
+    var a = document.createElement('a');
+    a.className = 'chip'; a.href = '#' + s.id; a.textContent = (i + 1) + '. ' + s.getAttribute('data-title').split(' ').slice(0, 2).join(' ');
+    a.addEventListener('click', function () { if (!isOpenTarget(s)) animateDet(s, true); });
+    chips.appendChild(a); chipEls.push(a);
+  });
+
+  /* Link dalam halaman membuka bagiannya */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || a.classList.contains('chip')) return;
+    var t = document.querySelector(a.getAttribute('href'));
+    if (t && t.tagName === 'DETAILS' && !isOpenTarget(t)) animateDet(t, true);
+  });
+  if (location.hash) { var h0 = document.querySelector(location.hash); if (h0 && h0.tagName === 'DETAILS') forceOpen(h0); }
+
+  document.getElementById('openAll').addEventListener('click', function () {
+    var k = 0; secs.forEach(function (s) { if (s.classList.contains('hidden') || isOpenTarget(s)) return; animateDet(s, true, k++ * 70); });
+  });
+  document.getElementById('closeAll').addEventListener('click', function () {
+    var k = 0; secs.forEach(function (s) { if (s.classList.contains('hidden') || !isOpenTarget(s)) return; animateDet(s, false, k++ * 40); });
+  });
+
+  /* Bagian muncul halus saat di-scroll */
+  var showAll = function () { secs.forEach(function (s) { s.classList.add('in'); }); };
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (es) {
+      es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.04 });
+    secs.forEach(function (s, i) { s.style.setProperty('--d', Math.min(i, 3) * 60 + 'ms'); io.observe(s); });
+    setTimeout(showAll, 3000); // jaring pengaman
+  } else { showAll(); }
+
+  /* Chip aktif mengikuti bagian yang sedang dibaca */
+  if ('IntersectionObserver' in window) {
+    var spy = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var idx = secs.indexOf(en.target); if (idx < 0) return;
+        chipEls.forEach(function (c, j) { c.classList.toggle('on', j === idx); });
+        var c = chipEls[idx];
+        chips.scrollTo({ left: c.offsetLeft - (chips.clientWidth - c.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+      });
+    }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+    secs.forEach(function (s) { spy.observe(s); });
+  }
+
+  /* Bar progres baca di bawah header */
+  var prog = document.getElementById('prog'), tick = false;
+  function updateProg(){
+    var de = document.documentElement, max = de.scrollHeight - de.clientHeight;
+    prog.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, Math.max(0, (window.pageYOffset || de.scrollTop) / max)) : 0) + ')';
+    tick = false;
+  }
+  window.addEventListener('scroll', function () { if (!tick) { tick = true; requestAnimationFrame(updateProg); } }, { passive: true });
+  updateProg();
+
+  /* Pencarian: menyaring bagian yang memuat kata, lalu membukanya */
+  var q = document.getElementById('q'), hit = document.getElementById('hitCount');
+  var orig = secs.map(function (s) { return s.innerHTML; });
+  function esc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  q.addEventListener('input', function () {
+    var term = q.value.trim().toLowerCase();
+    var n = 0;
+    secs.forEach(function (s, i) {
+      var open = s.open;
+      if (s._a) { try { s._a.cancel(); } catch (e) {} s._a = null; }
+      s.innerHTML = orig[i];
+      s.open = open;
+      if (!term) { s.classList.remove('hidden'); s.classList.add('in'); return; }
+      var txt = (s.textContent + ' ' + s.getAttribute('data-title')).toLowerCase();
+      if (txt.indexOf(term) === -1) { s.classList.add('hidden'); return; }
+      s.classList.remove('hidden'); s.classList.add('in'); forceOpen(s); n++;
+      var walker = document.createTreeWalker(s.querySelector('.body'), NodeFilter.SHOW_TEXT, null);
+      var nodes = [], node; while ((node = walker.nextNode())) nodes.push(node);
+      var re = new RegExp(esc(q.value.trim()), 'gi');
+      nodes.forEach(function (tn) {
+        if (!re.test(tn.nodeValue)) { re.lastIndex = 0; return; }
+        re.lastIndex = 0;
+        var span = document.createElement('span');
+        span.innerHTML = tn.nodeValue.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(re, function (m) { return '<mark>' + m + '</mark>'; });
+        tn.parentNode.replaceChild(span, tn);
+      });
+    });
+    hit.textContent = term ? (n ? n + ' bagian cocok dengan “' + q.value.trim() + '”' : 'Tidak ada yang cocok. Coba kata lain.') : '';
+  });
+})();
+</script>
+</body>
+</html>
