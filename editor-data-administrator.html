@@ -497,16 +497,26 @@
   .pk-tag.tg-unpaid{ color:#b03030; }
   .pickup-ownpaid, .own-paid-edit{ display:flex; gap:10px; align-items:flex-start; margin-top:12px; font-size:13px; font-weight:700; line-height:1.4; cursor:pointer; }
   .pickup-ownpaid input, .own-paid-edit input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
-  .led-item{ padding:9px 0; border-bottom:1px dashed rgba(128,128,128,0.35); }
+  .led-item{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding:6px 0; border-bottom:1px dashed rgba(128,128,128,0.3); }
   .led-item:last-child{ border-bottom:none; }
-  .led-item b{ display:block; font-size:15px; font-weight:800; }
-  .led-tags{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-  .led-tag{ font-size:12px; font-weight:800; padding:3px 10px; border-radius:999px; }
+  .led-item b{ flex:1 1 100px; min-width:0; font-size:14px; font-weight:800; line-height:1.25; }
+  .led-tags{ display:flex; gap:5px; flex-shrink:0; }
+  .led-tag{ font-size:11px; font-weight:800; padding:2px 8px; border-radius:999px; white-space:nowrap; }
   .led-tag.w-stay{ background:rgba(155,107,211,0.16); color:#7a4cb8; }
   .led-tag.w-out{ background:rgba(232,131,42,0.16); color:#b8620f; }
   .led-tag.w-done{ background:rgba(47,127,209,0.14); color:#1f65ad; }
   .led-tag.p-ok{ background:rgba(45,138,85,0.16); color:#1f7a47; }
   .led-tag.p-no{ background:rgba(200,60,60,0.13); color:#b03030; }
+  .scope-box{ margin:12px 0 4px; padding:12px; border-radius:16px; background:rgba(232,131,42,0.10); border:2px solid rgba(232,131,42,0.45); }
+  .scope-q{ font-size:14px; font-weight:800; margin-bottom:8px; }
+  .scope-chip{ display:block; width:100%; text-align:left; margin-top:6px; padding:9px 12px; border-radius:12px; border:2px solid rgba(128,128,128,0.35); background:rgba(255,255,255,0.55); color:inherit; font:inherit; cursor:pointer; }
+  .scope-chip b{ display:block; font-size:14px; font-weight:800; }
+  .scope-chip small{ display:block; font-size:12px; font-weight:600; opacity:0.8; margin-top:1px; }
+  .scope-chip.on{ border-color:#2d8a55; background:rgba(45,138,85,0.16); }
+  @keyframes scopeShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-6px); } 75%{ transform:translateX(6px); } }
+  .scope-box.scope-shake{ animation:scopeShake .4s; }
+  .scope-edit{ display:flex; flex-direction:column; gap:6px; margin-top:12px; font-size:13px; font-weight:700; }
+  .scope-edit select{ padding:10px 12px; border-radius:12px; border:2px solid rgba(128,128,128,0.4); font:inherit; background:var(--card, #fff); color:inherit; }
   .pickup-item{ display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; }
   .pickup-item input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
   .pickup-item b{ display:block; font-size:14px; font-weight:750; }
@@ -1029,6 +1039,14 @@
           <label>Harga</label>
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
+          <div class="scope-edit" id="detScopeWrap" style="display:none;">
+            <span>Harga ini untuk barang yang mana?</span>
+            <select id="detScope">
+              <option value="all">Semua barang</option>
+              <option value="out">Yang dibawa pulang saja</option>
+              <option value="stay">Yang ditinggal saja</option>
+            </select>
+          </div>
           <label class="own-paid-edit" id="detOwnPaidWrap" style="display:none;"><input type="checkbox" id="detOwnPaid"><span>Harga ini juga melunasi barang yang ditinggal di baris ini</span></label>
         </div>
         <div class="detail-row">
@@ -1040,7 +1058,7 @@
           </div>
         </div>
         <div class="detail-row" id="detLedgerRow" style="display:none;">
-          <label>Rincian Barang <span class="opt-tag">(posisi &amp; pembayaran per barang)</span></label>
+          <label>Rincian Barang <span class="opt-tag">(posisi · bayar)</span></label>
           <div class="val" id="detLedgerView"></div>
         </div>
         <div class="detail-row" id="detLinkRow" style="display:none;">
@@ -1163,6 +1181,12 @@
         <div class="preview-row"><span>Metode Bayar</span><span id="cfMetode">—</span></div>
         <div class="preview-row"><span>Bukti</span><span id="cfBukti">—</span></div>
         <div class="preview-row" id="cfLinkRow" style="display:none;"><span>Menandai selesai</span><span id="cfLink">—</span></div>
+      </div>
+      <div class="scope-box" id="cfScopeBox" style="display:none;">
+        <div class="scope-q">Harga ini untuk barang yang mana?</div>
+        <button type="button" class="scope-chip" data-scope="out"><b>Yang dibawa pulang saja</b><small id="cfScopeOut"></small></button>
+        <button type="button" class="scope-chip" data-scope="stay"><b>Yang ditinggal saja</b><small id="cfScopeStay"></small></button>
+        <button type="button" class="scope-chip" data-scope="all"><b>Semua barang</b><small>yang dibawa + yang ditinggal</small></button>
       </div>
       <div class="btn-row">
         <button class="btn-secondary" id="btnConfirmBatal">Batal</button>
@@ -2571,6 +2595,17 @@
       if (carryKeys.length) pendingNewRecord.stokCarry = carryKeys;
       if (document.getElementById('pickupOwnPaid').checked && !isHargaKosong(harga) && ownItemsInForm().length) pendingNewRecord.ownPaid = true;
     }
+    // Ada barang dibawa + barang ditinggal + Harga angka -> tanya Harga itu untuk yang mana
+    pendingScope = null;
+    const probe = parseStokItems({ barang, barangKeluar, stokBarang, harga });
+    pendingNeedScope = !pickupLinks.length && !isHargaKosong(harga) && !isCentangText(harga) && (probe.outItems || []).length > 0 && probe.items.length > 0;
+    const scopeBox = document.getElementById('cfScopeBox');
+    scopeBox.style.display = pendingNeedScope ? '' : 'none';
+    scopeBox.querySelectorAll('.scope-chip').forEach(b => b.classList.remove('on'));
+    if (pendingNeedScope) {
+      document.getElementById('cfScopeOut').textContent = probe.outItems.map(i => i.name).join(', ');
+      document.getElementById('cfScopeStay').textContent = probe.items.map(i => i.name).join(', ');
+    }
     document.getElementById('cfLinkRow').style.display = pickupLinks.length ? '' : 'none';
     document.getElementById('cfLink').textContent = pickupLinks.map(l => (l.mode === 'bayar' ? 'Bayar: ' : 'Ambil: ') + (l.label || 'barang') + ' (' + l.tgl + ')').join('; ');
     openOverlay('overlayConfirm');
@@ -2583,9 +2618,22 @@
   }
 
   let pendingNewRecord = null;
+  let pendingScope = null, pendingNeedScope = false;
+  document.querySelectorAll('#cfScopeBox .scope-chip').forEach(b => b.addEventListener('click', () => {
+    pendingScope = b.dataset.scope;
+    document.querySelectorAll('#cfScopeBox .scope-chip').forEach(x => x.classList.toggle('on', x === b));
+  }));
   document.getElementById('btnConfirmBatal').addEventListener('click', () => closeOverlay('overlayConfirm'));
   document.getElementById('btnConfirmSimpan').addEventListener('click', () => {
     if (!pendingNewRecord) return;
+    if (pendingNeedScope) {
+      if (!pendingScope) { // wajib memilih dulu
+        const box = document.getElementById('cfScopeBox');
+        replayClass(box, 'scope-shake', 500);
+        return;
+      }
+      pendingNewRecord.hargaScope = pendingScope;
+    }
     const now = new Date().toISOString();
     records.push({ id: uid(), ...pendingNewRecord, created_at: now });
     pendingNewRecord = null;
@@ -2652,6 +2700,7 @@
     document.getElementById('detKetEdit').style.display = 'none';
     document.getElementById('detHargaEditWrap').style.display = 'none';
     document.getElementById('detOwnPaidWrap').style.display = 'none';
+    document.getElementById('detScopeWrap').style.display = 'none';
     document.getElementById('detBuktiView').style.display = '';
     document.getElementById('detBuktiDropzone').style.display = 'none';
     document.getElementById('detMetodeView').style.display = '';
@@ -2694,6 +2743,11 @@
     const ownN = (r.ambilDari && r.ambilDari.length) ? parseStokItems(r).items.filter(i => !i.carried).length : 0;
     document.getElementById('detOwnPaidWrap').style.display = ownN ? 'flex' : 'none';
     document.getElementById('detOwnPaid').checked = !!r.ownPaid;
+    const pp = parseStokItems(r);
+    const bh = r.hargaAuto ? r.hargaBase : r.harga;
+    const showScope = !(r.ambilDari && r.ambilDari.length) && !isHargaKosong(bh) && !isCentangText(bh) && (pp.outItems || []).length > 0 && pp.items.length > 0;
+    document.getElementById('detScopeWrap').style.display = showScope ? 'flex' : 'none';
+    document.getElementById('detScope').value = r.hargaScope || 'all';
     document.getElementById('detailActionsView').style.display = 'none';
     document.getElementById('detailActionsEdit').style.display = 'flex';
   });
@@ -2731,6 +2785,10 @@
     } else if (r.pickup) {
       if (!isCentangText(stokBarang)) delete r.pickup;
       else if (r.pickup.hargaAuto && !isCentangText(harga)) r.pickup.hargaAuto = false;
+    }
+    if (document.getElementById('detScopeWrap').style.display !== 'none') {
+      if (!isHargaKosong(harga) && !isCentangText(harga)) r.hargaScope = document.getElementById('detScope').value;
+      else delete r.hargaScope;
     }
     if (r.ambilDari && r.ambilDari.length) {
       const wasOwn = !!r.ownPaid;
@@ -3028,20 +3086,22 @@
     const isPickupRow = !!(r.ambilDari && r.ambilDari.length);
     const pks = Object.keys(r.pickups || {}).map(k => r.pickups[k]).filter(Boolean).sort((a, b) => new Date(a.at) - new Date(b.at));
     const baseHarga = r.hargaAuto ? r.hargaBase : r.harga;
-    const paidOnTitip = (!isPickupRow && !isHargaKosong(baseHarga) && !isCentangText(baseHarga)) || (isPickupRow && !!r.ownPaid);
+    const titipNumeric = !isPickupRow && !isHargaKosong(baseHarga) && !isCentangText(baseHarga);
+    const sc = r.hargaScope || 'all';
+    const paidOnTitip = dibawa => (titipNumeric && (sc === 'all' || (dibawa ? sc === 'out' : sc === 'stay'))) || (isPickupRow && !!r.ownPaid);
     const list = parsed.items.filter(i => !i.carried).map(i => ({ i, dibawa: !!parsed.out }))
       .concat((parsed.outItems || []).map(i => ({ i, dibawa: true })));
     return list.map(({ i, dibawa }) => {
       let where, whereCls;
-      if (dibawa) { where = 'Dibawa pulang ' + fmtTitik(r.created_at); whereCls = 'w-out'; }
+      if (dibawa) { where = 'Dibawa ' + fmtTitik(r.created_at); whereCls = 'w-out'; }
       else {
         const t = pks.find(p => p.mode !== 'bayar' && (p.items == null || p.items.includes(i.key)));
         if (t) { where = 'Diambil ' + fmtTitik(t.at); whereCls = 'w-done'; }
         else if (i.done) { where = 'Sudah diambil'; whereCls = 'w-done'; }
-        else { where = 'Masih ditinggal'; whereCls = 'w-stay'; }
+        else { where = 'Ditinggal'; whereCls = 'w-stay'; }
       }
-      let pay = 'Belum dibayar', payCls = 'p-no';
-      if (paidOnTitip) { pay = 'Lunas ' + fmtTitik(r.created_at); payCls = 'p-ok'; }
+      let pay = 'Belum bayar', payCls = 'p-no';
+      if (paidOnTitip(dibawa)) { pay = 'Lunas ' + fmtTitik(r.created_at); payCls = 'p-ok'; }
       else {
         const p = pks.find(q => q.paid && (q.payItems == null || q.payItems.includes(i.key)));
         if (p) { pay = 'Lunas ' + fmtTitik(p.at); payCls = 'p-ok'; }
@@ -3082,9 +3142,11 @@
         const paidSet = paidKeySet(rr, parsedR);
         if (parsedR.out) items = items.filter(i => !paidSet.has(i.key)); // sudah dibawa & sudah dibayar semua -> tidak perlu muncul lagi
         // Harga berisi ANGKA di baris titip = sudah dibayar lunas saat dititip (DP ditulis di Keterangan, Harga dikosongkan)
+        // Kalau ada barang dibawa DAN barang ditinggal, `hargaScope` menentukan Harga itu untuk yang mana (out / stay / all)
         if (!isPickupRow && !isHargaKosong(r.harga) && !isCentangText(r.harga)) {
-          parsedR.items.forEach(i => paidSet.add(i.key));
-          (parsedR.outItems || []).forEach(i => paidSet.add(i.key));
+          const sc = r.hargaScope || 'all';
+          if (sc !== 'out') parsedR.items.forEach(i => paidSet.add(i.key));
+          if (sc !== 'stay') (parsedR.outItems || []).forEach(i => paidSet.add(i.key));
         }
         // Dibawa pulang di hari titip yang sama & belum dibayar: hanya bisa "Bayar saja"
         const dibawa = (parsedR.outItems || []).filter(i => !paidSet.has(i.key));
