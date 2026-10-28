@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v16'; // dinaikkan: halaman editor, daftar nomor, folder baru & rekap gaji kini ikut tema/font/bahasa bersama
+const CACHE_NAME = 'bmtech-shell-v17'; // dinaikkan: halaman editor, daftar nomor, folder baru & rekap gaji kini ikut tema/font/bahasa bersama
 
 const APP_SHELL = [
   '/my-profile-bm.html',
