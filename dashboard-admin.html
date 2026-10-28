@@ -2517,6 +2517,85 @@
   @media (prefers-reduced-motion: reduce) {
     .seg-lens, .segmented-tabs.holding .seg-lens { transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
   }
+
+  /* ===================================================================
+     MODE GELAP: kaca lebih terang & bening (tidak hitam pekat),
+     MODE TERANG: menu tampilan (List/Card/Grid) ikut Liquid Glass
+     =================================================================== */
+  body:not(.theme-light) {
+    --bg-dark: #101013;
+    --card-surface-dark: #1C1C20;
+    --hdr-rgb: 16, 16, 19;
+    --glass-hi: rgba(255,255,255,.30);
+    --glass-lo: rgba(255,255,255,.07);
+    --glass-edge: rgba(255,255,255,.24);
+    --glass-shadow: rgba(0,0,0,.40);
+    --glass-pill-bg: rgba(255,255,255,.12);
+  }
+  body:not(.theme-light) .screen-container { background: var(--bg-dark); }
+  body:not(.theme-light) .header-btn,
+  body:not(.theme-light) .search-pill,
+  body:not(.theme-light) .btn-compose-pencil {
+    background:
+      linear-gradient(145deg, rgba(255,255,255,.26) 0%, rgba(255,255,255,.08) 45%, rgba(255,255,255,.16) 100%),
+      rgba(120,120,132,.28);
+  }
+  body:not(.theme-light) .search-pill { color: #E6E6EA; }
+  body:not(.theme-light) .search-pill span { color: #E6E6EA; }
+
+  /* Navigasi Notes | Tasks versi gelap: trek abu-abu terang, penanda terpilih LEBIH TERANG, teks aktif berwarna sistem yang dicerahkan */
+  body:not(.theme-light) .segmented-tabs {
+    --seg-text: #B4B4BC;
+    --seg-text-lens: color-mix(in srgb, var(--accent-yellow) 55%, #ffffff);
+    background: linear-gradient(180deg, #3E3E44 0%, #303035 100%) !important;
+    border: 1px solid rgba(255,255,255,.18) !important;
+    box-shadow:
+      inset 0 1.5px 2px rgba(255,255,255,.18),
+      inset 0 -2px 5px rgba(0,0,0,.25),
+      0 1px 2px rgba(0,0,0,.3),
+      0 8px 20px -8px rgba(0,0,0,.5) !important;
+  }
+  body:not(.theme-light) .seg-lens {
+    background-color: rgba(255,255,255,.16);
+    border-color: rgba(255,255,255,.26);
+    box-shadow:
+      inset 0 1px 1px rgba(255,255,255,.25),
+      inset 0 -1px 3px rgba(0,0,0,.2),
+      0 1px 2px rgba(0,0,0,.3),
+      0 3px 8px rgba(0,0,0,.2);
+  }
+  body:not(.theme-light) .segmented-tabs.holding .seg-lens {
+    background-color: rgba(255,255,255,.22);
+    border-color: rgba(255,255,255,.55);
+  }
+
+  /* Menu List / Card / Grid */
+  body:not(.theme-light) .view-popup {
+    background: linear-gradient(145deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.07) 100%), rgba(48,48,54,.78);
+    border: 1px solid rgba(255,255,255,.22);
+    box-shadow: inset 0 1.5px 1px rgba(255,255,255,.28), 0 16px 40px rgba(0,0,0,.5);
+  }
+  body:not(.theme-light) .view-option.active { color: color-mix(in srgb, var(--accent-yellow) 55%, #ffffff); }
+
+  body.theme-light .view-popup {
+    background: linear-gradient(145deg, rgba(255,255,255,.82) 0%, rgba(255,255,255,.42) 55%, rgba(255,255,255,.62) 100%), rgba(255,255,255,.3);
+    -webkit-backdrop-filter: blur(26px) saturate(1.9);
+    backdrop-filter: blur(26px) saturate(1.9);
+    border: 1px solid rgba(255,255,255,.9);
+    box-shadow:
+      inset 0 1.5px 1px rgba(255,255,255,.95),
+      inset 0 -1.5px 2px rgba(255,255,255,.4),
+      0 14px 34px rgba(30,30,60,.20),
+      0 1px 3px rgba(0,0,0,.08);
+    overflow: hidden;
+  }
+  body.theme-light .view-option { color: #1C1B19; }
+  body.theme-light .view-option:active { background: rgba(0,0,0,.07); }
+  body.theme-light .view-option.active { color: var(--accent-yellow); }
+
+  /* Judul menu folder = tombol muat ulang halaman */
+  .drawer-header h3.drawer-refresh { cursor: pointer; transition: transform .2s cubic-bezier(.34,1.56,.64,1), opacity .15s ease; }
+  .drawer-header h3.drawer-refresh:active { transform: scale(.94); opacity: .6; }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -2636,7 +2715,7 @@
 <div class="drawer-overlay" id="drawerOverlay"></div>
 <aside class="drawer" id="drawer">
   <div class="drawer-header">
-    <h3>BUKU CATATAN</h3>
+    <h3 class="drawer-refresh" id="drawerTitleRefresh" role="button" tabindex="0" title="Ketuk untuk muat ulang halaman">BUKU CATATAN</h3>
     <button class="btn-create-category" id="btnCreateCategory">New</button>
   </div>
   
@@ -4231,6 +4310,17 @@
   const viewOptions = document.querySelectorAll('.view-option');
   const notesList = document.getElementById('notesList');
 
+  // Ingat pilihan tampilan (list / card / grid) di perangkat ini
+  const VIEW_MODE_KEY = 'bm-admin-view-mode';
+  const VALID_VIEW_MODES = ['view-list', 'view-card', 'view-grid'];
+  (function restoreViewMode() {
+    let saved = null;
+    try { saved = localStorage.getItem(VIEW_MODE_KEY); } catch (e) {}
+    if (!saved || VALID_VIEW_MODES.indexOf(saved) === -1) return;
+    notesList.className = 'notes-container ' + saved;
+    viewOptions.forEach(b => b.classList.toggle('active', b.dataset.view === saved));
+  })();
+
   btnToggleViewMenu.addEventListener('click', (e) => {
     e.stopPropagation();
     viewPopup.classList.toggle('open');
@@ -4244,6 +4334,7 @@
       btn.classList.add('active');
       const viewMode = btn.dataset.view;
       notesList.className = 'notes-container ' + viewMode;
+      try { localStorage.setItem(VIEW_MODE_KEY, viewMode); } catch (e) {}
       viewPopup.classList.remove('open');
       renderNotes();
     });
@@ -5160,6 +5251,14 @@
     refreshTrashCount();
     showMiniToast(`${count} note dipindahkan ke Sampah`);
   }
+
+  (function () {
+    const t = document.getElementById('drawerTitleRefresh');
+    if (!t) return;
+    const go = () => location.reload();
+    t.addEventListener('click', go);
+    t.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  })();
 
   const btnOpenDrawer = document.getElementById('btnOpenDrawer');
   const drawer = document.getElementById('drawer');
