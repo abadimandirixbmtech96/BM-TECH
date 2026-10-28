@@ -2596,6 +2596,55 @@
   /* Judul menu folder = tombol muat ulang halaman */
   .drawer-header h3.drawer-refresh { cursor: pointer; transition: transform .2s cubic-bezier(.34,1.56,.64,1), opacity .15s ease; }
   .drawer-header h3.drawer-refresh:active { transform: scale(.94); opacity: .6; }
+
+  /* ===== MODE GELAP v2: glassmorphism polos (blur + transparan), tanpa kilau/cahaya, tidak hitam ===== */
+  body:not(.theme-light) .header::before {
+    background: linear-gradient(180deg, rgba(var(--hdr-rgb), .30) 0%, rgba(var(--hdr-rgb), .16) 55%, rgba(var(--hdr-rgb), 0) 100%);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+  body:not(.theme-light) .header-btn,
+  body:not(.theme-light) .search-pill,
+  body:not(.theme-light) .btn-compose-pencil {
+    background: rgba(255,255,255,.14);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    backdrop-filter: blur(22px) saturate(1.5);
+    border: 1px solid rgba(255,255,255,.22) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,.22) !important;
+  }
+  body:not(.theme-light) .header-btn::before,
+  body:not(.theme-light) .search-pill::before,
+  body:not(.theme-light) .btn-compose-pencil::before { display: none; }
+
+  body:not(.theme-light) .segmented-tabs {
+    background: transparent !important;
+    border: 1px solid rgba(255,255,255,.22) !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,.22) !important;
+  }
+  body:not(.theme-light) .segmented-tabs::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(255,255,255,.12);
+    -webkit-backdrop-filter: blur(22px) saturate(1.5);
+    backdrop-filter: blur(22px) saturate(1.5);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body:not(.theme-light) .seg-lens,
+  body:not(.theme-light) .segmented-tabs.holding .seg-lens {
+    background-color: rgba(255,255,255,.20);
+    border-color: rgba(255,255,255,.30);
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+  }
+  body:not(.theme-light) .segmented-tabs.holding .seg-lens {
+    background-color: rgba(255,255,255,.28);
+    box-shadow: 0 6px 16px rgba(0,0,0,.25);
+  }
+  body:not(.theme-light) .seg-ring,
+  body:not(.theme-light) .seg-glint-a,
+  body:not(.theme-light) .seg-glint-b { display: none; }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
