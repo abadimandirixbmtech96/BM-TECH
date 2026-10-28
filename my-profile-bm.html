@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
 <meta name="apple-mobile-web-app-title" content="BM-TECH Admin">
 <meta name="referrer" content="no-referrer">
-<title>My Profile — BM-TECH</title>
+<title>Profil Saya — BM-TECH</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -106,7 +106,9 @@
   /* ---------- Dashboard tertanam: beralih tanpa memuat ulang halaman ---------- */
   #dashHub { position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%; border: 0; background: var(--bg); transform: translateX(100%); visibility: hidden; pointer-events: none; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s; }
   #dashHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
-  @media (prefers-reduced-motion: reduce) { #dashHub, #dashHub.on { transition: none; } }
+  #recapHub { position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%; border: 0; background: var(--bg); transform: translateX(100%); visibility: hidden; pointer-events: none; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s; }
+  #recapHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
+  @media (prefers-reduced-motion: reduce) { #dashHub, #dashHub.on, #recapHub, #recapHub.on { transition: none; } }
 
   /* ---------- dock: navigasi liquid glass di paling bawah ---------- */
   .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 28px 16px calc(env(safe-area-inset-bottom, 0px) + 12px); pointer-events: none; background: linear-gradient(to top, var(--bg) 40%, transparent); }
@@ -173,6 +175,7 @@
   .log small { color: var(--muted); font-size: 12px; }
   .empty { text-align: center; color: var(--muted); padding: 26px 8px; font-size: 14px; }
 
+  #aksesCard { overflow-x: auto; }
   .mx { display: grid; grid-template-columns: 1fr 46px 46px 46px; align-items: center; column-gap: 6px; }
   .mx .h { font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); text-align: center; padding-bottom: 10px; }
   .mx .h.l { text-align: left; }
@@ -584,6 +587,7 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
   <linearGradient id="cg-owner" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE98A"/><stop offset=".55" stop-color="#F5B301"/><stop offset="1" stop-color="#B97800"/></linearGradient>
   <linearGradient id="cg-admin1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#C3CAD5"/><stop offset="1" stop-color="#7F8896"/></linearGradient>
+  <linearGradient id="cg-admin3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE3F2"/><stop offset=".55" stop-color="#3F8FB5"/><stop offset="1" stop-color="#1F5673"/></linearGradient>
   <linearGradient id="cg-admin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6C18F"/><stop offset=".55" stop-color="#C9772F"/><stop offset="1" stop-color="#8A4B16"/></linearGradient>
 </defs></svg>
 
@@ -663,6 +667,7 @@
   <section class="panel" id="p-akses">
     <p class="hint" id="aksesHint"></p>
     <div class="card" id="aksesCard"></div>
+    <button class="btn ghost" id="btnAddRole" style="display:none"></button>
     <button class="btn ghost" id="btnReset">Kembalikan ke bawaan</button>
     <div id="admCard"></div>
     <div id="permHistWrap" hidden><div class="sec">Riwayat perubahan izin</div><div class="card" id="permHist" style="padding:4px 18px"></div></div>
@@ -795,7 +800,7 @@
   <div class="field"><label>Nama</label><input id="admName" maxlength="40" autocomplete="off"></div>
   <div class="field"><label>Email login</label><input id="admMail" type="email" autocomplete="off" inputmode="email" autocapitalize="off" placeholder="nama@gmail.com"></div>
   <div class="field" id="admPwWrap"><label>Password sementara</label><input id="admPw" type="password" autocomplete="new-password" placeholder="Minimal 8 karakter"></div>
-  <div class="field" id="admRoleWrap"><label>Role (izin)</label><div class="seg" id="admRole" style="margin-bottom:0"><button data-r="admin1">Admin 1</button><button data-r="admin2">Admin 2</button></div></div>
+  <div class="field" id="admRoleWrap"><label>Role (izin)</label><div class="seg" id="admRole" style="margin-bottom:0;overflow-x:auto"></div></div>
   <div class="toggle-row" style="margin:4px 0 16px"><div><p>Akses Developer</p><small>Menambah Alat Developer (Info Sistem). Cukup aktif atau nonaktif, tanpa masa berlaku.</small></div><button class="sw" id="admDev" aria-pressed="false"></button></div>
   <button class="btn" id="admSave">Simpan</button>
   <button class="btn ghost" id="admOwner" style="margin-top:10px">Jadikan Owner</button>
@@ -825,7 +830,10 @@
 function bmMain(REAL){
   /* Halaman Profil: akun, role, izin, pengumuman, dan log dibaca/ditulis ke Supabase lewat sesi login Dashboard. */
 
-  var ROLE_LABEL = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };
+  var ROLE_RE = /^admin([1-9][0-9]?)$/;
+  function validRole(r){ return r === 'owner' || ROLE_RE.test(String(r || '')); }
+  function RL(r){ var m = ROLE_RE.exec(String(r || '')); return r === 'owner' ? 'Owner' : (m ? 'Admin ' + m[1] : String(r || '')); }
+  var ROLE_LABEL = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };   /* dipertahankan untuk kompatibilitas; gunakan RL() */
   var FEATURES = [
     { k: 'tulis',    t: 'Tambah & ubah data',         s: 'Input di semua editor' },
     { k: 'hapus',    t: 'Hapus ke Sampah',            s: 'Wajib puzzle penghapusan' },
@@ -838,8 +846,10 @@ function bmMain(REAL){
     admin1: { tulis:1, hapus:1, pulih:0, ekspor:1, role:0 },
     admin2: { tulis:1, hapus:0, pulih:0, ekspor:0, role:0 }
   };
+  function defOf(r){ return DEFAULTS[r] || DEFAULTS.admin2; }   /* Admin 3 dan seterusnya mulai dari izin paling sempit */
   var SHORTCUTS = [
     { k: null, a: 'dash', t: 'Dashboard', ic: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>' },
+    { k: null, a: 'recap', t: 'Rekap Gaji', ic: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16.5 14.5h.01"/>' },
     { k: 'ann',      t: 'Pengumuman',       ic: '<path d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1z"/><path d="M15 9a4 4 0 010 6M17.5 6.5a8 8 0 010 11"/>' },
     { k: 'role',     t: 'Tambah Admin',     ic: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 19v-1a4 4 0 014-4h5a4 4 0 014 4v1M19 8v6M16 11h6"/>' }
   ];
@@ -853,7 +863,7 @@ function bmMain(REAL){
   };
 
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
-  var S = { me: REAL.email, admins: [], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, annSeen: {}, extraLogs: [], media: {}, mediaDirty: true };
+  var S = { me: REAL.email, admins: [], roles: ['admin1', 'admin2'], perms: clone(DEFAULTS), devices: {}, logins: [], ann: [], seen: {}, annSeen: {}, extraLogs: [], media: {}, mediaDirty: true };
 
   /* ---------- satu pintu untuk akun & role ---------- */
   function acct(id){ for (var i = 0; i < S.admins.length; i++) if (S.admins[i].id === id) return S.admins[i]; return null; }
@@ -865,7 +875,7 @@ function bmMain(REAL){
     if (k === 'role') return getRole() === 'owner';
     var p = S.perms[getRole()]; return !!(p && p[k]);
   }
-  function roleLabel(a){ return a.dev && a.role !== 'owner' ? 'Admin + Dev' : ROLE_LABEL[a.role] + (a.dev ? ' + Dev' : ''); }   // izin Admin + Dev mengikuti Admin 1
+  function roleLabel(a){ return a.dev && a.role !== 'owner' ? 'Admin + Dev' : RL(a.role) + (a.dev ? ' + Dev' : ''); }   // izin Admin + Dev mengikuti Admin 1
   function groupOf(a){ return a.role === 'owner' ? 'Owner' : 'Admin'; }
   function nameOfId(id){ var a = acct(id); return a ? a.name : 'Admin'; }
   function allLogs(){ return S.extraLogs; }
@@ -974,10 +984,15 @@ function bmMain(REAL){
       } catch (e) {}
     }
     if (!S.media[em] && keepMe) S.media[em] = keepMe;
-    var admins =q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: hasOwn(ROLE_LABEL, r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false, bio: r.bio || '', accent: /^#[0-9a-fA-F]{6}$/.test(r.accent || '') ? r.accent : '', avatar: /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(r.avatar || '') ? r.avatar : '' }; });
+    var admins =q[0].data.map(function(r){ var m = String(r.email).toLowerCase(); return { id: m, mail: m, name: r.display_name || m.split('@')[0], role: validRole(r.role) ? r.role : 'admin2', dev: !!r.is_dev, active: r.active !== false, bio: r.bio || '', accent: /^#[0-9a-fA-F]{6}$/.test(r.accent || '') ? r.accent : '', avatar: /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(r.avatar || '') ? r.avatar : '' }; });
     var known = admins.some(function(a){ return a.id === em; });
     if (!known) admins.push({ id: em, mail: em, name: em.split('@')[0], role: 'admin2', dev: false, active: true });
-    var perms = clone(DEFAULTS);
+    var roleSet = { admin1: 1, admin2: 1 };
+    q[1].data.forEach(function(r){ if (ROLE_RE.test(r.role || '')) roleSet[r.role] = 1; });
+    admins.forEach(function(a){ if (ROLE_RE.test(a.role)) roleSet[a.role] = 1; });
+    var roles = Object.keys(roleSet).sort(function(a, b){ return parseInt(a.slice(5), 10) - parseInt(b.slice(5), 10); });
+    var perms = {}; roles.forEach(function(r){ perms[r] = clone(defOf(r)); });
+    perms.owner = clone(DEFAULTS.owner);
     q[1].data.forEach(function(r){ if (perms[r.role] && r.feature in perms[r.role]) perms[r.role][r.feature] = r.allowed ? 1 : 0; });
     perms.owner = clone(DEFAULTS.owner);
     var EXPS = [1, 3, 7, 14, 30];
@@ -1016,7 +1031,7 @@ function bmMain(REAL){
     try { if (ownerNow) { var ph = await c.from('perm_history').select('*').order('id', { ascending: false }).limit(30); if (!ph.error) S.permHist = ph.data || []; } } catch (e) {}
     try { if (ownerNow) { var wk = await c.rpc('weekly_summary', { p_days: 7 }); if (!wk.error && Array.isArray(wk.data)) S.week = wk.data; } } catch (e) {}
     try { if (devNow || ownerNow) { var st = await c.from('app_settings').select('*'); if (!st.error) (st.data || []).forEach(function(x){ S.settings[x.key] = x; }); } } catch (e) {}
-    S.admins = admins; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.teamLogins = team; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
+    S.admins = admins; S.roles = roles; S.perms = perms; S.ann = ann; S.logins = logins; S.devices = dv; S.teamLogins = team; S.myLid = myLid; S.known = known; S.annSeen = annSeen;
     S.seen = {}; S.seen[em] = q[3].data.map(function(r){ return r.announcement_id; });
     S.extraLogs = q[5].data.filter(function(r){ return !/pengumuman/i.test(r.detail || ''); }).map(function(r){ return { a: String(r.actor_email).toLowerCase(), k: logKind(r.kind), t: r.detail, m: fmtT(r.created_at), ts: Date.parse(r.created_at) }; });
   }
@@ -1050,15 +1065,49 @@ function bmMain(REAL){
     if (!hubPushed) { try { history.pushState({ bmHub: 1 }, ''); hubPushed = true; } catch (e) {} }
     showHub(true);
   }
-  window.addEventListener('popstate', function(){ hubPushed = !!(history.state && history.state.bmHub); if (hubOn && !hubPushed) showHub(false); });
+  /* Rekap Gaji: dimuat sekali sebagai lapisan di atas Profil, sama seperti Dashboard (tanpa memuat ulang halaman) */
+  var recap = null, recapOn = false, recapPushed = false;
+  function ensureRecap(){
+    if (recap) return recap;
+    recap = document.createElement('iframe');
+    recap.id = 'recapHub'; recap.name = 'bm-recap-hub'; recap.title = 'Rekap Gaji';
+    recap.setAttribute('aria-hidden', 'true');
+    recap.src = 'salary-recap.html';
+    document.body.appendChild(recap);
+    return recap;
+  }
+  function showRecap(on){
+    if (on === recapOn) return;
+    recapOn = on;
+    var f = ensureRecap();
+    f.classList.toggle('on', on);
+    f.setAttribute('aria-hidden', on ? 'false' : 'true');
+    document.documentElement.style.overflow = on ? 'hidden' : '';
+    if (on) { try { f.contentWindow.focus(); } catch (e) {} }
+    else { window.scrollTo(0, 0); try { window.focus(); } catch (e) {} }
+  }
+  function goRecap(){
+    if (!recapPushed) { try { history.pushState({ bmRecap: 1 }, ''); recapPushed = true; } catch (e) {} }
+    showRecap(true);
+  }
+  window.addEventListener('popstate', function(){
+    hubPushed = !!(history.state && history.state.bmHub); if (hubOn && !hubPushed) showHub(false);
+    recapPushed = !!(history.state && history.state.bmRecap); if (recapOn && !recapPushed) showRecap(false);
+  });
   window.addEventListener('message', function(e){
-    if (!hub || e.source !== hub.contentWindow || e.origin !== location.origin) return;
-    if (e.data && e.data.type === 'bm-nav' && e.data.to === 'profile') showHub(false);
+    if (e.origin !== location.origin) return;
+    if (hub && e.source === hub.contentWindow && e.data && e.data.type === 'bm-nav' && e.data.to === 'profile') showHub(false);
+    if (recap && e.source === recap.contentWindow && e.data && e.data.type === 'close-page') {
+      if (history.state && history.state.bmRecap) history.back(); else showRecap(false);
+    }
   });
   /* muat Dashboard di belakang layar setelah Profil tampil, supaya saat dibuka langsung siap */
   (function(){
     var go = function(){ try { if (navigator.connection && navigator.connection.saveData) return; } catch (e) {} ensureHub(); };
     if (window.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 1500);
+    /* Rekap Gaji menyusul sedikit lebih lambat agar tidak berebut koneksi dengan Dashboard */
+    var go2 = function(){ try { if (navigator.connection && navigator.connection.saveData) return; } catch (e) {} ensureRecap(); };
+    setTimeout(go2, 5000);
   })();
   function toLogin(){
     try { if (window.BMSession) BMSession.stop(); } catch (e) {}
@@ -1081,6 +1130,28 @@ function bmMain(REAL){
   $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
   $('bootBack').addEventListener('click', toLogin);
   try { REAL.c.auth.onAuthStateChange(function(ev){ if (ev === 'SIGNED_OUT') location.replace('admin-login.html'); }); } catch (e) {}
+  /* izin & role berubah di perangkat lain → tampilan Profil ikut menyesuaikan langsung (Realtime + cek ulang berkala) */
+  (function(){
+    var t = null, again = function(){ clearTimeout(t); t = setTimeout(function(){ if (loaded && !busy && !document.hidden) refresh(); }, 500); };
+    try {
+      REAL.c.channel('bm-profil-izin-' + Math.random().toString(36).slice(2))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'role_permissions' }, again)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_roles' }, again)
+        .subscribe();
+    } catch (e) {}
+    var sig = null;
+    function check(){
+      if (!loaded || busy || document.hidden) return;
+      Promise.all([REAL.c.from('role_permissions').select('role,feature,allowed'), REAL.c.from('admin_roles').select('email,role,active,is_dev')]).then(function(q){
+        if (q[0].error || q[1].error) return;
+        var n = JSON.stringify([q[0].data.map(function(r){ return r.role + r.feature + r.allowed; }).sort(), q[1].data.map(function(r){ return r.email + r.role + r.active + r.is_dev; }).sort()]);
+        if (sig !== null && n !== sig) again();
+        sig = n;
+      }, function(){});
+    }
+    setInterval(check, 20000);
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) check(); });
+  })();
   /* jalankan permintaan ke server, lalu muat ulang tampilan. Baris 0 = ditolak server (izin/RLS). */
   function srv(p, ok, log){
     if (busy) return Promise.resolve(toast('Sedang menyimpan, tunggu sebentar'));
@@ -1184,13 +1255,16 @@ function bmMain(REAL){
       ? 'Semua Owner dan Admin bisa melihat semua data. Izin di bawah hanya membatasi siapa yang boleh mengubah, menghapus, dan mengelola. Admin + Dev memakai izin kolom Admin 1, ditambah Info Sistem. Hak Owner selalu penuh. Perubahan langsung berlaku.'
       : 'Anda bisa melihat semua data. Ini yang boleh Anda lakukan sebagai ' + (a ? roleLabel(a) : 'Admin') + '. Hanya Owner yang bisa mengubahnya.';
     $('btnReset').style.display = isOwner ? 'block' : 'none';
+    var nxt = S.roles.length ? parseInt(S.roles[S.roles.length - 1].slice(5), 10) + 1 : 1;
+    $('btnAddRole').style.display = isOwner && nxt <= 9 ? 'block' : 'none';
+    $('btnAddRole').textContent = 'Tambah role Admin ' + nxt;
     if (isOwner) {
-      var cols = ['owner', 'admin1', 'admin2'];
-      var h = '<div class="mx"><div class="h l">Fitur</div>' + cols.map(function(c){ return '<div class="h">' + ROLE_LABEL[c].replace(' ', '&nbsp;') + '</div>'; }).join('');
+      var cols = ['owner'].concat(S.roles);
+      var h = '<div class="mx" style="grid-template-columns:1fr repeat(' + cols.length + ',46px)"><div class="h l">Fitur</div>' + cols.map(function(c){ return '<div class="h">' + RL(c).replace(' ', '&nbsp;') + '</div>'; }).join('');
       FEATURES.forEach(function(f){
         h += '<div class="n">' + f.t + '<small>' + f.s + '</small></div>';
         cols.forEach(function(c){
-          var on = !!S.perms[c][f.k], fixed = c === 'owner' || f.k === 'role';
+          var on = !!(S.perms[c] && S.perms[c][f.k]), fixed = c === 'owner' || f.k === 'role';
           h += '<div class="c"><button class="sw' + (on ? ' on' : '') + (c === 'owner' ? ' fixed' : '') + '" ' + (fixed ? 'disabled' : '') + ' data-r="' + c + '" data-k="' + f.k + '" aria-pressed="' + on + '"></button></div>';
         });
       });
@@ -1255,7 +1329,7 @@ function bmMain(REAL){
     $('permHist').innerHTML = h.length ? h.map(function(x){
       var who = x.actor_email ? uu(nameOfId(String(x.actor_email).toLowerCase())) : 'Sistem';
       var what = x.new_allowed === null ? 'mengembalikan ke pengaturan awal' : (x.old_allowed === null ? 'menetapkan' : 'mengubah');
-      return '<div class="ph"><b>' + who + '</b> ' + what + ' izin <b>' + esc(ROLE_LABEL[x.role] || x.role) + '</b>: ' + esc(FEAT_NAME[x.feature] || x.feature) + '<br>' + tx(x.old_allowed) + ' → ' + tx(x.new_allowed) + '<small>' + esc(fmtT(x.at)) + '</small></div>';
+      return '<div class="ph"><b>' + who + '</b> ' + what + ' izin <b>' + esc(RL(x.role)) + '</b>: ' + esc(FEAT_NAME[x.feature] || x.feature) + '<br>' + tx(x.old_allowed) + ' → ' + tx(x.new_allowed) + '<small>' + esc(fmtT(x.at)) + '</small></div>';
     }).join('') : '<div class="empty">Belum ada perubahan izin yang tercatat.</div>';
   }
   /* keluarkan satu perangkat tertentu (Owner) */
@@ -1416,6 +1490,7 @@ function bmMain(REAL){
   $('shortcuts').addEventListener('click', function(e){
     var b = e.target.closest('.short'); if (!b) return;
     if (b.getAttribute('data-a') === 'dash') return goDash();
+    if (b.getAttribute('data-a') === 'recap') return goRecap();
     var k = b.getAttribute('data-k') || null;
     if (!can(k)) return toast('Tidak ada izin');   // lapisan kedua: izin dicek lagi saat diketuk
     if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
@@ -1516,15 +1591,21 @@ function bmMain(REAL){
     var r = b.getAttribute('data-r'), k = b.getAttribute('data-k');
     if (!S.perms[r] || r === 'owner' || k === 'role') return;
     {
-      var nv = !S.perms[r][k], tt = FEATURES.filter(function(f){ return f.k === k; })[0].t, msg = ROLE_LABEL[r] + ': ' + tt + ' ' + (nv ? 'diizinkan' : 'dicabut');
+      var nv = !S.perms[r][k], tt = FEATURES.filter(function(f){ return f.k === k; })[0].t, msg = RL(r) + ': ' + tt + ' ' + (nv ? 'diizinkan' : 'dicabut');
       return srv(function(){ return REAL.c.from('role_permissions').update({ allowed: nv, updated_at: new Date().toISOString() }).eq('role', r).eq('feature', k).select(); }, msg, ['sys', 'Mengubah izin ' + msg]);
     }
   });
+  $('btnAddRole').addEventListener('click', function(){
+    if (getRole() !== 'owner') return;
+    var n = S.roles.length ? parseInt(S.roles[S.roles.length - 1].slice(5), 10) + 1 : 1; if (n > 9) return;
+    var r = 'admin' + n, rows = Object.keys(DEFAULTS.admin2).map(function(k){ return { role: r, feature: k, allowed: !!DEFAULTS.admin2[k] }; });
+    return srv(function(){ return REAL.c.from('role_permissions').insert(rows).select(); }, RL(r) + ' ditambahkan', ['sys', 'Menambahkan role ' + RL(r)]);
+  });
   $('btnReset').addEventListener('click', function(){
     if (getRole() !== 'owner') return;
-    confirmBox('Kembalikan ke bawaan?', 'Hak akses Admin 1, Admin 2, dan Admin + Dev kembali ke pengaturan awal.', function(){
+    confirmBox('Kembalikan ke bawaan?', 'Hak akses semua role Admin dan Admin + Dev kembali ke pengaturan awal.', function(){
       {
-        var rows = []; ['admin1', 'admin2'].forEach(function(r){ Object.keys(DEFAULTS[r]).forEach(function(k){ rows.push({ role: r, feature: k, allowed: !!DEFAULTS[r][k] }); }); });
+        var rows = []; S.roles.forEach(function(r){ Object.keys(defOf(r)).forEach(function(k){ rows.push({ role: r, feature: k, allowed: !!defOf(r)[k] }); }); });
         return srv(function(){ return REAL.c.from('role_permissions').upsert(rows, { onConflict: 'role,feature' }); }, 'Hak akses dikembalikan', ['sys', 'Mengembalikan hak akses ke bawaan']);
       }
     });
@@ -1689,6 +1770,7 @@ function bmMain(REAL){
     $('admMail').value = a ? a.mail : ($('admMail').value || ''); $('admMail').readOnly = !!a;
     $('admRoleWrap').style.display = isOwnerRow ? 'none' : 'block';
     $('admPwWrap').style.display = !a ? 'block' : 'none';
+    $('admRole').innerHTML = S.roles.map(function(r){ return '<button data-r="' + r + '" style="white-space:nowrap">' + RL(r) + '</button>'; }).join('');
     markOn('#admRole button', function(b){ return b.getAttribute('data-r') === admRole; });
     $('admDev').classList.toggle('on', admDev); $('admDev').setAttribute('aria-pressed', admDev);
     $('admOwner').style.display = a && !isOwnerRow && a.active ? 'block' : 'none';
@@ -1724,10 +1806,10 @@ function bmMain(REAL){
         if (S.admins.some(function(x){ return x.mail === mail2; })) return toast('Email itu sudah terdaftar');
         if (pw.length < 8) return toast('Password sementara minimal 8 karakter');
         $('ovAdm').classList.remove('on'); $('admPw').value = '';
-        return srv(function(){ return fnCall({ action: 'create', email: mail2, name: name, role: admRole === 'admin2' ? 'admin2' : 'admin1', is_dev: admDev, password: pw }); }, 'Admin ditambahkan. Beri tahu email dan password sementaranya.', ['add', 'Menambahkan admin ' + name]);
+        return srv(function(){ return fnCall({ action: 'create', email: mail2, name: name, role: ROLE_RE.test(admRole) ? admRole : 'admin1', is_dev: admDev, password: pw }); }, 'Admin ditambahkan. Beri tahu email dan password sementaranya.', ['add', 'Menambahkan admin ' + name]);
       }
       var upd = { display_name: name, is_dev: admDev, updated_at: new Date().toISOString() };
-      if (a.role !== 'owner') upd.role = admRole === 'admin2' ? 'admin2' : 'admin1';
+      if (a.role !== 'owner') upd.role = ROLE_RE.test(admRole) ? admRole : 'admin1';
       $('ovAdm').classList.remove('on');
       return srv(function(){ return REAL.c.from('admin_roles').update(upd).eq('email', a.mail).select(); }, 'Akun diperbarui', ['sys', 'Mengubah akun ' + name]);
     }
@@ -1777,7 +1859,7 @@ function bmMain(REAL){
   });
   /* ================= MAHKOTA, KOMPRESI MEDIA, VIEWER KACA, PROFIL TIM ================= */
   var CROWN_TITLE = { owner: 'Owner', admin1: 'Admin 1', admin2: 'Admin 2' };
-  function crk(r){ return r === 'owner' || r === 'admin1' || r === 'admin2' ? r : 'admin2'; }
+  function crk(r){ return r === 'owner' || r === 'admin1' || r === 'admin2' ? r : (ROLE_RE.test(String(r || '')) ? 'admin3' : 'admin2'); }
   function crownSvg(role){
     var k = crk(role);
     return '<svg class="cr" viewBox="0 0 24 24" aria-hidden="true">' +
@@ -1785,7 +1867,7 @@ function bmMain(REAL){
       '<path d="M5.2 16.4h13.6" stroke="rgba(0,0,0,.22)" stroke-width="1.1" stroke-linecap="round"/>' +
       '<circle cx="12" cy="4.6" r="1.35" fill="#fff" fill-opacity=".92"/><circle cx="2.8" cy="8.4" r="1.15" fill="#fff" fill-opacity=".85"/><circle cx="21.2" cy="8.4" r="1.15" fill="#fff" fill-opacity=".85"/></svg>';
   }
-  function crownHtml(role){ return '<span class="crown" title="' + CROWN_TITLE[crk(role)] + '">' + crownSvg(role) + '</span>'; }
+  function crownHtml(role){ return '<span class="crown" title="' + RL(role) + '">' + crownSvg(role) + '</span>'; }
   function badgeHtml(a){ return '<span class="crown-i">' + crownSvg(a.role) + '</span><span>' + esc(roleLabel(a)) + '</span>'; }
 
   /* data dari server divalidasi sebelum dipakai sebagai src */
