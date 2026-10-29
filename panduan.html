@@ -10,6 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js');</script>
 <script src="/bm-theme.js"></script>
+<script src="/bm-lang.js"></script>
 <style>
   :root{
     --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -29,6 +30,13 @@
     --accent-soft:rgba(var(--accent-rgb),0.18);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family:var(--app-font); }
+  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
+  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
+  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
+  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
+  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
+  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
+  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
   /* Tanpa blok teks biru, menu tekan-lama, dan cincin fokus saat disentuh */
   html, body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   *::selection{ background:transparent; color:inherit; }
@@ -657,30 +665,38 @@
 
 <script>
 (function () {
-  /* Tema sama dengan Editor (tersimpan di localStorage 'bm-theme') */
+  /* Tema, warna sistem, font, dan teks tebal sama dengan Editor & System Management (kunci bm-* di localStorage) */
+  var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
   function ls(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function applyAccent(){
+    var B = window.BMTheme, hex;
+    if (!B || !B.getAccent) return;
+    try { hex = B.getAccent(); } catch (e) { return; }
+    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return;
+    var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
+    var ir = Math.round(r * 0.45), ig = Math.round(g * 0.45), ib = Math.round(b * 0.45);
+    var st = document.documentElement.style;
+    st.setProperty('--accent', hex);
+    st.setProperty('--accent-rgb', r + ',' + g + ',' + b);
+    st.setProperty('--accent-ink', 'rgb(' + ir + ', ' + ig + ', ' + ib + ')');
+    st.setProperty('--accent-ink-rgb', ir + ', ' + ig + ', ' + ib);
+    var dark = '#1C1B19';
+    st.setProperty('--on-accent', (B.contrast && B.contrast(hex, dark) < B.contrast(hex, '#FFFFFF')) ? '#FFFFFF' : dark);
+  }
   function applyTheme(){
     var cl = document.body.classList, dark = ls('bm-theme') !== 'light';
     cl.toggle('surface-dark', dark);
+    Object.keys(FONT_CLASS).forEach(function (k) { cl.remove(FONT_CLASS[k]); });
+    var f = ls('bm-font');
+    if (f && FONT_CLASS[f]) cl.add(FONT_CLASS[f]);
     cl.toggle('font-bold-mode', ls('bm-font-bold') === 'on');
     var m = document.getElementById('themeColorMeta'); if (m) m.setAttribute('content', dark ? '#15140F' : '#F6F1E7');
-    var B = window.BMTheme;
-    if (B && B.getAccent) {
-      try {
-        var hex = B.getAccent();
-        if (/^#[0-9a-f]{6}$/i.test(hex || '')) {
-          var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
-          var st = document.documentElement.style;
-          st.setProperty('--accent', hex); st.setProperty('--accent-rgb', r + ',' + g + ',' + b);
-          var lin = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-          var L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
-          st.setProperty('--on-accent', (1.05 / (L + 0.05)) > ((L + 0.05) / 0.06) ? '#FFFFFF' : '#1C1B19'); // pilih kontras terbaik
-        }
-      } catch (e) {}
-    }
+    applyAccent();
+    if (f === 'custom' && window.BMTheme && window.BMTheme.ensureCustom) { try { window.BMTheme.ensureCustom(); } catch (e) {} }
   }
   applyTheme();
-  window.addEventListener('storage', applyTheme);
+  window.addEventListener('storage', function (e) { if (!e.key || e.key.indexOf('bm-') === 0) applyTheme(); });
+  window.addEventListener('pageshow', applyTheme);
 
   /* Matikan klik kanan / menu tekan-lama dan pemilihan teks (kecuali kolom cari) */
   document.addEventListener('contextmenu', function (e) { if (!(e.target.closest && e.target.closest('input, textarea'))) e.preventDefault(); });
