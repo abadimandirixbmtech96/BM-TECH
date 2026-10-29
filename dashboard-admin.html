@@ -2645,6 +2645,11 @@
   body:not(.theme-light) .seg-ring,
   body:not(.theme-light) .seg-glint-a,
   body:not(.theme-light) .seg-glint-b { display: none; }
+
+  /* Tombol bulat tidak boleh gepeng saat judul panjang */
+  .header-btn { flex-shrink: 0; min-width: 44px; }
+  .settings-top h2 { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .note-detail-actions { flex-shrink: 0; }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -7004,37 +7009,62 @@
   }
 
 
-  // Geser tabel detail note: kunci satu arah (kiri-kanan ATAU atas-bawah), tidak diagonal
+  // Geser tabel detail note: satu arah saja (kiri-kanan ATAU atas-bawah), tanpa diagonal.
+  // Scroll native disabled untuk sentuhan (touch-action:none); gerakan & momentum diatur manual -> tidak memantul.
   (function () {
     const wrap = document.querySelector('.note-detail-table-wrap');
     if (!wrap) return;
-    const THRESH = 6;
-    let sx = 0, sy = 0, sl = 0, st = 0, axis = null, touching = false, idleTimer = null;
+    wrap.style.touchAction = 'none';
+    wrap.style.overscrollBehavior = 'contain';
+    const LOCK_PX = 6;
+    let sx = 0, sy = 0, lx = 0, ly = 0, lt = 0, axis = null, vel = 0, raf = 0, active = false;
+
+    const stopMomentum = () => { if (raf) { cancelAnimationFrame(raf); raf = 0; } };
+
     wrap.addEventListener('touchstart', (e) => {
-      if (e.touches.length !== 1) return;
-      clearTimeout(idleTimer);
-      touching = true; axis = null;
-      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
-      sl = wrap.scrollLeft; st = wrap.scrollTop;
+      if (e.touches.length !== 1) { active = false; return; }
+      stopMomentum();
+      active = true; axis = null; vel = 0;
+      sx = lx = e.touches[0].clientX; sy = ly = e.touches[0].clientY; lt = e.timeStamp;
     }, { passive: true });
+
     wrap.addEventListener('touchmove', (e) => {
-      if (axis || !touching) return;
-      const dx = Math.abs(e.touches[0].clientX - sx), dy = Math.abs(e.touches[0].clientY - sy);
-      if (dx < THRESH && dy < THRESH) return;
-      axis = dx > dy ? 'x' : 'y';
-    }, { passive: true });
-    const release = () => {
-      touching = false;
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => { axis = null; }, 250);   // tahan kunci selama momentum
+      if (!active || e.touches.length !== 1) return;
+      const x = e.touches[0].clientX, y = e.touches[0].clientY;
+      if (!axis) {
+        const dx = Math.abs(x - sx), dy = Math.abs(y - sy);
+        if (dx < LOCK_PX && dy < LOCK_PX) return;
+        axis = dx > dy ? 'x' : 'y';
+        lx = x; ly = y; lt = e.timeStamp;
+        return;
+      }
+      const dt = Math.max(1, e.timeStamp - lt);
+      const delta = axis === 'x' ? lx - x : ly - y;
+      if (axis === 'x') wrap.scrollLeft += delta; else wrap.scrollTop += delta;
+      vel = 0.8 * (delta / dt) + 0.2 * vel;          // px/ms, diperhalus
+      lx = x; ly = y; lt = e.timeStamp;
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    const end = (e) => {
+      if (!active) return;
+      active = false;
+      if (!axis || (e.timeStamp - lt) > 80 || Math.abs(vel) < 0.05) return;   // jari berhenti dulu = tanpa luncuran
+      const ax = axis;
+      let v = vel, last = performance.now();
+      const step = (now) => {
+        const dt = Math.min(32, now - last); last = now;
+        const before = ax === 'x' ? wrap.scrollLeft : wrap.scrollTop;
+        if (ax === 'x') wrap.scrollLeft += v * dt; else wrap.scrollTop += v * dt;
+        const after = ax === 'x' ? wrap.scrollLeft : wrap.scrollTop;
+        v *= Math.pow(0.95, dt / 16);
+        if (Math.abs(v) < 0.02 || after === before) { raf = 0; return; }
+        raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
     };
-    wrap.addEventListener('touchend', release, { passive: true });
-    wrap.addEventListener('touchcancel', release, { passive: true });
-    wrap.addEventListener('scroll', () => {
-      if (!axis) return;
-      if (axis === 'x') { if (wrap.scrollTop !== st) wrap.scrollTop = st; sl = wrap.scrollLeft; }
-      else { if (wrap.scrollLeft !== sl) wrap.scrollLeft = sl; st = wrap.scrollTop; }
-    }, { passive: true });
+    wrap.addEventListener('touchend', end, { passive: true });
+    wrap.addEventListener('touchcancel', () => { active = false; stopMomentum(); }, { passive: true });
   })();
 
   document.getElementById('btnNoteDetailBack').addEventListener('click', () => noteDetailOverlay.classList.remove('open'));
