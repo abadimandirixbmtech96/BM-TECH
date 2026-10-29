@@ -190,6 +190,34 @@
   details.sec[open] ol.steps > li:nth-child(5){ animation-delay:.30s; }
   details.sec[open] ol.steps > li:nth-child(n+6){ animation-delay:.36s; }
   mark{ animation:markPulse 1.1s ease; }
+
+  /* Bagian yang terbuka: garis aksen + cahaya lembut, nomor memantul */
+  details.sec{ border-left:4px solid transparent; transition:border-color .5s ease, box-shadow .5s ease, background .4s ease; }
+  details.sec.is-open{ border-left-color:var(--accent); box-shadow:0 14px 34px rgba(var(--accent-rgb),0.14); }
+  @keyframes numPop{ 0%{ transform:scale(1) rotate(0); } 40%{ transform:scale(1.28) rotate(-10deg); } 70%{ transform:scale(0.94) rotate(4deg); } 100%{ transform:scale(1) rotate(0); } }
+  details.sec.is-open > summary .num{ animation:numPop .7s var(--spring); }
+  @keyframes rowIn{ from{ opacity:0; transform:translate3d(-10px,0,0); } to{ opacity:1; transform:none; } }
+  details.sec[open] tr{ animation:rowIn .5s var(--ease) both; }
+  details.sec[open] tr:nth-child(2){ animation-delay:.08s; } details.sec[open] tr:nth-child(3){ animation-delay:.14s; }
+  details.sec[open] tr:nth-child(4){ animation-delay:.2s; } details.sec[open] tr:nth-child(5){ animation-delay:.26s; }
+  details.sec[open] tr:nth-child(6){ animation-delay:.32s; } details.sec[open] tr:nth-child(n+7){ animation-delay:.38s; }
+  @keyframes tagPop{ from{ opacity:0; transform:scale(.6); } to{ opacity:1; transform:none; } }
+  details.sec[open] .tag, details.sec[open] kbd, details.sec[open] .btnlike{ animation:tagPop .5s var(--spring) .18s both; }
+  details.sec[open] h3{ animation:rowIn .55s var(--ease) both; }
+
+  /* Kilau sekali pada kartu pembuka */
+  .intro{ position:relative; overflow:hidden; }
+  .intro::after{
+    content:''; position:absolute; top:0; bottom:0; left:-60%; width:45%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,0.35), transparent);
+    transform:skewX(-18deg); animation:sheen 1.6s ease .9s 1 both; pointer-events:none;
+  }
+  @keyframes sheen{ from{ left:-60%; } to{ left:130%; } }
+
+  /* Riak sentuhan */
+  .rip{ position:absolute; border-radius:50%; background:rgba(var(--accent-rgb),0.30); transform:scale(0); opacity:1; pointer-events:none; animation:ripple .7s var(--ease) forwards; }
+  @keyframes ripple{ to{ transform:scale(1); opacity:0; } }
+  details.sec > summary, .faq > summary, .chip, .back-btn{ position:relative; overflow:hidden; }
   .faq > summary{ transition:background .25s ease; }
   .faq[open] > summary{ background:var(--accent-soft); }
 
@@ -668,7 +696,8 @@
     det.classList.toggle('is-open', open);
     var body = bodyOf(det);
     if (det._a) { try { det._a.cancel(); } catch (e) {} det._a = null; }
-    if (!body || reduce || !det.animate) { det.open = open; return; }
+    if (body && body.getAnimations) { body.getAnimations().forEach(function (an) { try { an.cancel(); } catch (e) {} }); } // buang sisa efek animasi lama
+    if (!body || reduce || !det.animate) { det.open = open; if (body) body.style.overflow = ''; return; }
     body.style.overflow = 'hidden';
     var cs, h, pt, pb, anim;
     if (open) {
@@ -678,19 +707,22 @@
         { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 },
         { height: h + 'px', paddingTop: pt, paddingBottom: pb, opacity: 1 }
       ], { duration: 460, easing: EASE, delay: delay || 0, fill: 'backwards' });
-      anim.onfinish = function(){ body.style.overflow = ''; det._a = null; };
+      anim.onfinish = function(){ body.style.overflow = ''; det._a = null; try { anim.cancel(); } catch (e) {} };
     } else {
       cs = getComputedStyle(body); h = body.offsetHeight; pt = cs.paddingTop; pb = cs.paddingBottom;
       anim = body.animate([
         { height: h + 'px', paddingTop: pt, paddingBottom: pb, opacity: 1 },
         { height: '0px', paddingTop: '0px', paddingBottom: '0px', opacity: 0 }
       ], { duration: 340, easing: EASE, delay: delay || 0, fill: 'both' });
-      anim.onfinish = function(){ det.open = false; body.style.overflow = ''; det._a = null; };
+      anim.onfinish = function(){ det.open = false; body.style.overflow = ''; det._a = null; try { anim.cancel(); } catch (e) {} };
     }
     anim.oncancel = function(){ body.style.overflow = ''; };
     det._a = anim;
   }
-  function forceOpen(det){ det._target = true; det.open = true; det.classList.add('is-open'); }
+  function forceOpen(det){
+    det._target = true; det.open = true; det.classList.add('is-open');
+    var bd = bodyOf(det); if (bd) { bd.style.overflow = ''; if (bd.getAnimations) bd.getAnimations().forEach(function (an) { try { an.cancel(); } catch (e) {} }); }
+  }
   secs.forEach(function (s) { if (s.open) s.classList.add('is-open'); });
 
   /* Satu pendengar untuk semua judul bagian & FAQ (tetap jalan walau isi di-render ulang oleh pencarian) */
@@ -699,8 +731,34 @@
     if (!sm) return;
     e.preventDefault();
     var det = sm.parentNode;
-    animateDet(det, !isOpenTarget(det));
+    var willOpen = !isOpenTarget(det);
+    animateDet(det, willOpen);
+    if (willOpen && det.classList.contains('sec')) nudgeIntoView(det);
   });
+
+  /* Riak sentuhan di judul bagian, FAQ, chip, dan tombol kembali */
+  document.addEventListener('pointerdown', function (e) {
+    if (reduce) return;
+    var host = e.target.closest && e.target.closest('details.sec > summary, .faq > summary, .chip, .back-btn');
+    if (!host) return;
+    var r = host.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.2;
+    var d = document.createElement('span'); d.className = 'rip';
+    d.style.width = d.style.height = size + 'px';
+    d.style.left = (e.clientX - r.left - size / 2) + 'px'; d.style.top = (e.clientY - r.top - size / 2) + 'px';
+    host.appendChild(d);
+    setTimeout(function () { if (d.parentNode) d.parentNode.removeChild(d); }, 750);
+  }, { passive: true });
+
+  /* Bagian yang baru dibuka digulir halus ke atas bila judulnya terlalu di bawah layar */
+  function nudgeIntoView(det){
+    var sm = det.querySelector(':scope > summary'); if (!sm) return;
+    var top = sm.getBoundingClientRect().top;
+    if (top > window.innerHeight * 0.6) {
+      setTimeout(function () {
+        try { window.scrollTo({ top: (window.pageYOffset || document.documentElement.scrollTop) + sm.getBoundingClientRect().top - 150, behavior: reduce ? 'auto' : 'smooth' }); } catch (e) {}
+      }, 120);
+    }
+  }
 
   /* Chip navigasi cepat */
   var chips = document.getElementById('chips');
