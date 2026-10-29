@@ -6911,11 +6911,44 @@
     });
     return out.length ? `<div class="jump-chips">${out.join('')}</div>` : '';
   }
-  function jumpToRecord(noteId, recId) {
-    const note = notesData.find(n => n.id === noteId);
+  // Note hasil gabungan pekan / hasil ambil dari server (tidak ada di notesData) disimpan sementara di sini
+  const detailExtraNotes = {};
+  const rowsHaveRid = (n, rid) => !!(n && n.content && Array.isArray(n.content.rows) &&
+    n.content.rows.some(r => r && r.cells && r.cells._rid === rid));
+
+  async function resolveJumpNote(noteId, recId) {
+    // 1) note asli ada langsung di daftar yang sedang tampil
+    let n = notesData.find(x => x.id === noteId);
+    if (n && !n._merged) return n;
+    // 2) tampilan karyawan/customer = rekap gabungan per pekan; cari rekap yang memuat baris tujuan
+    n = notesData.find(x => x._merged && rowsHaveRid(x, recId));
+    if (n) return n;
+    // 3) tidak sedang termuat (beda pekan/bulan/folder) -> ambil dari server
+    const { data, error } = await supabaseClient.from('notes').select('*').order('created_at', { ascending: false });
+    if (error || !Array.isArray(data)) return null;
+    const target = data.find(x => x.id === noteId);
+    if (!target) return null;
+    const vf = vfParse(activeCategoryId);
+    if (vf) {
+      const d = getNoteEffectiveDate(target);
+      if (d && !isNaN(d)) {
+        const anchor = getWeekAnchorThursday(d).getTime();
+        const sameWeek = data.filter(x => noteHasVf(x, vf)).filter(x => {
+          const dd = getNoteEffectiveDate(x);
+          return dd && !isNaN(dd) && getWeekAnchorThursday(dd).getTime() === anchor;
+        });
+        const merged = mergeNotesByWeek(sameWeek, vf).find(m => m._weekAnchor === anchor);
+        if (merged && rowsHaveRid(merged, recId)) { detailExtraNotes[merged.id] = merged; return merged; }
+      }
+    }
+    detailExtraNotes[target.id] = target;
+    return target;
+  }
+
+  async function jumpToRecord(noteId, recId) {
+    const note = await resolveJumpNote(noteId, recId);
     if (!note) { showLiquidAlert('Data Tidak Ditemukan', 'Note tujuan sudah dihapus atau belum termuat.'); return; }
-    openNoteDetail(noteId);
-    const wrap = document.querySelector('.note-detail-table-wrap');
+    openNoteDetail(note.id);
     const tr = Array.from(document.querySelectorAll('#noteDetailTable tbody tr[data-rid]')).find(t => t.dataset.rid === recId);
     if (!tr) { showLiquidAlert('Baris Tidak Ditemukan', 'Baris tujuan tidak ada di note ini (mungkin sudah dihapus).'); return; }
     setTimeout(() => {
@@ -6931,7 +6964,7 @@
   });
 
   function openNoteDetail(noteId) {
-    const note = notesData.find(n => n.id === noteId);
+    const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
     if (!note) return;
     currentDetailNote = note;
 
@@ -6969,6 +7002,40 @@
 
     noteDetailOverlay.classList.add('open');
   }
+
+
+  // Geser tabel detail note: kunci satu arah (kiri-kanan ATAU atas-bawah), tidak diagonal
+  (function () {
+    const wrap = document.querySelector('.note-detail-table-wrap');
+    if (!wrap) return;
+    const THRESH = 6;
+    let sx = 0, sy = 0, sl = 0, st = 0, axis = null, touching = false, idleTimer = null;
+    wrap.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      clearTimeout(idleTimer);
+      touching = true; axis = null;
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+      sl = wrap.scrollLeft; st = wrap.scrollTop;
+    }, { passive: true });
+    wrap.addEventListener('touchmove', (e) => {
+      if (axis || !touching) return;
+      const dx = Math.abs(e.touches[0].clientX - sx), dy = Math.abs(e.touches[0].clientY - sy);
+      if (dx < THRESH && dy < THRESH) return;
+      axis = dx > dy ? 'x' : 'y';
+    }, { passive: true });
+    const release = () => {
+      touching = false;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => { axis = null; }, 250);   // tahan kunci selama momentum
+    };
+    wrap.addEventListener('touchend', release, { passive: true });
+    wrap.addEventListener('touchcancel', release, { passive: true });
+    wrap.addEventListener('scroll', () => {
+      if (!axis) return;
+      if (axis === 'x') { if (wrap.scrollTop !== st) wrap.scrollTop = st; sl = wrap.scrollLeft; }
+      else { if (wrap.scrollLeft !== sl) wrap.scrollLeft = sl; st = wrap.scrollTop; }
+    }, { passive: true });
+  })();
 
   document.getElementById('btnNoteDetailBack').addEventListener('click', () => noteDetailOverlay.classList.remove('open'));
 
