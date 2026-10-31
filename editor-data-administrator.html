@@ -543,6 +543,11 @@
   .pk-tag.tg-out{ color:#b8620f; }
   .pk-tag.tg-paid{ color:#1f7a47; }
   .pk-tag.tg-unpaid{ color:#b03030; }
+  .pickup-partial{ margin-top:12px; padding:11px 13px; border-radius:14px; background:rgba(232,131,42,0.10); border:2px solid rgba(232,131,42,0.42); animation:softPop .5s cubic-bezier(0.22,1,0.36,1) both; }
+  .pp-title{ font-size:14px; font-weight:800; }
+  .pp-hint{ font-size:12.5px; font-weight:600; line-height:1.4; opacity:0.85; margin:2px 0 6px; }
+  .pp-row{ display:flex; align-items:center; gap:10px; padding:6px 0; font-size:14px; font-weight:700; cursor:pointer; }
+  .pp-row input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
   .pickup-ownpaid, .own-paid-edit{ display:flex; gap:10px; align-items:flex-start; margin-top:12px; font-size:13px; font-weight:700; line-height:1.4; cursor:pointer; }
   .pickup-ownpaid input, .own-paid-edit input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
   .led-item{ display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding:6px 0; border-bottom:1px dashed rgba(128,128,128,0.3); }
@@ -974,6 +979,11 @@
           <button type="button" class="pickup-apply" id="btnPickupApply">Ambil barang</button>
           <button type="button" class="pickup-apply alt" id="btnPickupPay">Bayar saja</button>
         </div>
+        <div class="pickup-partial" id="pickupPartialWrap" style="display:none;">
+          <div class="pp-title">Mana yang dibayar sekarang?</div>
+          <div class="pp-hint">Centang yang dibayar hari ini (Harga diisi untuk yang dicentang saja). Yang tidak dicentang dibawa dulu, bayarnya menyusul.</div>
+          <div id="pickupPartialList"></div>
+        </div>
         <label class="pickup-ownpaid" id="pickupOwnPaidWrap" style="display:none;"><input type="checkbox" id="pickupOwnPaid"><span id="pickupOwnPaidTxt"></span></label>
         <div class="pickup-done" id="pickupDone"></div>
       </div>
@@ -1343,6 +1353,7 @@
   let pickupCandidates = [];
   let pickupApplied = [];
   let pickupChecked = new Set();
+  let pickupUnpaid = new Set(); // barang yang dibawa sekarang tapi bayarnya menyusul
   let pickupMode = 'ambil';
   let pickupLookupSeq = 0;
   let folderNotesCache = { at: 0, folder: null, notes: null };
@@ -3212,9 +3223,13 @@
         }
         // Dibawa pulang di hari titip yang sama & belum dibayar: hanya bisa "Bayar saja"
         const dibawa = (parsedR.outItems || []).filter(i => !paidSet.has(i.key));
-        if (!items.length && !dibawa.length) return;
+        // Sudah diambil tapi bayarnya menyusul ("ambil semua, baru sebagian yang dibayar"): tetap dilacak di data asal
+        const pkEntries = Object.keys(r.pickups || {}).map(k => r.pickups[k]).filter(Boolean);
+        const menyusul = parsedR.items.filter(i => !i.carried && !i.done && !paidSet.has(i.key)
+          && pkEntries.some(p => p.mode !== 'bayar' && p.paid && Array.isArray(p.items) && p.items.includes(i.key)));
+        if (!items.length && !dibawa.length && !menyusul.length) return;
         const paidCnt = items.filter(i => paidSet.has(i.key)).length;
-        const totalCnt = items.length + dibawa.length;
+        const totalCnt = items.length + dibawa.length + menyusul.length;
         out.push({
           noteId: src.noteId, recordId: r.id, out: !!parsedR.out,
           created_at: r.created_at,
@@ -3225,6 +3240,7 @@
           somePaid: paidCnt > 0,
           items: items.map(i => ({ key: i.key, name: i.name, paid: paidSet.has(i.key) }))
             .concat(dibawa.map(i => ({ key: i.key, name: i.name, paid: false, out: true })))
+            .concat(menyusul.map(i => ({ key: i.key, name: i.name, paid: false, out: true })))
         });
       });
     });
@@ -3245,7 +3261,7 @@
       if (found.length === 1) found[0].items.forEach(it => pickupChecked.add(itemCk(found[0], it)));
       const still = new Set(found.map(c => c.noteId + '|' + c.recordId));
       pickupApplied = pickupApplied.filter(g => still.has(g.c.noteId + '|' + g.c.recordId));
-      if (!pickupApplied.length) gid('pickupDone').textContent = '';
+      if (!pickupApplied.length) { gid('pickupDone').textContent = ''; pickupUnpaid = new Set(); gid('pickupPartialWrap').style.display = 'none'; }
     }
     renderPickupCard();
   }
@@ -3450,8 +3466,8 @@
     el.addEventListener('input', schedulePickupLookup);
     el.addEventListener('blur', schedulePickupLookup);
   });
-  gid('btnPickupApply').addEventListener('click', () => { applyPickupToForm('ambil'); refreshOwnPaidToggle(); });
-  gid('btnPickupPay').addEventListener('click', () => { applyPickupToForm('bayar'); refreshOwnPaidToggle(); });
+  gid('btnPickupApply').addEventListener('click', () => { pickupUnpaid = new Set(); applyPickupToForm('ambil'); renderPartialPanel(); refreshOwnPaidToggle(); });
+  gid('btnPickupPay').addEventListener('click', () => { pickupUnpaid = new Set(); applyPickupToForm('bayar'); renderPartialPanel(); refreshOwnPaidToggle(); });
   gid('inputStokBarang').addEventListener('input', refreshOwnPaidToggle);
 
   function resetPickupForm(){
@@ -3463,6 +3479,7 @@
     gid('pickupList').innerHTML = '';
     gid('pickupDone').textContent = '';
     gid('pickupOwnPaidWrap').style.display = 'none'; gid('pickupOwnPaid').checked = false;
+    pickupUnpaid = new Set(); gid('pickupPartialWrap').style.display = 'none'; gid('pickupPartialList').textContent = '';
     folderNotesCache.at = 0; // paksa baca ulang catatan lain saat form dibuka
     fetchFolderNotesLight(true).catch(() => {}); // pemanasan, supaya saran cepat muncul
   }
@@ -3471,6 +3488,10 @@
     const names = g.items.map(i => i.name);
     const link = { noteId: g.c.noteId, recordId: g.c.recordId, mode, items: names, label: names.join(', '), tgl: g.c.tgl, synced: false };
     if (g.c.carry && g.c.carry.length) link.carry = g.c.carry.slice(); // titipan asal ini sendiri baris pengambilan lama
+    if (mode === 'ambil') {
+      const un = g.items.filter(i => !i.paid && pickupUnpaid.has(itemCk(g.c, i))).map(i => i.name);
+      if (un.length) link.unpaid = un; // dibawa sekarang, dibayar menyusul
+    }
     return link;
   }
 
@@ -3492,6 +3513,37 @@
     const out = [];
     splitList(stokText).forEach(tok => { const k = itemKey(tok); if (pool[k] > 0) { pool[k]--; out.push(k); } });
     return out;
+  }
+
+  // Panel "Mana yang dibayar sekarang?": tampil bila yang diambil >= 2 barang yang belum dibayar
+  function updateAmbilKet(){
+    if (pickupMode !== 'ambil' || !pickupApplied.length) return;
+    const names = [].concat(...pickupApplied.map(g => g.items.map(i => i.name)));
+    const unpaid = [].concat(...pickupApplied.map(g => g.items.filter(i => !i.paid && pickupUnpaid.has(itemCk(g.c, i))).map(i => i.name)));
+    let txt = ketText('Ambil barang', names);
+    if (unpaid.length) txt += ' \u00B7 belum bayar: ' + unpaid.join(', ');
+    const el = gid('inputKeterangan'), cur = el.value.trim();
+    if (!cur || cur === pickupAutoKet) { el.value = txt; pickupAutoKet = txt; }
+  }
+  function renderPartialPanel(){
+    const wrap = gid('pickupPartialWrap'), list = gid('pickupPartialList');
+    if (!wrap || !list) return;
+    list.textContent = '';
+    const rows = [];
+    if (pickupMode === 'ambil') pickupApplied.forEach(g => g.items.forEach(i => { if (!i.paid && !i.out) rows.push({ g, i }); }));
+    if (rows.length < 2) { wrap.style.display = 'none'; pickupUnpaid = new Set(); updateAmbilKet(); return; }
+    const valid = new Set(rows.map(r => itemCk(r.g.c, r.i)));
+    pickupUnpaid = new Set([...pickupUnpaid].filter(k => valid.has(k)));
+    wrap.style.display = '';
+    rows.forEach(({ g, i }) => {
+      const ck = itemCk(g.c, i);
+      const lb = document.createElement('label'); lb.className = 'pp-row';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !pickupUnpaid.has(ck);
+      cb.addEventListener('change', () => { if (cb.checked) pickupUnpaid.delete(ck); else pickupUnpaid.add(ck); updateAmbilKet(); });
+      const sp = document.createElement('span'); sp.textContent = i.name;
+      lb.appendChild(cb); lb.appendChild(sp); list.appendChild(lb);
+    });
+    updateAmbilKet();
   }
 
   // Barang BARU yang ditinggal di form pengambilan (bukan sisa titipan lama)
@@ -3584,12 +3636,18 @@
     const paid = parts[1] === '1';
     const names = (job.link.items && job.link.items.length) ? job.link.items.slice() : null;
     const keys = names ? keysForNames(o, names, pid, mode === 'bayar' ? 'payItems' : 'items', mode === 'bayar') : null;
+    let payKeys = keys;
+    if (paid && keys && mode !== 'bayar' && job.link.unpaid && job.link.unpaid.length) {
+      const pool = {};
+      job.link.unpaid.forEach(n => { const k = itemKey(n); pool[k] = (pool[k] || 0) + 1; });
+      payKeys = keys.filter((k, i) => { const nk = itemKey(names[i]); if (pool[nk] > 0) { pool[nk]--; return false; } return true; });
+    }
     const entry = {
       noteId: currentNoteId,
       at: job.rec.created_at,
       mode,
       items: mode === 'bayar' ? [] : keys,
-      payItems: paid ? keys : [],
+      payItems: paid ? payKeys : [],
       names,
       paid
     };
