@@ -426,18 +426,33 @@
   /* ---------- Saran nama PJ (dropdown kustom, bukan datalist native) ---------- */
   .suggest-wrap{ position:relative; }
   .suggest-list{
-    display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
-    max-height:190px; overflow-y:auto; border-radius:14px; border:1.5px solid var(--line);
-    background:var(--paper-alt); box-shadow:0 12px 28px rgba(30,25,15,0.18);
-    -webkit-overflow-scrolling:touch;
+    display:none; position:absolute; left:0; right:0; bottom:calc(100% + 8px); z-index:30;
+    border-radius:16px; border:1.5px solid var(--line); background:var(--paper-alt);
+    box-shadow:0 -8px 26px rgba(0,0,0,0.16); overflow:hidden; transform-origin:50% 100%;
   }
-  .suggest-list.open{ display:block; }
+  .suggest-list.open{ display:block; animation:suggestUp .32s cubic-bezier(0.22,1,0.36,1) backwards; }
+  .suggest-list.closing{ display:block; pointer-events:none; animation:suggestDown .26s cubic-bezier(0.4,0,1,1) forwards; }
+  @keyframes suggestUp{ from{ opacity:0; transform:translate3d(0,16px,0) scale(.98); } to{ opacity:1; transform:none; } }
+  @keyframes suggestDown{ from{ opacity:1; transform:none; } to{ opacity:0; transform:translate3d(0,30px,0) scale(.98); } }
+  .suggest-handle{
+    display:flex; align-items:center; justify-content:center; padding:6px 0 5px; touch-action:none; cursor:grab;
+    background:var(--paper-alt); border-bottom:1px solid var(--line-soft);
+  }
+  .suggest-handle button{
+    border:none; padding:0; width:48px; height:24px; border-radius:12px; cursor:pointer;
+    background:var(--accent); color:var(--on-accent); display:flex; align-items:center; justify-content:center;
+    transition:transform .25s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .suggest-handle button:active{ transform:scale(.9); }
+  .suggest-handle svg{ width:16px; height:16px; stroke-width:3; }
+  .suggest-scroll{ max-height:var(--sg-max,190px); overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; }
   .suggest-item{
     padding:11px 14px; font-size:14.5px; font-weight:600; color:var(--ink); cursor:pointer;
     border-bottom:1px solid var(--line-soft);
   }
   .suggest-item:last-child{ border-bottom:none; }
   .suggest-item:active{ background:var(--accent-soft); }
+  .suggest-item.add::before{ content:'+'; display:inline-block; width:18px; height:18px; line-height:18px; margin-right:9px; text-align:center; border-radius:50%; background:var(--accent-soft); font-weight:800; }
   .detail-row .suggest-list{ border-radius:11px; }
   .hint-card{
     display:flex; gap:10px; align-items:flex-start; padding:13px 14px; border-radius:14px;
@@ -2508,31 +2523,152 @@
     });
   });
 
-  function setupSuggestDropdown(inputEl, listEl, getNames){
+  // Pecah nama PJ jadi orang per orang (abaikan pemisah "x", "dan", "&", "+", ",")
+  function pjTokensOf(str){
+    return String(str == null ? '' : str).split(/[^A-Za-z0-9]+/).filter(t => t && !/^(x|dan)$/i.test(t));
+  }
+
+  function setupSuggestDropdown(inputEl, listEl, getNames, smart){
+    const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    let closeTimer = null;
+
+    // Saran pintar: ketik "yono" -> semua tim yang memuat yono + nama anggota lain untuk ditambahkan
+    function suggestionsFor(){
+      const raw = inputEl.value;
+      const teams = getNames();
+      const q = raw.trim().toLowerCase();
+      if (!q) return teams.map(t => ({ text: t, value: t }));
+      if (!smart) return teams.filter(t => t.toLowerCase().includes(q)).map(t => ({ text: t, value: t }));
+
+      const trailing = /(?:^|\s)(?:x|dan)\s*$|[&+,]\s*$/i.test(raw);          // "yono x " / "yono &"
+      const toks = pjTokensOf(raw).map(t => t.toLowerCase());
+      const base = trailing ? toks : toks.slice(0, -1);
+      const part = trailing ? '' : (toks[toks.length - 1] || '');
+
+      const teamMatch = (t) => {
+        if (t.toLowerCase().includes(q)) return true;
+        const tt = pjTokensOf(t).map(x => x.toLowerCase()), used = new Set();
+        return toks.every(n => {
+          const i = tt.findIndex((x, idx) => !used.has(idx) && x.startsWith(n));
+          if (i < 0) return false;
+          used.add(i); return true;
+        });
+      };
+      const rank = (t) => {
+        const tl = t.toLowerCase();
+        const same = pjTokensOf(t).map(x => x.toLowerCase()).sort().join('|') === toks.slice().sort().join('|');
+        return same ? 0 : (tl.startsWith(q) ? 1 : 2);
+      };
+      const out = [], seen = new Set();
+      const push = (it) => { const k = it.value.toLowerCase().replace(/\s+/g, ' '); if (seen.has(k)) return; seen.add(k); out.push(it); };
+
+      teams.filter(teamMatch).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).forEach(t => push({ text: t, value: t }));
+
+      // Nama anggota lain yang pernah muncul, untuk melengkapi tim
+      const people = new Map();
+      teams.forEach(t => pjTokensOf(t).forEach(n => { const k = n.toLowerCase(); if (!people.has(k)) people.set(k, n); }));
+      const head = trailing ? raw.replace(/\s+$/, '') : raw.replace(/\s+$/, '').replace(/[A-Za-z0-9]+$/, '');
+      [...people.entries()].sort((a, b) => a[1].localeCompare(b[1])).forEach(([k, name]) => {
+        if (base.includes(k) || (trailing && toks.includes(k))) return;
+        if (!trailing && (!part || !k.startsWith(part) || (k === part && !base.length))) return;
+        const value = trailing ? (head + ' ' + name) : (head + name);
+        push({ text: value, value, add: true });
+      });
+      return out.slice(0, 14);
+    }
+
+    function sizeList(){
+      const bar = (inputEl.closest('section') || document).querySelector('.topbar');
+      const top = bar ? bar.getBoundingClientRect().bottom : 110;
+      const room = inputEl.getBoundingClientRect().top - top - 16 - 38; // 38 = tinggi pegangan
+      if (room < 110 && !sizeList.retry) {
+        sizeList.retry = true;
+        try { inputEl.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+        setTimeout(() => { sizeList.retry = false; if (listEl.classList.contains('open')) sizeList(); }, 380);
+      }
+      listEl.style.setProperty('--sg-max', Math.max(96, Math.min(260, room)) + 'px');
+    }
+
+    function hideNow(){
+      clearTimeout(closeTimer);
+      listEl.classList.remove('open', 'closing');
+      listEl.style.transition = listEl.style.transform = listEl.style.opacity = '';
+    }
+    function closeAnimated(fromDrag){
+      if (!listEl.classList.contains('open')) return;
+      clearTimeout(closeTimer);
+      if (fromDrag) {
+        listEl.style.transition = 'transform .22s ease, opacity .22s ease';
+        listEl.style.transform = 'translate3d(0,70px,0)'; listEl.style.opacity = '0';
+        closeTimer = setTimeout(hideNow, 230);
+      } else {
+        listEl.classList.add('closing');
+        closeTimer = setTimeout(hideNow, 270);
+      }
+    }
+
     function renderList(){
-      const q = inputEl.value.trim().toLowerCase();
-      const names = getNames().filter(n => !q || n.toLowerCase().includes(q));
-      if (!names.length) { listEl.classList.remove('open'); listEl.innerHTML = ''; return; }
-      listEl.innerHTML = names.map(n => `<div class="suggest-item">${escapeHtml(n)}</div>`).join('');
+      clearTimeout(closeTimer);
+      listEl.classList.remove('closing');
+      listEl.style.transition = listEl.style.transform = listEl.style.opacity = '';
+      const items = suggestionsFor();
+      if (!items.length) { listEl.classList.remove('open'); listEl.innerHTML = ''; return; }
+      listEl.innerHTML = '<div class="suggest-handle"><button type="button" aria-label="Tutup saran">' + CHEV + '</button></div>'
+        + '<div class="suggest-scroll">'
+        + items.map(it => `<div class="suggest-item${it.add ? ' add' : ''}" data-v="${escapeHtml(it.value)}">${escapeHtml(it.text)}</div>`).join('')
+        + '</div>';
+      const wasOpen = listEl.classList.contains('open');
       listEl.classList.add('open');
+      if (!wasOpen) { listEl.style.animation = 'none'; void listEl.offsetWidth; listEl.style.animation = ''; }
+      sizeList();
     }
     inputEl.addEventListener('focus', renderList);
     inputEl.addEventListener('input', renderList);
-    inputEl.addEventListener('blur', () => { listEl.classList.remove('open'); });
+    inputEl.addEventListener('blur', hideNow);
+
+    // Pilih saran
     listEl.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.suggest-handle')) { e.preventDefault(); return; } // jangan ambil fokus dari input
       const item = e.target.closest('.suggest-item');
       if (!item) return;
       e.preventDefault(); // supaya blur pada input tidak lebih dulu menutup dropdown ini
-      inputEl.value = item.textContent;
-      listEl.classList.remove('open');
-      // Setelah pilih nama, pindah fokus ke field berikutnya supaya keyboard Android tersambung ulang
-      // (mengubah value input yang sedang fokus lewat script bikin Enter/Next "nyangkut").
-      setTimeout(() => focusNextField(inputEl), 0);
+      const isAdd = item.classList.contains('add');
+      inputEl.value = item.dataset.v || item.textContent;
+      hideNow();
+      if (isAdd) {
+        // tambah anggota: tetap di kolom ini supaya bisa menambah anggota lagi
+        inputEl.blur();
+        setTimeout(() => { inputEl.focus(); try { const n = inputEl.value.length; inputEl.setSelectionRange(n, n); } catch (er) {} }, 40);
+      } else {
+        // Setelah pilih nama, pindah fokus ke field berikutnya supaya keyboard Android tersambung ulang
+        // (mengubah value input yang sedang fokus lewat script bikin Enter/Next "nyangkut").
+        setTimeout(() => focusNextField(inputEl), 0);
+      }
+    });
+    // Tutup dengan panah (klik) atau geser pegangan ke bawah, seperti slider
+    listEl.addEventListener('click', (e) => { if (e.target.closest('.suggest-handle')) closeAnimated(false); });
+    let startY = null, dy = 0;
+    listEl.addEventListener('touchstart', (e) => {
+      if (!e.target.closest('.suggest-handle')) return;
+      e.preventDefault(); // cegah input kehilangan fokus (keyboard tetap terbuka)
+      startY = e.touches[0].clientY; dy = 0; listEl.style.transition = 'none';
+    }, { passive: false });
+    listEl.addEventListener('touchmove', (e) => {
+      if (startY == null) return;
+      dy = Math.max(0, e.touches[0].clientY - startY);
+      listEl.style.transform = 'translate3d(0,' + dy + 'px,0)';
+      listEl.style.opacity = String(Math.max(0.25, 1 - dy / 180));
+    }, { passive: true });
+    listEl.addEventListener('touchend', () => {
+      if (startY == null) return;
+      const moved = dy; startY = null; dy = 0;
+      if (moved > 36 || moved < 6) { closeAnimated(moved > 6); }   // geser ke bawah, atau sekadar ketuk panah
+      else { listEl.style.transition = 'transform .28s cubic-bezier(0.34,1.56,0.64,1), opacity .2s'; listEl.style.transform = ''; listEl.style.opacity = ''; }
     });
   }
 
-  setupSuggestDropdown(document.getElementById('inputPJ'), document.getElementById('pjSuggestList'), getPJNames);
-  setupSuggestDropdown(document.getElementById('detPJedit'), document.getElementById('detPJSuggestList'), getPJNames);
+  setupSuggestDropdown(document.getElementById('inputPJ'), document.getElementById('pjSuggestList'), getPJNames, true);
+  setupSuggestDropdown(document.getElementById('detPJedit'), document.getElementById('detPJSuggestList'), getPJNames, true);
 
   // Huruf pertama otomatis kapital di semua field teks (keyboard user tidak
   // auto-kapital). Cuma huruf PERTAMA yang diubah, sisanya dibiarkan apa
