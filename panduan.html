@@ -10,7 +10,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700;750;800&display=swap" rel="stylesheet">
 <script>document.documentElement.classList.add('js');</script>
 <script src="/bm-theme.js"></script>
-<script src="/bm-lang.js"></script>
 <style>
   :root{
     --app-font:'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
@@ -30,13 +29,6 @@
     --accent-soft:rgba(var(--accent-rgb),0.18);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; font-family:var(--app-font); }
-  body.font-serif * { font-family: Georgia, 'Times New Roman', Times, serif !important; }
-  body.font-mono * { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace !important; }
-  body.font-rounded * { font-family: ui-rounded, 'SF Pro Rounded', 'Baloo 2', 'Segoe UI', sans-serif !important; }
-  body.font-klasik * { font-family: 'Times New Roman', Times, Georgia, serif !important; }
-  body.font-humanis * { font-family: Verdana, Tahoma, Geneva, sans-serif !important; }
-  body.font-kompak * { font-family: 'Arial Narrow', 'Segoe UI', Arial, sans-serif !important; }
-  body.font-custom * { font-family: 'BMCustom', 'Inter', sans-serif !important; }
   /* Tanpa blok teks biru, menu tekan-lama, dan cincin fokus saat disentuh */
   html, body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   *::selection{ background:transparent; color:inherit; }
@@ -319,7 +311,7 @@
       <div class="tbl"><table>
         <tr><th>Kolom</th><th>Cara mengisi</th></tr>
         <tr><td><b>Nomor, Tanggal, Waktu</b></td><td>Terisi otomatis saat disimpan. Tidak bisa diubah.</td></tr>
-        <tr><td><b>PJ</b> <span class="tag no">wajib</span></td><td>Ketik atau pilih dari saran (nama PJ yang pernah dipakai). Boleh lebih dari satu orang, misalnya <code>Yono x Amin</code>. Urutan nama dan kata “x” atau “dan” tidak berpengaruh: <code>Amin x Yono</code> dianggap PJ yang sama.</td></tr>
+        <tr><td><b>PJ</b> <span class="tag no">wajib</span></td><td>Ketik atau pilih dari saran (nama PJ yang pernah dipakai). Boleh lebih dari satu orang, misalnya <code>Yono x Amin</code>. Urutan nama dan kata “x” atau “dan” tidak berpengaruh: <code>Amin x Yono</code> dianggap PJ yang sama. Saat mencari titipan lama, cukup salah satu anggota tim pun dikenali (bagian 5). Lihat <a href="#saranpj">cara kerja saran PJ</a> di bawah.</td></tr>
         <tr><td><b>Customer</b> (opsional)</td><td>Tulis nama dengan ejaan yang sama setiap kali. Huruf besar/kecil dan spasi ganda tidak berpengaruh. Nama ini dipakai untuk menemukan titipan lama.</td></tr>
         <tr><td><span class="mk in">Barang dan Jumlah</span> <span class="tag no">wajib</span></td><td>Barang yang masuk, dipisah koma. Lihat contoh jumlah di bawah.</td></tr>
         <tr><td><span class="mk out">Barang Keluar</span></td><td>Barang yang dibawa pulang customer.</td></tr>
@@ -329,6 +321,14 @@
         <tr><td><b>Metode Bayar</b></td><td><b>Cash</b>, <b>Transfer</b>, atau keduanya (bayar campur, lalu isi nominal masing-masing). <b>Wajib</b> kalau Harga berisi angka.</td></tr>
         <tr><td><b>Bukti</b></td><td>Maksimal <b>2 gambar</b>. Pilih lewat <b>Galeri</b>, <b>Kamera</b>, atau tarik &amp; lepas. Tunggu upload selesai sebelum menyimpan.</td></tr>
       </table></div>
+
+      <h3 id="saranpj">Saran PJ</h3>
+      <p>Kartu saran muncul <b>di atas</b> kolom PJ, jadi tidak tertutup keyboard.</p>
+      <ul>
+        <li>Ketik sebagian nama, misalnya <code>yono</code>. Muncul semua PJ yang memuat nama itu, seperti <code>yono x BM</code> dan <code>Amin x Yono</code>.</li>
+        <li>Ketik pemisah setelah nama, misalnya <code>yono x </code>. Muncul <b>nama anggota lain</b> yang pernah dipakai, ditandai <b>+</b>. Ketuk salah satu untuk menambahkannya ke tim, dan kamu tetap di kolom itu untuk menambah anggota berikutnya.</li>
+        <li>Ketuk saran tanpa tanda + untuk memilih PJ itu, lalu kamu pindah ke kolom berikutnya.</li>
+      </ul>
 
       <h3>Menulis jumlah barang</h3>
       <p>Tulis jumlah di belakang nama, dan editor memecahnya jadi satu item per barang:</p>
@@ -384,7 +384,9 @@
 
       <h3>Syarat supaya titipan ditemukan</h3>
       <ul>
-        <li><b>PJ</b> dan <b>Customer</b> harus sama dengan data titipan lama (aturan PJ dan Customer ada di bagian 3).</li>
+        <li><b>Customer</b> harus sama dengan data titipan lama (ejaan sama, huruf besar/kecil bebas).</li>
+        <li><b>PJ</b> harus sama, <b>atau salah satu anggota tim</b> data lama. Contoh: titipan tgl 10 dengan PJ <code>yono x BM x mail x amin</code> dan customer <code>Yanto</code>. Di tgl 11 kamu cukup mengetik PJ <code>yono</code> dan customer <code>Yanto</code>, kartu tracking tetap muncul. Berlaku juga sebaliknya (tim sekarang lebih besar dari tim lama) dan urutan nama bebas. PJ yang bukan anggota tim tidak akan memunculkan titipan itu.</li>
+        <li>Kalau PJ-nya hanya cocok sebagian, judul tanggal di kartu diberi keterangan <code>· PJ (nama tim lama)</code>. PJ yang sama persis diurutkan paling atas.</li>
         <li>Data lama masih punya barang yang belum diambil, atau belum dibayar.</li>
       </ul>
 
@@ -395,6 +397,7 @@
           <br><span class="tag stay">ditinggal</span> atau <span class="tag out">dibawa</span> &nbsp;+&nbsp; <span class="tag ok">dibayar ✓</span> atau <span class="tag no">belum dibayar</span>
         </li>
         <li>Centang barang yang dibahas hari ini. Kalau hanya ada satu data titipan, semua barangnya langsung tercentang.</li>
+        <li><b>Kartu terlalu panjang?</b> Ketuk tombol panah ▴ di kanan atas kartu (atau ketuk judulnya) untuk <b>menutup</b> kartu. Yang tampil hanya judul dan jumlah barang, misalnya <code>3 barang</code>. Kamu juga bisa <b>menggeser judul kartu ke atas</b> untuk menutup dan <b>ke bawah</b> untuk membuka, seperti slider. Pilihan centangmu tidak hilang saat kartu ditutup.</li>
         <li>Pilih tombol:
           <ul>
             <li><b>Ambil barang</b>: barang dibawa pulang. Kalau Harga diisi, barangnya sekaligus tercatat lunas.</li>
@@ -420,6 +423,16 @@
         <li>Kalau semua barang yang dipilih sudah lunas sebelumnya, Harga terisi <b>✓</b> otomatis.</li>
         <li>Harga di data pengambilan <b>hanya</b> untuk barang yang diambil atau dibayar di data itu.</li>
       </ul>
+
+      <h3>Ambil semua, tapi baru sebagian yang dibayar</h3>
+      <p>Customer membawa pulang beberapa barang sekaligus, tapi hanya sebagian yang dibayar hari ini? Setelah menekan <b>Ambil barang</b> dengan <b>2 barang atau lebih</b>, muncul kotak oranye <b>“Mana yang dibayar sekarang?”</b>.</p>
+      <ol class="steps">
+        <li>Semua barang tercentang. <b>Hilangkan centang</b> pada barang yang bayarnya menyusul.</li>
+        <li>Isi <b>Harga</b> hanya untuk barang yang masih tercentang. Keterangan otomatis bertambah, misalnya <code>· belum bayar: krengkes, krengkes</code>.</li>
+        <li>Simpan. Semua barang tercatat <span class="tag done">Diambil</span>, tapi yang tidak dicentang berstatus <span class="tag no">Belum bayar</span> dan Harga di data asal belum menjadi ✓.</li>
+        <li>Saat customer datang membayar, kartu menampilkan barang itu sebagai <span class="tag out">dibawa</span> <span class="tag no">belum dibayar</span>. Pilih <b>Bayar saja</b>, isi Harga, simpan. Setelah semuanya lunas, Harga data asal menjadi ✓ otomatis.</li>
+      </ol>
+      <div class="note"><b>Harga dikosongkan?</b>Kalau Harga kosong, semua barang yang diambil dianggap belum dibayar, apa pun centangnya.</div>
 
       <h3>Menitip barang baru sekaligus</h3>
       <p>Customer mengambil barang lama, tapi membawa barang baru yang ditinggal? Setelah menekan <i>Ambil barang</i> atau <i>Bayar saja</i>, ketik barang baru di <span class="mk stay">Barang Ditinggal</span> di belakang sisa yang sudah terisi. Tulisanmu tidak akan ditimpa.</p>
@@ -631,10 +644,13 @@
     <summary><span class="num">13</span>Masalah umum &amp; solusinya<svg class="caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
     <div class="body">
       <details class="faq"><summary>Kartu “Barang masih ditinggal” tidak muncul</summary><div>
-        Periksa berurutan: <b>(1)</b> PJ sama dengan data titipan (urutan nama boleh beda), <b>(2)</b> ejaan Customer sama, <b>(3)</b> data titipan masih punya barang yang belum diambil atau belum dibayar, <b>(4)</b> Harga data titipan bukan ✓ yang kamu ketik sendiri. Kartu juga butuh koneksi internet untuk memeriksa catatan lain di folder yang sama.
+        Periksa berurutan: <b>(1)</b> PJ sama dengan data titipan, atau salah satu anggota timnya (urutan nama bebas), <b>(2)</b> ejaan Customer sama, <b>(3)</b> data titipan masih punya barang yang belum diambil atau belum dibayar, <b>(4)</b> Harga data titipan bukan ✓ yang kamu ketik sendiri. Kartu juga butuh koneksi internet untuk memeriksa catatan lain di folder yang sama.
       </div></details>
       <details class="faq"><summary>Salah mengambil barang. Bagaimana membatalkan?</summary><div>
         Buka data pengambilannya, ketuk <b>Hapus</b>, lalu selesaikan puzzle. Data titipan asal kembali seperti sebelum diambil. Setelah itu buat ulang data pengambilan yang benar.
+      </div></details>
+      <details class="faq"><summary>Customer ambil semua barang tapi baru membayar sebagian</summary><div>
+        Tekan <b>Ambil barang</b> lalu hilangkan centang pada barang yang bayarnya menyusul di kotak <b>“Mana yang dibayar sekarang?”</b>. Isi Harga untuk yang dibayar saja. Besoknya barang yang belum dibayar muncul di kartu sebagai “dibawa · belum dibayar”, lalu lunasi lewat <b>Bayar saja</b>. Detail ada di bagian 5.
       </div></details>
       <details class="faq"><summary>Harga di data titipan berubah jadi ✓ sendiri</summary><div>
         Itu normal. Saat <b>semua</b> barang di data itu sudah lunas lewat data pengambilan, editor mengisi ✓ otomatis. Kalau lunasnya dibatalkan (data pengambilan dihapus), Harga kembali kosong.
@@ -665,38 +681,30 @@
 
 <script>
 (function () {
-  /* Tema, warna sistem, font, dan teks tebal sama dengan Editor & System Management (kunci bm-* di localStorage) */
-  var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
+  /* Tema sama dengan Editor (tersimpan di localStorage 'bm-theme') */
   function ls(k){ try { return localStorage.getItem(k); } catch (e) { return null; } }
-  function applyAccent(){
-    var B = window.BMTheme, hex;
-    if (!B || !B.getAccent) return;
-    try { hex = B.getAccent(); } catch (e) { return; }
-    if (!/^#[0-9a-f]{6}$/i.test(hex || '')) return;
-    var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
-    var ir = Math.round(r * 0.45), ig = Math.round(g * 0.45), ib = Math.round(b * 0.45);
-    var st = document.documentElement.style;
-    st.setProperty('--accent', hex);
-    st.setProperty('--accent-rgb', r + ',' + g + ',' + b);
-    st.setProperty('--accent-ink', 'rgb(' + ir + ', ' + ig + ', ' + ib + ')');
-    st.setProperty('--accent-ink-rgb', ir + ', ' + ig + ', ' + ib);
-    var dark = '#1C1B19';
-    st.setProperty('--on-accent', (B.contrast && B.contrast(hex, dark) < B.contrast(hex, '#FFFFFF')) ? '#FFFFFF' : dark);
-  }
   function applyTheme(){
     var cl = document.body.classList, dark = ls('bm-theme') !== 'light';
     cl.toggle('surface-dark', dark);
-    Object.keys(FONT_CLASS).forEach(function (k) { cl.remove(FONT_CLASS[k]); });
-    var f = ls('bm-font');
-    if (f && FONT_CLASS[f]) cl.add(FONT_CLASS[f]);
     cl.toggle('font-bold-mode', ls('bm-font-bold') === 'on');
     var m = document.getElementById('themeColorMeta'); if (m) m.setAttribute('content', dark ? '#15140F' : '#F6F1E7');
-    applyAccent();
-    if (f === 'custom' && window.BMTheme && window.BMTheme.ensureCustom) { try { window.BMTheme.ensureCustom(); } catch (e) {} }
+    var B = window.BMTheme;
+    if (B && B.getAccent) {
+      try {
+        var hex = B.getAccent();
+        if (/^#[0-9a-f]{6}$/i.test(hex || '')) {
+          var r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
+          var st = document.documentElement.style;
+          st.setProperty('--accent', hex); st.setProperty('--accent-rgb', r + ',' + g + ',' + b);
+          var lin = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+          var L = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+          st.setProperty('--on-accent', (1.05 / (L + 0.05)) > ((L + 0.05) / 0.06) ? '#FFFFFF' : '#1C1B19'); // pilih kontras terbaik
+        }
+      } catch (e) {}
+    }
   }
   applyTheme();
-  window.addEventListener('storage', function (e) { if (!e.key || e.key.indexOf('bm-') === 0) applyTheme(); });
-  window.addEventListener('pageshow', applyTheme);
+  window.addEventListener('storage', applyTheme);
 
   /* Matikan klik kanan / menu tekan-lama dan pemilihan teks (kecuali kolom cari) */
   document.addEventListener('contextmenu', function (e) { if (!(e.target.closest && e.target.closest('input, textarea'))) e.preventDefault(); });
