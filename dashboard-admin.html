@@ -4823,11 +4823,220 @@
     return categoriesData.filter(c => !c.ownerUsername && !c.schema && !isPjId(c.id));
   }
 
+  // ===== Pelacak barang Data Administrator (SALINAN logika editor-data-administrator.html) =====
+  // Dulu Task membaca baris tabel yang sudah "diratakan" sehingga tidak tahu: barang kembar (krengkes, krengkes),
+  // lingkup Harga (dibawa / ditinggal / semua), barang yang sudah diambil tapi bayarnya menyusul, barang baru yang
+  // ditinggal di baris pengambilan, dan barang yang dibawa di hari titip yang sama. Sekarang dihitung dari record asli.
+  const AdminTrack = (function () {
+    const CENT_G = /[\u221A\u2713\u2714\u2611\u2705]/g;
+    const normText = s => String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toLowerCase();
+    const isCentangText = v => /[\u221A\u2713\u2714\u2611\u2705]/.test(String(v == null ? '' : v));
+    const stripCentang = s => String(s == null ? '' : s).replace(CENT_G, '').replace(/\s+/g, ' ').trim();
+    const isHargaKosong = h => h == null || h === '' || h === 0 || /^0+$/.test(String(h).trim());
+    const isBJWhole = v => normText(stripCentang(v)).replace(/[^a-z0-9]/g, '') === 'bj';
+    const isTidakAdaText = v => normText(v).replace(/\s/g, '') === 'tidakada';
+    const splitList = s => String(s == null ? '' : s).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+    const itemKey = name => normText(stripCentang(name));
+    const isDateToken = t => /^\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}$/.test(String(t == null ? '' : t).trim());
+    // Barang kembar diberi kunci unik: gardan, gardan#2, gardan#3
+    function withUniqueKeys(items) {
+      const seen = {};
+      return items.map(i => { const n = (seen[i.key] = (seen[i.key] || 0) + 1); return n > 1 ? Object.assign({}, i, { key: i.key + '#' + n }) : i; });
+    }
+    // Barang sudah DIBAWA semua (Barang Keluar terisi, Stok "Tidak ada") tapi Harga kosong = belum dibayar
+    function outUnpaidNames(o, text) {
+      if (!o) return null;
+      const links = Array.isArray(o.ambilDari) ? o.ambilDari : [];
+      if (links.some(l => l && l.mode === 'bayar')) return null;
+      if (!(text === '' || isTidakAdaText(stripCentang(text)))) return null;
+      const keluar = String(o.barangKeluar == null ? '' : o.barangKeluar).trim();
+      if (!keluar || isTidakAdaText(stripCentang(keluar))) return null;
+      if (!(isHargaKosong(o.harga) || o.hargaAuto || (o.pickups && Object.keys(o.pickups).length))) return null;
+      let names;
+      if (links.length) names = [].concat(...links.map(l => (Array.isArray(l.items) && l.items.length) ? l.items : splitList(l.label)));
+      else names = isBJWhole(keluar) ? splitList(o.barang) : splitList(keluar);
+      names = names.map(stripCentang).filter(Boolean);
+      return names.length ? names : null;
+    }
+    function parseStokItems(o) {
+      const text = String(o.stokBase != null ? o.stokBase : (o.stokBarang == null ? '' : o.stokBarang)).trim();
+      const outNames = outUnpaidNames(o, text);
+      if (outNames) return { whole: false, out: true, text, items: withUniqueKeys(outNames.map(n => ({ key: itemKey(n), name: n, done: false }))) };
+      if (!text || isTidakAdaText(stripCentang(text))) return { whole: false, text, items: [] };
+      if (isBJWhole(text)) {
+        const allDone = isCentangText(text);
+        let names = splitList(o.barang).map(stripCentang).filter(Boolean);
+        if (Array.isArray(o.ambilDari) && o.ambilDari.length) names = names.filter(n => !isDateToken(n));
+        if (!names.length) names = ['B&J'];
+        return { whole: true, text, items: withUniqueKeys(names.map(n => ({ key: itemKey(n), name: n, done: allDone }))) };
+      }
+      // Barang BAWAAN: sisa titipan lama yang hanya disalin ke Stok Barang baris pengambilan (dilacak di data asalnya)
+      const carry = {};
+      (Array.isArray(o.stokCarry) ? o.stokCarry : []).forEach(k => { carry[k] = (carry[k] || 0) + 1; });
+      const items = withUniqueKeys(splitList(text)
+        .map(tok => ({ name: stripCentang(tok), done: isCentangText(tok) }))
+        .filter(i => i.name && !isTidakAdaText(i.name))
+        .map(i => {
+          const key = itemKey(i.name);
+          const carried = carry[key] > 0;
+          if (carried) carry[key]--;
+          return { key, name: i.name, done: i.done, carried };
+        }));
+      // Barang yang DIBAWA PULANG di hari titip yang sama (Barang Keluar terisi, tapi masih ada sisa di Stok Barang)
+      let outItems = [];
+      const isLinkRow = Array.isArray(o.ambilDari) && o.ambilDari.length > 0;
+      if (!isLinkRow && items.length) {
+        const kl = String(o.barangKeluar == null ? '' : o.barangKeluar).trim();
+        if (kl && !isTidakAdaText(stripCentang(kl)) && !isBJWhole(kl)) {
+          outItems = withUniqueKeys(splitList(kl).map(stripCentang).filter(n => n && !isTidakAdaText(n))
+            .map(n => ({ key: 'out:' + itemKey(n), name: n, done: false, dibawa: true })));
+        }
+      }
+      return { whole: false, text, items, outItems };
+    }
+    function takenKeys(o, parsed) {
+      const set = new Set();
+      let all = false;
+      Object.values(o.pickups || {}).forEach(p => {
+        if (!p || p.mode === 'bayar') return;
+        if (p.items == null) all = true; else p.items.forEach(k => set.add(k));
+      });
+      if (all) parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
+      return set;
+    }
+    function paidKeySet(o, parsed) {
+      const set = new Set();
+      let all = false;
+      Object.values(o.pickups || {}).forEach(p => {
+        if (!p || !p.paid) return;
+        if (p.payItems == null) all = true; else p.payItems.forEach(k => set.add(k));
+      });
+      if (all) parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
+      if (o.ownPaid) { // Harga baris pengambilan juga melunasi barang yang baru ditinggal
+        parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
+        (parsed.outItems || []).forEach(i => set.add(i.key));
+      }
+      return set;
+    }
+    // Baris pengambilan LAMA (belum punya stokCarry): tebak barang bawaan dari data titipan asalnya
+    function resolveCarry(r, idx) {
+      if (Array.isArray(r.stokCarry)) return r.stokCarry;
+      const links = Array.isArray(r.ambilDari) ? r.ambilDari : [];
+      if (!links.length) return [];
+      const pool = {};
+      links.forEach(l => {
+        const o = idx && idx.get(l.recordId);
+        if (!o || o === r) return;
+        const taken = {};
+        if (l.mode !== 'bayar') (Array.isArray(l.items) ? l.items : []).forEach(n => { const k = itemKey(n); taken[k] = (taken[k] || 0) + 1; });
+        parseStokItems(o).items.forEach(i => {
+          const k = i.key.replace(/#\d+$/, '');
+          if (taken[k] > 0) { taken[k]--; return; }
+          pool[k] = (pool[k] || 0) + 1;
+        });
+      });
+      const out = [];
+      splitList(r.stokBase != null ? r.stokBase : r.stokBarang).forEach(tok => {
+        const k = itemKey(tok);
+        if (pool[k] > 0) { pool[k]--; out.push(k); }
+      });
+      return out;
+    }
+    function buildIndex(notes) {
+      const m = new Map();
+      (notes || []).forEach(n => {
+        const c = n && n.content;
+        if (c && c.schema === 'admin-data-v1' && Array.isArray(c.records)) c.records.forEach(r => { if (r && r.id) m.set(r.id, r); });
+      });
+      return m;
+    }
+    // Hasil: barang yang masih DITINGGAL dan barang yang DIBAWA tapi belum dibayar untuk satu record
+    function analyze(r, idx) {
+      const none = { ditinggal: null, belumbayar: null };
+      if (!r) return none;
+      const isPickupRow = !!(r.ambilDari && r.ambilDari.length);
+      let rr = r;
+      if (isPickupRow && !Array.isArray(r.stokCarry)) {
+        const carry = resolveCarry(r, idx);
+        if (carry.length) rr = Object.assign({}, r, { stokCarry: carry });
+      }
+      const parsed = parseStokItems(rr);
+      if (isPickupRow && !parsed.out && !parsed.items.some(i => !i.carried)) return none; // tidak ada barang baru di baris pengambilan
+      if (!isPickupRow && isCentangText(r.harga) && !r.hargaAuto) return none;            // Harga ✓ ketikan manual = sudah beres
+      const paidSet = paidKeySet(rr, parsed);
+      // Harga ANGKA di baris titip = lunas saat dititip; lingkupnya (hargaScope) bisa hanya yang dibawa / hanya yang ditinggal
+      if (!isPickupRow && !isHargaKosong(r.harga) && !isCentangText(r.harga)) {
+        const sc = r.hargaScope || 'all';
+        if (sc !== 'out') parsed.items.forEach(i => paidSet.add(i.key));
+        if (sc !== 'stay') (parsed.outItems || []).forEach(i => paidSet.add(i.key));
+      }
+      const dibawaUnpaid = [], dibawaPaid = [];
+      let ditinggal = null;
+      if (parsed.out) {
+        // semua barang sudah dibawa: yang belum dibayar jadi tugas
+        parsed.items.forEach(i => (paidSet.has(i.key) ? dibawaPaid : dibawaUnpaid).push(i.name));
+      } else {
+        const taken = (r.pickup && !r.pickups) ? new Set(parsed.items.map(i => i.key)) : takenKeys(rr, parsed); // format lama = sudah diambil semua
+        const left = parsed.items.filter(i => !i.done && !i.carried && !taken.has(i.key));
+        if (left.length) {
+          const paidNames = left.filter(i => paidSet.has(i.key)).map(i => i.name);
+          ditinggal = { names: left.map(i => i.name), paidNames, paid: paidNames.length === left.length,
+                        allLeft: !!parsed.whole && left.length === parsed.items.length };
+        }
+        // dibawa di hari titip yang sama
+        (parsed.outItems || []).forEach(i => (paidSet.has(i.key) ? dibawaPaid : dibawaUnpaid).push(i.name));
+        // sudah diambil, bayarnya menyusul (ambil semua, baru sebagian yang dibayar)
+        const pk = Object.values(r.pickups || {}).filter(Boolean);
+        parsed.items.forEach(i => {
+          if (i.carried || i.done) return;
+          const entries = pk.filter(p => p.mode !== 'bayar' && Array.isArray(p.items) && p.items.includes(i.key));
+          if (!entries.length) return;
+          if (paidSet.has(i.key)) dibawaPaid.push(i.name);
+          else if (entries.some(p => p.paid)) dibawaUnpaid.push(i.name);   // (kalau Harga kosong, ditagih lewat baris pengambilannya)
+        });
+      }
+      return { ditinggal, belumbayar: dibawaUnpaid.length ? { names: dibawaUnpaid, paidNames: dibawaPaid } : null };
+    }
+    return { analyze, buildIndex };
+  })();
+
+  // Task untuk satu note Data Administrator (schema admin-data-v1), dibaca dari record aslinya
+  function adminTasksOf(note, idx, tasks) {
+    const pad2 = n => String(n).padStart(2, '0');
+    const recs = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    recs.forEach((r, rowIndex) => {
+      const d = r.created_at ? new Date(r.created_at) : null;
+      const ok = d && !isNaN(d.getTime());
+      const tanggal = ok ? `${pad2(d.getDate())}-${pad2(d.getMonth() + 1)}-${d.getFullYear()}` : '';
+      const when = parseRowDate(tanggal, note.created_at);
+      const base = {
+        noteId: note.id,
+        folderId: note.folder_id,
+        folderName: note.folder || 'Uncategorized',
+        noteTitle: note.title || 'Untitled',
+        rowIndex,
+        when,
+        dateText: taskDateText(when),
+        jam: ok ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '',
+        customer: String(r.customer || '').trim(),
+        barang: String(r.barang || '').trim()
+      };
+      const a = AdminTrack.analyze(r, idx);
+      if (a.ditinggal) tasks.push({ ...base, type: 'ditinggal', allLeft: a.ditinggal.allLeft, what: a.ditinggal.names.join(', '), paid: a.ditinggal.paid, paidNames: a.ditinggal.paidNames });
+      if (a.belumbayar) tasks.push({ ...base, type: 'belumbayar', what: a.belumbayar.names.join(', '), paidNames: a.belumbayar.paidNames });
+      const missing = TASK_INCOMPLETE_FIELDS.filter(f => f === 'Harga' ? isHargaEmpty(formatHargaCell(r.harga)) : isEmptyValue(f === 'Customer' ? r.customer : r.barang));
+      if (missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing });
+    });
+  }
+
   function computeTasks() {
     const tasks = [];
+    const adminIdx = AdminTrack.buildIndex(allNotesData);
 
     allNotesData.forEach(note => {
       if (isCustomNote(note)) return;
+      // Note format baru (Data Administrator): hitung dari record asli, bukan dari baris tabel yang sudah diratakan
+      if (note.content && note.content.schema === 'admin-data-v1' && Array.isArray(note.content.records)) { adminTasksOf(note, adminIdx, tasks); return; }
       const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
       const columns = content.columns;
