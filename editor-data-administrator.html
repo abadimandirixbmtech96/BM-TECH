@@ -2071,6 +2071,13 @@
       return;
     }
 
+    // Pengaman: note ini ternyata data OPERASIONAL -> alihkan ke editor operasional.
+    if (note.content && note.content.schema === 'operasional-data-v1') {
+      existingNoteLoadFailed = true; // blok autosave selama pengalihan
+      window.location.replace('editor-data-operasional.html' + window.location.search);
+      return;
+    }
+
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
     noteFolderId = note.folder_id || targetFolderId || null;
