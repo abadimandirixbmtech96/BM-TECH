@@ -4625,6 +4625,35 @@
     return !!(cat && /hutang|piutang/i.test(cat.name || ''));
   }
 
+  // =====================================================================
+  // BUKU OPERASIONAL — data terpisah (hanya penyimpanan; dibaca halaman analisa).
+  // schema 'operasional-data-v1': { buyer, seller, item, keterangan, harga, metode, bayarCash, bayarTransfer, bukti[] }
+  // Tidak masuk Tasks, folder per PJ/Customer, maupun pencarian global (sama seperti Warung/Kasbon/Hutang).
+  // =====================================================================
+  const OPERASIONAL_SCHEMA = 'operasional-data-v1';
+  const OPERASIONAL_EDITOR_FILE = 'editor-data-operasional.html';
+
+  function isOperasionalNote(note) {
+    return !!(note && note.content && note.content.schema === OPERASIONAL_SCHEMA);
+  }
+  function isOperasionalFolderId(folderId) {
+    const cat = (typeof categoriesData !== 'undefined' ? categoriesData : []).find(c => c.id === folderId);
+    return !!(cat && /operasional/i.test(cat.name || ''));
+  }
+
+  const OPERASIONAL_COLUMNS = [
+    { id: 'no', label: 'No' },
+    { id: 'tanggal', label: 'Date' },
+    { id: 'jam', label: 'Time' },
+    { id: 'buyer', label: 'Buyer' },
+    { id: 'seller', label: 'Seller' },
+    { id: 'item', label: 'Item' },
+    { id: 'keterangan', label: 'Remarks' },
+    { id: 'harga', label: 'Price' },
+    { id: 'metode', label: 'Metode' },
+    { id: 'bukti', label: 'Proof', type: 'image' }
+  ];
+
   const HUTANG_COLUMNS = [
     { id: 'no', label: 'No' },
     { id: 'tanggal', label: 'Tanggal' },
@@ -4712,6 +4741,35 @@
         };
       });
       return { columns: HUTANG_COLUMNS, rows };
+    }
+    if (isOperasionalNote(note) && Array.isArray(note.content.records)) {
+      const pad2 = n => String(n).padStart(2, '0');
+      const sorted = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+      const rows = sorted.map((r, i) => {
+        const dt = r.created_at ? new Date(r.created_at) : null;
+        return {
+          cells: {
+            no: String(i + 1).padStart(3, '0'),
+            tanggal: dt ? `${pad2(dt.getDate())}-${pad2(dt.getMonth() + 1)}-${dt.getFullYear()}` : '',
+            jam: dt ? `${pad2(dt.getHours())}:${pad2(dt.getMinutes())}` : '',
+            buyer: r.buyer || '',
+            seller: r.seller || '',
+            item: r.item || '',
+            keterangan: r.keterangan || '',
+            harga: formatHargaCell(r.harga),
+            metode: r.metode === 'cash' ? 'Cash' : r.metode === 'transfer' ? 'Transfer'
+              : r.metode === 'campur' ? ((r.bayarCash || r.bayarTransfer)
+                  ? `Cash ${Math.round(r.bayarCash || 0).toLocaleString('id-ID')} + Transfer ${Math.round(r.bayarTransfer || 0).toLocaleString('id-ID')}`
+                  : 'Cash + Transfer')
+              : '',
+            bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
+            _buktiAll: Array.isArray(r.bukti) ? r.bukti : [],
+            _nid: note.id || '',
+            _rid: r.id || ''
+          }
+        };
+      });
+      return { columns: OPERASIONAL_COLUMNS, rows };
     }
     return getNoteTable(note);
   }
@@ -7042,9 +7100,11 @@
 
     const noteObj = noteId ? (notesData.find(n => n.id === noteId) || null) : null;
     const editorFile = (isCustomNote(noteObj) || isCustomFolderId(folderId)) ? CUSTOM_EDITOR_FILE
+                     : isOperasionalNote(noteObj) ? OPERASIONAL_EDITOR_FILE
                      : isHutangNote(noteObj) ? HUTANG_EDITOR_FILE
                      : isKasbonNote(noteObj) ? KASBON_EDITOR_FILE
                      : isWarungNote(noteObj) ? WARUNG_EDITOR_FILE
+                     : isOperasionalFolderId(folderId) ? OPERASIONAL_EDITOR_FILE
                      : isHutangFolderId(folderId) ? HUTANG_EDITOR_FILE
                      : isKasbonFolderId(folderId) ? KASBON_EDITOR_FILE
                      : isWarungFolderId(folderId) ? WARUNG_EDITOR_FILE
@@ -7797,7 +7857,7 @@
     const folderNameById = {};
     categoriesData.forEach(f => { folderNameById[f.id] = f.name; });
 
-    allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n) && !isHutangNote(n)).map(n => ({
+    allNotesData = (data || []).filter(n => !isWarungNote(n) && !isKasbonNote(n) && !isHutangNote(n) && !isOperasionalNote(n)).map(n => ({
       ...n,
       folder: folderNameById[n.folder_id] || 'Uncategorized'
     }));
