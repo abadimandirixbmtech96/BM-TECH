@@ -845,6 +845,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Export CSV
         </button>
+        <button class="export-btn" id="btnExportOpsCSV">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Operasional (CSV)
+        </button>
         <button class="export-btn" id="btnExportPDF">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Cetak / PDF
@@ -951,6 +955,34 @@
     </div>
   </section>
 
+  <section class="panel" id="opsPanel">
+    <p class="analytics-section-title">Pengeluaran Operasional <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="opsMethodList">
+      <p class="bar-empty">Belum ada data operasional</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Operasional per Item <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="opsItemList">
+      <p class="bar-empty">Belum ada data operasional</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Operasional per Seller <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="opsSellerList">
+      <p class="bar-empty">Belum ada data operasional</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <p class="analytics-section-title">Operasional per Buyer <span class="section-period" data-period-label></span></p>
+    <div class="bar-list" id="opsBuyerList">
+      <p class="bar-empty">Belum ada data operasional</p>
+    </div>
+  </section>
+
   <section class="panel">
     <p class="analytics-section-title">Posisi Hutang Piutang <span class="section-period" id="debtAsOf"></span></p>
     <div class="bar-list" id="debtCard">
@@ -998,7 +1030,8 @@
 <script>
   // =====================================================================
   // ANALISA & LAPORAN — halaman mandiri (dipisah dari dashboard-admin.html)
-  // KHUSUS folder BUKU BESAR. Satu baris tabel yang punya nilai Harga =
+  // Pemasukan: KHUSUS folder BUKU BESAR. Pengeluaran: Kasbon (folder kasbon) dan
+  // Operasional (folder BUKU OPERASIONAL, schema operasional-data-v1). Satu baris tabel yang punya nilai Harga =
   // satu transaksi. Semua panel (grafik, statistik, Top Customer, Performa
   // PJ, Riwayat) mengikuti periode yang dipilih di kartu omzet; panel
   // Aktivitas Terakhir selalu menampilkan yang paling baru, apa pun periodenya.
@@ -1258,6 +1291,8 @@
   let folderList = [];      // semua folder (dipakai mencari folder hutang piutang & kasbon)
   let debtItems = [];       // semua catatan hutang / piutang / kasbon (termasuk yang sudah lunas)
   let debtLoadError = false;
+  let opsItems = [];        // semua catatan Buku Operasional (termasuk yang belum berharga)
+  let opsLoadError = false;
   let isLoading = false;
   let lastLoadedAt = null;
   let lastLoadError = false;
@@ -1887,7 +1922,7 @@
 
 
   // --- Kartu hero geser: Pemasukan (gabungan) | Kasbon | Operasional | Bersih ---
-  // Kasbon = total kasbon yang dicatat pada periode (sesuai tanggal catatan). Operasional menunggu Buku Operasional.
+  // Kasbon = total kasbon yang dicatat pada periode (sesuai tanggal catatan). Operasional = Harga catatan Buku Operasional pada periode.
   const HERO_SL = [{ id: 'inc', name: 'Ringkasan' }, { id: 'kas', name: 'Kasbon' }, { id: 'ops', name: 'Operasional' }, { id: 'net', name: 'Bersih' }];
   const HC = { inc: '#3DD68C', kas: '#F0A529', ops: '#B07CFF' };
   const heroSt = {};
@@ -1896,7 +1931,11 @@
     ? { wrap: 'incomeChartWrap', svg: 'incomeChartSvg', empty: 'incomeChartEmpty', tip: 'chartTip', axS: 'chartAxisStart', axE: 'chartAxisEnd' }
     : { wrap: id + 'ChartWrap', svg: id + 'ChartSvg', empty: id + 'ChartEmpty', tip: id + 'ChartTip', axS: id + 'AxS', axE: id + 'AxE' };
 
-  function getOperasionalEvents(period) { return []; } // TODO: isi dari Buku Operasional kalau editornya sudah jadi
+  // Operasional = nominal Harga catatan Buku Operasional pada periode (tanggal = waktu dicatat)
+  function getOperasionalEvents(period) {
+    return opsInPeriod(period).filter(o => o.amount > 0)
+      .map(o => ({ t: o.when.getTime(), v: o.amount, label: formatTime(o.when) + ' · ' + o.item, nama: o.item }));
+  }
 
   function heroEvents(period) {
     const { start, end } = getPeriodRange(period), all = period === 'all';
@@ -2079,7 +2118,7 @@
     const net = t.inc - t.kas - t.ops, pl = periodLabelText(period), ws = new Set(B.ev.kas.map(e => normalizeKey(e.nama) || e.nama.toLowerCase()));
     const set = (id, label, val, sub) => { $(id + 'Label').textContent = pl.replace('Pemasukan', label); $(id + 'Value').textContent = val; $(id + 'Sub').textContent = sub; };
     set('kas', 'Kasbon', formatRupiah(t.kas), B.ev.kas.length ? `${B.ev.kas.length} catatan · ${ws.size} orang · belum lunas ${c(debtItems.filter(d => d.type === 'kasbon' && d.sisa > 0).reduce((q, d) => q + d.sisa, 0))}` : 'Belum ada kasbon pada periode ini');
-    set('ops', 'Operasional', formatRupiah(t.ops), B.ev.ops.length ? `${B.ev.ops.length} catatan` : 'Buku Operasional belum terhubung');
+    set('ops', 'Operasional', formatRupiah(t.ops), opsLoadError ? 'Gagal memuat Buku Operasional' : B.ev.ops.length ? `${B.ev.ops.length} catatan · ${new Set(B.ev.ops.map(e => normalizeKey(e.nama) || e.nama.toLowerCase())).size} item` : 'Belum ada operasional pada periode ini');
     set('net', 'Bersih', fmtS(net), `Pemasukan ${c(t.inc)} − Kasbon ${c(t.kas)} − Operasional ${c(t.ops)}`);
     $('netValWrap').className = 'income-total-value ' + (net < 0 ? 'hero-neg' : 'hero-pos');
     $('kasValWrap').className = 'income-total-value hero-kas'; $('opsValWrap').className = 'income-total-value hero-ops';
@@ -2667,6 +2706,19 @@
         combos.forEach((g, i) => lines.push(`${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
       }
     }
+    const hv = heroEvents(period);
+    const kasT = hv.kas.reduce((q, e) => q + e.v, 0), opsT = hv.ops.reduce((q, e) => q + e.v, 0);
+    if (kasT > 0 || opsT > 0) {
+      lines.push('', '*Pengeluaran & Bersih*');
+      if (kasT > 0) lines.push(`Kasbon: ${formatRupiah(kasT)} (${hv.kas.length} catatan)`);
+      if (opsT > 0) {
+        lines.push(`Operasional: ${formatRupiah(opsT)} (${hv.ops.length} catatan)`);
+        const og = groupOps(opsInPeriod(period), 'item').slice(0, 3);
+        og.forEach((g, i) => lines.push(`  ${i + 1}. ${g.name} — ${formatRupiah(g.total)} (${g.count}x)`));
+      }
+      const netV = total - kasT - opsT;
+      lines.push(`*Bersih:* ${netV < 0 ? '- ' : ''}${formatRupiah(Math.abs(netV))} (Pemasukan − Kasbon − Operasional)`);
+    }
     const openDebt = debtItems.filter(d => d.sisa > 0);
     if (openDebt.length) {
       lines.push('', '*Posisi saat ini*');
@@ -2702,6 +2754,7 @@
     renderRanking('pjComboList', txs, 'pj', 'Tanpa PJ', 10, 'Belum ada transaksi gabungan PJ', '', pjComboTotals);
     renderTrend();
     renderCustomerSplit(txs);
+    renderOps(currentIncomePeriod);
     renderBusyTimes(txs, currentIncomePeriod);
     historyLimit = HISTORY_PAGE;
     renderHistory(txs);
@@ -2789,6 +2842,148 @@
       console.error('Gagal memuat hutang piutang:', err && err.message);
       return false;
     }
+  }
+
+  // --- Buku Operasional (schema 'operasional-data-v1') ---
+  // record: { buyer, seller, item, keterangan, harga, metode, bayarCash, bayarTransfer, bukti[], created_at }
+  // Nominal ketat seperti transaksi lain (parseRupiah): "30.000" / 30000 dihitung; teks bebas ("50rb") / kosong = amount 0
+  // (tetap tercatat sebagai catatan, tapi tidak dijumlahkan).
+  const OPS_FOLDER_RE = /operasional/i;
+  const OPS_SCHEMA = 'operasional-data-v1';
+
+  function collectOpsItems(note, out) {
+    const c = note && note.content;
+    if (!c || c.schema !== OPS_SCHEMA || !Array.isArray(c.records)) return;
+    c.records.forEach(r => {
+      if (!r) return;
+      const when = r.created_at ? new Date(r.created_at) : null;
+      if (!when || isNaN(when)) return;
+      const amount = parseRupiah(r.harga);
+      const metode = normMetode(r.metode);
+      let cash = 0, trf = 0;
+      if (amount > 0) {
+        if (metode === 'cash') cash = amount;
+        else if (metode === 'transfer') trf = amount;
+        else if (metode === 'campur') { cash = Math.min(amount, Math.max(0, Number(r.bayarCash) || 0)); trf = Math.max(0, amount - cash); }
+      }
+      const txt = (v, fb) => { const t = String(v == null ? '' : v).trim(); return t || fb; };
+      out.push({
+        when, amount, metode, cash, trf,
+        buyer: txt(r.buyer, 'Tanpa Buyer'),
+        seller: txt(r.seller, 'Tanpa Seller'),
+        item: txt(r.item, 'Tanpa Item'),
+        keterangan: txt(r.keterangan, ''),
+        hasProof: Array.isArray(r.bukti) && r.bukti.length > 0,
+        noteTitle: note.title || 'Untitled'
+      });
+    });
+  }
+
+  // Mengembalikan true kalau sukses; kalau gagal data lama dibiarkan
+  async function loadOpsData() {
+    try {
+      const ids = folderList
+        .filter(f => f && f.id && !f.owner_username && typeof f.name === 'string' && OPS_FOLDER_RE.test(f.name))
+        .map(f => f.id);
+
+      const items = [];
+      if (ids.length > 0) {
+        for (let from = 0; ; from += NOTES_PAGE_SIZE) {
+          const { data, error } = await supabaseClient
+            .from('notes')
+            .select('id, folder_id, title, content, created_at')
+            .in('folder_id', ids)
+            .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
+            .range(from, from + NOTES_PAGE_SIZE - 1);
+
+          if (error) {
+            console.error('Gagal memuat Buku Operasional:', error.message);
+            return false;
+          }
+          (data || []).forEach(n => collectOpsItems(n, items));
+          if (!data || data.length < NOTES_PAGE_SIZE) break;
+        }
+      }
+      opsItems = items;
+      return true;
+    } catch (err) {
+      console.error('Gagal memuat Buku Operasional:', err && err.message);
+      return false;
+    }
+  }
+
+  // Catatan operasional pada periode terpilih (aturan rentang sama dengan Kasbon)
+  function opsInPeriod(period) {
+    const { start, end } = getPeriodRange(period), all = period === 'all';
+    return opsItems.filter(o => o.when && (all || (o.when >= start && o.when <= end)));
+  }
+
+  function groupOps(list, field) {
+    const map = new Map();
+    list.forEach(o => {
+      if (!(o.amount > 0)) return;
+      const key = normalizeKey(o[field]) || o[field].toLowerCase();
+      let g = map.get(key);
+      if (!g) { g = { name: o[field], total: 0, count: 0 }; map.set(key, g); }
+      g.total += o.amount; g.count += 1;
+    });
+    return [...map.values()].sort((a, b) => b.total - a.total);
+  }
+
+  function renderOpsBars(elId, groups, total, limit, emptyText) {
+    const el = $(elId);
+    if (!groups.length) { el.innerHTML = `<p class="bar-empty">${emptyText}</p>`; return; }
+    const top = groups.slice(0, limit), max = top[0].total || 1;
+    el.innerHTML = top.map(g => `
+      <div class="bar-row">
+        <div class="bar-top">
+          <span class="bar-name">${escapeHtml(g.name)}<span class="bar-meta">${g.count}x · ${total ? Math.round((g.total / total) * 100) : 0}%</span></span>
+          <span class="bar-count">${formatRupiah(g.total)}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round((g.total / max) * 100)}%"></div></div>
+      </div>`).join('') + (groups.length > limit ? `<p class="bar-note">+ ${groups.length - limit} lainnya tidak ditampilkan</p>` : '');
+  }
+
+  function renderOps(period) {
+    if (opsLoadError) {
+      ['opsMethodList', 'opsItemList', 'opsSellerList', 'opsBuyerList'].forEach(id => { $(id).innerHTML = '<p class="bar-empty">Gagal memuat Buku Operasional. Ketuk muat ulang.</p>'; });
+      return;
+    }
+    const list = opsInPeriod(period), priced = list.filter(o => o.amount > 0);
+    const total = priced.reduce((s, o) => s + o.amount, 0);
+    const noPrice = list.length - priced.length;
+    const noteTxt = noPrice ? `<p class="bar-note">${noPrice} catatan belum ada nominal Harga, belum dihitung.</p>` : '';
+
+    if (!priced.length) {
+      $('opsMethodList').innerHTML = `<p class="bar-empty">${list.length ? 'Belum ada nominal Harga pada periode ini' : 'Belum ada data operasional'}</p>` + noteTxt;
+    } else {
+      const cash = priced.reduce((s, o) => s + o.cash, 0), trf = priced.reduce((s, o) => s + o.trf, 0);
+      const unset = Math.max(0, total - cash - trf);
+      const rows = [['💵 Cash', cash], ['🏦 Transfer', trf], ['Metode belum dipilih', unset]].filter(r => r[1] > 0);
+      const max = Math.max(...rows.map(r => r[1]), 1);
+      $('opsMethodList').innerHTML =
+        `<div class="bar-row"><div class="bar-top"><span class="bar-name">Total Operasional<span class="bar-meta">${priced.length} catatan · rata-rata ${compactRupiah(total / priced.length)}</span></span><span class="bar-count">${formatRupiah(total)}</span></div></div>` +
+        rows.map(([n, v]) => `
+          <div class="bar-row">
+            <div class="bar-top"><span class="bar-name">${n}<span class="bar-meta">${Math.round((v / total) * 100)}%</span></span><span class="bar-count">${formatRupiah(v)}</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round((v / max) * 100)}%"></div></div>
+          </div>`).join('') + noteTxt;
+    }
+    renderOpsBars('opsItemList', groupOps(list, 'item'), total, 8, 'Belum ada data operasional');
+    renderOpsBars('opsSellerList', groupOps(list, 'seller'), total, 8, 'Belum ada data operasional');
+    renderOpsBars('opsBuyerList', groupOps(list, 'buyer'), total, 8, 'Belum ada data operasional');
+  }
+
+  function csvOpsRows(list) {
+    const lines = [['Tanggal', 'Jam', 'Buyer', 'Seller', 'Item', 'Remarks', 'Harga (Rp)', 'Metode', 'Cash (Rp)', 'Transfer (Rp)', 'Bukti', 'Note'].join(',')];
+    [...list].sort((a, b) => a.when - b.when).forEach(o => {
+      lines.push([toLocalDateStr(o.when), formatTime(o.when), o.buyer === 'Tanpa Buyer' ? '' : o.buyer, o.seller === 'Tanpa Seller' ? '' : o.seller,
+        o.item === 'Tanpa Item' ? '' : o.item, o.keterangan, o.amount || '',
+        o.metode === 'cash' ? 'Cash' : o.metode === 'transfer' ? 'Transfer' : o.metode === 'campur' ? 'Campur' : '',
+        o.cash || '', o.trf || '', o.hasProof ? 'Ada' : '', o.noteTitle].map(csvCell).join(','));
+    });
+    return '\uFEFF' + lines.join('\r\n') + '\r\n';
   }
 
   function debtDetailHtml(type, list) {
@@ -2924,7 +3119,10 @@
     updateLastUpdated();
 
     const ok = await loadAnalyticsData();
-    debtLoadError = ok ? !(await loadDebtData()) : true;
+    if (ok) {
+      const [debtOk, opsOk] = await Promise.all([loadDebtData(), loadOpsData()]);
+      debtLoadError = !debtOk; opsLoadError = !opsOk;
+    } else { debtLoadError = true; opsLoadError = true; }
 
     isLoading = false;
     setRefreshing(false);
@@ -3114,6 +3312,20 @@
     if (!btn || !DEBT_TYPES[btn.dataset.debt]) return;
     debtTab = btn.dataset.debt;
     renderDebt();
+  });
+
+  $('btnExportOpsCSV').addEventListener('click', () => {
+    const list = opsInPeriod(currentIncomePeriod);
+    if (list.length === 0) { alert('Belum ada catatan operasional di periode ini.'); return; }
+    const blob = new Blob([csvOpsRows(list)], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `laporan-operasional-${currentIncomePeriod}-${toLocalDateStr(new Date())}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 
   $('btnExportPDF').addEventListener('click', () => window.print());
