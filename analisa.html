@@ -336,6 +336,18 @@
   .trend-badge.down { display: inline-flex; color: var(--accent-red); background: rgba(240, 85, 92, 0.14); }
   .trend-badge.flat { display: inline-flex; color: var(--text-secondary); background: var(--glass-pill-bg); }
 
+
+  /* Kartu hero bisa digeser: Pemasukan -> Pengeluaran -> Bersih */
+  .hero-swipe { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .hero-swipe::-webkit-scrollbar { display: none; }
+  .hero-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; }
+  .hero-dots { display: flex; justify-content: center; gap: 6px; margin: -6px 0 12px 0; }
+  .hero-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); opacity: .35; transition: all .2s; }
+  .hero-dots span.active { width: 16px; border-radius: 3px; opacity: 1; background: var(--accent-yellow); }
+  .hero-expense { color: var(--accent-red); }
+  .hero-net.pos { color: var(--accent-green); }
+  .hero-net.neg { color: var(--accent-red); }
+
   .period-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
   .period-tabs::-webkit-scrollbar { display: none; }
   .period-tab {
@@ -746,11 +758,26 @@
 
   <section class="panel">
     <div class="income-card" id="incomeCard">
-      <p class="income-total-label" id="incomeTotalLabel">Total Pemasukan Bulan Ini</p>
-      <p class="income-total-value">
-        <span id="incomeTotalValue">Rp 0</span><span class="trend-badge" id="incomeTrendBadge"></span>
-      </p>
-      <p class="income-total-sub" id="incomeTotalSub">Belum ada data transaksi</p>
+      <div class="hero-swipe" id="heroSwipe">
+        <div class="hero-slide">
+          <p class="income-total-label" id="incomeTotalLabel">Total Pemasukan Bulan Ini</p>
+          <p class="income-total-value">
+            <span id="incomeTotalValue">Rp 0</span><span class="trend-badge" id="incomeTrendBadge"></span>
+          </p>
+          <p class="income-total-sub" id="incomeTotalSub">Belum ada data transaksi</p>
+        </div>
+        <div class="hero-slide">
+          <p class="income-total-label" id="expenseLabel">Total Pengeluaran Bulan Ini</p>
+          <p class="income-total-value hero-expense"><span id="expenseValue">Rp 0</span></p>
+          <p class="income-total-sub" id="expenseSub">Kasbon Rp 0 · Operasional Rp 0</p>
+        </div>
+        <div class="hero-slide">
+          <p class="income-total-label" id="netLabel">Total Bersih Bulan Ini</p>
+          <p class="income-total-value hero-net" id="netWrap"><span id="netValue">Rp 0</span></p>
+          <p class="income-total-sub" id="netSub">Pemasukan dikurangi pengeluaran</p>
+        </div>
+      </div>
+      <div class="hero-dots" id="heroDots" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
 
       <div class="period-tabs">
         <button class="period-tab" data-period="day">Hari Ini</button>
@@ -1845,6 +1872,46 @@
     badgeEl.textContent = `${arrow} ${formatPct(trend.pct)}%`;
   }
 
+
+  // --- Pengeluaran & bersih (slide geser di kartu hero) ---
+  // Kasbon  = uang yang keluar ke karyawan: total kasbon yang dicatat pada periode terpilih (sesuai tanggal catatan).
+  // Operasional = menunggu Buku Operasional selesai dibangun; sementara selalu 0.
+  function getKasbonExpense(period) {
+    const { start, end } = getPeriodRange(period);
+    return debtItems
+      .filter(d => d.type === 'kasbon' && (period === 'all' || (d.when && d.when >= start && d.when <= end)))
+      .reduce((s, d) => s + d.total, 0);
+  }
+  function getOperasionalExpense(period) {
+    return 0; // TODO: isi dari Buku Operasional kalau editornya sudah jadi
+  }
+
+  function renderHeroExtra() {
+    const period = currentIncomePeriod;
+    const income = sumTxs(getPeriodTxs(period));
+    const kasbon = getKasbonExpense(period);
+    const operasional = getOperasionalExpense(period);
+    const expense = kasbon + operasional;
+    const net = income - expense;
+
+    $('expenseLabel').textContent = periodLabelText(period).replace('Pemasukan', 'Pengeluaran');
+    $('expenseValue').textContent = formatRupiah(expense);
+    $('expenseSub').textContent = `Kasbon ${compactRupiah(kasbon)} · Operasional ${compactRupiah(operasional)}`;
+
+    $('netLabel').textContent = periodLabelText(period).replace('Pemasukan', 'Bersih');
+    $('netValue').textContent = (net < 0 ? '- ' : '') + formatRupiah(Math.abs(net));
+    $('netWrap').className = 'income-total-value hero-net ' + (net < 0 ? 'neg' : 'pos');
+    $('netSub').textContent = `Pemasukan ${compactRupiah(income)} − Pengeluaran ${compactRupiah(expense)}`;
+  }
+
+  (function initHeroSwipe() {
+    const sw = $('heroSwipe'), dots = $('heroDots').children;
+    sw.addEventListener('scroll', () => {
+      const i = Math.round(sw.scrollLeft / sw.clientWidth);
+      for (let k = 0; k < dots.length; k++) dots[k].classList.toggle('active', k === i);
+    }, { passive: true });
+  })();
+
   function renderIncomeCard() {
     const { points, total, unit, txCount } = computeIncomeSeries(currentIncomePeriod);
     const trend = computeTrend(currentIncomePeriod, total);
@@ -1887,6 +1954,7 @@
       const bestLabel = unit === 'bulan' ? 'Bulan terbaik' : (unit === 'transaksi' ? 'Transaksi terbesar' : 'Hari terbaik');
       $('incomeBest').textContent = `🏆 ${bestLabel}: ${best.label} · ${compactRupiah(best.value)}`;
     }
+    renderHeroExtra();
     renderMethodCards();
   }
 
