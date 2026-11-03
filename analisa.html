@@ -349,6 +349,14 @@
   .hero-net.neg { color: var(--accent-red); }
 
 
+  #incomeChartWrap, #incomeChartWrap svg { height: 190px; }
+  .chart-tip b { font-weight: 800; }
+  .chart-tip { white-space: nowrap; line-height: 1.5; }
+  .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 2px 0 12px; }
+  .kpi { background: var(--glass-pill-bg); border-radius: 14px; padding: 8px 10px; min-width: 0; }
+  .kpi span { display: block; font-size: 10.5px; color: var(--text-secondary); }
+  .kpi b { display: block; font-size: 14px; font-weight: 800; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .kpi em { display: block; font-size: 10px; font-style: normal; color: var(--text-muted); margin-top: 1px; }
   .hero-nav { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
   .hero-nav::-webkit-scrollbar { display: none; }
   .hero-nav button { flex: 1; font: inherit; font-size: 11.5px; font-weight: 700; padding: 6px 4px; border-radius: 999px; border: 0; white-space: nowrap; cursor: pointer; background: var(--glass-pill-bg); color: var(--text-secondary); }
@@ -795,6 +803,11 @@
             <span id="incomeTotalValue">Rp 0</span><span class="trend-badge" id="incomeTrendBadge"></span>
           </p>
           <p class="income-total-sub" id="incomeTotalSub">Belum ada data transaksi</p>
+          <div class="kpi-row">
+            <div class="kpi"><span>Masuk</span><b id="kpiIn">-</b></div>
+            <div class="kpi"><span>Keluar</span><b id="kpiOut">-</b></div>
+            <div class="kpi"><span>Bersih</span><b id="kpiNet">-</b><em id="kpiMargin"></em></div>
+          </div>
           <div class="hero-legend" id="heroLegend"></div>
       <div class="income-chart-wrap" id="incomeChartWrap">
         <svg id="incomeChartSvg" viewBox="0 0 320 150"></svg>
@@ -1875,7 +1888,7 @@
 
   // --- Kartu hero geser: Pemasukan (gabungan) | Kasbon | Operasional | Bersih ---
   // Kasbon = total kasbon yang dicatat pada periode (sesuai tanggal catatan). Operasional menunggu Buku Operasional.
-  const HERO_SL = [{ id: 'inc', name: 'Pemasukan' }, { id: 'kas', name: 'Kasbon' }, { id: 'ops', name: 'Operasional' }, { id: 'net', name: 'Bersih' }];
+  const HERO_SL = [{ id: 'inc', name: 'Ringkasan' }, { id: 'kas', name: 'Kasbon' }, { id: 'ops', name: 'Operasional' }, { id: 'net', name: 'Bersih' }];
   const HC = { inc: '#3DD68C', kas: '#F0A529', ops: '#B07CFF' };
   const heroSt = {};
   const fmtS = v => (v < 0 ? '- ' : '') + formatRupiah(Math.abs(v));
@@ -1893,6 +1906,16 @@
     return { inc, kas, ops: getOperasionalEvents(period) };
   }
 
+  // Candlestick = saldo berjalan (masuk - keluar): buka/tutup/tinggi/rendah per hari (atau per transaksi di 'Hari Ini')
+  function candles(groups) {
+    let run = 0;
+    return groups.map(g => {
+      const o = run; let h = run, l = run, i = 0, x = 0;
+      g.evs.sort((a, b) => a.t - b.t).forEach(e => { run += e.s * e.v; h = Math.max(h, run); l = Math.min(l, run); if (e.s > 0) i += e.v; else x += e.v; });
+      return { label: g.label, o, c: run, h, l, i, x };
+    });
+  }
+
   function buildHero(period) {
     const ev = heroEvents(period), all = [...ev.inc, ...ev.kas, ...ev.ops];
     const tot = { inc: ev.inc.reduce((s, e) => s + e.v, 0), kas: ev.kas.reduce((s, e) => s + e.v, 0), ops: ev.ops.reduce((s, e) => s + e.v, 0) };
@@ -1908,6 +1931,8 @@
         .sort((a, b) => a.t - b.t).map(e => { run += e.s * e.v; return { f: f(e.t), v: run, label: e.label }; });
       out.ser = { inc: mk(ev.inc), kas: mk(ev.kas), ops: mk(ev.ops), net };
       out.ax = [formatTime(new Date(lo)), hi > lo ? formatTime(new Date(hi)) : ''];
+      out.cd = candles([...ev.inc.map(e => ({ ...e, s: 1 })), ...ev.kas.map(e => ({ ...e, s: -1 })), ...ev.ops.map(e => ({ ...e, s: -1 }))]
+        .sort((a, b) => a.t - b.t).map(e => ({ label: e.label, evs: [e] })));
       return out;
     }
 
@@ -1935,6 +1960,9 @@
     const mk = a => a.map((v, i) => ({ f: bk.length > 1 ? i / (bk.length - 1) : 0.5, v, label: bk[i].label }));
     out.ser = { inc: mk(s.inc), kas: mk(s.kas), ops: mk(s.ops), net: mk(s.inc.map((v, i) => v - s.kas[i] - s.ops[i])) };
     out.shared = true;
+    const cg = bk.map(b => ({ label: b.label, evs: [] }));
+    ['inc', 'kas', 'ops'].forEach(k => ev[k].forEach(e => { const i = idx.get(keyOf(e.t)); if (i !== undefined) cg[i].evs.push({ t: e.t, v: e.v, s: k === 'inc' ? 1 : -1 }); }));
+    out.cd = candles(cg);
     out.ax = [bk[0].short, bk.length > 1 ? bk[bk.length - 1].short : ''];
     return out;
   }
@@ -1982,9 +2010,53 @@
     svg.innerHTML = `<defs>${defs}</defs>${body}${peak}<line id="hcl${id}" x1="0" y1="0" x2="0" y2="${h - pb}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>`;
   }
 
+  const fmtC = v => (v < 0 ? '-' : '') + compactRupiah(Math.abs(v));
+  function drawCandles(B) {
+    const H = hid('inc'), svg = $(H.svg), w = $(H.wrap).clientWidth || 320, h = 190, px = 6, top = 14, bot = 138, vb = 186, VH = 36;
+    const cs = B.cd || [], empty = $(H.empty);
+    const base = document.body.classList.contains('theme-light') ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.10)';
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`); $(H.tip).style.display = 'none';
+    $(H.axS).textContent = B.ax[0] || ''; $(H.axE).textContent = B.ax[1] || '';
+    heroSt.inc = { cs, w, px, candle: true, step: 1 };
+    if (!cs.length) { svg.innerHTML = `<line x1="0" y1="${bot}" x2="${w}" y2="${bot}" stroke="${base}" stroke-width="1.5"/>`; empty.style.display = 'flex'; return; }
+    empty.style.display = 'none';
+    const lo = Math.min(0, ...cs.map(c => c.l)); let hi = Math.max(0, ...cs.map(c => c.h)); if (hi === lo) hi = lo + 1;
+    const Y = v => bot - ((v - lo) / (hi - lo)) * (bot - top), n = cs.length, step = (w - px * 2) / n;
+    const cw = Math.max(2, Math.min(16, step * 0.62)), X = i => px + step * (i + 0.5);
+    const vmax = Math.max(1, ...cs.map(c => c.i + c.x)), V = v => (v / vmax) * VH;
+    heroSt.inc.step = step;
+    let g = '';
+    for (let k = 0; k <= 3; k++) {
+      const v = lo + (hi - lo) * k / 3, y = Y(v).toFixed(1);
+      g += `<line x1="0" x2="${w}" y1="${y}" y2="${y}" stroke="${base}" ${k ? 'stroke-dasharray="2 4"' : ''}/><text x="${w - 2}" y="${y - 3}" text-anchor="end" style="fill:var(--text-muted);font-size:9px">${fmtC(v)}</text>`;
+    }
+    g += `<rect id="hclinc" x="0" y="0" width="${step.toFixed(1)}" height="${vb}" rx="4" style="fill:var(--text-secondary)" opacity="0"/>`;
+    cs.forEach((c, i) => {
+      const x = X(i), col = c.c > c.o ? '#3DD68C' : (c.c < c.o ? '#F0555C' : '#8A8F98');
+      g += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y(c.h).toFixed(1)}" y2="${Y(c.l).toFixed(1)}" stroke="${col}" stroke-width="1.4"/>`
+        + `<rect x="${(x - cw / 2).toFixed(1)}" y="${Y(Math.max(c.o, c.c)).toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1.5, Math.abs(Y(c.o) - Y(c.c))).toFixed(1)}" rx="1.5" fill="${col}"/>`
+        + `<rect x="${(x - cw / 2).toFixed(1)}" y="${(vb - V(c.i)).toFixed(1)}" width="${cw.toFixed(1)}" height="${V(c.i).toFixed(1)}" fill="#3DD68C" opacity=".55"/>`
+        + `<rect x="${(x - cw / 2).toFixed(1)}" y="${(vb - V(c.i) - V(c.x)).toFixed(1)}" width="${cw.toFixed(1)}" height="${V(c.x).toFixed(1)}" fill="#F0555C" opacity=".55"/>`;
+    });
+    const fin = cs[n - 1].c, fy = Y(fin), ft = 'Saldo ' + fmtC(fin), bw = ft.length * 5.8 + 12, fc = fin < 0 ? '#F0555C' : '#3DD68C';
+    g += `<line x1="0" x2="${w}" y1="${fy.toFixed(1)}" y2="${fy.toFixed(1)}" stroke="${fc}" stroke-width="1" stroke-dasharray="4 3" opacity=".8"/>`
+      + `<rect x="${(w - bw - 2).toFixed(1)}" y="${(fy - 8.5).toFixed(1)}" width="${bw.toFixed(1)}" height="17" rx="8.5" fill="${fc}"/><text x="${(w - bw / 2 - 2).toFixed(1)}" y="${(fy + 3.6).toFixed(1)}" text-anchor="middle" style="fill:#0B0F14;font-size:10px;font-weight:800">${ft}</text>`;
+    svg.innerHTML = g;
+  }
+
   function heroPointer(e, id) {
     const st = heroSt[id]; if (!st) return;
     const H = hid(id), rect = $(H.wrap).getBoundingClientRect(), x = e.clientX - rect.left, X = f => st.px + f * (st.w - st.px * 2);
+    if (st.candle) {
+      if (!st.cs.length) return;
+      clearTimeout(chartTipTimer);
+      const i = Math.max(0, Math.min(st.cs.length - 1, Math.floor((x - st.px) / st.step))), c = st.cs[i], r = $('hclinc'), tip = $(H.tip);
+      r.setAttribute('x', st.px + st.step * i); r.setAttribute('opacity', '.14');
+      tip.innerHTML = `<b>${c.label}</b><br>Buka ${fmtS(c.o)} · Tutup ${fmtS(c.c)}<br>Tinggi ${fmtS(c.h)} · Rendah ${fmtS(c.l)}<br><span style="color:#3DD68C">Masuk ${formatRupiah(c.i)}</span> · <span style="color:#F0555C">Keluar ${formatRupiah(c.x)}</span>`;
+      tip.style.display = 'block';
+      tip.style.left = Math.max(0, Math.min(st.w - tip.offsetWidth, st.px + st.step * (i + .5) - tip.offsetWidth / 2)) + 'px';
+      return;
+    }
     let best = 1e9, L = null, P = null;
     st.lines.forEach(l => l.pts.forEach(p => { const d = Math.abs(X(p.f) - x); if (d < best) { best = d; L = l; P = p; } }));
     if (!P) return;
@@ -2006,19 +2078,19 @@
     const period = currentIncomePeriod, B = buildHero(period), t = B.tot, ser = B.ser, c = compactRupiah;
     const net = t.inc - t.kas - t.ops, pl = periodLabelText(period), ws = new Set(B.ev.kas.map(e => normalizeKey(e.nama) || e.nama.toLowerCase()));
     const set = (id, label, val, sub) => { $(id + 'Label').textContent = pl.replace('Pemasukan', label); $(id + 'Value').textContent = val; $(id + 'Sub').textContent = sub; };
-    set('kas', 'Kasbon', formatRupiah(t.kas), B.ev.kas.length ? `${B.ev.kas.length} catatan · ${ws.size} orang` : 'Belum ada kasbon pada periode ini');
+    set('kas', 'Kasbon', formatRupiah(t.kas), B.ev.kas.length ? `${B.ev.kas.length} catatan · ${ws.size} orang · belum lunas ${c(debtItems.filter(d => d.type === 'kasbon' && d.sisa > 0).reduce((q, d) => q + d.sisa, 0))}` : 'Belum ada kasbon pada periode ini');
     set('ops', 'Operasional', formatRupiah(t.ops), B.ev.ops.length ? `${B.ev.ops.length} catatan` : 'Buku Operasional belum terhubung');
     set('net', 'Bersih', fmtS(net), `Pemasukan ${c(t.inc)} − Kasbon ${c(t.kas)} − Operasional ${c(t.ops)}`);
     $('netValWrap').className = 'income-total-value ' + (net < 0 ? 'hero-neg' : 'hero-pos');
     $('kasValWrap').className = 'income-total-value hero-kas'; $('opsValWrap').className = 'income-total-value hero-ops';
 
     const Lg = (name, color, pts) => ({ name, color, pts });
-    const incLines = [Lg('Pemasukan', HC.inc, ser.inc)];
-    if (t.kas > 0) incLines.push(Lg('Kasbon', HC.kas, ser.kas));
-    if (t.ops > 0) incLines.push(Lg('Operasional', HC.ops, ser.ops));
-    $('heroLegend').innerHTML = [['Pemasukan', HC.inc, 1], ['Kasbon', HC.kas, t.kas > 0], ['Operasional', HC.ops, t.ops > 0]]
-      .map(([n, col, on]) => `<span style="${on ? '' : 'opacity:.4'}"><i style="background:${col}"></i>${n}</span>`).join('');
-    drawHero('inc', incLines, B.ax, B.shared);
+    const exp = t.kas + t.ops, margin = t.inc > 0 ? (net / t.inc) * 100 : null;
+    $('kpiIn').textContent = c(t.inc); $('kpiOut').textContent = c(exp); $('kpiNet').textContent = fmtC(net);
+    $('kpiNet').className = net < 0 ? 'hero-neg' : 'hero-pos';
+    $('kpiMargin').textContent = margin === null ? '' : `margin ${margin.toFixed(1).replace('.', ',')}%`;
+    $('heroLegend').innerHTML = '<span><i style="background:#3DD68C"></i>Saldo naik</span><span><i style="background:#F0555C"></i>Saldo turun</span><span>▮ Batang bawah: masuk / keluar</span>';
+    drawCandles(B);
     drawHero('kas', [Lg('Kasbon', HC.kas, ser.kas)], B.ax, B.shared, 'Belum ada kasbon pada periode ini');
     drawHero('ops', [Lg('Operasional', HC.ops, ser.ops)], B.ax, B.shared, 'Belum ada data operasional');
     drawHero('net', [Lg('Bersih', net < 0 ? '#F0555C' : '#3DD68C', ser.net)], B.ax, B.shared, 'Belum ada data untuk periode ini');
