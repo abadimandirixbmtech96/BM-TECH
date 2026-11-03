@@ -348,6 +348,15 @@
   .hero-net.pos { color: var(--accent-green); }
   .hero-net.neg { color: var(--accent-red); }
 
+
+  .hero-nav { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+  .hero-nav::-webkit-scrollbar { display: none; }
+  .hero-nav button { flex: 1; font: inherit; font-size: 11.5px; font-weight: 700; padding: 6px 4px; border-radius: 999px; border: 0; white-space: nowrap; cursor: pointer; background: var(--glass-pill-bg); color: var(--text-secondary); }
+  .hero-nav button.active { background: var(--accent-yellow); color: var(--on-accent); }
+  .hero-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-bottom: 8px; font-size: 11px; color: var(--text-secondary); }
+  .hero-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  .hero-kas { color: #F0A529; } .hero-ops { color: #B07CFF; }
+  .hero-pos { color: var(--accent-green); } .hero-neg { color: var(--accent-red); }
   .period-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 14px; scrollbar-width: none; }
   .period-tabs::-webkit-scrollbar { display: none; }
   .period-tab {
@@ -758,27 +767,7 @@
 
   <section class="panel">
     <div class="income-card" id="incomeCard">
-      <div class="hero-swipe" id="heroSwipe">
-        <div class="hero-slide">
-          <p class="income-total-label" id="incomeTotalLabel">Total Pemasukan Bulan Ini</p>
-          <p class="income-total-value">
-            <span id="incomeTotalValue">Rp 0</span><span class="trend-badge" id="incomeTrendBadge"></span>
-          </p>
-          <p class="income-total-sub" id="incomeTotalSub">Belum ada data transaksi</p>
-        </div>
-        <div class="hero-slide">
-          <p class="income-total-label" id="expenseLabel">Total Pengeluaran Bulan Ini</p>
-          <p class="income-total-value hero-expense"><span id="expenseValue">Rp 0</span></p>
-          <p class="income-total-sub" id="expenseSub">Kasbon Rp 0 · Operasional Rp 0</p>
-        </div>
-        <div class="hero-slide">
-          <p class="income-total-label" id="netLabel">Total Bersih Bulan Ini</p>
-          <p class="income-total-value hero-net" id="netWrap"><span id="netValue">Rp 0</span></p>
-          <p class="income-total-sub" id="netSub">Pemasukan dikurangi pengeluaran</p>
-        </div>
-      </div>
-      <div class="hero-dots" id="heroDots" aria-hidden="true"><span class="active"></span><span></span><span></span></div>
-
+      <div class="hero-nav" id="heroNav"></div>
       <div class="period-tabs">
         <button class="period-tab" data-period="day">Hari Ini</button>
         <button class="period-tab" data-period="week">Pekan Ini</button>
@@ -799,6 +788,14 @@
         <button class="apply-range-btn" id="btnApplyCustomRange">Terapkan</button>
       </div>
 
+      <div class="hero-swipe" id="heroSwipe">
+        <div class="hero-slide">
+          <p class="income-total-label" id="incomeTotalLabel">Total Pemasukan Bulan Ini</p>
+          <p class="income-total-value">
+            <span id="incomeTotalValue">Rp 0</span><span class="trend-badge" id="incomeTrendBadge"></span>
+          </p>
+          <p class="income-total-sub" id="incomeTotalSub">Belum ada data transaksi</p>
+          <div class="hero-legend" id="heroLegend"></div>
       <div class="income-chart-wrap" id="incomeChartWrap">
         <svg id="incomeChartSvg" viewBox="0 0 320 150"></svg>
         <div class="income-chart-empty" id="incomeChartEmpty">Belum ada data untuk periode ini</div>
@@ -822,6 +819,9 @@
       </div>
       <p class="income-unit-note" id="incomeUnitNote"></p>
       <p class="income-best" id="incomeBest"></p>
+        </div>
+      </div>
+
 
       <div class="export-row">
         <button class="export-btn share-btn" id="btnShare">
@@ -1873,43 +1873,189 @@
   }
 
 
-  // --- Pengeluaran & bersih (slide geser di kartu hero) ---
-  // Kasbon  = uang yang keluar ke karyawan: total kasbon yang dicatat pada periode terpilih (sesuai tanggal catatan).
-  // Operasional = menunggu Buku Operasional selesai dibangun; sementara selalu 0.
-  function getKasbonExpense(period) {
-    const { start, end } = getPeriodRange(period);
-    return debtItems
-      .filter(d => d.type === 'kasbon' && (period === 'all' || (d.when && d.when >= start && d.when <= end)))
-      .reduce((s, d) => s + d.total, 0);
+  // --- Kartu hero geser: Pemasukan (gabungan) | Kasbon | Operasional | Bersih ---
+  // Kasbon = total kasbon yang dicatat pada periode (sesuai tanggal catatan). Operasional menunggu Buku Operasional.
+  const HERO_SL = [{ id: 'inc', name: 'Pemasukan' }, { id: 'kas', name: 'Kasbon' }, { id: 'ops', name: 'Operasional' }, { id: 'net', name: 'Bersih' }];
+  const HC = { inc: '#3DD68C', kas: '#F0A529', ops: '#B07CFF' };
+  const heroSt = {};
+  const fmtS = v => (v < 0 ? '- ' : '') + formatRupiah(Math.abs(v));
+  const hid = id => id === 'inc'
+    ? { wrap: 'incomeChartWrap', svg: 'incomeChartSvg', empty: 'incomeChartEmpty', tip: 'chartTip', axS: 'chartAxisStart', axE: 'chartAxisEnd' }
+    : { wrap: id + 'ChartWrap', svg: id + 'ChartSvg', empty: id + 'ChartEmpty', tip: id + 'ChartTip', axS: id + 'AxS', axE: id + 'AxE' };
+
+  function getOperasionalEvents(period) { return []; } // TODO: isi dari Buku Operasional kalau editornya sudah jadi
+
+  function heroEvents(period) {
+    const { start, end } = getPeriodRange(period), all = period === 'all';
+    const inc = getPeriodTxs(period).map(t => ({ t: t.ts || t.date.getTime(), v: t.amount, label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t) }));
+    const kas = debtItems.filter(d => d.type === 'kasbon' && d.when && (all || (d.when >= start && d.when <= end)))
+      .map(d => ({ t: d.when.getTime(), v: d.total, label: formatTime(d.when) + ' · ' + d.nama, nama: d.nama }));
+    return { inc, kas, ops: getOperasionalEvents(period) };
   }
-  function getOperasionalExpense(period) {
-    return 0; // TODO: isi dari Buku Operasional kalau editornya sudah jadi
+
+  function buildHero(period) {
+    const ev = heroEvents(period), all = [...ev.inc, ...ev.kas, ...ev.ops];
+    const tot = { inc: ev.inc.reduce((s, e) => s + e.v, 0), kas: ev.kas.reduce((s, e) => s + e.v, 0), ops: ev.ops.reduce((s, e) => s + e.v, 0) };
+    const out = { ev, tot, ax: ['', ''], shared: false, ser: { inc: [], kas: [], ops: [], net: [] } };
+    if (!all.length) return out;
+    const ts = all.map(e => e.t);
+
+    if (period === 'day') {
+      const lo = Math.min(...ts), hi = Math.max(...ts), f = t => hi > lo ? (t - lo) / (hi - lo) : 0.5;
+      const mk = a => [...a].sort((x, y) => x.t - y.t).map(e => ({ f: f(e.t), v: e.v, label: e.label }));
+      let run = 0;
+      const net = [...ev.inc.map(e => ({ ...e, s: 1 })), ...ev.kas.map(e => ({ ...e, s: -1 })), ...ev.ops.map(e => ({ ...e, s: -1 }))]
+        .sort((a, b) => a.t - b.t).map(e => { run += e.s * e.v; return { f: f(e.t), v: run, label: e.label }; });
+      out.ser = { inc: mk(ev.inc), kas: mk(ev.kas), ops: mk(ev.ops), net };
+      out.ax = [formatTime(new Date(lo)), hi > lo ? formatTime(new Date(hi)) : ''];
+      return out;
+    }
+
+    const { start, end } = getPeriodRange(period), now = new Date();
+    const first = startOfDay(period === 'all' ? new Date(Math.min(...ts)) : start);
+    const last = startOfDay(new Date(Math.max((end > now ? now : end).getTime(), ...ts)));
+    const n = Math.round((last - first) / 864e5) + 1, byDay = n <= 92, bk = [];
+    if (byDay) {
+      for (let i = 0; i < n; i++) {
+        const d = addDays(first, i);
+        bk.push({ k: toLocalDateStr(d), label: d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }), short: d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) });
+      }
+    } else {
+      let y = first.getFullYear(), m = first.getMonth();
+      while (y < last.getFullYear() || (y === last.getFullYear() && m <= last.getMonth())) {
+        const d = new Date(y, m, 1);
+        bk.push({ k: toLocalMonthStr(d), label: d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }), short: d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit' }) });
+        if (++m > 11) { m = 0; y++; }
+      }
+    }
+    const idx = new Map(bk.map((b, i) => [b.k, i]));
+    const keyOf = t => { const d = new Date(t); return byDay ? toLocalDateStr(d) : toLocalMonthStr(d); };
+    const s = { inc: bk.map(() => 0), kas: bk.map(() => 0), ops: bk.map(() => 0) };
+    ['inc', 'kas', 'ops'].forEach(k => ev[k].forEach(e => { const i = idx.get(keyOf(e.t)); if (i !== undefined) s[k][i] += e.v; }));
+    const mk = a => a.map((v, i) => ({ f: bk.length > 1 ? i / (bk.length - 1) : 0.5, v, label: bk[i].label }));
+    out.ser = { inc: mk(s.inc), kas: mk(s.kas), ops: mk(s.ops), net: mk(s.inc.map((v, i) => v - s.kas[i] - s.ops[i])) };
+    out.shared = true;
+    out.ax = [bk[0].short, bk.length > 1 ? bk[bk.length - 1].short : ''];
+    return out;
+  }
+
+  // Grafik multi-garis. lines: [{name,color,pts:[{f,v,label}]}], garis pertama = utama (area + label puncak)
+  function drawHero(id, lines, ax, shared, emptyTxt) {
+    const H = hid(id), svg = $(H.svg), wrap = $(H.wrap), w = wrap.clientWidth || 320, h = 150, px = 6, pt = 30, pb = 8;
+    const base = document.body.classList.contains('theme-light') ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.10)';
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    $(H.tip).style.display = 'none';
+    $(H.axS).textContent = ax[0] || ''; $(H.axE).textContent = ax[1] || '';
+    heroSt[id] = { lines, w, px, shared };
+    const vals = lines.flatMap(l => l.pts.map(p => p.v));
+    const empty = $(H.empty);
+    if (emptyTxt) empty.textContent = emptyTxt;
+    if (!vals.length) {
+      svg.innerHTML = `<line x1="0" y1="${h - pb}" x2="${w}" y2="${h - pb}" stroke="${base}" stroke-width="1.5"/>`;
+      empty.style.display = 'flex'; return;
+    }
+    empty.style.display = 'none';
+    const lo = Math.min(0, ...vals); let hi = Math.max(0, ...vals); if (hi === lo) hi = lo + 1;
+    const X = f => px + f * (w - px * 2), Y = v => h - pb - ((v - lo) / (hi - lo)) * (h - pt - pb), y0 = Y(0);
+    let body = `<line x1="0" y1="${y0.toFixed(1)}" x2="${w}" y2="${y0.toFixed(1)}" stroke="${base}" stroke-width="1" ${lo < 0 ? 'stroke-dasharray="4 4"' : ''}/>`;
+    let defs = '', peak = '';
+    lines.forEach((l, li) => {
+      if (!l.pts.length) return;
+      const C = l.color, xs = l.pts.map(p => X(p.f)), ys = l.pts.map(p => Y(p.v));
+      const d = xs.map((x, i) => (i ? 'L' : 'M') + x.toFixed(1) + ',' + ys[i].toFixed(1)).join(' ');
+      if (li === 0 && lo === 0) {
+        defs += `<linearGradient id="hg${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${C}" stop-opacity="0.32"/><stop offset="100%" stop-color="${C}" stop-opacity="0"/></linearGradient>`;
+        body += `<path d="${d} L${xs[xs.length - 1].toFixed(1)},${y0.toFixed(1)} L${xs[0].toFixed(1)},${y0.toFixed(1)} Z" fill="url(#hg${id})"/>`;
+      }
+      body += `<path d="${d}" fill="none" stroke="${C}" stroke-width="${li ? 1.8 : 2.2}" stroke-linecap="round" stroke-linejoin="round"/>`;
+      if (l.pts.length <= 45) l.pts.forEach((p, i) => { if (p.v !== 0) body += `<circle cx="${xs[i].toFixed(1)}" cy="${ys[i].toFixed(1)}" r="${li ? 2.4 : 3}" fill="var(--card-surface-dark)" stroke="${C}" stroke-width="2"/>`; });
+      body += `<circle cx="${xs[xs.length - 1].toFixed(1)}" cy="${ys[ys.length - 1].toFixed(1)}" r="${li ? 3 : 4}" fill="${C}"/>`;
+      if (!peak) {
+        const mx = Math.max(...l.pts.map(p => p.v)), pi = l.pts.findIndex(p => p.v === mx);
+        if (mx !== 0) {
+          const txt = compactRupiah(Math.abs(mx)), bw = txt.length * 6.1 + 14, bh = 17;
+          const bx = Math.max(2, Math.min(w - bw - 2, xs[pi] - bw / 2)), by = Math.max(2, ys[pi] - bh - 9), ax2 = Math.max(bx + 8, Math.min(bx + bw - 8, xs[pi]));
+          peak = `<circle cx="${xs[pi].toFixed(1)}" cy="${ys[pi].toFixed(1)}" r="4.6" fill="${C}"/><rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="8.5" style="fill:var(--accent-yellow)"/><polygon points="${(ax2 - 4).toFixed(1)},${(by + bh).toFixed(1)} ${(ax2 + 4).toFixed(1)},${(by + bh).toFixed(1)} ${ax2.toFixed(1)},${(by + bh + 4.5).toFixed(1)}" style="fill:var(--accent-yellow)"/><text x="${(bx + bw / 2).toFixed(1)}" y="${(by + 12).toFixed(1)}" text-anchor="middle" style="fill:var(--on-accent);font-size:10px;font-weight:700;">${(mx < 0 ? '-' : '') + txt}</text>`;
+        }
+      }
+    });
+    svg.innerHTML = `<defs>${defs}</defs>${body}${peak}<line id="hcl${id}" x1="0" y1="0" x2="0" y2="${h - pb}" stroke="var(--text-secondary)" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>`;
+  }
+
+  function heroPointer(e, id) {
+    const st = heroSt[id]; if (!st) return;
+    const H = hid(id), rect = $(H.wrap).getBoundingClientRect(), x = e.clientX - rect.left, X = f => st.px + f * (st.w - st.px * 2);
+    let best = 1e9, L = null, P = null;
+    st.lines.forEach(l => l.pts.forEach(p => { const d = Math.abs(X(p.f) - x); if (d < best) { best = d; L = l; P = p; } }));
+    if (!P) return;
+    clearTimeout(chartTipTimer);
+    const multi = st.lines.length > 1;
+    const txt = st.shared
+      ? P.label + ' · ' + st.lines.map(l => { const q = l.pts.find(z => z.f === P.f); return (multi ? l.name + ' ' : '') + fmtS(q ? q.v : 0); }).join(' · ')
+      : (multi ? L.name + ' · ' : '') + P.label + ' · ' + fmtS(P.v);
+    const ln = $('hcl' + id); ln.setAttribute('x1', X(P.f)); ln.setAttribute('x2', X(P.f)); ln.setAttribute('opacity', '0.7');
+    const tip = $(H.tip); tip.textContent = txt; tip.style.display = 'block';
+    tip.style.left = Math.max(0, Math.min(st.w - tip.offsetWidth, X(P.f) - tip.offsetWidth / 2)) + 'px';
+  }
+  function heroHide(id) {
+    const tip = $(hid(id).tip); if (tip) tip.style.display = 'none';
+    const ln = $('hcl' + id); if (ln) ln.setAttribute('opacity', '0');
   }
 
   function renderHeroExtra() {
-    const period = currentIncomePeriod;
-    const income = sumTxs(getPeriodTxs(period));
-    const kasbon = getKasbonExpense(period);
-    const operasional = getOperasionalExpense(period);
-    const expense = kasbon + operasional;
-    const net = income - expense;
+    const period = currentIncomePeriod, B = buildHero(period), t = B.tot, ser = B.ser, c = compactRupiah;
+    const net = t.inc - t.kas - t.ops, pl = periodLabelText(period), ws = new Set(B.ev.kas.map(e => normalizeKey(e.nama) || e.nama.toLowerCase()));
+    const set = (id, label, val, sub) => { $(id + 'Label').textContent = pl.replace('Pemasukan', label); $(id + 'Value').textContent = val; $(id + 'Sub').textContent = sub; };
+    set('kas', 'Kasbon', formatRupiah(t.kas), B.ev.kas.length ? `${B.ev.kas.length} catatan · ${ws.size} orang` : 'Belum ada kasbon pada periode ini');
+    set('ops', 'Operasional', formatRupiah(t.ops), B.ev.ops.length ? `${B.ev.ops.length} catatan` : 'Buku Operasional belum terhubung');
+    set('net', 'Bersih', fmtS(net), `Pemasukan ${c(t.inc)} − Kasbon ${c(t.kas)} − Operasional ${c(t.ops)}`);
+    $('netValWrap').className = 'income-total-value ' + (net < 0 ? 'hero-neg' : 'hero-pos');
+    $('kasValWrap').className = 'income-total-value hero-kas'; $('opsValWrap').className = 'income-total-value hero-ops';
 
-    $('expenseLabel').textContent = periodLabelText(period).replace('Pemasukan', 'Pengeluaran');
-    $('expenseValue').textContent = formatRupiah(expense);
-    $('expenseSub').textContent = `Kasbon ${compactRupiah(kasbon)} · Operasional ${compactRupiah(operasional)}`;
+    const Lg = (name, color, pts) => ({ name, color, pts });
+    const incLines = [Lg('Pemasukan', HC.inc, ser.inc)];
+    if (t.kas > 0) incLines.push(Lg('Kasbon', HC.kas, ser.kas));
+    if (t.ops > 0) incLines.push(Lg('Operasional', HC.ops, ser.ops));
+    $('heroLegend').innerHTML = [['Pemasukan', HC.inc, 1], ['Kasbon', HC.kas, t.kas > 0], ['Operasional', HC.ops, t.ops > 0]]
+      .map(([n, col, on]) => `<span style="${on ? '' : 'opacity:.4'}"><i style="background:${col}"></i>${n}</span>`).join('');
+    drawHero('inc', incLines, B.ax, B.shared);
+    drawHero('kas', [Lg('Kasbon', HC.kas, ser.kas)], B.ax, B.shared, 'Belum ada kasbon pada periode ini');
+    drawHero('ops', [Lg('Operasional', HC.ops, ser.ops)], B.ax, B.shared, 'Belum ada data operasional');
+    drawHero('net', [Lg('Bersih', net < 0 ? '#F0555C' : '#3DD68C', ser.net)], B.ax, B.shared, 'Belum ada data untuk periode ini');
 
-    $('netLabel').textContent = periodLabelText(period).replace('Pemasukan', 'Bersih');
-    $('netValue').textContent = (net < 0 ? '- ' : '') + formatRupiah(Math.abs(net));
-    $('netWrap').className = 'income-total-value hero-net ' + (net < 0 ? 'neg' : 'pos');
-    $('netSub').textContent = `Pemasukan ${compactRupiah(income)} − Pengeluaran ${compactRupiah(expense)}`;
+    ['kas', 'ops', 'net'].forEach(id => {
+      const v = ser[id].map(p => p.v).filter(x => id === 'net' || x > 0), ok = v.length > 0;
+      $(id + 'Hi').textContent = ok ? c(Math.max(...v)) : '-';
+      $(id + 'Avg').textContent = ok ? c(v.reduce((a, b) => a + b, 0) / v.length) : '-';
+      $(id + 'Lo').textContent = ok ? c(Math.min(...v)) : '-';
+      $(id + 'Unit').textContent = ok ? (period === 'day' ? 'Nilai per catatan' : 'Nilai per periode aktif') : '';
+    });
   }
 
-  (function initHeroSwipe() {
-    const sw = $('heroSwipe'), dots = $('heroDots').children;
+  (function initHero() {
+    const sw = $('heroSwipe'), nav = $('heroNav');
+    HERO_SL.slice(1).forEach(s => {
+      const id = s.id, el = document.createElement('div');
+      el.className = 'hero-slide';
+      el.innerHTML = `<p class="income-total-label" id="${id}Label"></p><p class="income-total-value" id="${id}ValWrap"><span id="${id}Value">Rp 0</span></p><p class="income-total-sub" id="${id}Sub"></p>
+        <div class="income-chart-wrap" id="${id}ChartWrap"><svg id="${id}ChartSvg" viewBox="0 0 320 150"></svg><div class="income-chart-empty" id="${id}ChartEmpty"></div><div class="chart-tip" id="${id}ChartTip"></div></div>
+        <div class="chart-axis"><span id="${id}AxS"></span><span id="${id}AxE"></span></div>
+        <div class="income-mini-stats">${[['Hi', 'Tertinggi'], ['Avg', 'Rata-rata'], ['Lo', 'Terendah']].map(([k, l]) => `<div class="income-mini-stat"><p class="income-mini-stat-value" id="${id}${k}">-</p><p class="income-mini-stat-label">${l}</p></div>`).join('')}</div>
+        <p class="income-unit-note" id="${id}Unit"></p>`;
+      sw.appendChild(el);
+    });
+    nav.innerHTML = HERO_SL.map((s, i) => `<button type="button" data-i="${i}" class="${i ? '' : 'active'}">${s.name}</button>`).join('');
+    nav.addEventListener('click', e => { const b = e.target.closest('button'); if (b) sw.scrollTo({ left: b.dataset.i * sw.clientWidth, behavior: 'smooth' }); });
     sw.addEventListener('scroll', () => {
       const i = Math.round(sw.scrollLeft / sw.clientWidth);
-      for (let k = 0; k < dots.length; k++) dots[k].classList.toggle('active', k === i);
+      [...nav.children].forEach((b, k) => b.classList.toggle('active', k === i));
     }, { passive: true });
+    HERO_SL.forEach(s => {
+      const wrap = $(hid(s.id).wrap), id = s.id, mv = e => heroPointer(e, id);
+      wrap.addEventListener('pointerdown', mv); wrap.addEventListener('pointermove', mv);
+      wrap.addEventListener('pointerleave', () => heroHide(id)); wrap.addEventListener('pointercancel', () => heroHide(id));
+      wrap.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { clearTimeout(chartTipTimer); chartTipTimer = setTimeout(() => heroHide(id), 2200); } });
+    });
   })();
 
   function renderIncomeCard() {
@@ -1931,10 +2077,7 @@
     $('incomeTotalSub').textContent = sub;
 
     renderTrendBadge(trend);
-    renderIncomeChartSVG(points);
 
-    $('chartAxisStart').textContent = points.length ? points[0].short : '';
-    $('chartAxisEnd').textContent = points.length > 1 ? points[points.length - 1].short : '';
 
     // Tertinggi / rata-rata / terendah dihitung dari titik yang benar-benar ada isinya
     // (bukan hari kosong yang diisi 0, supaya "Terendah" tidak selalu Rp 0)
@@ -2845,7 +2988,7 @@
   });
 
   // --- Angka terlalu panjang: huruf dikecilkan sampai muat (kalau sudah paling kecil, dipotong "...") ---
-  const FIT_SELECTOR = '#incomeTotalValue, #cashValue, #transferValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
+  const FIT_SELECTOR = '#incomeTotalValue, #kasValue, #opsValue, #netValue, #cashValue, #transferValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
   const FIT_MIN_PX = 8;
 
   function fitOne(el) {
