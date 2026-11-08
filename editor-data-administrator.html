@@ -308,12 +308,13 @@
   .be-textbar input{ flex:1; min-width:0; border:none; border-radius:12px; padding:11px 14px; font:inherit; font-size:15px; background:#fff; color:#1C1B19; }
   .be-tools{ padding:8px 14px calc(var(--safe-bottom) + 14px); display:flex; flex-direction:column; gap:10px; }
   .be-row{ display:flex; align-items:center; gap:8px; }
-  .be-tool{ flex:1; border:none; border-radius:12px; padding:11px 2px; font:inherit; font-size:11.5px; font-weight:800; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; }
+  .be-tool{ flex:1; border:none; border-radius:12px; padding:11px 2px; font:inherit; font-size:11.5px; font-weight:800; white-space:nowrap; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; }
   .be-tool.on{ background:var(--accent); color:#1C1B19; }
   .be-color{ width:30px; height:30px; border-radius:50%; border:3px solid transparent; outline:1px solid rgba(255,255,255,0.4); cursor:pointer; flex-shrink:0; }
   .be-color.on{ border-color:#fff; }
   #beSize{ flex:1; min-width:0; }
-  .be-marker{ position:fixed; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid #fff; background:var(--accent); pointer-events:none; display:none; z-index:2; }
+  .be-textbar .be-btn{ padding:10px 12px; font-size:13px; }
+  .be-hint{ text-align:center; font-size:12px; font-weight:600; opacity:.7; padding:2px 14px 0; min-height:16px; }
 
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
@@ -693,6 +694,7 @@
   .preview-row:last-child{ border-bottom:none; }
   .preview-row span:first-child{ color:var(--ink-soft); font-weight:600; flex-shrink:0; }
   .preview-row span:last-child{ font-weight:750; text-align:right; }
+  #cfKet{ white-space:pre-wrap; text-align:left; }
   .preview-row span.empty-val{ color:var(--ink-soft); font-weight:600; font-style:italic; }
 
 
@@ -1048,12 +1050,18 @@
 
       <div class="field">
         <label class="lbl-out">Barang Keluar <span class="opt-tag">(opsional · yang dibawa pulang)</span></label>
-        <input type="text" id="inputBarangKeluar" placeholder="Yang dibawa pulang" autocomplete="off">
+        <div class="suggest-wrap">
+          <input type="text" id="inputBarangKeluar" placeholder="Yang dibawa pulang" autocomplete="off">
+          <div class="suggest-list" id="keluarSuggestList"></div>
+        </div>
       </div>
 
       <div class="field">
         <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(opsional · belum diambil)</span></label>
-        <input type="text" id="inputStokBarang" placeholder="Yang masih ditinggal" autocomplete="off">
+        <div class="suggest-wrap">
+          <input type="text" id="inputStokBarang" placeholder="Yang masih ditinggal" autocomplete="off">
+          <div class="suggest-list" id="stokSuggestList"></div>
+        </div>
       </div>
 
       <div class="field">
@@ -1135,12 +1143,18 @@
         <div class="detail-row">
           <label class="lbl-out">Barang Keluar <span class="opt-tag">(yang dibawa pulang)</span></label>
           <div class="val" id="detKeluarView">—</div>
-          <input type="text" id="detKeluarEdit" style="display:none;">
+          <div class="suggest-wrap">
+            <input type="text" id="detKeluarEdit" style="display:none;">
+            <div class="suggest-list" id="detKeluarSuggestList"></div>
+          </div>
         </div>
         <div class="detail-row">
           <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(belum diambil)</span></label>
           <div class="val" id="detStokView">—</div>
-          <input type="text" id="detStokEdit" style="display:none;">
+          <div class="suggest-wrap">
+            <input type="text" id="detStokEdit" style="display:none;">
+            <div class="suggest-list" id="detStokSuggestList"></div>
+          </div>
         </div>
         <div class="detail-row">
           <label>Keterangan</label>
@@ -1340,17 +1354,19 @@
       <span class="be-title">Edit Gambar</span>
       <button type="button" class="be-btn be-save" id="beSave">Simpan</button>
     </div>
-    <div class="be-stage"><canvas id="beCanvas"></canvas></div>
     <div class="be-textbar" id="beTextBar">
-      <input type="text" id="beTextInput" maxlength="80" placeholder="Ketik teks lalu tekan Tambah" autocomplete="off">
-      <button type="button" class="be-btn be-save" id="beTextAdd">Tambah</button>
+      <input type="text" id="beTextInput" maxlength="80" placeholder="Ketik teks di sini" autocomplete="off">
+      <button type="button" class="be-btn" id="beTextDel">Hapus</button>
+      <button type="button" class="be-btn be-save" id="beTextDone">Selesai</button>
     </div>
+    <div class="be-stage"><canvas id="beCanvas"></canvas></div>
+    <div class="be-hint" id="beHint"></div>
     <div class="be-tools">
       <div class="be-row">
         <button type="button" class="be-tool on" data-mode="draw">Coret</button>
         <button type="button" class="be-tool" data-mode="text">Teks</button>
-        <button type="button" class="be-tool" id="beRotL">Putar Kiri</button>
-        <button type="button" class="be-tool" id="beRotR">Putar Kanan</button>
+        <button type="button" class="be-tool" id="beRotL">&#8634; Kiri</button>
+        <button type="button" class="be-tool" id="beRotR">&#8635; Kanan</button>
         <button type="button" class="be-tool" id="beUndo">Urungkan</button>
       </div>
       <div class="be-row">
@@ -1363,7 +1379,6 @@
         <input type="range" id="beSize" min="2" max="24" value="6" aria-label="Ukuran">
       </div>
     </div>
-    <div class="be-marker" id="beMarker"></div>
   </div>
 
   <!-- Viewer bukti: tap thumbnail buat lihat ukuran penuh, geser (swipe) kalau ada 2 gambar -->
@@ -1700,45 +1715,103 @@
     return best;
   }
 
-  // ---- Editor gambar Bukti: putar, coret, tambah teks ----
-  const BE_MAX_DIM = 1280, BE_MAX_UNDO = 6;
+  // ---- Editor gambar Bukti: putar, coret, dan teks (teks tetap bisa diubah, digeser, diperbesar) ----
+  // beBase = gambar + coretan (digabung jadi satu). Teks disimpan terpisah sebagai objek,
+  // digambar di atas beBase pada setiap render, jadi tidak pernah "menempel" permanen.
+  const BE_MAX_DIM = 1280, BE_MAX_UNDO = 10;
   const beCv = document.getElementById('beCanvas');
+  const beBase = document.createElement('canvas');
   const beTextBar = document.getElementById('beTextBar');
   const beTextInput = document.getElementById('beTextInput');
-  const beMarker = document.getElementById('beMarker');
+  const beHint = document.getElementById('beHint');
   const beSize = document.getElementById('beSize');
-  let beMode = 'draw', beColor = '#E53935', beTextPos = null, beDone = null, beDrawing = false, beLast = null;
+  let beMode = 'draw', beColor = '#E53935', beBrush = 6, beDone = null;
+  let beDrawing = false, beLast = null;
+  let beTexts = [], beSel = null, beDirty = false, beDrag = null, beWantFocus = false;
   const beHist = [];
 
-  function beClearText(){ beTextPos = null; beMarker.style.display = 'none'; beTextBar.style.display = 'none'; beTextInput.value = ''; }
-  function beSetMode(m){
-    beMode = m;
-    document.querySelectorAll('.be-tool[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
-    if (m !== 'text') beClearText();
+  function beSyncSize(){ beCv.width = beBase.width; beCv.height = beBase.height; }
+  function beFont(t){ return Math.max(10, Math.round(t.v * Math.min(beBase.width, beBase.height) / 50)); }
+  function beSetFont(ctx, fs){ ctx.font = '800 ' + fs + 'px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'; }
+  function beDrawText(ctx, t){
+    if (!t.text) return;
+    const fs = beFont(t);
+    beSetFont(ctx, fs);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(2, fs / 6);
+    ctx.strokeStyle = t.color.toLowerCase() === '#111111' ? '#ffffff' : '#111111';
+    ctx.strokeText(t.text, t.x, t.y);
+    ctx.fillStyle = t.color;
+    ctx.fillText(t.text, t.x, t.y);
   }
+  function beBox(t){
+    const ctx = beCv.getContext('2d'), fs = beFont(t);
+    beSetFont(ctx, fs);
+    const w = ctx.measureText(t.text || ' ').width + fs / 3, h = fs * 1.25;
+    return { x: t.x - w / 2, y: t.y - h / 2, w: w, h: h };
+  }
+  function beRender(showSel){
+    const ctx = beCv.getContext('2d');
+    ctx.drawImage(beBase, 0, 0);
+    beTexts.forEach(t => beDrawText(ctx, t));
+    if (showSel && beSel) {
+      const rect = beCv.getBoundingClientRect();
+      const k = rect.width ? beCv.width / rect.width : 1;
+      const bx = beBox(beSel);
+      ctx.save();
+      ctx.strokeStyle = '#F0A529'; ctx.lineWidth = 2 * k; ctx.setLineDash([8 * k, 6 * k]);
+      ctx.strokeRect(bx.x - 4 * k, bx.y - 4 * k, bx.w + 8 * k, bx.h + 8 * k);
+      ctx.restore();
+    }
+  }
+  function bePrune(keep){ beTexts = beTexts.filter(t => t === keep || t.text.trim()); }
+  function beMarkColor(c){
+    document.querySelectorAll('#beColors .be-color').forEach(x => x.classList.toggle('on', x.dataset.c.toLowerCase() === String(c).toLowerCase()));
+  }
+  function beUpdateUI(){
+    document.querySelectorAll('.be-tool[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === beMode));
+    beTextBar.style.display = (beMode === 'text' && beSel) ? 'flex' : 'none';
+    if (beSel) { beSize.value = beSel.v; beMarkColor(beSel.color); }
+    else { beSize.value = beBrush; beMarkColor(beColor); }
+    beHint.textContent = beMode === 'text'
+      ? (beSel ? 'Geser teks untuk memindah · slider = ukuran teks' : 'Tap gambar untuk menambah teks · tap teks untuk mengubah')
+      : 'Coret gambar dengan jari · slider = tebal kuas';
+  }
+  function beSelect(t){
+    beSel = t || null; beDirty = false;
+    bePrune(beSel);
+    if (beSel) beTextInput.value = beSel.text; else beTextInput.blur();
+    beUpdateUI(); beRender(true);
+  }
+  function beSetMode(m){ beMode = m; beSelect(null); }
+
+  // Simpan kondisi untuk "Urungkan". beTouch = simpan sekali per rangkaian ubahan pada teks yang sama.
   function beSnapshot(){
     const c = document.createElement('canvas');
-    c.width = beCv.width; c.height = beCv.height;
-    c.getContext('2d').drawImage(beCv, 0, 0);
-    beHist.push(c);
+    c.width = beBase.width; c.height = beBase.height;
+    c.getContext('2d').drawImage(beBase, 0, 0);
+    beHist.push({ c: c, texts: beTexts.map(t => Object.assign({}, t)) });
     if (beHist.length > BE_MAX_UNDO) beHist.shift();
   }
+  function beTouch(){ if (!beDirty) { beSnapshot(); beDirty = true; } }
   function beUndo(){
-    const c = beHist.pop();
-    if (!c) return;
-    beClearText();
-    beCv.width = c.width; beCv.height = c.height;
-    beCv.getContext('2d').drawImage(c, 0, 0);
+    const h = beHist.pop();
+    if (!h) return;
+    beBase.width = h.c.width; beBase.height = h.c.height;
+    beBase.getContext('2d').drawImage(h.c, 0, 0);
+    beTexts = h.texts;
+    beSyncSize(); beSelect(null);
   }
   function beRotate(dir){ // 1 = kanan, -1 = kiri
-    beClearText();
     beSnapshot();
-    const src = beHist[beHist.length - 1];
-    beCv.width = src.height; beCv.height = src.width;
-    const ctx = beCv.getContext('2d');
-    ctx.translate(beCv.width / 2, beCv.height / 2);
+    const src = beHist[beHist.length - 1].c, W = src.width, H = src.height;
+    beBase.width = H; beBase.height = W;
+    const ctx = beBase.getContext('2d');
+    ctx.translate(H / 2, W / 2);
     ctx.rotate(dir * Math.PI / 2);
-    ctx.drawImage(src, -src.width / 2, -src.height / 2);
+    ctx.drawImage(src, -W / 2, -H / 2);
+    beTexts.forEach(t => { const x = t.x, y = t.y; if (dir === 1) { t.x = H - y; t.y = x; } else { t.x = y; t.y = W - x; } });
+    beSyncSize(); beRender(true);
   }
   function bePoint(e){
     const r = beCv.getBoundingClientRect();
@@ -1746,32 +1819,42 @@
     return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k, k: k };
   }
   function beStroke(a, b){
-    const ctx = beCv.getContext('2d');
-    ctx.strokeStyle = beColor; ctx.lineWidth = Number(beSize.value) * a.k;
+    const ctx = beBase.getContext('2d');
+    ctx.strokeStyle = beColor; ctx.lineWidth = beBrush * a.k;
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    beRender(false);
   }
-  function beAddText(){
-    const t = beTextInput.value.trim();
-    if (!t || !beTextPos) return;
+  function beHit(p){
+    const pad = 14 * p.k;
+    for (let i = beTexts.length - 1; i >= 0; i--) {
+      const bx = beBox(beTexts[i]);
+      if (p.x >= bx.x - pad && p.x <= bx.x + bx.w + pad && p.y >= bx.y - pad && p.y <= bx.y + bx.h + pad) return beTexts[i];
+    }
+    return null;
+  }
+  function beAddTextAt(p){
     beSnapshot();
-    const ctx = beCv.getContext('2d');
-    const fs = Math.round(Number(beSize.value) * 4 * beTextPos.k);
-    ctx.font = '800 ' + fs + 'px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs / 6);
-    ctx.strokeStyle = beColor.toLowerCase() === '#111111' ? '#ffffff' : '#111111';
-    ctx.strokeText(t, beTextPos.x, beTextPos.y);
-    ctx.fillStyle = beColor;
-    ctx.fillText(t, beTextPos.x, beTextPos.y);
-    beClearText();
+    const t = { text: '', x: p.x, y: p.y, v: 4, color: beColor };
+    beTexts.push(t);
+    beSelect(t);
+    beDirty = true; // snapshot sudah diambil di atas
+    beWantFocus = true;
+  }
+  function beDeleteSel(){
+    if (!beSel) return;
+    beSnapshot();
+    beTexts = beTexts.filter(t => t !== beSel);
+    beSelect(null);
   }
   function beFinish(save){
-    closeOverlay('overlayBuktiEditor');
-    beClearText();
     const done = beDone; beDone = null;
+    bePrune(null); beSel = null;
+    beTextInput.blur();
+    closeOverlay('overlayBuktiEditor');
     if (!done) return;
-    if (!save || !beHist.length) { done(null); return; } // batal / tidak ada perubahan
+    if (!save || !beHist.length) { done(null); return; } // batal / tidak ada perubahan -> tidak ada yang diunggah
+    beRender(false);
     compressCanvas(beCv).then(done).catch(() => { showMigrationToast('Gagal memproses gambar.'); done(null); });
   }
   // Buka editor untuk satu gambar -> Promise<Blob JPEG | null>
@@ -1783,50 +1866,83 @@
       img.onload = () => {
         const longest = Math.max(img.naturalWidth, img.naturalHeight);
         const r = longest > BE_MAX_DIM ? BE_MAX_DIM / longest : 1;
-        beCv.width = Math.round(img.naturalWidth * r); beCv.height = Math.round(img.naturalHeight * r);
-        const ctx = beCv.getContext('2d');
-        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, beCv.width, beCv.height);
-        ctx.drawImage(img, 0, 0, beCv.width, beCv.height);
-        beHist.length = 0; beDone = resolve;
+        beBase.width = Math.round(img.naturalWidth * r); beBase.height = Math.round(img.naturalHeight * r);
+        const ctx = beBase.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, beBase.width, beBase.height);
+        ctx.drawImage(img, 0, 0, beBase.width, beBase.height);
+        beSyncSize();
+        beHist.length = 0; beTexts = []; beSel = null; beDone = resolve;
         beSetMode('draw');
         openOverlay('overlayBuktiEditor');
+        beRender(true);
       };
       img.src = src;
     });
   }
+
   beCv.addEventListener('pointerdown', (e) => {
     const p = bePoint(e);
+    e.preventDefault();
+    try { beCv.setPointerCapture(e.pointerId); } catch (err) {}
     if (beMode === 'text') {
-      beTextPos = p;
-      beMarker.style.left = e.clientX + 'px'; beMarker.style.top = e.clientY + 'px'; beMarker.style.display = 'block';
-      beTextBar.style.display = 'flex'; beTextInput.focus();
+      const hit = beHit(p);
+      if (hit) {
+        if (hit !== beSel) beSelect(hit);
+        beDrag = { t: hit, dx: p.x - hit.x, dy: p.y - hit.y, sx: p.x, sy: p.y, moved: false };
+      } else {
+        beAddTextAt(p);
+      }
       return;
     }
-    e.preventDefault();
     beSnapshot();
     beDrawing = true; beLast = p;
-    try { beCv.setPointerCapture(e.pointerId); } catch (err) {}
     beStroke(p, p);
   });
   beCv.addEventListener('pointermove', (e) => {
+    if (beDrag) {
+      const p = bePoint(e);
+      if (!beDrag.moved) {
+        if (Math.hypot(p.x - beDrag.sx, p.y - beDrag.sy) < 4 * p.k) return;
+        beDrag.moved = true; beTouch();
+      }
+      beDrag.t.x = Math.max(0, Math.min(beCv.width, p.x - beDrag.dx));
+      beDrag.t.y = Math.max(0, Math.min(beCv.height, p.y - beDrag.dy));
+      beRender(true);
+      return;
+    }
     if (!beDrawing) return;
     const p = bePoint(e);
     beStroke(beLast, p); beLast = p;
   });
-  ['pointerup', 'pointercancel'].forEach(t => beCv.addEventListener(t, () => { beDrawing = false; }));
+  ['pointerup', 'pointercancel'].forEach(t => beCv.addEventListener(t, () => {
+    const tapped = beDrag && !beDrag.moved;
+    beDrag = null; beDrawing = false;
+    if (beWantFocus || tapped) { beWantFocus = false; beTextInput.focus(); }
+  }));
+
+  beTextInput.addEventListener('input', () => {
+    if (!beSel) return;
+    beTouch(); beSel.text = beTextInput.value; beRender(true);
+  });
+  beTextInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); beSelect(null); } });
+  beSize.addEventListener('input', () => {
+    const v = Number(beSize.value);
+    if (beSel) { beTouch(); beSel.v = v; beRender(true); } else { beBrush = v; }
+  });
+  document.getElementById('beColors').addEventListener('click', (e) => {
+    const b = e.target.closest('.be-color');
+    if (!b) return;
+    if (beSel) { beTouch(); beSel.color = b.dataset.c; beRender(true); } else { beColor = b.dataset.c; }
+    beMarkColor(b.dataset.c);
+  });
   document.querySelectorAll('.be-tool[data-mode]').forEach(b => b.addEventListener('click', () => beSetMode(b.dataset.mode)));
   document.getElementById('beRotL').addEventListener('click', () => beRotate(-1));
   document.getElementById('beRotR').addEventListener('click', () => beRotate(1));
   document.getElementById('beUndo').addEventListener('click', beUndo);
-  document.getElementById('beTextAdd').addEventListener('click', beAddText);
+  document.getElementById('beTextDel').addEventListener('click', beDeleteSel);
+  document.getElementById('beTextDone').addEventListener('click', () => beSelect(null));
   document.getElementById('beCancel').addEventListener('click', () => beFinish(false));
   document.getElementById('beSave').addEventListener('click', () => beFinish(true));
-  document.getElementById('beColors').addEventListener('click', (e) => {
-    const b = e.target.closest('.be-color');
-    if (!b) return;
-    beColor = b.dataset.c;
-    document.querySelectorAll('#beColors .be-color').forEach(x => x.classList.toggle('on', x === b));
-  });
 
   async function imgbbUploadOnce(blob){
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -2766,8 +2882,8 @@
     return String(str == null ? '' : str).split(/[^A-Za-z0-9]+/).filter(t => t && !/^(x|dan)$/i.test(t));
   }
 
-  function setupSuggestDropdown(inputEl, listEl, getNames, smart){
-    let closeTimer = null;
+  function setupSuggestDropdown(inputEl, listEl, getNames, smart, onPick){
+    let closeTimer = null, silent = false;
 
     // Saran pintar: ketik "yono" -> semua tim yang memuat yono + nama anggota lain untuk ditambahkan
     function suggestionsFor(){
@@ -2775,7 +2891,7 @@
       const teams = getNames();
       const q = raw.trim().toLowerCase();
       if (!q) return teams.map(t => ({ text: t, value: t }));
-      if (!smart) return teams.filter(t => t.toLowerCase().includes(q)).map(t => ({ text: t, value: t }));
+      if (!smart) return (teams.some(t => t.toLowerCase() === q) ? teams : teams.filter(t => t.toLowerCase().includes(q))).map(t => ({ text: t, value: t })); // isi sudah sama persis dengan salah satu saran -> tampilkan semua pilihan
 
       const trailing = /(?:^|\s)(?:x|dan)\s*$|[&+,]\s*$/i.test(raw);          // "yono x " / "yono &"
       const toks = pjTokensOf(raw).map(t => t.toLowerCase());
@@ -2832,6 +2948,7 @@
       listEl.style.transition = listEl.style.transform = listEl.style.opacity = '';
     }
     function renderList(){
+      if (silent) return;
       clearTimeout(closeTimer);
       listEl.classList.remove('closing');
       listEl.style.transition = listEl.style.transform = listEl.style.opacity = '';
@@ -2856,6 +2973,7 @@
       e.preventDefault(); // supaya blur pada input tidak lebih dulu menutup dropdown ini
       const isAdd = item.classList.contains('add');
       inputEl.value = item.dataset.v || item.textContent;
+      if (onPick) { silent = true; try { onPick(); } finally { silent = false; } }
       hideNow();
       if (isAdd) {
         // tambah anggota: tetap di kolom ini supaya bisa menambah anggota lagi
@@ -2869,8 +2987,38 @@
     });
   }
 
-  setupSuggestDropdown(document.getElementById('inputPJ'), document.getElementById('pjSuggestList'), getPJNames, true);
+  setupSuggestDropdown(document.getElementById('inputPJ'), document.getElementById('pjSuggestList'), getPJNames, true, () => fillKetFromPJ());
   setupSuggestDropdown(document.getElementById('detPJedit'), document.getElementById('detPJSuggestList'), getPJNames, true);
+
+  // Saran teks cepat "B&J" dan "Tidak ada" untuk Barang Keluar & Barang Ditinggal (Tambah Data + Edit Detail).
+  // onPick memicu event input supaya aturan sambungan B&J <-> Tidak ada tetap jalan.
+  [['inputBarangKeluar', 'keluarSuggestList'], ['inputStokBarang', 'stokSuggestList'],
+   ['detKeluarEdit', 'detKeluarSuggestList'], ['detStokEdit', 'detStokSuggestList']].forEach(([inId, listId]) => {
+    const el = document.getElementById(inId);
+    setupSuggestDropdown(el, document.getElementById(listId), () => [LABEL_BJ, LABEL_TIDAK_ADA], false,
+      () => el.dispatchEvent(new Event('input', { bubbles: true })));
+  });
+
+  // Tambah Data saja (bukan Edit Detail / data lama): PJ berisi 2 nama atau lebih, misalnya "Yono x Mail",
+  // maka Keterangan otomatis terisi "1. Yono" dan "2. Mail". Keterangan yang sudah diisi/diubah sendiri tidak ditimpa.
+  let ketAutoText = '';
+  function pjNames(str){
+    return String(str || '').split(/\s*[,&+]\s*|\s+(?:x|dan)\s+/i)
+      .map(n => n.trim()).filter(Boolean)
+      .map(n => n.charAt(0).toUpperCase() + n.slice(1));
+  }
+  function fillKetFromPJ(){
+    const ketEl = document.getElementById('inputKeterangan');
+    const names = pjNames(document.getElementById('inputPJ').value);
+    const next = names.length >= 2 ? names.map((n, i) => (i + 1) + '. ' + n).join('\n') : '';
+    const cur = ketEl.value;
+    if (cur.trim() !== '' && cur !== ketAutoText) return; // sudah diisi / diubah pengguna
+    ketAutoText = next;
+    if (cur === next) return;
+    ketEl.value = next;
+    ketEl.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  document.getElementById('inputPJ').addEventListener('blur', fillKetFromPJ);
 
   // Huruf pertama otomatis kapital di semua field teks (keyboard user tidak
   // auto-kapital). Cuma huruf PERTAMA yang diubah, sisanya dibiarkan apa
