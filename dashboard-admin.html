@@ -2407,10 +2407,9 @@
   }
   .header-btn > *, .search-pill > *, .btn-compose-pencil > * { position: relative; z-index: 1; }
   .hdr-filter-btn { overflow: visible; }
-  .hdr-filter-btn .hdr-filter-ico { width: 22px; height: 22px; display: block; flex: 0 0 auto; }
-  .hdr-filter-btn .hdr-filter-ico path { transition: fill .2s ease; }
-  .hdr-filter-btn.active .hdr-filter-ico path { fill: rgba(28, 27, 25, 0.28); }
-  .hdr-filter-btn .tasks-filter-badge { z-index: 2; }
+  /* Angka harus melayang di pojok. Aturan ".header-btn > *" di atas membuatnya position:relative,
+     sehingga ikut masuk barisan isi tombol dan mendorong ikon ke kiri. */
+  .hdr-filter-btn .tasks-filter-badge { position: absolute; top: -4px; right: -4px; z-index: 2; }
 
   /* ============================================================
      SENTUH / TAHAN = MEMBESAR (gaya iOS), bukan mengecil
@@ -2786,7 +2785,7 @@
       </svg>
     </button>
     <button class="header-btn hdr-filter-btn" id="btnTasksFilter" aria-label="Filter Tasks">
-      <svg class="hdr-filter-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h17l-6.6 7.7v5.6l-3.8 1.9v-7.5z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
       <span class="tasks-filter-badge" id="tasksFilterBadge"></span>
     </button>
   </header>
@@ -4039,6 +4038,20 @@
       });
       item.addEventListener('touchend', () => clearTimeout(pressTimer));
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+      // Komputer: klik kanan membuka menu edit/hapus yang sama dengan tekan-tahan di layar sentuh
+      item.addEventListener('contextmenu', (e) => {
+        if (e.target.closest('.folder-menu-popup')) return;
+        e.preventDefault();
+        clearTimeout(pressTimer);
+        if (isPjId(item.dataset.catId)) return;
+        const cat = categoriesData.find(c => c.id === item.dataset.catId);
+        if (isPermanentFolder(cat)) return;
+        if (deleteModeCatId === item.dataset.catId) return;
+        longPressed = true;
+        deleteModeCatId = item.dataset.catId;
+        renderCategories();
+      });
     });
 
     container.querySelectorAll('.folder-menu-item').forEach(el => {
@@ -4754,7 +4767,7 @@
   }
 
   const WARUNG_SCHEMA = 'warung-data-v1';
-  const WARUNG_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-warung.html';
+  const WARUNG_EDITOR_FILE = 'editor-data-warung.html';
   const LEDGER_EDITOR_FILE = 'editor-data-administrator.html';
 
   function isWarungNote(note) {
@@ -4766,7 +4779,7 @@
   }
 
   const KASBON_SCHEMA = 'kasbon-data-v1';
-  const KASBON_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-kasbon.html';
+  const KASBON_EDITOR_FILE = 'editor-data-kasbon.html';
 
   function isKasbonNote(note) {
     return !!(note && note.content && note.content.schema === KASBON_SCHEMA);
@@ -4792,7 +4805,7 @@
   // schema 'hutangpiutang-data-v1': { jenis('hutang'|'piutang'), nama, total, dibayar, keterangan }
   // =====================================================================
   const HUTANG_SCHEMA = 'hutangpiutang-data-v1';
-  const HUTANG_EDITOR_FILE = 'https://dashboard-bm-tech.vercel.app/editor-data-hutang-piutang.html';
+  const HUTANG_EDITOR_FILE = 'editor-data-hutang-piutang.html';
 
   function isHutangNote(note) {
     return !!(note && note.content && note.content.schema === HUTANG_SCHEMA);
@@ -5250,6 +5263,7 @@
         folderName: note.folder || 'Uncategorized',
         noteTitle: note.title || 'Untitled',
         rowIndex,
+        recId: r.id || '',
         when,
         dateText: taskDateText(when),
         jam: ok ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '',
@@ -5293,6 +5307,7 @@
           folderName: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled',
           rowIndex,
+          recId: (row && row.cells && row.cells._rid) || '',
           when,
           dateText: taskDateText(when),
           jam: val('Jam') || '',
@@ -5354,6 +5369,7 @@
           folderName: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled',
           rowIndex,
+          recId: r.id || '',
           when,
           dateText: taskDateText(when),
           customer: String(r.nama || '').trim(),
@@ -5380,6 +5396,7 @@
           folderName: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled',
           rowIndex,
+          recId: r.id || '',
           when,
           dateText: taskDateText(when),
           customer: String(r.nama || '').trim(),
@@ -5524,7 +5541,8 @@
     if (!card) return;
     const t = currentShownTasks[Number(card.dataset.idx)];
     if (!t) return;
-    openEditor(t.noteId, { folder: t.folderId, row: t.rowIndex, focus: t.missing ? t.missing[0] : undefined });
+    // rec = ID data: editor langsung membuka data itu (tanpa scroll); row/focus tetap dikirim untuk editor yang membacanya
+    openEditor(t.noteId, { folder: t.folderId, rec: t.recId || undefined, row: t.rowIndex, focus: t.missing ? t.missing[0] : undefined });
   });
 
   document.getElementById('tasksSummary').addEventListener('click', (e) => {
