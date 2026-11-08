@@ -1856,6 +1856,28 @@
   }
   .liquid-alert-btn:active { opacity: 0.85; }
 
+  .edit-row-box { max-width: 340px; }
+  .edit-row-box .liquid-alert-text { margin-bottom: 14px; }
+  .edit-row-input {
+    width: 100%; box-sizing: border-box; text-align: center;
+    font: inherit; font-size: 26px; font-weight: 800; letter-spacing: 0.06em;
+    padding: 12px 14px; border-radius: 16px; outline: none;
+    color: #fff; background: rgba(255, 255, 255, 0.14);
+    border: 1.5px solid rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .edit-row-input::placeholder { color: rgba(255, 255, 255, 0.45); font-size: 15px; font-weight: 600; letter-spacing: 0; }
+  .edit-row-input:focus { border-color: var(--accent-yellow); box-shadow: 0 0 0 3px rgba(240, 165, 40, 0.28); }
+  .edit-row-input.err { border-color: #FF8A8A; box-shadow: 0 0 0 3px rgba(255, 110, 110, 0.25); }
+  .edit-row-info { min-height: 38px; margin: 10px 2px 16px; font-size: 12.5px; line-height: 1.45; color: rgba(255, 255, 255, 0.82); word-break: break-word; }
+  .edit-row-info.err { color: #FFB4B4; font-weight: 700; }
+  .edit-row-actions { display: flex; gap: 10px; }
+  .edit-row-actions .liquid-alert-btn { flex: 1.4; }
+  .edit-row-cancel { flex: 1; padding: 13px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.12); color: #fff; font-size: 14.5px; font-weight: 700; cursor: pointer; }
+  .edit-row-cancel:active { opacity: 0.8; }
+  .edit-row-actions .liquid-alert-btn:disabled { opacity: 0.45; }
+
   .note-detail-overlay {
     position: fixed;
     inset: 0;
@@ -2385,6 +2407,9 @@
   }
   .header-btn > *, .search-pill > *, .btn-compose-pencil > * { position: relative; z-index: 1; }
   .hdr-filter-btn { overflow: visible; }
+  .hdr-filter-btn .hdr-filter-ico { width: 22px; height: 22px; display: block; flex: 0 0 auto; }
+  .hdr-filter-btn .hdr-filter-ico path { transition: fill .2s ease; }
+  .hdr-filter-btn.active .hdr-filter-ico path { fill: rgba(28, 27, 25, 0.28); }
   .hdr-filter-btn .tasks-filter-badge { z-index: 2; }
 
   /* ============================================================
@@ -2761,7 +2786,7 @@
       </svg>
     </button>
     <button class="header-btn hdr-filter-btn" id="btnTasksFilter" aria-label="Filter Tasks">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+      <svg class="hdr-filter-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h17l-6.6 7.7v5.6l-3.8 1.9v-7.5z"/></svg>
       <span class="tasks-filter-badge" id="tasksFilterBadge"></span>
     </button>
   </header>
@@ -3161,6 +3186,19 @@
     <p class="liquid-alert-title" id="liquidAlertTitle">Judul</p>
     <p class="liquid-alert-text" id="liquidAlertText">Isi pesan.</p>
     <button class="liquid-alert-btn" id="liquidAlertClose">Tutup</button>
+  </div>
+</div>
+
+<div class="liquid-alert-backdrop" id="editRowBackdrop">
+  <div class="liquid-alert-box edit-row-box">
+    <p class="liquid-alert-title">Edit data nomor berapa?</p>
+    <p class="liquid-alert-text" id="editRowHint">Ini rekap gabungan beberapa note. Masukkan nomor baris yang mau diedit.</p>
+    <input type="text" class="edit-row-input" id="editRowInput" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="Ketik nomor">
+    <div class="edit-row-info" id="editRowInfo"></div>
+    <div class="edit-row-actions">
+      <button type="button" class="edit-row-cancel" id="editRowCancel">Batal</button>
+      <button type="button" class="liquid-alert-btn" id="editRowGo" disabled>Buka Editor</button>
+    </div>
   </div>
 </div>
 
@@ -7564,12 +7602,108 @@
   document.getElementById('btnNoteDetailEdit').addEventListener('click', () => {
     if (!currentDetailNote) return;
     if (currentDetailNote._merged) {
-      showLiquidAlert('Tidak Bisa Diedit', 'Ini rekap gabungan satu pekan dari beberapa note. Untuk mengubah data, buka note aslinya di folder BUKU BESAR.');
+      openEditRowDialog(currentDetailNote);   // rekap gabungan: pilih nomor baris, editor dibuka di note aslinya
       return;
     }
     noteDetailOverlay.classList.remove('open');
     openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });
   });
+
+  // ---- Rekap gabungan: pilih nomor baris yang mau diedit ----
+  const editRowBackdrop = document.getElementById('editRowBackdrop');
+  const editRowInput = document.getElementById('editRowInput');
+  const editRowInfo = document.getElementById('editRowInfo');
+  const editRowGo = document.getElementById('editRowGo');
+  const editRowHint = document.getElementById('editRowHint');
+  let editRowNote = null, editRowTarget = null;
+
+  function editRowSummary(note, row) {
+    const cols = (note.content && note.content.columns) || [];
+    const parts = [];
+    for (const c of cols) {
+      if (c.id === 'no' || c.type === 'image' || c.id === 'bukti') continue;
+      const v = row.cells ? row.cells[c.id] : '';
+      if (v !== undefined && v !== null && String(v).trim() !== '') parts.push(String(v).trim());
+      if (parts.length >= 5) break;
+    }
+    return parts.join(' · ');
+  }
+
+  function editRowFind(note, num) {
+    const rows = (note.content && note.content.rows) || [];
+    let row = rows.find(r => r && r.cells && parseInt(r.cells.no, 10) === num);
+    if (!row && num >= 1 && num <= rows.length) row = rows[num - 1];
+    return row || null;
+  }
+
+  function editRowValidate() {
+    const raw = editRowInput.value.replace(/\D/g, '');
+    if (editRowInput.value !== raw) editRowInput.value = raw;
+    editRowTarget = null;
+    editRowInput.classList.remove('err');
+    editRowInfo.classList.remove('err');
+    editRowGo.disabled = true;
+    const total = ((editRowNote.content && editRowNote.content.rows) || []).length;
+    if (!raw) { editRowInfo.textContent = ''; return; }
+    const num = parseInt(raw, 10);
+    const row = num >= 1 ? editRowFind(editRowNote, num) : null;
+    if (!row) {
+      editRowInput.classList.add('err');
+      editRowInfo.classList.add('err');
+      editRowInfo.textContent = `Nomor ${raw} tidak ada. Pilih 1 sampai ${total}.`;
+      return;
+    }
+    if (!row.cells || !row.cells._nid || !row.cells._rid) {
+      editRowInput.classList.add('err');
+      editRowInfo.classList.add('err');
+      editRowInfo.textContent = `Nomor ${num} tidak punya note asal, jadi tidak bisa dibuka di editor.`;
+      return;
+    }
+    editRowTarget = row;
+    editRowInfo.textContent = editRowSummary(editRowNote, row) || `Data nomor ${num}`;
+    editRowGo.disabled = false;
+  }
+
+  function openEditRowDialog(note) {
+    editRowNote = note;
+    editRowTarget = null;
+    const total = ((note.content && note.content.rows) || []).length;
+    editRowHint.textContent = `Ini rekap gabungan beberapa note (${total} baris). Masukkan nomor baris yang mau diedit, editor langsung terbuka di data itu.`;
+    editRowInput.value = '';
+    editRowInfo.textContent = '';
+    editRowInfo.classList.remove('err');
+    editRowInput.classList.remove('err');
+    editRowGo.disabled = true;
+    editRowBackdrop.classList.add('open');
+    setTimeout(() => { try { editRowInput.focus(); } catch (e) {} }, 280);
+  }
+
+  function closeEditRowDialog() { editRowBackdrop.classList.remove('open'); try { editRowInput.blur(); } catch (e) {} }
+
+  async function confirmEditRow() {
+    const row = editRowTarget;
+    if (!row || !row.cells) return;
+    const noteId = row.cells._nid, recId = row.cells._rid;
+    editRowGo.disabled = true;
+    // Folder note asal: dari data folder PJ/customer yang sudah dimuat; kalau tidak ada, ambil dari server
+    let src = pjNotesSource.find(n => n.id === noteId) || notesData.find(n => n.id === noteId);
+    let folderId = src ? src.folder_id : null;
+    if (!folderId) {
+      const { data } = await supabaseClient.from('notes').select('folder_id').eq('id', noteId).maybeSingle();
+      folderId = data ? data.folder_id : null;
+    }
+    closeEditRowDialog();
+    noteDetailOverlay.classList.remove('open');
+    openEditor(noteId, { folder: folderId || undefined, rec: recId });
+  }
+
+  editRowInput.addEventListener('input', editRowValidate);
+  editRowInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); if (!editRowGo.disabled) confirmEditRow(); }
+  });
+  editRowGo.addEventListener('click', confirmEditRow);
+  document.getElementById('editRowCancel').addEventListener('click', closeEditRowDialog);
+  editRowBackdrop.addEventListener('click', (e) => { if (e.target === editRowBackdrop) closeEditRowDialog(); });
 
   const imageLightboxOverlay = document.getElementById('imageLightboxOverlay');
   const lightboxImage = document.getElementById('lightboxImage');
@@ -8201,6 +8335,7 @@
     const rm = (...ids) => () => ids.forEach(i => { const e = $id(i); if (e) e.classList.remove('open'); });
     // id = elemen utama yang diberi kelas "open"; close = cara menutupnya (memakai fungsi tutup bawaan bila ada)
     const LAYERS = [
+      { id: 'editRowBackdrop',       close: rm('editRowBackdrop') },
       { id: 'liquidAlertBackdrop',   close: rm('liquidAlertBackdrop') },
       { id: 'pzvOverlay',            close: () => $id('pzvCancel').click() }, // batal = menyelesaikan konfirmasi dengan benar
       { id: 'imageLightboxOverlay',  close: () => closeLightbox() },
