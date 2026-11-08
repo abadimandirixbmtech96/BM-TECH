@@ -288,6 +288,33 @@
   .bukti-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all .15s ease; }
   .bukti-dot.active{ background:#fff; width:16px; border-radius:3px; }
 
+  /* ---------- Editor gambar Bukti ---------- */
+  .bukti-thumb-edit{
+    position:absolute; left:0; right:0; bottom:0; height:20px; border:none; padding:0;
+    background:rgba(20,16,8,0.65); color:#fff; font-size:11px; font-weight:800; cursor:pointer;
+  }
+  .bukti-editor{
+    position:fixed; inset:0; z-index:400; display:flex; flex-direction:column; background:#14110b; color:#fff;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .bukti-editor.show{ opacity:1; pointer-events:auto; }
+  .be-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:calc(var(--safe-top) + 10px) 14px 10px; }
+  .be-title{ font-size:15px; font-weight:800; }
+  .be-btn{ border:none; border-radius:12px; padding:10px 16px; font:inherit; font-size:14px; font-weight:800; background:rgba(255,255,255,0.14); color:#fff; cursor:pointer; }
+  .be-btn.be-save{ background:var(--accent); color:#1C1B19; }
+  .be-stage{ flex:1; min-height:0; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:6px 12px; }
+  .be-stage canvas{ max-width:100%; max-height:100%; touch-action:none; border-radius:8px; background:#fff; }
+  .be-textbar{ display:none; gap:8px; padding:8px 14px; }
+  .be-textbar input{ flex:1; min-width:0; border:none; border-radius:12px; padding:11px 14px; font:inherit; font-size:15px; background:#fff; color:#1C1B19; }
+  .be-tools{ padding:8px 14px calc(var(--safe-bottom) + 14px); display:flex; flex-direction:column; gap:10px; }
+  .be-row{ display:flex; align-items:center; gap:8px; }
+  .be-tool{ flex:1; border:none; border-radius:12px; padding:11px 2px; font:inherit; font-size:11.5px; font-weight:800; background:rgba(255,255,255,0.12); color:#fff; cursor:pointer; }
+  .be-tool.on{ background:var(--accent); color:#1C1B19; }
+  .be-color{ width:30px; height:30px; border-radius:50%; border:3px solid transparent; outline:1px solid rgba(255,255,255,0.4); cursor:pointer; flex-shrink:0; }
+  .be-color.on{ border-color:#fff; }
+  #beSize{ flex:1; min-width:0; }
+  .be-marker{ position:fixed; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; border:2px solid #fff; background:var(--accent); pointer-events:none; display:none; z-index:2; }
+
   /* ---------- Bottom nav ---------- */
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
@@ -1051,7 +1078,7 @@
       </div>
 
       <div class="field">
-        <label>Bukti <span class="opt-tag">(opsional — maks. 2 gambar)</span></label>
+        <label>Bukti <span class="opt-tag">(opsional — maks. 4 gambar)</span></label>
         <div class="bukti-dropzone" id="buktiDropzone">
           <input type="file" id="buktiFileGaleri" accept="image/*" multiple hidden>
           <input type="file" id="buktiFileKamera" accept="image/*" capture="environment" hidden>
@@ -1304,6 +1331,39 @@
         <button class="btn-danger-outline" style="flex:1;" id="btnDeleteYakin" disabled>Ya, Hapus</button>
       </div>
     </div>
+  </div>
+
+  <!-- Editor gambar Bukti: putar, coret, tambah teks -->
+  <div class="bukti-editor" id="overlayBuktiEditor">
+    <div class="be-top">
+      <button type="button" class="be-btn" id="beCancel">Batal</button>
+      <span class="be-title">Edit Gambar</span>
+      <button type="button" class="be-btn be-save" id="beSave">Simpan</button>
+    </div>
+    <div class="be-stage"><canvas id="beCanvas"></canvas></div>
+    <div class="be-textbar" id="beTextBar">
+      <input type="text" id="beTextInput" maxlength="80" placeholder="Ketik teks lalu tekan Tambah" autocomplete="off">
+      <button type="button" class="be-btn be-save" id="beTextAdd">Tambah</button>
+    </div>
+    <div class="be-tools">
+      <div class="be-row">
+        <button type="button" class="be-tool on" data-mode="draw">Coret</button>
+        <button type="button" class="be-tool" data-mode="text">Teks</button>
+        <button type="button" class="be-tool" id="beRotL">Putar Kiri</button>
+        <button type="button" class="be-tool" id="beRotR">Putar Kanan</button>
+        <button type="button" class="be-tool" id="beUndo">Urungkan</button>
+      </div>
+      <div class="be-row">
+        <div class="be-row" id="beColors">
+          <button type="button" class="be-color on" data-c="#E53935" style="background:#E53935" aria-label="Merah"></button>
+          <button type="button" class="be-color" data-c="#111111" style="background:#111111" aria-label="Hitam"></button>
+          <button type="button" class="be-color" data-c="#FFFFFF" style="background:#FFFFFF" aria-label="Putih"></button>
+          <button type="button" class="be-color" data-c="#FFD600" style="background:#FFD600" aria-label="Kuning"></button>
+        </div>
+        <input type="range" id="beSize" min="2" max="24" value="6" aria-label="Ukuran">
+      </div>
+    </div>
+    <div class="be-marker" id="beMarker"></div>
   </div>
 
   <!-- Viewer bukti: tap thumbnail buat lihat ukuran penuh, geser (swipe) kalau ada 2 gambar -->
@@ -1606,7 +1666,7 @@
     });
   }
   function canvasToJpeg(img, maxDim, quality){
-    let w = img.naturalWidth, h = img.naturalHeight;
+    let w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
     const longest = Math.max(w, h);
     if (longest > maxDim) { const r = maxDim / longest; w = Math.round(w * r); h = Math.round(h * r); }
     const canvas = document.createElement('canvas');
@@ -1629,6 +1689,144 @@
     }
     return best;
   }
+
+  async function compressCanvas(canvas){
+    let best = null;
+    for (const [dim, q] of BUKTI_STEPS) {
+      const blob = await canvasToJpeg(canvas, dim, q);
+      if (!best || blob.size < best.size) best = blob;
+      if (blob.size <= BUKTI_TARGET_BYTES) break;
+    }
+    return best;
+  }
+
+  // ---- Editor gambar Bukti: putar, coret, tambah teks ----
+  const BE_MAX_DIM = 1280, BE_MAX_UNDO = 6;
+  const beCv = document.getElementById('beCanvas');
+  const beTextBar = document.getElementById('beTextBar');
+  const beTextInput = document.getElementById('beTextInput');
+  const beMarker = document.getElementById('beMarker');
+  const beSize = document.getElementById('beSize');
+  let beMode = 'draw', beColor = '#E53935', beTextPos = null, beDone = null, beDrawing = false, beLast = null;
+  const beHist = [];
+
+  function beClearText(){ beTextPos = null; beMarker.style.display = 'none'; beTextBar.style.display = 'none'; beTextInput.value = ''; }
+  function beSetMode(m){
+    beMode = m;
+    document.querySelectorAll('.be-tool[data-mode]').forEach(b => b.classList.toggle('on', b.dataset.mode === m));
+    if (m !== 'text') beClearText();
+  }
+  function beSnapshot(){
+    const c = document.createElement('canvas');
+    c.width = beCv.width; c.height = beCv.height;
+    c.getContext('2d').drawImage(beCv, 0, 0);
+    beHist.push(c);
+    if (beHist.length > BE_MAX_UNDO) beHist.shift();
+  }
+  function beUndo(){
+    const c = beHist.pop();
+    if (!c) return;
+    beClearText();
+    beCv.width = c.width; beCv.height = c.height;
+    beCv.getContext('2d').drawImage(c, 0, 0);
+  }
+  function beRotate(dir){ // 1 = kanan, -1 = kiri
+    beClearText();
+    beSnapshot();
+    const src = beHist[beHist.length - 1];
+    beCv.width = src.height; beCv.height = src.width;
+    const ctx = beCv.getContext('2d');
+    ctx.translate(beCv.width / 2, beCv.height / 2);
+    ctx.rotate(dir * Math.PI / 2);
+    ctx.drawImage(src, -src.width / 2, -src.height / 2);
+  }
+  function bePoint(e){
+    const r = beCv.getBoundingClientRect();
+    const k = beCv.width / r.width;
+    return { x: (e.clientX - r.left) * k, y: (e.clientY - r.top) * k, k: k };
+  }
+  function beStroke(a, b){
+    const ctx = beCv.getContext('2d');
+    ctx.strokeStyle = beColor; ctx.lineWidth = Number(beSize.value) * a.k;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  function beAddText(){
+    const t = beTextInput.value.trim();
+    if (!t || !beTextPos) return;
+    beSnapshot();
+    const ctx = beCv.getContext('2d');
+    const fs = Math.round(Number(beSize.value) * 4 * beTextPos.k);
+    ctx.font = '800 ' + fs + 'px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, fs / 6);
+    ctx.strokeStyle = beColor.toLowerCase() === '#111111' ? '#ffffff' : '#111111';
+    ctx.strokeText(t, beTextPos.x, beTextPos.y);
+    ctx.fillStyle = beColor;
+    ctx.fillText(t, beTextPos.x, beTextPos.y);
+    beClearText();
+  }
+  function beFinish(save){
+    closeOverlay('overlayBuktiEditor');
+    beClearText();
+    const done = beDone; beDone = null;
+    if (!done) return;
+    if (!save || !beHist.length) { done(null); return; } // batal / tidak ada perubahan
+    compressCanvas(beCv).then(done).catch(() => { showMigrationToast('Gagal memproses gambar.'); done(null); });
+  }
+  // Buka editor untuk satu gambar -> Promise<Blob JPEG | null>
+  function openBuktiEditor(src){
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onerror = () => { showMigrationToast('Gambar ini tidak bisa diedit.'); resolve(null); };
+      img.onload = () => {
+        const longest = Math.max(img.naturalWidth, img.naturalHeight);
+        const r = longest > BE_MAX_DIM ? BE_MAX_DIM / longest : 1;
+        beCv.width = Math.round(img.naturalWidth * r); beCv.height = Math.round(img.naturalHeight * r);
+        const ctx = beCv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, beCv.width, beCv.height);
+        ctx.drawImage(img, 0, 0, beCv.width, beCv.height);
+        beHist.length = 0; beDone = resolve;
+        beSetMode('draw');
+        openOverlay('overlayBuktiEditor');
+      };
+      img.src = src;
+    });
+  }
+  beCv.addEventListener('pointerdown', (e) => {
+    const p = bePoint(e);
+    if (beMode === 'text') {
+      beTextPos = p;
+      beMarker.style.left = e.clientX + 'px'; beMarker.style.top = e.clientY + 'px'; beMarker.style.display = 'block';
+      beTextBar.style.display = 'flex'; beTextInput.focus();
+      return;
+    }
+    e.preventDefault();
+    beSnapshot();
+    beDrawing = true; beLast = p;
+    try { beCv.setPointerCapture(e.pointerId); } catch (err) {}
+    beStroke(p, p);
+  });
+  beCv.addEventListener('pointermove', (e) => {
+    if (!beDrawing) return;
+    const p = bePoint(e);
+    beStroke(beLast, p); beLast = p;
+  });
+  ['pointerup', 'pointercancel'].forEach(t => beCv.addEventListener(t, () => { beDrawing = false; }));
+  document.querySelectorAll('.be-tool[data-mode]').forEach(b => b.addEventListener('click', () => beSetMode(b.dataset.mode)));
+  document.getElementById('beRotL').addEventListener('click', () => beRotate(-1));
+  document.getElementById('beRotR').addEventListener('click', () => beRotate(1));
+  document.getElementById('beUndo').addEventListener('click', beUndo);
+  document.getElementById('beTextAdd').addEventListener('click', beAddText);
+  document.getElementById('beCancel').addEventListener('click', () => beFinish(false));
+  document.getElementById('beSave').addEventListener('click', () => beFinish(true));
+  document.getElementById('beColors').addEventListener('click', (e) => {
+    const b = e.target.closest('.be-color');
+    if (!b) return;
+    beColor = b.dataset.c;
+    document.querySelectorAll('#beColors .be-color').forEach(x => x.classList.toggle('on', x === b));
+  });
 
   async function imgbbUploadOnce(blob){
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1694,16 +1892,17 @@
           <img src="${escapeHtml(it.previewUrl || it.url || '')}" alt="Bukti ${i + 1}">
           ${it.status === 'uploading' ? '<div class="bukti-thumb-spinner"></div>' : ''}
           ${it.status === 'error' ? '<div class="bukti-thumb-error" title="Gagal upload — tap untuk hapus lalu coba lagi">!</div>' : ''}
+          ${it.status === 'done' ? `<button type="button" class="bukti-thumb-edit" data-idx="${i}" aria-label="Edit gambar">Edit</button>` : ''}
           <button type="button" class="bukti-thumb-remove" data-idx="${i}" aria-label="Hapus gambar">&times;</button>
         </div>
       `).join('');
       cfg.dropzone.classList.toggle('has-items', items.length > 0);
-      cfg.dropzone.classList.toggle('full', items.length >= 2);
+      cfg.dropzone.classList.toggle('full', items.length >= 4);
     }
 
     async function addFiles(fileList){
-      const remaining = 2 - items.length;
-      if (remaining <= 0) { showMigrationToast('Maksimal 2 gambar bukti.'); return; }
+      const remaining = 4 - items.length;
+      if (remaining <= 0) { showMigrationToast('Maksimal 4 gambar bukti.'); return; }
       const files = Array.from(fileList || []).filter(f => f.type && f.type.startsWith('image/')).slice(0, remaining);
       if (!files.length) return;
       for (const file of files) {
@@ -1724,6 +1923,25 @@
       }
     }
 
+    async function editItem(idx){
+      const it = items[idx];
+      if (!it || it.status !== 'done') return;
+      const blob = await openBuktiEditor(it.previewUrl || it.url);
+      if (!blob) return;
+      const prev = { url: it.url, path: it.path, previewUrl: it.previewUrl };
+      it.previewUrl = URL.createObjectURL(blob); it.status = 'uploading';
+      render();
+      try {
+        const { url, path } = await uploadBukti(blob);
+        it.url = url; it.path = path; it.status = 'done';
+      } catch (err) {
+        console.error('Upload hasil edit gagal:', err);
+        it.url = prev.url; it.path = prev.path; it.previewUrl = prev.previewUrl; it.status = 'done';
+        showMigrationToast('Upload hasil edit gagal: ' + (err && err.message ? err.message : 'coba lagi'));
+      }
+      render();
+    }
+
     cfg.btnGaleri.addEventListener('click', () => cfg.inputGaleri.click());
     cfg.btnKamera.addEventListener('click', () => cfg.inputKamera.click());
     cfg.inputGaleri.addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
@@ -1742,6 +1960,8 @@
     });
 
     cfg.thumbs.addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.bukti-thumb-edit');
+      if (editBtn) { editItem(Number(editBtn.dataset.idx)); return; }
       const removeBtn = e.target.closest('.bukti-thumb-remove');
       if (removeBtn) {
         const idx = Number(removeBtn.dataset.idx);
@@ -3028,6 +3248,31 @@
   //  (recomputeOrigin), jadi aman diulang dan tidak bisa "setengah jadi".
   // =====================================================================
   const gid = (id) => document.getElementById(id);
+
+  // Keterangan: baris berawalan "1. " -> Enter otomatis lanjut ke "2. ", dst.
+  // Enter di baris yang nomornya masih kosong = nomor dihapus (keluar dari daftar).
+  function setupAutoNumber(el){
+    if (!el) return;
+    function apply(e){
+      const pos = el.selectionStart;
+      if (pos !== el.selectionEnd) return;
+      const val = el.value;
+      const lineStart = val.lastIndexOf('\n', pos - 1) + 1;
+      let lineEnd = val.indexOf('\n', pos);
+      if (lineEnd < 0) lineEnd = val.length;
+      const m = /^(\s*)(\d+)\.[ \t](.*)$/.exec(val.slice(lineStart, lineEnd));
+      if (!m) return;
+      if (pos < lineStart + m[1].length + m[2].length + 2) return; // kursor masih di dalam nomor
+      e.preventDefault();
+      if (!m[3].trim()) el.setRangeText('', lineStart, lineEnd, 'end');
+      else el.setRangeText('\n' + m[1] + (Number(m[2]) + 1) + '. ', pos, pos, 'end');
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    el.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) apply(e); });
+    el.addEventListener('beforeinput', (e) => { if (e.inputType === 'insertLineBreak' || e.inputType === 'insertParagraph') apply(e); });
+  }
+  setupAutoNumber(gid('inputKeterangan'));
+  setupAutoNumber(gid('detKetEdit'));
   const LABEL_CENTANG_VAL = '\u2713';
   const CENT_G = /[\u221A\u2713\u2714\u2611\u2705]/g;
 
