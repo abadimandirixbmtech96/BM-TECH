@@ -29,7 +29,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const MODELS = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v7-rich-2026-11-09';
+const VERSION = 'jarvis-v8-rekap-2026-11-09';
 const MAX_TOOL_ROUNDS = 8;
 const MAX_RESULT_CHARS = 14000;
 const MAX_ROWS = 60;
@@ -279,6 +279,116 @@ async function t_list_values(q, a) {
   return { cakupan: name, field: a.field, jumlah_nilai_unik: all.length, baris_berisi_field_ini: used, baris_diperiksa: scanned, daftar: all.slice(0, lim).map((x) => x.nama + ' (' + x.n + 'x)'), dipotong: all.length > lim || undefined };
 }
 
+/* ---------- REKAP: tabel IDENTIK dengan aplikasi (kolom, urutan, format, aturan pekan & PJ) ----------
+ * Aturan aplikasi (dashboard-admin.html): pekan = Kamis..Rabu, "Pekan N" = ceil(tanggal Kamis awal / 7) pada bulan Kamis itu;
+ * pekan sebuah note ditentukan tanggal di JUDUL note; filter PJ = cocok per KATA ("Yono x amin" masuk rekap Amin).
+ * Tabel dibuat SERVER (bukan disalin model) -> angka & urutan pasti sama dengan data. */
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const REKAP_COLS = {
+  'admin-data-v1': [['no', 'No'], ['tanggal', 'Tanggal'], ['jam', 'Jam'], ['pj', 'PJ'], ['customer', 'Customer'], ['barang', 'Barang'], ['barangKeluar', 'Barang Keluar'], ['stokBarang', 'Stok Barang'], ['keterangan', 'Keterangan'], ['harga', 'Harga'], ['metode', 'Metode'], ['bukti', 'Bukti']],
+  'kasbon-data-v1': [['no', 'No'], ['tanggal', 'Tanggal'], ['jam', 'Jam'], ['nama', 'Nama'], ['total', 'Total Tagihan'], ['dibayar', 'Dibayar'], ['sisa', 'Sisa Tagihan'], ['keterangan', 'Keterangan']],
+  'hutangpiutang-data-v1': [['no', 'No'], ['tanggal', 'Tanggal'], ['jam', 'Jam'], ['jenis', 'Jenis'], ['nama', 'Nama'], ['total', 'Total'], ['dibayar', 'Dibayar'], ['sisa', 'Sisa'], ['keterangan', 'Keterangan']],
+  'warung-data-v1': [['no', 'No'], ['tanggal', 'Tanggal'], ['jam', 'Jam'], ['nama', 'Nama Barang'], ['jumlah', 'Jumlah'], ['keterangan', 'Keterangan'], ['nominal', 'Harga']],
+  'operasional-data-v1': [['no', 'No'], ['tanggal', 'Date'], ['jam', 'Time'], ['buyer', 'Buyer'], ['seller', 'Seller'], ['item', 'Item'], ['keterangan', 'Remarks'], ['harga', 'Price'], ['metode', 'Metode'], ['bukti', 'Proof']]
+};
+const MONEY_KEYS = new Set(['harga', 'total', 'dibayar', 'sisa', 'nominal']);
+function fmtId(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function ymd(d) { return d.toISOString().slice(0, 10); }
+function utcDate(s) { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); }
+function weekInfo(s) {
+  const a = utcDate(s); a.setUTCDate(a.getUTCDate() - ((a.getUTCDay() - 4 + 7) % 7));
+  const b = new Date(a); b.setUTCDate(b.getUTCDate() + 6);
+  return { dari: ymd(a), sampai: ymd(b), label: 'Pekan ' + (Math.floor((a.getUTCDate() - 1) / 7) + 1) + ' ' + MONTH_SHORT[a.getUTCMonth()] + ' ' + a.getUTCFullYear() };
+}
+function todayWib() { return new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10); }
+function noteDay(n) {
+  const m = String(n.title || '').match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+  if (m) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; const s = y + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0'); if (!isNaN(utcDate(s)) && +m[2] <= 12 && +m[1] <= 31) return s; }
+  return wibDate(n.created_at).slice(0, 10);
+}
+const dmy = (s) => s ? s.slice(8, 10) + '-' + s.slice(5, 7) + '-' + s.slice(0, 4) : '';
+function metodeOf(r) {
+  if (r.metode === 'cash') return 'Cash'; if (r.metode === 'transfer') return 'Transfer';
+  if (r.metode === 'campur') return (r.bayarCash || r.bayarTransfer) ? 'Cash ' + fmtId(r.bayarCash) + ' + Transfer ' + fmtId(r.bayarTransfer) : 'Cash + Transfer';
+  return '';
+}
+function recToCells(schema, r) {
+  const w = wibDate(r.created_at), c = { tanggal: dmy(w.slice(0, 10)), jam: w.slice(11, 16) };
+  const money = {};
+  (REKAP_COLS[schema] || []).forEach(([k]) => {
+    if (k === 'no' || k === 'tanggal' || k === 'jam') return;
+    if (k === 'sisa') { c.sisa = r.total != null ? fmtId((Number(r.total) || 0) - (Number(r.dibayar) || 0)) : ''; money.sisa = (Number(r.total) || 0) - (Number(r.dibayar) || 0); return; }
+    if (k === 'metode') { c.metode = metodeOf(r); return; }
+    if (k === 'bukti') { c.bukti = Array.isArray(r.bukti) && r.bukti.length ? 'Ada (' + r.bukti.length + ')' : ''; return; }
+    const v = r[k]; if (MONEY_KEYS.has(k)) { c[k] = (v === undefined || v === null || v === '') ? '' : (typeof v === 'number' ? fmtId(v) : String(v)); const m = parseMoney(v); if (m !== null) money[k] = m; }
+    else c[k] = v == null ? '' : String(v);
+  });
+  return { cells: c, money, stamp: r.created_at || '' };
+}
+function legacyToCells(lg, row) {   // format lama BUKU BESAR (kolom acak) -> kolom admin-data-v1, dicocokkan lewat label
+  const label = {}; (lg.columns || []).forEach((x) => { label[x.id] = keyNorm(x.label); });
+  const get = (re) => { const k = Object.keys(row.cells || {}).find((id) => re.test(label[id] || '')); return k ? String(row.cells[k] == null ? '' : row.cells[k]) : ''; };
+  const t = legacyDate(get(/^tanggal$/));
+  const harga = get(/^harga$|nominal/);
+  return { cells: { tanggal: dmy(t), jam: get(/^jam$/), pj: get(/pjawab|penanggung|^pj$/), customer: get(/customer|^nama$/), barang: get(/barangdanjumlah|^barang$/), barangKeluar: get(/barangyangdibawa/), stokBarang: get(/barangyangditinggal/), keterangan: get(/keterangan/), harga, metode: '', bukti: '' }, money: { harga: parseMoney(harga) }, stamp: t, day: t };
+}
+function pjMatch(val, name) { const k = keyNorm(name); return String(val || '').split(/[^A-Za-z0-9]+/).some((tok) => tok && keyNorm(tok) === k); }
+
+async function t_rekap(q, a) {
+  const f = await resolveFolder(q, a.folder || 'BUKU BESAR');
+  if (!f) return { error: 'Folder "' + a.folder + '" tidak ditemukan' };
+  const notes = await fetchNotes(q, f.id);
+  const schema = ((notes.find((n) => n.content && n.content.schema) || {}).content || {}).schema || 'admin-data-v1';
+  const cols = REKAP_COLS[schema]; if (!cols) return { error: 'Buku ini belum didukung untuk rekap' };
+
+  /* periode */
+  let dari = /^\d{4}-\d{2}-\d{2}$/.test(a.dari || '') ? a.dari : '', sampai = /^\d{4}-\d{2}-\d{2}$/.test(a.sampai || '') ? a.sampai : '', plabel = 'Semua Data';
+  const pk = lower(a.pekan);
+  if (pk) {
+    let ref = todayWib();
+    if (pk === 'lalu') { const d = utcDate(ref); d.setUTCDate(d.getUTCDate() - 7); ref = ymd(d); } else if (/^\d{4}-\d{2}-\d{2}$/.test(pk)) ref = pk;
+    const wk = weekInfo(ref); dari = wk.dari; sampai = wk.sampai; plabel = wk.label;
+  } else if (/^\d{4}-\d{2}$/.test(a.bulan || '')) {
+    const [y, m] = a.bulan.split('-').map(Number); dari = a.bulan + '-01'; sampai = ymd(new Date(Date.UTC(y, m, 0))); plabel = MONTH_SHORT[m - 1] + ' ' + y;
+  } else if (dari || sampai) plabel = (dari ? dmy(dari) : '…') + ' s/d ' + (sampai ? dmy(sampai) : '…');
+
+  /* filter (mengikuti aplikasi: PJ per kata; lainnya "mengandung") */
+  const ff = a.filter_field ? keyNorm(a.filter_field) : '', fv = a.filter_nilai ? String(a.filter_nilai).trim() : '';
+  const match = (cells) => {
+    if (!fv) return true;
+    const key = ff ? (Object.keys(cells).find((k) => keyNorm(k) === ff || keyNorm(k).includes(ff))) : null;
+    if (key === 'pj' || ff === 'pj' || ff === 'pjawab') return pjMatch(cells.pj, fv);
+    if (key) return norm(cells[key]).includes(norm(fv));
+    return norm(Object.values(cells).join(' ')).includes(norm(fv));   // tanpa field: cari di semua kolom
+  };
+
+  const pool = [];
+  notes.forEach((n) => {
+    const day = noteDay(n);
+    if ((dari && day < dari) || (sampai && day > sampai)) return;
+    const recs = (n.content && Array.isArray(n.content.records)) ? [...n.content.records].sort((x, y) => new Date(x.created_at) - new Date(y.created_at)) : [];
+    recs.forEach((r) => { if (r && typeof r === 'object') pool.push(Object.assign(recToCells(schema, r), { day, ncr: n.created_at })); });
+    const lg = n.content && n.content.legacy;
+    if (schema === 'admin-data-v1' && lg && Array.isArray(lg.rows)) lg.rows.forEach((r) => { const x = legacyToCells(lg, r); pool.push(Object.assign(x, { day, ncr: n.created_at })); });
+  });
+  pool.sort((x, y) => (x.day < y.day ? -1 : x.day > y.day ? 1 : (new Date(x.ncr) - new Date(y.ncr)) || (x.stamp < y.stamp ? -1 : 1)));
+  const picked = pool.filter((p) => match(p.cells));
+  const truncated = picked.length > 400; const rowsP = picked.slice(0, 400);
+
+  const rows = rowsP.map((p, i) => cols.map(([k]) => k === 'no' ? String(i + 1).padStart(3, '0') : (p.cells[k] == null ? '' : p.cells[k])));
+  const sums = {}; const totalsOf = ['harga', 'total', 'dibayar', 'sisa', 'nominal'].filter((k) => cols.some(([c]) => c === k));
+  rowsP.forEach((p) => totalsOf.forEach((k) => { if (p.money[k] != null && isFinite(p.money[k])) sums[k] = (sums[k] || 0) + p.money[k]; }));
+  const labelOf = Object.fromEntries(cols);
+  const totals = totalsOf.filter((k) => sums[k] != null).map((k) => ({ label: 'Total ' + labelOf[k], kolom: labelOf[k], nilai: fmtId(sums[k]), angka: sums[k] }));
+
+  const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+  const judul = clip(a.judul, 90) || ('Rekap ' + (fv ? cap(fv) : f.name) + ' - ' + plabel);
+  const days = rowsP.map((p) => p.day).filter(Boolean).sort();
+  const cnt = (key) => { const m = {}; rowsP.forEach((p) => { const v = String(p.cells[key] || '').trim(); if (v) m[v] = (m[v] || 0) + 1; }); return Object.entries(m).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([k, v]) => k + ' (' + v + 'x)'); };
+  const report = { title: judul, folder: f.name, periode: plabel, rentang: (dari || sampai) ? { dari, sampai } : null, columns: cols.map(([, l]) => l), keys: cols.map(([k]) => k), rows, totals, truncated: truncated || undefined, total_baris: picked.length, orientation: cols.length > 6 ? 'landscape' : 'portrait' };
+  return { report, ringkasan: { judul, folder: f.name, periode: plabel, jumlah_baris: picked.length, dari_total_baris_pool: pool.length, tanggal_awal: days[0] ? dmy(days[0]) : null, tanggal_akhir: days.length ? dmy(days[days.length - 1]) : null, total: totals.map((t) => t.label + ': Rp' + t.nilai), customer_terbanyak: cnt('customer') || undefined, pj_terbanyak: cnt('pj') || undefined, barang_terbanyak: cnt('barang').slice(0, 3), dipotong: truncated || undefined, catatan: 'Tabel LENGKAP & PDF sudah dibuat otomatis oleh sistem dan tampil di layar. JANGAN menulis ulang tabel. Tulis hanya 1 kalimat inti + 3-4 butir temuan dari data ringkasan ini; sebut periode & cakupan (' + plabel + ', ' + picked.length + ' baris).' } };
+}
+
 /* ---------- alat TULIS (hanya membuat usulan) ---------- */
 function newRecId() { return 'r_' + Date.now().toString(36) + '_' + crypto.randomBytes(4).toString('hex').slice(0, 7); }
 function templateOf(note) {
@@ -363,6 +473,7 @@ const TOOLS = {
   get_note: { fn: t_get_note, decl: { name: 'get_note', description: 'Baca semua baris data sebuah note (maks 60 baris per panggilan; pakai mulai_baris untuk lanjut). Mengembalikan nomor baris dan nama field.', parameters: { type: 'OBJECT', properties: { note_id: { type: 'STRING' }, mulai_baris: { type: 'INTEGER', description: '0 = baris pertama' } }, required: ['note_id'] } } },
   search_data: { fn: t_search_data, decl: { name: 'search_data', description: 'Cari kata (nama customer, barang, dll) di SEMUA baris SEMUA note (atau satu folder). Hasil menyebut berapa note & baris yang diperiksa. Ejaan mirip dicoba otomatis bila tidak ada yang persis.', parameters: { type: 'OBJECT', properties: { kata: { type: 'STRING' }, folder: { type: 'STRING' } }, required: ['kata'] } } },
   list_values: { fn: t_list_values, decl: { name: 'list_values', description: 'Daftar nilai unik sebuah field beserta jumlah kemunculannya (mis. semua nama customer, semua barang). Pakai untuk pertanyaan "siapa saja" / "daftar nama" / "yang paling sering".', parameters: { type: 'OBJECT', properties: { field: { type: 'STRING', description: 'mis. customer, nama, barang, pj' }, folder: { type: 'STRING' }, limit: { type: 'INTEGER' } }, required: ['field'] } } },
+  rekap: { fn: t_rekap, decl: { name: 'rekap', description: 'Buat REKAP/LAPORAN berbentuk tabel PERSIS seperti di aplikasi (kolom & urutan sama). Wajib dipakai untuk permintaan "rangkum / rekap / laporan / data X pekan ini / bulan ini". Server membuat tabel lengkap + tombol PDF otomatis; kamu hanya menulis ringkasan. Pekan mengikuti aplikasi: Kamis-Rabu. Contoh "rekap Amin pekan ini": folder BUKU BESAR, filter_field pj, filter_nilai Amin, pekan ini.', parameters: { type: 'OBJECT', properties: { folder: { type: 'STRING', description: 'default BUKU BESAR' }, filter_field: { type: 'STRING', description: 'pj, customer, nama, barang, … (kosong = cari di semua kolom)' }, filter_nilai: { type: 'STRING', description: 'nama yang dicari, mis. Amin' }, pekan: { type: 'STRING', description: '"ini", "lalu", atau tanggal YYYY-MM-DD di dalam pekan itu' }, bulan: { type: 'STRING', description: 'YYYY-MM (bila bukan per pekan)' }, dari: { type: 'STRING' }, sampai: { type: 'STRING' }, judul: { type: 'STRING' } }, required: ['folder'] } } },
   sum_field: { fn: t_sum_field, decl: { name: 'sum_field', description: 'Jumlahkan sebuah field angka (harga, total, dibayar, nominal, …) di satu note, satu folder, atau semua folder, opsional dalam rentang tanggal (YYYY-MM-DD) dan dikelompokkan per field lain (mis. customer). WAJIB dipakai untuk setiap total/rekap; jangan menghitung sendiri.', parameters: { type: 'OBJECT', properties: { field: { type: 'STRING' }, folder: { type: 'STRING' }, note_id: { type: 'STRING' }, dari: { type: 'STRING' }, sampai: { type: 'STRING' }, kelompok: { type: 'STRING', description: 'nama field untuk pengelompokan, mis. customer' } }, required: ['field'] } } },
   open_folder: { fn: nav_open_folder, decl: { name: 'open_folder', description: 'Buka sebuah folder/buku di layar dashboard (mis. "buka buku besar").', parameters: { type: 'OBJECT', properties: { folder: { type: 'STRING' } }, required: ['folder'] } } },
   open_note: { fn: nav_open_note, decl: { name: 'open_note', description: 'Buka detail sebuah note di layar.', parameters: { type: 'OBJECT', properties: { note_id: { type: 'STRING' } }, required: ['note_id'] } } },
@@ -411,7 +522,7 @@ async function audit(q, uid, email, p, ok, msg) {
 }
 
 /* ---------- label langkah untuk tampilan progres ---------- */
-const rp = (n) => 'Rp' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+const rp = (n) => 'Rp' + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 function stepLabel(name, a) {
   a = a || {};
   switch (name) {
@@ -420,6 +531,7 @@ function stepLabel(name, a) {
     case 'get_note': return 'Membaca isi catatan';
     case 'search_data': return 'Mencari “' + clip(a.kata, 40) + '” di ' + (a.folder ? clip(a.folder, 40) : 'semua catatan');
     case 'list_values': return 'Mendaftar ' + clip(a.field, 30) + (a.folder ? ' di ' + clip(a.folder, 40) : ' dari semua catatan');
+    case 'rekap': return 'Menyusun rekap ' + (a.filter_nilai ? clip(a.filter_nilai, 30) + ' ' : '') + 'di ' + clip(a.folder || 'BUKU BESAR', 40) + (a.pekan ? ' (pekan ' + clip(a.pekan, 12) + ')' : '');
     case 'sum_field': return 'Menghitung total ' + clip(a.field, 30) + (a.folder ? ' di ' + clip(a.folder, 40) : '');
     case 'open_folder': return 'Membuka folder ' + clip(a.folder, 40);
     case 'open_note': return 'Membuka catatan';
@@ -439,6 +551,7 @@ function stepDone(name, r) {
     case 'get_note': return (r.total_baris || 0) + ' baris dibaca';
     case 'search_data': return (r.jumlah_ditemukan || 0) + ' data ditemukan' + (r.diperiksa ? ' · ' + r.diperiksa.jumlah_baris + ' baris diperiksa' : '') + (r.ejaan_mirip ? ' (ejaan mirip)' : '');
     case 'list_values': return (r.jumlah_nilai_unik || 0) + ' nilai unik · ' + (r.baris_diperiksa || 0) + ' baris diperiksa';
+    case 'rekap': return (r.ringkasan ? r.ringkasan.jumlah_baris : 0) + ' baris direkap · ' + ((r.ringkasan && r.ringkasan.total && r.ringkasan.total[0]) || 'tanpa total') + ' · ' + (r.ringkasan ? r.ringkasan.periode : '');
     case 'sum_field': return 'Total ' + rp(r.total) + ' · ' + (r.baris_terhitung || 0) + ' baris dihitung';
     case 'open_folder': case 'open_note': case 'open_page': return 'Ditampilkan di layar';
     case 'add_row': case 'update_field': case 'create_note': return 'Menunggu persetujuanmu';
@@ -453,7 +566,8 @@ function systemPrompt(email) {
     'Kamu adalah JARVIS, asisten suara/teks untuk aplikasi pencatatan bengkel BM-TECH. Pengguna: admin (' + email + ').',
     'Waktu sekarang (WIB): ' + now + '. Mata uang Rupiah. Jawab dalam bahasa pengguna (default Indonesia), profesional, ringkas, tanpa emoji.',
     'FORMAT JAWABAN (layar merender ini; aman dipakai): judul "## Judul", daftar "- butir", tabel pipa "| Kolom A | Kolom B |" diikuti baris pemisah "| --- | --- |", dan **tebal**. Kalimat PERTAMA selalu ringkasan 1 kalimat yang enak dibacakan keras (tanpa simbol). Pakai TABEL bila ada 3+ baris data atau 3+ kolom; jangan membuat tabel untuk jawaban 1-2 fakta. Salin nama/angka PERSIS dari hasil alat dan tulis uang sebagai "Rp190.000". Tabel maksimal 30 baris; bila lebih, tampilkan 30 teratas dan sebut "dan N baris lainnya".',
-    'PERMINTAAN "rangkum / ringkas / rekap / laporan": panggil alat yang relevan (search_data / sum_field / list_values / get_note), lalu tulis: ## judul, 1 kalimat inti, 3-5 butir temuan (jumlah transaksi, total uang lewat sum_field, rentang tanggal, barang/pelanggan tersering), lalu tabel rincian. Di akhir boleh satu butir catatan/saran bila relevan. Layar otomatis menampilkan tombol unduh PDF di bawah jawaban.',
+    'PERMINTAAN "rangkum / ringkas / rekap / laporan / data si X pekan ini": WAJIB panggil alat rekap (bukan search_data). Sistem sendiri menampilkan tabel lengkap persis seperti di aplikasi + tombol PDF, jadi JANGAN menulis tabel lagi. Tulis saja: 1 kalimat inti, lalu 3-4 butir temuan dari data ringkasan alat (jumlah transaksi, total uang yang DIKEMBALIKAN alat, rentang tanggal, pelanggan/barang tersering). Total harus sesuai cakupan yang diminta (mis. pekan itu saja), jangan pernah menyebut total seluruh buku sebagai total periode.',
+    'PEKAN mengikuti aplikasi: Kamis sampai Rabu. "Pekan ini" = pekan berjalan; "Pekan 1 Nov 2026" = pekan yang Kamis-awalnya jatuh di tanggal 1-7 November. Rekap per orang memakai filter_field pj (cocok per kata: "Yono x amin" termasuk rekap Amin). Tabel lain (bukan rekap) boleh pakai tabel pipa.',
     'Gunakan alat untuk mengambil data nyata; JANGAN mengarang. Untuk total/rekap WAJIB pakai sum_field (jangan menghitung sendiri). Field berbeda per buku (BUKU BESAR: customer, barang, harga; KASBON/HUTANG: nama, total, dibayar; WARUNG: nama, nominal; OPERASIONAL: item, harga) — panggil list_folders bila ragu.',
     'Riwayat percakapan (termasuk jawaban "tidak ditemukan" sebelumnya) bisa keliru atau basi: untuk SETIAP pertanyaan data, panggil alat lagi; jangan menyalin jawaban lama. Untuk "siapa saja / daftar nama" pakai list_values; untuk mencari satu nama pakai search_data.',
     'KEJUJURAN: jangan pernah bilang "saya bisa melihat semua data" secara umum. Sebut cakupan nyata dari hasil alat (mis. "dari 61 note dan 1041 baris yang saya periksa"). Jika tidak ketemu, katakan "tidak ada di N note/M baris yang saya periksa", bukan "tidak ada data". Yang TIDAK terbaca: baris yang sudah dihapus (sampah), isi foto bukti, dan data di luar aplikasi. Jika hasil bertanda ejaan mirip, tanyakan konfirmasi ke pengguna. Jika alat error, katakan error-nya, jangan menyimpulkan data kosong.',
@@ -567,6 +681,7 @@ module.exports = async function handler(req, res) {
     const decls = Object.values(TOOLS).map((t) => t.decl);
     const actions = [];      // perintah UI untuk browser
     const proposals = [];    // usulan tulis (bertanda tangan)
+    const reports = [];      // tabel rekap buatan server (tampil + PDF)
     let reply = '';
     const gctx = { idx: 0, model: '', t0: Date.now() };
 
@@ -592,6 +707,7 @@ module.exports = async function handler(req, res) {
         else {
           try {
             result = await tool.fn(q, args);
+            if (result && result.report) { reports.push(result.report); const summ = result.ringkasan; result = { ringkasan: summ, report: undefined }; result.__rep = true; }
             if (result && result.ui) { actions.push(result.ui); result = { ok: true, catatan: 'Perintah tampilan dikirim ke layar admin.' }; }
             if (result && result.proposal) {
               const pr = result.proposal;
@@ -602,6 +718,7 @@ module.exports = async function handler(req, res) {
           } catch (e) { result = { error: clip(e.message, 200) }; }
         }
         emit({ type: 'step', id: sid, state: (result && result.error) ? 'err' : 'ok', text: stepDone(name, result) });
+        if (result && result.__rep) delete result.__rep;
         let ser = JSON.stringify(result == null ? {} : result);
         if (ser.length > MAX_RESULT_CHARS) result = { dipotong: true, catatan: 'Hasil terlalu besar, persempit pencarian', sebagian: ser.slice(0, MAX_RESULT_CHARS) };
         respParts.push({ functionResponse: { name, response: { result } } });
@@ -609,7 +726,7 @@ module.exports = async function handler(req, res) {
       contents.push({ role: 'user', parts: respParts });
     }
     if (!reply) reply = 'Perintah terlalu panjang untuk saya selesaikan sekaligus. Coba pecah jadi langkah lebih kecil.';
-    return finish({ reply, actions, proposals });
+    return finish({ reply, actions, proposals, reports });
   } catch (err) {
     if (res.headersSent || res.getHeader('Content-Type') === 'application/x-ndjson; charset=utf-8') { try { res.write(JSON.stringify({ type: 'error', error: clip(err.message || 'Jarvis gagal', 200) }) + '\n'); return res.end(); } catch (e) { return; } }
     return res.status(err.status || 500).json({ error: clip(err.message || 'Jarvis gagal', 200) });
