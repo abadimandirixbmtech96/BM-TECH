@@ -251,7 +251,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
       var txt = await r.text(), j = null; try { j = JSON.parse(txt); } catch (e) {}
       if (!j) { w.textContent = 'Server membalas HTTP ' + r.status + ' tapi bukan JSON. Kemungkinan /api/jarvis belum ter-deploy (cek file ada di folder api/ lalu Redeploy).'; return; }
       if (j.error) { w.textContent = 'HTTP ' + r.status + ': ' + j.error; return; }
-      w.textContent = 'Server Jarvis aktif.\n' + j.hasil.map(function (h) { return (h.ok ? '✓ ' : '✗ ') + h.model + ' (' + h.ms + ' ms)' + (h.error ? '\n   ' + h.error : ''); }).join('\n');
+      w.textContent = 'Server Jarvis aktif (' + (j.versi || 'VERSI LAMA — belum ter-deploy') + ').\n' + (j.data ? (j.data.error ? 'Baca data GAGAL: ' + j.data.error : 'Data terbaca: ' + j.data.note_terbaca + ' note, ' + j.data.baris_terbaca + ' baris (baris berisi "Arifin": ' + j.data.baris_berisi_arifin + ')') + '\n' : 'Pembaca data: tidak ada (kode lama)\n') + j.hasil.map(function (h) { return (h.ok ? '✓ ' : '✗ ') + h.model + ' (' + h.ms + ' ms)' + (h.error ? '\n   ' + h.error : ''); }).join('\n');
     } catch (e) { w.textContent = 'Gagal menghubungi /api/jarvis: ' + e.message + '. Server belum bisa dijangkau — pastikan file api/jarvis.js sudah ter-deploy.'; }
     finally { busy = false; }
   }
