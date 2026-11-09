@@ -29,7 +29,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const MODELS = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v8-rekap-2026-11-09';
+const VERSION = 'jarvis-v9-ai-page-2026-11-10';
 const MAX_TOOL_ROUNDS = 8;
 const MAX_RESULT_CHARS = 14000;
 const MAX_ROWS = 60;
@@ -579,8 +579,9 @@ function systemPrompt(email) {
 async function callGemini(contents, email, tools, ctx) {
   const key = process.env.GEMINI_API_KEY;
   const errs = [];
-  for (let i = ctx.idx; i < (ctx.only ? ctx.idx + 1 : MODELS.length); i++) {
-    const model = MODELS[i];
+  const LIST = ctx.list || MODELS;
+  for (let i = ctx.idx; i < (ctx.only ? ctx.idx + 1 : LIST.length); i++) {
+    const model = LIST[i];
     if (Date.now() - ctx.t0 > 45000) { errs.push('waktu habis'); break; }
     const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 20000);
     let r;
@@ -683,7 +684,8 @@ module.exports = async function handler(req, res) {
     const proposals = [];    // usulan tulis (bertanda tangan)
     const reports = [];      // tabel rekap buatan server (tampil + PDF)
     let reply = '';
-    const gctx = { idx: 0, model: '', t0: Date.now() };
+    const pref = (typeof body.model === 'string' && /^gemini-[a-z0-9.\-]{2,60}$/.test(body.model)) ? body.model : '';   // pilihan model dari halaman Jarvis AI; tetap ada cadangan
+    const gctx = { idx: 0, model: '', t0: Date.now(), list: pref ? [pref].concat(MODELS.filter((m) => m !== pref)) : MODELS };
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       gctx.mode = (round === 0 && !SMALLTALK.test(msg)) ? 'ANY' : 'AUTO';   // pertanyaan data WAJIB lewat alat, tidak boleh dijawab dari kepala model
