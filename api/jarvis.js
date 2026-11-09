@@ -29,7 +29,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const MODELS = [process.env.GEMINI_MODEL, 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-3.6-flash', 'gemini-3.1-flash-lite'].filter(Boolean);
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v6-records-2026-11-09';
+const VERSION = 'jarvis-v7-rich-2026-11-09';
 const MAX_TOOL_ROUNDS = 8;
 const MAX_RESULT_CHARS = 14000;
 const MAX_ROWS = 60;
@@ -410,12 +410,50 @@ async function audit(q, uid, email, p, ok, msg) {
   try { await q('/rest/v1/jarvis_log', { method: 'POST', body: JSON.stringify({ user_id: uid, email, op: p.op, detail: p, ok, message: clip(msg, 300) }) }); } catch (e) { /* tabel opsional */ }
 }
 
+/* ---------- label langkah untuk tampilan progres ---------- */
+const rp = (n) => 'Rp' + Math.round(Number(n) || 0).toLocaleString('id-ID');
+function stepLabel(name, a) {
+  a = a || {};
+  switch (name) {
+    case 'list_folders': return 'Membaca daftar folder';
+    case 'list_notes': return 'Membuka daftar catatan' + (a.folder ? ' di ' + clip(a.folder, 40) : '');
+    case 'get_note': return 'Membaca isi catatan';
+    case 'search_data': return 'Mencari “' + clip(a.kata, 40) + '” di ' + (a.folder ? clip(a.folder, 40) : 'semua catatan');
+    case 'list_values': return 'Mendaftar ' + clip(a.field, 30) + (a.folder ? ' di ' + clip(a.folder, 40) : ' dari semua catatan');
+    case 'sum_field': return 'Menghitung total ' + clip(a.field, 30) + (a.folder ? ' di ' + clip(a.folder, 40) : '');
+    case 'open_folder': return 'Membuka folder ' + clip(a.folder, 40);
+    case 'open_note': return 'Membuka catatan';
+    case 'open_page': return 'Membuka halaman ' + clip(a.halaman, 30);
+    case 'add_row': return 'Menyiapkan usulan baris baru';
+    case 'update_field': return 'Menyiapkan usulan perubahan';
+    case 'create_note': return 'Menyiapkan usulan catatan baru';
+    default: return 'Memproses';
+  }
+}
+function stepDone(name, r) {
+  r = r || {};
+  if (r.error) return 'Gagal: ' + clip(r.error, 90);
+  switch (name) {
+    case 'list_folders': return (r.folders || []).length + ' folder dibaca';
+    case 'list_notes': return (r.total_note != null ? r.total_note : (r.notes || []).length) + ' catatan ditemukan';
+    case 'get_note': return (r.total_baris || 0) + ' baris dibaca';
+    case 'search_data': return (r.jumlah_ditemukan || 0) + ' data ditemukan' + (r.diperiksa ? ' · ' + r.diperiksa.jumlah_baris + ' baris diperiksa' : '') + (r.ejaan_mirip ? ' (ejaan mirip)' : '');
+    case 'list_values': return (r.jumlah_nilai_unik || 0) + ' nilai unik · ' + (r.baris_diperiksa || 0) + ' baris diperiksa';
+    case 'sum_field': return 'Total ' + rp(r.total) + ' · ' + (r.baris_terhitung || 0) + ' baris dihitung';
+    case 'open_folder': case 'open_note': case 'open_page': return 'Ditampilkan di layar';
+    case 'add_row': case 'update_field': case 'create_note': return 'Menunggu persetujuanmu';
+    default: return 'Selesai';
+  }
+}
+
 /* ---------- Gemini ---------- */
 function systemPrompt(email) {
   const now = new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', dateStyle: 'full', timeStyle: 'short' });
   return [
     'Kamu adalah JARVIS, asisten suara/teks untuk aplikasi pencatatan bengkel BM-TECH. Pengguna: admin (' + email + ').',
-    'Waktu sekarang (WIB): ' + now + '. Mata uang Rupiah. Jawab dalam bahasa pengguna (default Indonesia), SINGKAT dan natural karena akan dibacakan keras; tanpa markdown, tanpa tabel, tanpa emoji. Sebut angka uang seperti "dua ratus lima puluh ribu rupiah" atau "Rp250.000".',
+    'Waktu sekarang (WIB): ' + now + '. Mata uang Rupiah. Jawab dalam bahasa pengguna (default Indonesia), profesional, ringkas, tanpa emoji.',
+    'FORMAT JAWABAN (layar merender ini; aman dipakai): judul "## Judul", daftar "- butir", tabel pipa "| Kolom A | Kolom B |" diikuti baris pemisah "| --- | --- |", dan **tebal**. Kalimat PERTAMA selalu ringkasan 1 kalimat yang enak dibacakan keras (tanpa simbol). Pakai TABEL bila ada 3+ baris data atau 3+ kolom; jangan membuat tabel untuk jawaban 1-2 fakta. Salin nama/angka PERSIS dari hasil alat dan tulis uang sebagai "Rp190.000". Tabel maksimal 30 baris; bila lebih, tampilkan 30 teratas dan sebut "dan N baris lainnya".',
+    'PERMINTAAN "rangkum / ringkas / rekap / laporan": panggil alat yang relevan (search_data / sum_field / list_values / get_note), lalu tulis: ## judul, 1 kalimat inti, 3-5 butir temuan (jumlah transaksi, total uang lewat sum_field, rentang tanggal, barang/pelanggan tersering), lalu tabel rincian. Di akhir boleh satu butir catatan/saran bila relevan. Layar otomatis menampilkan tombol unduh PDF di bawah jawaban.',
     'Gunakan alat untuk mengambil data nyata; JANGAN mengarang. Untuk total/rekap WAJIB pakai sum_field (jangan menghitung sendiri). Field berbeda per buku (BUKU BESAR: customer, barang, harga; KASBON/HUTANG: nama, total, dibayar; WARUNG: nama, nominal; OPERASIONAL: item, harga) — panggil list_folders bila ragu.',
     'Riwayat percakapan (termasuk jawaban "tidak ditemukan" sebelumnya) bisa keliru atau basi: untuk SETIAP pertanyaan data, panggil alat lagi; jangan menyalin jawaban lama. Untuk "siapa saja / daftar nama" pakai list_values; untuk mencari satu nama pakai search_data.',
     'KEJUJURAN: jangan pernah bilang "saya bisa melihat semua data" secara umum. Sebut cakupan nyata dari hasil alat (mis. "dari 61 note dan 1041 baris yang saya periksa"). Jika tidak ketemu, katakan "tidak ada di N note/M baris yang saya periksa", bukan "tidak ada data". Yang TIDAK terbaca: baris yang sudah dihapus (sampah), isi foto bukti, dan data di luar aplikasi. Jika hasil bertanda ejaan mirip, tanyakan konfirmasi ke pengguna. Jika alat error, katakan error-nya, jangan menyimpulkan data kosong.',
@@ -515,6 +553,17 @@ module.exports = async function handler(req, res) {
     });
     contents.push({ role: 'user', parts: [{ text: msg }] });
 
+    /* --- streaming: browser melihat langkah demi langkah (NDJSON). Tanpa body.stream = satu JSON biasa --- */
+    const streaming = body.stream === true;
+    const emit = (o) => { if (streaming) { try { res.write(JSON.stringify(o) + '\n'); } catch (e) {} } };
+    if (streaming) {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+      res.setHeader('X-Accel-Buffering', 'no');
+      emit({ type: 'start', versi: VERSION });
+    }
+    const finish = (obj, code) => { if (streaming) { emit(Object.assign({ type: obj.error ? 'error' : 'final' }, obj)); return res.end(); } return res.status(code || 200).json(obj); };
+
     const decls = Object.values(TOOLS).map((t) => t.decl);
     const actions = [];      // perintah UI untuk browser
     const proposals = [];    // usulan tulis (bertanda tangan)
@@ -523,6 +572,7 @@ module.exports = async function handler(req, res) {
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       gctx.mode = (round === 0 && !SMALLTALK.test(msg)) ? 'ANY' : 'AUTO';   // pertanyaan data WAJIB lewat alat, tidak boleh dijawab dari kepala model
+      emit({ type: 'status', text: round === 0 ? 'Memahami permintaan…' : 'Menyusun jawaban…' });
       const g = await callGemini(contents, user.email, decls, gctx);
       const cand = g.candidates && g.candidates[0];
       const parts = (cand && cand.content && cand.content.parts) || [];
@@ -536,6 +586,8 @@ module.exports = async function handler(req, res) {
         const name = c.functionCall.name; const args = c.functionCall.args || {};
         const tool = Object.prototype.hasOwnProperty.call(TOOLS, name) ? TOOLS[name] : null;
         let result;
+        const sid = 's' + round + '_' + name + '_' + Math.random().toString(36).slice(2, 6);
+        emit({ type: 'step', id: sid, state: 'run', text: stepLabel(name, args) });
         if (!tool) result = { error: 'Alat tidak tersedia' };
         else {
           try {
@@ -549,6 +601,7 @@ module.exports = async function handler(req, res) {
             }
           } catch (e) { result = { error: clip(e.message, 200) }; }
         }
+        emit({ type: 'step', id: sid, state: (result && result.error) ? 'err' : 'ok', text: stepDone(name, result) });
         let ser = JSON.stringify(result == null ? {} : result);
         if (ser.length > MAX_RESULT_CHARS) result = { dipotong: true, catatan: 'Hasil terlalu besar, persempit pencarian', sebagian: ser.slice(0, MAX_RESULT_CHARS) };
         respParts.push({ functionResponse: { name, response: { result } } });
@@ -556,8 +609,9 @@ module.exports = async function handler(req, res) {
       contents.push({ role: 'user', parts: respParts });
     }
     if (!reply) reply = 'Perintah terlalu panjang untuk saya selesaikan sekaligus. Coba pecah jadi langkah lebih kecil.';
-    return res.status(200).json({ reply, actions, proposals });
+    return finish({ reply, actions, proposals });
   } catch (err) {
+    if (res.headersSent || res.getHeader('Content-Type') === 'application/x-ndjson; charset=utf-8') { try { res.write(JSON.stringify({ type: 'error', error: clip(err.message || 'Jarvis gagal', 200) }) + '\n'); return res.end(); } catch (e) { return; } }
     return res.status(err.status || 500).json({ error: clip(err.message || 'Jarvis gagal', 200) });
   }
 };
