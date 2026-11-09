@@ -11,7 +11,13 @@
  */
 (function () {
   'use strict';
-  if (window.BMJarvis || window.parent !== window) return;      // tidak di dalam iframe editor
+  var inHub = window.name === 'bm-dash-hub';                        // Dashboard yang tertanam di halaman Profil (aplikasi terpasang)
+  if (window.BMJarvis || (window.parent !== window && !inHub)) return;   // tidak di dalam iframe editor/panel lain
+  /* di dalam Profil, Dashboard dimuat tersembunyi di belakang layar: Jarvis (terutama mikrofon) hanya aktif saat Dashboard terlihat */
+  function isActive() {
+    if (!inHub) return document.visibilityState === 'visible';
+    try { var f = window.frameElement; return document.visibilityState === 'visible' && !!f && f.getAttribute('aria-hidden') !== 'true'; } catch (e) { return false; }
+  }
 
   var API = '/api/jarvis';
   var LS_VOICE = 'bm-jarvis-voice', LS_WAKE = 'bm-jarvis-wake';
@@ -158,7 +164,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
   /* ---------- mode "Hai Jarvis" ---------- */
   var wakePaused = false, wakeStopped = true;
   function startWake() {
-    if (!SR || !wakeOn) return;
+    if (!SR || !wakeOn || !isActive()) return;
     wakeStopped = false; wakePaused = false;
     if (wakeRec) return;
     wakeRec = mkRec(true);
@@ -173,12 +179,16 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
       }
     };
     wakeRec.onerror = function (e) { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { wakeOn = false; ls(LS_WAKE, '0'); paintToggles(); wakeStopped = true; } };
-    wakeRec.onend = function () { wakeRec = null; if (wakeOn && !wakeStopped && !wakePaused && document.visibilityState === 'visible') setTimeout(startWake, 400); };
+    wakeRec.onend = function () { wakeRec = null; if (wakeOn && !wakeStopped && !wakePaused && isActive()) setTimeout(startWake, 400); };
     try { wakeRec.start(); } catch (e) { wakeRec = null; }
   }
   function stopWake() { wakeStopped = true; if (wakeRec) { try { wakeRec.abort(); } catch (e) {} wakeRec = null; } paintToggles(); }
   function pauseWake() { wakePaused = true; if (wakeRec) { try { wakeRec.abort(); } catch (e) {} } }
   function resumeWake() { wakePaused = false; if (wakeOn && !wakeRec) setTimeout(startWake, 500); }
+  setInterval(function () {                                   // sinkronkan mikrofon dengan keterlihatan layar (Profil <-> Dashboard)
+    if (!wakeOn || busy || listening || wakePaused) return;
+    if (isActive() && !wakeRec) startWake(); else if (!isActive() && wakeRec) { try { wakeRec.abort(); } catch (e) {} }
+  }, 1500);
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { if (wakeOn && !wakeRec && !busy && !listening) startWake(); } else if (wakeRec) { try { wakeRec.abort(); } catch (e) {} } });
 
   /* ---------- suara keluar ---------- */
@@ -203,7 +213,11 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
   async function post(payload) {
     var tk = await token();
     if (!tk) throw new Error('Sesi login habis. Muat ulang halaman dan login lagi.');
-    var r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify(payload) });
+    var ac = new AbortController(), to = setTimeout(function () { ac.abort(); }, 60000);
+    var r;
+    try { r = await fetch(API, { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify(payload) }); }
+    catch (e) { throw new Error(e.name === 'AbortError' ? 'Server terlalu lama menjawab (>60 dtk). Ketik /tes untuk diagnosa.' : 'Tidak bisa menghubungi server Jarvis (' + (e.message || 'jaringan') + '). Ketik /tes untuk diagnosa.'); }
+    finally { clearTimeout(to); }
     var j = await r.json().catch(function () { return {}; });
     if (!r.ok) throw new Error(j.error || ('Gagal (' + r.status + ')'));
     return j;
@@ -211,6 +225,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
   async function submit(text) {
     text = String(text || '').trim().slice(0, 1500);
     if (!text || busy) return;
+    if (text.toLowerCase() === '/tes') { el.in.value = ''; return diagnose(); }
     busy = true; el.in.value = ''; el.send.disabled = true; stopListen(); pauseWake();
     say('u', text);
     var wait = say('a', ''); wait.innerHTML = '<span class="bmj-dots"><i></i><i></i><i></i></span>';
@@ -228,6 +243,19 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
     } finally { busy = false; el.send.disabled = false; }
   }
 
+  async function diagnose() {
+    var w = say('s', 'Mendiagnosa…'); busy = true;
+    try {
+      var tk = await token(); if (!tk) throw new Error('Tidak ada sesi login');
+      var r = await fetch(API, { headers: { Authorization: 'Bearer ' + tk } });
+      var txt = await r.text(), j = null; try { j = JSON.parse(txt); } catch (e) {}
+      if (!j) { w.textContent = 'Server membalas HTTP ' + r.status + ' tapi bukan JSON. Kemungkinan /api/jarvis belum ter-deploy (cek file ada di folder api/ lalu Redeploy).'; return; }
+      if (j.error) { w.textContent = 'HTTP ' + r.status + ': ' + j.error; return; }
+      w.textContent = 'Server Jarvis aktif.\n' + j.hasil.map(function (h) { return (h.ok ? '✓ ' : '✗ ') + h.model + ' (' + h.ms + ' ms)' + (h.error ? '\n   ' + h.error : ''); }).join('\n');
+    } catch (e) { w.textContent = 'Gagal menghubungi /api/jarvis: ' + e.message + '. Server belum bisa dijangkau — pastikan file api/jarvis.js sudah ter-deploy.'; }
+    finally { busy = false; }
+  }
+
   /* ---------- aksi tampilan (tidak mengubah data) ---------- */
   function runAction(a) {
     try {
@@ -242,8 +270,9 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
         else if (typeof openEditor === 'function') openEditor(a.note_id);
       } else if (a.type === 'open_page') {
         closeSheet();
-        if (a.url === '#settings') { var s = document.getElementById('settingsScreen'); if (s) s.classList.add('open'); }
-        else if (/^\/[a-z0-9-]+\.html$/i.test(a.url)) location.href = a.url;
+        var btn = /^btn[A-Za-z]+$/.test(a.button || '') ? document.getElementById(a.button) : null;
+        if (btn) setTimeout(function () { btn.click(); }, 280);
+        else say('s', 'Halaman itu belum bisa dibuka dari sini.');
       }
     } catch (e) { say('s', 'Gagal membuka tampilan: ' + e.message); }
   }
@@ -274,7 +303,9 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
 
   function init() {
     if (typeof supabaseClient === 'undefined') return;
-    token().then(function (tk) { if (tk && !el.fab) build(); });   // hanya muncul bila sudah login (server tetap cek admin)
+    function tryBuild() { return token().then(function (tk) { if (tk && !el.fab) { build(); return true; } return false; }); }   // hanya muncul bila sudah login (server tetap cek admin)
+    tryBuild();
+    try { supabaseClient.auth.onAuthStateChange(function (ev, ses) { if (ses && !el.fab) tryBuild(); }); } catch (e) {}
   }
   window.BMJarvis = { open: function () { openSheet(); }, ask: function (t) { openSheet(); submit(t); } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

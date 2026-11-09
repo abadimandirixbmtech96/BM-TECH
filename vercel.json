@@ -39,5 +39,10 @@
       "source": "/role-karyawan-:username",
       "destination": "/karyawan-tracking.html"
     }
-  ]
+  ],
+  "functions": {
+    "api/jarvis.js": {
+      "maxDuration": 60
+    }
+  }
 }
