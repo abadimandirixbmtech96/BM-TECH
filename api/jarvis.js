@@ -226,7 +226,7 @@ async function prepare_create_note(q, a) {
 }
 
 /* ---------- alat NAVIGASI (dijalankan di browser, tidak mengubah data) ---------- */
-const PAGES = { analisa: '/analisa.html', profil: '/my-profile-bm.html', pengaturan: '#settings', 'system-management': '/system-management.html', 'daftar-nomor-hp': '/daftar-nomor-hp.html', kalkulator: '/calculator.html', 'rekap-gaji': '/salary-recap.html', panduan: '/panduan.html' };
+const PAGES = { analisa: 'btnAnalyticsOpen', profil: 'btnProfile', pengaturan: 'btnOpenSettings', 'system-management': 'btnOpenSystem', 'daftar-nomor-hp': 'btnOpenPhones' };   // dibuka lewat tombol dashboard yang sudah ada
 async function nav_open_folder(q, a) {
   const f = await resolveFolder(q, a.folder);
   if (!f) return { error: 'Folder "' + a.folder + '" tidak ditemukan' };
@@ -241,7 +241,7 @@ async function nav_open_note(q, a) {
 async function nav_open_page(q, a) {
   const p = PAGES[lower(a.halaman)];
   if (!p) return { error: 'Halaman tidak dikenal. Pilihan: ' + Object.keys(PAGES).join(', ') };
-  return { ok: true, ui: { type: 'open_page', url: p, name: a.halaman } };
+  return { ok: true, ui: { type: 'open_page', button: p, name: lower(a.halaman) } };
 }
 
 const TOOLS = {
@@ -313,19 +313,25 @@ function systemPrompt(email) {
 async function callGemini(contents, email, tools, ctx) {
   const key = process.env.GEMINI_API_KEY;
   const errs = [];
-  for (let i = ctx.idx; i < MODELS.length; i++) {
+  for (let i = ctx.idx; i < (ctx.only ? ctx.idx + 1 : MODELS.length); i++) {
     const model = MODELS[i];
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
-      method: 'POST',
+    if (Date.now() - ctx.t0 > 45000) { errs.push('waktu habis'); break; }
+    const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 20000);
+    let r;
+    try {
+    r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
+      method: 'POST', signal: ac.signal,
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt(email) }] },
         contents,
         tools: [{ functionDeclarations: tools }],
         toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
-        generationConfig: { maxOutputTokens: 4096 }   // lega: model Gemini 3 memakai sebagian token untuk "berpikir"
+        generationConfig: { maxOutputTokens: ctx.maxTokens || 4096 }   // lega: model Gemini 3 memakai sebagian token untuk "berpikir"
       })
     });
+    } catch (e) { clearTimeout(to); errs.push(model + ': ' + (e.name === 'AbortError' ? 'timeout 20 dtk' : e.message)); continue; }
+    clearTimeout(to);
     const j = await r.json().catch(() => null);
     if (r.ok && j) { ctx.idx = i; ctx.model = model; return j; }
     errs.push(model + ': ' + ((j && j.error && j.error.message) || r.status));
@@ -338,7 +344,7 @@ async function callGemini(contents, email, tools, ctx) {
 /* ---------- handler ---------- */
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  if (req.method !== 'POST') { res.setHeader('Allow', 'POST'); return res.status(405).json({ error: 'Method not allowed' }); }
+  if (req.method !== 'POST' && req.method !== 'GET') { res.setHeader('Allow', 'GET, POST'); return res.status(405).json({ error: 'Method not allowed' }); }
   if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'GEMINI_API_KEY belum diatur di Vercel' });
 
   const auth = req.headers.authorization || '';
@@ -354,6 +360,21 @@ module.exports = async function handler(req, res) {
     const isAdmin = await q('/rest/v1/rpc/is_admin', { method: 'POST', body: '{}' });
     if (isAdmin !== true) return res.status(403).json({ error: 'Jarvis hanya untuk admin' });
     if (!rateOk(user.id)) return res.status(429).json({ error: 'Terlalu sering. Tunggu sebentar.' });
+
+    /* --- diagnosa: GET dengan token admin. Menguji tiap model dengan 1 kalimat pendek --- */
+    if (req.method === 'GET') {
+      const out = [];
+      for (let i = 0; i < MODELS.length; i++) {
+        const t0 = Date.now();
+        try {
+          const g = await callGemini([{ role: 'user', parts: [{ text: 'Balas satu kata: OK' }] }], user.email, [TOOLS.list_folders.decl], { idx: i, t0: Date.now(), maxTokens: 64, only: true });
+          const txt = (((g.candidates || [])[0] || {}).content || {}).parts;
+          out.push({ model: MODELS[i], ok: true, ms: Date.now() - t0, jawab: clip(JSON.stringify(txt || g.promptFeedback || '').slice(0, 80), 80) });
+          break;                                       // satu yang hidup sudah cukup
+        } catch (e) { out.push({ model: MODELS[i], ok: false, ms: Date.now() - t0, error: clip(e.message, 160) }); }
+      }
+      return res.status(200).json({ admin: true, env_gemini: true, hasil: out });
+    }
 
     const body = await readJson(req);
 
@@ -381,7 +402,7 @@ module.exports = async function handler(req, res) {
     const actions = [];      // perintah UI untuk browser
     const proposals = [];    // usulan tulis (bertanda tangan)
     let reply = '';
-    const gctx = { idx: 0, model: '' };
+    const gctx = { idx: 0, model: '', t0: Date.now() };
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       const g = await callGemini(contents, user.email, decls, gctx);
