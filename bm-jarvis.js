@@ -29,7 +29,7 @@
 
   /* ---------- UI ---------- */
   var css = '\
-#bmj-fab{position:fixed;left:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:2000;width:52px;height:52px;border-radius:50%;border:1px solid rgba(var(--accent-rgb,240,165,41),.55);background:radial-gradient(circle at 30% 30%,rgba(var(--accent-rgb,240,165,41),.35),rgba(18,18,20,.92));color:var(--accent-yellow,#F0A529);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 18px var(--accent-yellow-glow,rgba(240,165,41,.28));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}\
+#bmj-fab{position:fixed;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));touch-action:none;z-index:2000;width:52px;height:52px;border-radius:50%;border:1px solid rgba(var(--accent-rgb,240,165,41),.55);background:radial-gradient(circle at 30% 30%,rgba(var(--accent-rgb,240,165,41),.35),rgba(18,18,20,.92));color:var(--accent-yellow,#F0A529);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 18px var(--accent-yellow-glow,rgba(240,165,41,.28));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}\
 #bmj-fab:active{transform:scale(.9)}#bmj-fab svg{width:26px;height:26px}\
 #bmj-fab.bmj-hot{animation:bmjPulse 1.2s infinite}\
 @keyframes bmjPulse{0%{box-shadow:0 0 0 0 rgba(var(--accent-rgb,240,165,41),.6)}100%{box-shadow:0 0 0 18px rgba(var(--accent-rgb,240,165,41),0)}}\
@@ -90,7 +90,23 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a{b
     el.sheet.append(h, el.log, f);
     document.body.append(el.fab, el.ov, el.sheet);
 
-    el.fab.onclick = function () { openSheet(); };
+    /* tombol bisa digeser (tahan & seret); posisi diingat per perangkat */
+    try { var pos = JSON.parse(ls('bm-jarvis-pos') || 'null'); if (pos) { el.fab.style.left = Math.min(pos.x, innerWidth - 56) + 'px'; el.fab.style.top = Math.min(pos.y, innerHeight - 56) + 'px'; el.fab.style.right = 'auto'; el.fab.style.bottom = 'auto'; } } catch (e) {}
+    var drag = null, moved = false;
+    el.fab.addEventListener('pointerdown', function (e) { var r = el.fab.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY }; moved = false; try { el.fab.setPointerCapture(e.pointerId); } catch (x) {} });
+    el.fab.addEventListener('pointermove', function (e) {
+      if (!drag) return;
+      if (!moved && Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 8) return;
+      moved = true;
+      var x = Math.max(4, Math.min(innerWidth - 56, e.clientX - drag.dx)), y = Math.max(4, Math.min(innerHeight - 56, e.clientY - drag.dy));
+      el.fab.style.left = x + 'px'; el.fab.style.top = y + 'px'; el.fab.style.right = 'auto'; el.fab.style.bottom = 'auto';
+    });
+    el.fab.addEventListener('pointerup', function () {
+      if (drag && moved) { var r = el.fab.getBoundingClientRect(); ls('bm-jarvis-pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); }
+      else if (drag) openSheet();
+      drag = null;
+    });
+    el.fab.addEventListener('pointercancel', function () { drag = null; });
     el.ov.onclick = el.close.onclick = closeSheet;
     el.send.onclick = function () { submit(el.in.value); };
     el.in.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); submit(el.in.value); } };
