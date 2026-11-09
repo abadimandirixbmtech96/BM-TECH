@@ -2973,7 +2973,8 @@
       e.preventDefault(); // supaya blur pada input tidak lebih dulu menutup dropdown ini
       const isAdd = item.classList.contains('add');
       inputEl.value = item.dataset.v || item.textContent;
-      if (onPick) { silent = true; try { onPick(); } finally { silent = false; } }
+      let handled = false; // onPick mengembalikan true = fokus sudah dipindahkan sendiri
+      if (onPick) { silent = true; try { handled = onPick() === true; } finally { silent = false; } }
       hideNow();
       if (isAdd) {
         // tambah anggota: tetap di kolom ini supaya bisa menambah anggota lagi
@@ -2982,7 +2983,7 @@
       } else {
         // Setelah pilih nama, pindah fokus ke field berikutnya supaya keyboard Android tersambung ulang
         // (mengubah value input yang sedang fokus lewat script bikin Enter/Next "nyangkut").
-        setTimeout(() => focusNextField(inputEl), 0);
+        if (!handled) setTimeout(() => focusNextField(inputEl), 0);
       }
     });
   }
@@ -2996,7 +2997,7 @@
    ['detKeluarEdit', 'detKeluarSuggestList'], ['detStokEdit', 'detStokSuggestList']].forEach(([inId, listId]) => {
     const el = document.getElementById(inId);
     setupSuggestDropdown(el, document.getElementById(listId), () => [LABEL_BJ, LABEL_TIDAK_ADA], false,
-      () => el.dispatchEvent(new Event('input', { bubbles: true })));
+      () => { el._autoJump = false; el.dispatchEvent(new Event('input', { bubbles: true })); return el._autoJump === true; });
   });
 
   // Tambah Data saja (bukan Edit Detail / data lama): PJ berisi 2 nama atau lebih, misalnya "Yono x Mail",
@@ -3092,19 +3093,36 @@
     el.addEventListener('blur', () => { const v = expandJumlahBarang(el.value); if (v !== el.value) el.value = v; });
   });
 
-  function setupKeluarStokAuto(keluarId, stokId){
+  // Barang Keluar <-> Barang Ditinggal saling melengkapi supaya tidak ada data dobel:
+  //  - Keluar "B&J" -> Ditinggal "Tidak ada"; Keluar "Tidak ada" -> Ditinggal "B&J"
+  //  - Ditinggal "B&J" -> Keluar "Tidak ada"; Ditinggal "Tidak ada" -> Keluar "B&J"
+  //    (hanya jika Keluar masih kosong atau berisi B&J / Tidak ada; isi barang yang diketik tidak ditimpa)
+  // Setelah salah satu kolom terisi otomatis, kursor langsung lompat ke Keterangan.
+  function setupKeluarStokAuto(keluarId, stokId, ketId){
     const keluarEl = document.getElementById(keluarId);
     const stokEl = document.getElementById(stokId);
+    const ketEl = document.getElementById(ketId);
     if (!keluarEl || !stokEl) return;
+    const kosongAtauLabel = (v) => !String(v || '').trim() || sameLabel(v, LABEL_BJ) || sameLabel(v, LABEL_TIDAK_ADA);
+    const lompat = (dari) => {
+      dari._autoJump = true;
+      if (ketEl) setTimeout(() => { try { ketEl.focus(); } catch (e) {} }, 0);
+    };
     keluarEl.addEventListener('input', () => {
       forceBJUppercase(keluarEl);
-      if (sameLabel(keluarEl.value, LABEL_BJ)) stokEl.value = LABEL_TIDAK_ADA;
-      else if (sameLabel(keluarEl.value, LABEL_TIDAK_ADA)) stokEl.value = LABEL_BJ;
+      if (sameLabel(keluarEl.value, LABEL_BJ)) { stokEl.value = LABEL_TIDAK_ADA; lompat(keluarEl); }
+      else if (sameLabel(keluarEl.value, LABEL_TIDAK_ADA)) { stokEl.value = LABEL_BJ; lompat(keluarEl); }
     });
-    stokEl.addEventListener('input', () => forceBJUppercase(stokEl));
+    stokEl.addEventListener('input', () => {
+      forceBJUppercase(stokEl);
+      let lawan = null;
+      if (sameLabel(stokEl.value, LABEL_BJ)) lawan = LABEL_TIDAK_ADA;
+      else if (sameLabel(stokEl.value, LABEL_TIDAK_ADA)) lawan = LABEL_BJ;
+      if (lawan && kosongAtauLabel(keluarEl.value)) { keluarEl.value = lawan; lompat(stokEl); }
+    });
   }
-  setupKeluarStokAuto('inputBarangKeluar', 'inputStokBarang');   // form Tambah Data
-  setupKeluarStokAuto('detKeluarEdit', 'detStokEdit');           // form Edit Detail
+  setupKeluarStokAuto('inputBarangKeluar', 'inputStokBarang', 'inputKeterangan');   // form Tambah Data
+  setupKeluarStokAuto('detKeluarEdit', 'detStokEdit', 'detKetEdit');           // form Edit Detail
 
   document.getElementById('inputHarga').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
 
