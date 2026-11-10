@@ -3453,7 +3453,8 @@
       openEditor(deepLinkNoteId, {
         folder: deepLinkParams.get('folder'),
         row: deepLinkParams.get('row'),
-        focus: deepLinkParams.get('focus')
+        focus: deepLinkParams.get('focus'),
+        rec: deepLinkParams.get('rec')
       });
     } else {
       const resumeState = readOpenEditorState();
