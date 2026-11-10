@@ -241,6 +241,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 <div id="sheet" role="dialog" aria-modal="true"><div class="sh"><span id="shT"></span><button id="shX" aria-label="Tutup"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div><div class="sb" id="shB"></div></div>
 <div id="toast"></div>
 
+<script src="/bm-nota.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 (function () {
@@ -643,9 +644,9 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var ban = mk('button', '', 'ban'); var bt = mk('div'); bt.append(tx('b', '', 'Rekap pekan ini'), tx('span', '', 'Tabel lengkap dari Buku Besar plus PDF siap unduh')); ban.append(bt, mk('span', '', 'go', I.arrow));
     ban.onclick = function () { submit('Rekap transaksi pekan ini'); };
     var sugs = mk('div', '', 'sugs');
-    [[I.usr, 'Siapa customer terbanyak?', ''], [I.sum, 'Total harga Buku Besar bulan ini', ''], [I.find, 'Cari data customer', 'BARU'], [I.book, 'Ringkas Buku Kasbon dan Hutang Piutang', '']].forEach(function (s) {
+    [[I.add, 'Buat nota Yanto, lemer grand', 'BARU'], [I.usr, 'Siapa yang masih berhutang?', ''], [I.sum, 'Total harga Buku Besar bulan ini', ''], [I.book, 'Buka editor Buku Besar hari ini', '']].forEach(function (s) {
       var b = mk('button', '', 'sug'), ic = mk('span', '', 'ic', s[0]); b.append(ic, tx('span', '', s[1])); if (s[2]) b.appendChild(tx('small', '', s[2]));
-      b.onclick = function () { if (/^(Tambah|Cari)/.test(s[1])) { el.in.value = /^Tambah/.test(s[1]) ? 'Tambah data ke Buku Besar: ' : 'Cari data: '; autoGrow(); el.in.focus(); } else submit(s[1]); };
+      b.onclick = function () { if (/^Buat nota/.test(s[1])) { el.in.value = 'Buatkan nota atas nama '; autoGrow(); syncBtns(); el.in.focus(); } else if (/^(Tambah|Cari)/.test(s[1])) { el.in.value = /^Tambah/.test(s[1]) ? 'Tambah data ke Buku Besar: ' : 'Cari data: '; autoGrow(); el.in.focus(); } else submit(s[1]); };
       sugs.appendChild(b);
     });
     home.append(orb, h, sub, ban, sugs);
@@ -683,6 +684,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         var wrap = mk('div', '', 'bmj-r'), blocks = parseBlocks(m.text), reps = m.reps || [];
         var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); wrap.appendChild(ans);
         reps.forEach(function (r) { wrap.appendChild(renderReport(r)); });
+        (m.notas || []).forEach(function (n) { wrap.appendChild(window.BMNota.render(n)); });
         wrap.appendChild(buildActs(reps, blocks, lastQ)); wrap.style.animation = 'none'; el.log.appendChild(wrap);
       } else { var s = tx('div', 'bmj-m bmj-s', m.text); el.log.appendChild(s); }
     });
@@ -776,6 +778,9 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     });
   }
   var QUICK = [
+    [I.add, 'Buat nota…', 'Gambar nota siap unduh', 'Buatkan nota atas nama ', true],
+    [I.book, 'Buka editor Buku Besar hari ini', 'Untuk input / edit data', 'Buka editor data Buku Besar hari ini'],
+    [I.usr, 'Sisa hutang & kasbon', 'Siapa yang belum lunas', 'Siapa yang masih berhutang dan berapa sisanya?'],
     [I.tbl, 'Rekap transaksi pekan ini', 'Tabel + PDF', 'Rekap transaksi pekan ini'],
     [I.tbl, 'Rekap pekan lalu', 'Pekan sebelumnya', 'Rekap transaksi pekan lalu'],
     [I.sum, 'Total Buku Besar bulan ini', 'Jumlah harga', 'Total harga Buku Besar bulan ini'],
@@ -848,7 +853,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var tick = setInterval(function () { var idle = Math.round((Date.now() - R.last) / 1000); if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)'; }, 1500);
     try {
       var fin = await stream({ message: text, history: c.hist.slice(-10), model: modelId() }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
-      finishSteps(R, true);
+      clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
       var ctl = curCtl = { skip: false }; ans.onclick = function () { ctl.skip = true; };
@@ -856,9 +861,10 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       toBottom(true);
       await typeInto(ans, ctl);
       reps.forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
+      var notas = fin.notas || []; notas.forEach(function (n) { R.wrap.appendChild(window.BMNota.render(n)); });
       R.wrap.appendChild(buildActs(reps, blocks, text));
-      c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, reps: reps });
-      c.hist.push({ role: 'user', text: text }, { role: 'model', text: reply.slice(0, 1000) + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, reps: reps, notas: notas });
+      c.hist.push({ role: 'user', text: text }, { role: 'model', text: reply.slice(0, 1000) + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (c.hist.length > 20) c.hist = c.hist.slice(-20);
       c.updated = Date.now(); save(); if (saveWarn) { saveWarn = false; toast('Memori HP penuh: obrolan lama dihapus otomatis'); }
       (fin.actions || []).forEach(showAction);
@@ -903,9 +909,9 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   function showAction(a) {
     var box = mk('div', '', 'bmj-acts bmj-fade'), done = false;
     if (a.type === 'setting') { var t = applySetting(a); el.log.appendChild(tx('div', 'bmj-m bmj-s', '✓ ' + t + '.')); toBottom(); return; }
-    var url = (a.type === 'open_folder' || a.type === 'open_note' || a.type === 'goto') && URL_OK.test(a.url || '') ? a.url : '';
+    var url = (a.type === 'open_folder' || a.type === 'open_note' || a.type === 'open_editor' || a.type === 'goto') && URL_OK.test(a.url || '') ? a.url : '';
     if (!url) { el.log.appendChild(tx('div', 'bmj-m bmj-s', 'Perintah itu belum bisa dijalankan dari halaman ini.')); return; }
-    var label = a.type === 'open_note' ? 'Buka editor' : a.type === 'open_folder' ? 'Buka folder' : 'Buka halaman';
+    var label = (a.type === 'open_note' || a.type === 'open_editor') ? 'Buka editor' : a.type === 'open_folder' ? 'Buka folder' : 'Buka halaman';
     var note = tx('div', 'bmj-m bmj-s', ''), b = mk('button', '', 'pri', I.arrow + '<span></span>'), c = tx('button', '', 'Batal');
     b.querySelector('span').textContent = label + ': ' + clip(a.name || '', 28);
     var left = 3; note.textContent = 'Membuka ' + (a.name || 'halaman') + ' dalam ' + left + ' detik…';
