@@ -737,18 +737,20 @@ const MOTORS=['Supra X 125','Supra X','Supra Fit','Mega Pro','Megapro','GL Pro',
 const OC_SKIP=/^(PAKET|PISTON|STANG|SEHER|LAHER|KIT|CON|ROD|NPP|PARTS|MODEL|QTY|UKURAN|BEARING)$/i;
 const OCR={w:null,p:null,fail:false,cv:null,pm:'11',pmSet:'11'};
 const OC_HOSTS=[{n:'jsdelivr',b:'https://cdn.jsdelivr.net/npm/'},{n:'unpkg',b:'https://unpkg.com/'}];
-const ocMsg=e=>String(e&&e.message||e||'gagal').replace(/\s+/g,' ').slice(0,90);
+const OCV=[];try{document.addEventListener('securitypolicyviolation',e=>{OCV.push((e.violatedDirective||e.effectiveDirective||'?')+' '+String(e.blockedURI||'').slice(0,30))})}catch(e){}
+const ocMsg=e=>{const s=String(e&&e.message||(typeof e==='string'?e:'')||'').replace(/\s+/g,' ').slice(0,80);return s||'pekerja tidak bisa mulai (tanpa pesan)'};
 const ocTO=(p,ms,l)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error(l+' terlalu lama')),ms))]);
 function ocScript(src){return new Promise((ok,no)=>{if(window.Tesseract)return ok();const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('skrip tidak terunduh'));document.head.appendChild(s)})}
 function ocEngine(){if(OCR.w)return Promise.resolve(OCR.w);if(OCR.p)return OCR.p;
- OCR.p=(async()=>{const errs=[];
-  for(const h of OC_HOSTS){try{
-    await ocTO(ocScript(h.b+'tesseract.js@5.1.1/dist/tesseract.min.js'),25000,'skrip');
+ OCR.p=(async()=>{const errs=[];OCV.length=0;
+  for(const h of OC_HOSTS){let st='skrip';OCR.last='';try{
+    await ocTO(ocScript(h.b+'tesseract.js@5.1.1/dist/tesseract.min.js'),25000,'skrip');st='mesin';
     const w=await ocTO(window.Tesseract.createWorker('eng',1,{workerPath:h.b+'tesseract.js@5.1.1/dist/worker.min.js',corePath:h.b+'tesseract.js-core@5.1.1',langPath:h.b+'@tesseract.js-data/eng/4.0.0_best_int',
-      logger:m=>{if(m&&m.status&&typeof m.progress==='number'&&SC&&!OCR.w&&/load|init/i.test(m.status))camMsg('Menyiapkan pembaca tulisan ('+h.n+') '+Math.round(m.progress*100)+'%')}}),120000,'mesin');
+      errorHandler:e=>{OCR.last+=' !'+ocMsg(e)},
+      logger:m=>{if(m&&m.status){OCR.last=m.status;if(typeof m.progress==='number'&&SC&&!OCR.w&&/load|init/i.test(m.status))camMsg('Menyiapkan pembaca tulisan ('+h.n+') '+Math.round(m.progress*100)+'%')}}}),120000,'mesin');
     await w.setParameters({tessedit_pageseg_mode:'11',preserve_interword_spaces:'1'});OCR.w=w;return w}
-   catch(e){errs.push(h.n+': '+ocMsg(e))}}
-  OCR.p=null;OCR.err=errs.join(' | ');throw new Error(OCR.err)})();
+   catch(e){errs.push(h.n+' ['+st+(OCR.last?', terakhir: '+OCR.last:'')+']: '+ocMsg(e))}}
+  OCR.p=null;OCR.err=errs.join(' | ')+(OCV.length?' | DIBLOKIR situs: '+OCV.slice(0,2).join(', '):'');throw new Error(OCR.err)})();
  return OCR.p}
 function ocGrab(v){const W=v.videoWidth,H=v.videoHeight,k=Math.min(1,1800/Math.max(W,H)),cw=Math.round(W*k),ch=Math.round(H*k);
  const c=OCR.cv||(OCR.cv=document.createElement('canvas'));c.width=cw;c.height=ch;const x=c.getContext('2d');try{x.filter='grayscale(1) contrast(1.4)'}catch(e){}x.drawImage(v,0,0,cw,ch);return{c,k,W,H}}
@@ -791,7 +793,7 @@ function ocHandle(R){const S=SC;if(!S)return;S.ocr=R;S.cur=R.pc||R.seri;
  const x=ocFind(R);if(x){S.item=x;scShow(x);ping(true)}else{S.item=null;ocNone(R);ping(false)}}
 function ocNone(R){scPanel('<div class="rs"><div class="rsh"><b>Terbaca, belum ada di daftar</b><small>'+esc(R.label)+(R.pc?' · '+esc(R.pc):'')+'</small></div>'+(R.warn?'<span class="no">'+esc(R.warn)+'</span>':'')
  +grp((R.pc?mrow('Hubungkan ke barang yang ada','Pilih dari daftar, kode ini diingat','box','sclink',''):'')+mrow('Input barang baru','Terisi dari yang terbaca, periksa dulu','plus','scnew',''))+'</div>')}
-async function ocLoop(S,v){let w;try{camMsg('Menyiapkan pembaca tulisan, sekali saja, butuh internet');w=await ocEngine()}catch(e){if(SC===S)camMsg('Pembaca tulisan gagal dimuat ('+ocMsg(e)+'). Buka scan lagi untuk mencoba ulang. QR dan ketik manual tetap bisa.');return}
+async function ocLoop(S,v){let w;try{camMsg('Menyiapkan pembaca tulisan, sekali saja, butuh internet');w=await ocEngine()}catch(e){if(SC===S)camMsg('Pembaca tulisan gagal dimuat. '+(OCR.err||ocMsg(e))+' . QR dan ketik manual tetap bisa.');return}
  if(SC!==S)return;camMsg('');
  while(S.run&&SC===S){await new Promise(r=>setTimeout(r,300));if(!S.run||SC!==S)break;
   if(topPg()!==S.el||S.hold||!v.videoWidth||Date.now()<S.freeze||document.hidden)continue;
