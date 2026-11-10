@@ -560,7 +560,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
         if (ev.type === 'status') setStatus(R, ev.text);
         else if (ev.type === 'step') onStep(R, ev);
       });
-      finishSteps(R, true);
+      clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
       var ctl = curCtl = { skip: false }; ans.onclick = function () { ctl.skip = true; };      // ketuk jawaban = lewati animasi
@@ -568,6 +568,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
       toBottom(true);
       await typeInto(ans, ctl);
       reps.forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
+      (fin.notas || []).forEach(function (n) { ensureNota().then(function () { R.wrap.appendChild(window.BMNota.render(n)); toBottom(); }, function () { say('s', 'Modul nota gagal dimuat.'); }); });
       var hasTable = blocks.some(function (b) { return b.t === 'table'; });
       var report = reps.length || hasTable || /rangkum|ringkas|rekap|laporan|pdf|summary/i.test(text) || blocks.length >= 4;
       var acts = mk('div', '', 'bmj-acts bmj-fade');
@@ -613,6 +614,10 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
     finally { busy = false; }
   }
 
+  function ensureNota() {
+    if (window.BMNota) return Promise.resolve();
+    return new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = '/bm-nota.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+  }
   /* ---------- aksi tampilan (tidak mengubah data) ---------- */
   function applySetting(a) {
     var T = window.BMTheme, v = a.value, b = document.body;
@@ -642,6 +647,10 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
         closeSheet();
         if (typeof selectCategory === 'function' && typeof categoriesData !== 'undefined' && categoriesData.some(function (c) { return c.id === a.folder_id; })) selectCategory(a.folder_id);
         else if (typeof loadNotesForCategory === 'function') loadNotesForCategory(a.folder_id);
+      } else if (a.type === 'open_editor') {
+        closeSheet();
+        if (typeof openEditor === 'function') openEditor(a.note_id, { folder: a.folder_id || undefined, rec: a.rec || undefined });
+        else say('s', 'Editor belum siap, coba lagi sebentar.');
       } else if (a.type === 'open_note') {
         closeSheet();
         var inView = typeof notesData !== 'undefined' && notesData.some(function (n) { return n.id === a.note_id; });
