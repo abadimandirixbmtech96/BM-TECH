@@ -801,11 +801,24 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       b.append(
         toggleRow('Suara jawaban', 'Jarvis membacakan ringkasan', voiceOut, function (v) { voiceOut = v; ls(LS_VOICE, v ? '1' : '0'); if (!v) stopSpeak(); paintSpk(); }),
         toggleRow('Efek mengetik', 'Jawaban muncul seperti diketik', !typeOff, function (v) { typeOff = !v; REDUCED = typeOff; ls(LS_TYPE, v ? '1' : '0'); }),
+        item(I.gear, 'Gaya nota', 'Sekarang: ' + (ls('bm-jarvis-nota-style') === 'bengkel' ? 'Bengkel (rapi, huruf besar)' : 'Tulisan tangan'), function () { closeSheet(); setTimeout(notaStyleSheet, 250); }),
         item(I.gear, 'Model AI', 'Sekarang: ' + modelName(), function () { closeSheet(); setTimeout(openModelPop, 250); }),
         item(I.test, 'Uji koneksi server', 'Sama seperti mengetik /tes', function () { closeSheet(); diagnose(); }),
         item(I.dl, 'Unduh cadangan riwayat', 'File JSON dari HP ini', function () { closeSheet(); exportAll(); }),
         item(I.del, 'Hapus semua riwayat', store.chats.length + ' obrolan', function () { closeSheet(); if (!store.chats.length) return toast('Riwayat kosong'); delChats(store.chats.map(function (c) { return c.id; })); }, true),
         tx('div', 'note', 'Riwayat obrolan hanya tersimpan di browser HP ini (localStorage), tidak dikirim ke server dan tidak ikut pindah ke perangkat lain. Menghapus data situs atau memasang ulang aplikasi akan menghapusnya.')
+      );
+    });
+  }
+  function notaStyleSheet() {
+    openSheet('Gaya nota', function (b) {
+      var cur = ls('bm-jarvis-nota-style') === 'bengkel' ? 'bengkel' : 'tulisan';
+      function pick(k) { ls('bm-jarvis-nota-style', k); closeSheet(); toast('Gaya nota: ' + (k === 'bengkel' ? 'Bengkel' : 'Tulisan tangan')); }
+      b.append(
+        item(I.gear, (cur === 'tulisan' ? '\u2713 ' : '') + 'Tulisan tangan', 'Seperti nota kertas asli, ditulis tangan', function () { pick('tulisan'); }),
+        item(I.gear, (cur === 'bengkel' ? '\u2713 ' : '') + 'Bengkel', 'Cetak rapi ABADI MANDIRI X BM TECH96, huruf besar dan jelas', function () { pick('bengkel'); }),
+        toggleRow('Cap dan rekening BRI', 'Khusus gaya Bengkel', ls('bm-jarvis-nota-extra') !== '0', function (v) { ls('bm-jarvis-nota-extra', v ? '1' : '0'); }),
+        tx('div', 'note', 'Berlaku untuk nota yang dibuat setelah ini.')
       );
     });
   }
