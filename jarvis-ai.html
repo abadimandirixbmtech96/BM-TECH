@@ -886,12 +886,36 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     finally { setBusy(false); }
   }
 
-  /* perintah tampilan hanya bisa dijalankan di Dashboard: di sini ditawarkan sebagai tombol */
-  function showAction(a) {
-    var box = mk('div', '', 'bmj-acts bmj-fade'), b = mk('button', '', 'pri', I.arrow + '<span>Buka Dashboard</span>');
-    b.onclick = function () { location.href = '/dashboard-admin.html'; };
-    el.log.appendChild(tx('div', 'bmj-m bmj-s', 'Membuka folder/catatan langsung hanya bisa di Dashboard.')); box.appendChild(b); el.log.appendChild(box); toBottom();
+  /* ===== kendali aplikasi: pindah halaman / buka editor / ubah tampilan ===== */
+  var URL_OK = /^\/[a-z0-9\-]+\.html(\?[A-Za-z0-9_=&%.\-]*)?$/;
+  function applySetting(a) {
+    var T = window.BMTheme, v = a.value, r = document.documentElement;
+    if (a.key === 'tema') {
+      var light = v === 'toggle' ? !r.classList.contains('theme-light') : v === 'light';
+      r.classList.toggle('theme-light', light); ls('bm-theme', light ? 'light' : 'dark'); return 'Tema ' + (light ? 'terang' : 'gelap') + ' dipasang';
+    }
+    if (a.key === 'tebal') { r.classList.toggle('bold-mode', v === 'on'); try { if (v === 'on') localStorage.setItem('bm-font-bold', 'on'); else localStorage.removeItem('bm-font-bold'); } catch (e) {} return 'Teks tebal ' + (v === 'on' ? 'aktif' : 'mati'); }
+    if (a.key === 'font' && T) { T.setFont(v); return 'Font diganti: ' + v; }
+    if (a.key === 'warna' && T) { T.saveAccent(v); return 'Warna aksen diganti: ' + v; }
+    if (a.key === 'bahasa') { ls('bm-lang', v); return 'Bahasa disimpan (' + v + '), berlaku di halaman lain'; }
+    return 'Pengaturan ini belum didukung di sini';
   }
+  function showAction(a) {
+    var box = mk('div', '', 'bmj-acts bmj-fade'), done = false;
+    if (a.type === 'setting') { var t = applySetting(a); el.log.appendChild(tx('div', 'bmj-m bmj-s', '✓ ' + t + '.')); toBottom(); return; }
+    var url = (a.type === 'open_folder' || a.type === 'open_note' || a.type === 'goto') && URL_OK.test(a.url || '') ? a.url : '';
+    if (!url) { el.log.appendChild(tx('div', 'bmj-m bmj-s', 'Perintah itu belum bisa dijalankan dari halaman ini.')); return; }
+    var label = a.type === 'open_note' ? 'Buka editor' : a.type === 'open_folder' ? 'Buka folder' : 'Buka halaman';
+    var note = tx('div', 'bmj-m bmj-s', ''), b = mk('button', '', 'pri', I.arrow + '<span></span>'), c = tx('button', '', 'Batal');
+    b.querySelector('span').textContent = label + ': ' + clip(a.name || '', 28);
+    var left = 3; note.textContent = 'Membuka ' + (a.name || 'halaman') + ' dalam ' + left + ' detik…';
+    function go() { if (done) return; done = true; clearInterval(iv); saveLast(); location.href = url; }
+    var iv = setInterval(function () { left--; if (left <= 0) go(); else note.textContent = 'Membuka ' + (a.name || 'halaman') + ' dalam ' + left + ' detik…'; }, 1000);
+    b.onclick = go; c.onclick = function () { done = true; clearInterval(iv); note.textContent = 'Dibatalkan.'; c.remove(); };
+    box.append(b, c); el.log.appendChild(note); el.log.appendChild(box); toBottom();
+  }
+  function clip(s, n) { s = String(s == null ? '' : s); return s.length > n ? s.slice(0, n) + '…' : s; }
+  function saveLast() { if (chat) ls('bm-jarvis-last', JSON.stringify({ id: chat.id, t: Date.now() })); }
   function showProposal(p) {
     var box = mk('div', '', 'bmj-p');
     box.appendChild(tx('b', '', p.ringkas || 'Usulan perubahan'));
@@ -928,7 +952,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     $('dNm').textContent = nm; $('dAv').textContent = nm.charAt(0).toUpperCase();
 
     el.log = $('bmj-log'); el.in = $('in'); el.mic = $('mic'); el.send = $('send');
-    buildHome(nm); showHome(); paintModel(); paintSpk(); syncBtns(); paintHist();
+    buildHome(nm); showHome(); try { var lc = JSON.parse(ls('bm-jarvis-last') || 'null'); ls('bm-jarvis-last', ''); if (lc && Date.now() - lc.t < 30 * 60e3) { var oc = store.chats.filter(function (x) { return x.id === lc.id; })[0]; if (oc) { chat = oc; restore(oc); } } } catch (e) {} paintModel(); paintSpk(); syncBtns(); paintHist();
     $('boot').hidden = true; $('app').hidden = false;
 
     $('bMenu').onclick = openDrawer; $('ov').onclick = closeDrawer; $('bExit').onclick = exitPage;
