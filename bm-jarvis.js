@@ -614,6 +614,28 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
   }
 
   /* ---------- aksi tampilan (tidak mengubah data) ---------- */
+  function applySetting(a) {
+    var T = window.BMTheme, v = a.value, b = document.body;
+    if (a.key === 'tema') {
+      var light = v === 'toggle' ? !b.classList.contains('theme-light') : v === 'light';
+      b.classList.toggle('theme-light', light); try { localStorage.setItem('bm-theme', light ? 'light' : 'dark'); } catch (e) {}
+      var cb = document.getElementById('themeCheckbox'); if (cb) cb.checked = !light;
+      say('s', 'Tema ' + (light ? 'terang' : 'gelap') + ' dipasang.');
+    } else if (a.key === 'tebal') {
+      b.classList.toggle('font-bold-mode', v === 'on'); try { if (v === 'on') localStorage.setItem('bm-font-bold', 'on'); else localStorage.removeItem('bm-font-bold'); } catch (e) {}
+      say('s', 'Teks tebal ' + (v === 'on' ? 'aktif' : 'mati') + '.');
+    } else if (a.key === 'font' && T) { T.setFont(v); say('s', 'Font diganti: ' + v + '.'); }
+    else if (a.key === 'warna' && T) { T.saveAccent(v); say('s', 'Warna aksen diganti: ' + v + '.'); }
+    else if (a.key === 'bahasa') { try { localStorage.setItem('bm-lang', v); } catch (e) {} say('s', 'Bahasa disimpan; memuat ulang…'); setTimeout(function () { location.reload(); }, 600); }
+  }
+  function deepFolder() {   // ?jv_folder=ID dari halaman Jarvis AI -> pilih folder begitu data dashboard siap
+    var m = /[?&]jv_folder=([0-9a-f\-]{36})/i.exec(location.search); if (!m) return;
+    var id = m[1], n = 0, iv = setInterval(function () {
+      n++;
+      if (typeof selectCategory === 'function' && typeof categoriesData !== 'undefined' && categoriesData.some(function (c) { return c.id === id; })) { clearInterval(iv); try { selectCategory(id); } catch (e) {} try { history.replaceState(null, '', location.pathname); } catch (e) {} }
+      else if (n > 40) clearInterval(iv);
+    }, 400);
+  }
   function runAction(a) {
     try {
       if (a.type === 'open_folder') {
@@ -624,12 +646,12 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
         closeSheet();
         var inView = typeof notesData !== 'undefined' && notesData.some(function (n) { return n.id === a.note_id; });
         if (inView && typeof openNoteDetail === 'function') openNoteDetail(a.note_id);
-        else if (typeof openEditor === 'function') openEditor(a.note_id);
-      } else if (a.type === 'open_page') {
-        closeSheet();
-        var btn = /^btn[A-Za-z]+$/.test(a.button || '') ? document.getElementById(a.button) : null;
-        if (btn) setTimeout(function () { btn.click(); }, 280);
-        else say('s', 'Halaman itu belum bisa dibuka dari sini.');
+        else if (typeof openEditor === 'function') openEditor(a.note_id, a.folder_id ? { folder: a.folder_id } : {});
+      } else if (a.type === 'goto') {
+        closeSheet(); say('s', 'Membuka ' + (a.name || 'halaman') + '…');
+        if (/^\/[a-z0-9\-]+\.html(\?[A-Za-z0-9_=&%.\-]*)?$/.test(a.url || '') && a.url.indexOf('/dashboard-admin.html') !== 0) setTimeout(function () { (inHub ? window.parent : window).location.href = a.url; }, 700);
+      } else if (a.type === 'setting') {
+        applySetting(a);
       }
     } catch (e) { say('s', 'Gagal membuka tampilan: ' + e.message); }
   }
@@ -659,6 +681,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
   }
 
   function init() {
+    deepFolder();
     if (typeof supabaseClient === 'undefined') return;
     function tryBuild() { return token().then(function (tk) { if (tk && !el.fab) { build(); return true; } return false; }); }   // hanya muncul bila sudah login (server tetap cek admin)
     tryBuild();
