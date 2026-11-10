@@ -182,9 +182,17 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 @keyframes fresh{0%{opacity:0;transform:translateY(-10px);background:color-mix(in srgb,var(--ac) 16%,var(--sf))}35%{opacity:1;transform:none}100%{background:var(--sf)}}
 @keyframes gone{from{max-height:120px}to{opacity:0;transform:translateX(28px);max-height:0;padding-top:0;padding-bottom:0}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
+.in.ta{height:150px;padding:12px var(--s3);text-align:left;resize:none;line-height:1.45;font-family:inherit}
+#ims{color:var(--mu);font-size:var(--f1);margin:10px 0 0}.err-t{color:var(--er);font-size:var(--f2);margin:10px 0 0}#ims[hidden],.err-t[hidden]{display:none}
+.r.rv{cursor:pointer}.r.rv.off{opacity:.55}.r.rv .lw{color:var(--er)}
+.ck{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--bd);position:relative;transition:background .2s,border-color .2s}
+.ck.on{background:var(--ac);border-color:var(--ac)}.ck.on::after{content:'';position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid var(--on);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.sk{padding:var(--s3) 14px;border-top:1px solid var(--bd)}.sk:first-child{border-top:0}.skh b{display:block}.skh small{color:var(--mu);font-size:var(--f1)}
+.acts{display:flex;gap:8px;margin-top:10px}.acts .bt{flex:1;padding:0 var(--s2);height:42px;font-size:14px}
+.demo{margin-left:6px;vertical-align:2px}
 </style></head><body>
 <div id="app">
-<header><div><div class="app">Buku Warung BM TECH</div><h1 id="ttl"></h1></div><button class="ib cog" data-a="st" aria-label="Pengaturan" id="gear"></button></header>
+<header><div><div class="app">Buku Warung BM TECH<i class="tag mu demo">Demo</i></div><h1 id="ttl"></h1></div><button class="ib cog" data-a="st" aria-label="Pengaturan" id="gear"></button></header>
 <main id="v"></main>
 <nav id="nv" aria-label="Menu utama"><i></i></nav>
 </div>
@@ -440,9 +448,10 @@ function vHome(){const st=cc().stock,t=today(),low=D.items.filter(x=>!x.arch&&(s
 const KCH=[['all','Semua']].concat(KORD.map(k=>[k,KS[k]]));
 function itemsHtml(){const s=q.toLowerCase(),st=cc().stock,av=cc().avg;
  const a=D.items.filter(x=>(SF==='arch'||!x.arch)&&(SF!=='low'||(st[x.id]||0)<=0)&&(IK==='all'||kindOf(x)===IK)&&(x.name+' '+x.cat+' '+KS[kindOf(x)]+' '+(x.pc||'')+' '+(x.codes||[]).join(' ')).toLowerCase().includes(s)).sort((a,b)=>KORD.indexOf(kindOf(a))-KORD.indexOf(kindOf(b))||a.name.localeCompare(b.name));
- if(!a.length)return '<p class="em">'+(D.items.length?'Tidak ada barang yang cocok.':'Belum ada barang. Ketuk Input untuk menambah.')+'</p>';
- return grp(a.map(x=>{const t=st[x.id]||0,k=kindOf(x);return '<div class="r'+nw(x.id)+'" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(x.name)+(x.arch?'<i class="tag mu">Nonaktif</i>':'')+'</b><small>'+esc(k==='umum'&&x.cat?x.cat:KL[k])+'</small></div><div class="rt"><b>'+rp(x.sell)+'</b><small class="'+(t<=0?'lw':'')+'">Stok '+num(t)+' '+esc(x.unit)+'</small></div></div>'}).join(''))}
-function vItems(){return '<div style="display:flex;gap:8px"><span class="cw2" style="flex:1"><input id="q" class="in" placeholder="Cari barang atau scan" aria-label="Cari barang" autocomplete="off" value="'+esc(q)+'"><button type="button" class="scb" data-a="scb" aria-label="Scan barcode">'+ic('scan')+'</button></span><button class="bt" style="flex:none" data-a="inp">'+ic('plus')+'Input</button></div>'
+ if(!a.length)return '<p class="em">'+(D.items.length?'Tidak ada barang yang cocok.':'Belum ada barang. Tambah manual atau impor dari file.')+'</p>';
+ return grp(a.map(x=>{const t=st[x.id]||0,k=kindOf(x);return '<div class="r'+nw(x.id)+'" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(x.name)+(x.arch?'<i class="tag mu">Nonaktif</i>':'')+(x.sell>0?'':'<i class="tag">Harga kosong</i>')+'</b><small>'+esc(k==='umum'&&x.cat?x.cat:KL[k])+'</small></div><div class="rt"><b>'+rp(x.sell)+'</b><small class="'+(t<=0?'lw':'')+'">Stok '+num(t)+' '+esc(x.unit)+'</small></div></div>'}).join(''))}
+function vItems(){return '<span class="cw2" style="display:block"><input id="q" class="in" placeholder="Cari barang atau scan" aria-label="Cari barang" autocomplete="off" value="'+esc(q)+'"><button type="button" class="scb" data-a="scb" aria-label="Scan barang">'+ic('scan')+'</button></span>'
+ +'<div class="acts"><button class="bt" data-a="inp">'+ic('plus')+'Manual</button><button class="bt sec" data-a="imp">'+ic('up')+'Impor</button><button class="bt sec" data-a="stk">'+ic('box')+'Isi stok</button></div>'
  +chips(KCH,IK,'hik')+chips([['act','Aktif'],['low','Habis']].concat(D.items.some(x=>x.arch)?[['arch','Dengan nonaktif']]:[]),SF,'harch')+'<div id="lst" style="margin-top:12px">'+itemsHtml()+'</div>'}
 
 /* ================= Tab: Penjualan & Pembelian ================= */
@@ -583,13 +592,14 @@ function pgCart(){const c=CT,out=c.t==='out',T=ctTotals(),st=cc().stock;
  return pgh(title,body,{act:'<button class="ib" data-a="scc" aria-label="Scan barcode">'+ic('scan')+'</button>',foot:'<div class="ft"><div><small>Total</small><b id="c-tot">'+rp(T.tot)+'</b></div><button class="bt" data-a="csave" data-enter="1">'+(c.eid?'Simpan perubahan':'Simpan nota')+'</button></div>'})}
 function pickList(){const out=CT.t==='out',st=cc().stock,s=PK.toLowerCase();
  const a=D.items.filter(x=>!x.arch&&(PKK==='all'||kindOf(x)===PKK)&&(x.name+' '+x.cat+' '+(x.pc||'')+' '+(x.codes||[]).join(' ')).toLowerCase().includes(s)).sort((a,b)=>KORD.indexOf(kindOf(a))-KORD.indexOf(kindOf(b))||a.name.localeCompare(b.name));
- return a.length?grp(a.map(x=>{const n=CT.lines.find(l=>l.i===x.id),t=st[x.id]||0;return '<div class="r'+(out&&t<=0&&!n?' dis':'')+'" data-a="pick" data-id="'+x.id+'"><div><b>'+esc(x.name)+'</b><small>Stok '+num(t)+' '+esc(x.unit)+'&nbsp; '+rp(out?x.sell:(x.buy||0))+'</small></div>'+(n?'<span class="qty">'+num(+n.q||0)+'</span>':'')+'</div>'}).join('')):'<p class="em">Barang tidak ditemukan. Tambahkan lewat Input barang.</p>'}
+ return a.length?grp(a.map(x=>{const n=CT.lines.find(l=>l.i===x.id),t=st[x.id]||0;return '<div class="r'+(out&&t<=0&&!n?' dis':'')+'" data-a="pick" data-id="'+x.id+'"><div><b>'+esc(x.name)+'</b><small>Stok '+num(t)+' '+esc(x.unit)+'&nbsp; '+(out&&!(x.sell>0)?'Harga kosong':rp(out?x.sell:(x.buy||0)))+'</small></div>'+(n?'<span class="qty">'+num(+n.q||0)+'</span>':'')+'</div>'}).join('')):'<p class="em">Barang tidak ditemukan. Tambahkan lewat Input barang.</p>'}
 function pgPicker(){return pgh('Pilih barang','<input id="pk" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(PK)+'">'+chips(KCH,PKK,'pkk')+'<div id="pkl" style="margin-top:12px">'+pickList()+'</div>')}
 function cartSave(){const c=CT,out=c.t==='out';
  if(!c.lines.length)return bad('','Tambah minimal satu barang');
  for(let i=0;i<c.lines.length;i++){const l=c.lines[i];
   if(!(+l.q>0))return bad('.ln-q[data-ix="'+i+'"]','Jumlah harus lebih dari 0');
   if(l.p===''||!(+l.p>=0))return bad('.ln-p[data-ix="'+i+'"]','Harga tidak valid');
+  if(out&&!(+l.p>0))return bad('.ln-p[data-ix="'+i+'"]','Harga barang belum diisi')
   if(!itm(l.i))return bad('','Ada barang yang sudah dihapus, hapus barisnya')}
  if(!/^\d{4}-\d{2}-\d{2}$/.test(c.d))return bad('','Tanggal tidak valid');
  const T=ctTotals(),who=c.who.trim(),isU=!who||who.toLowerCase()==='umum';
@@ -660,7 +670,7 @@ function pgSettings(){const sz=Math.round(JSON.stringify(D).length/1024);
  +'<p class="hint">Format MP3, WAV, OGG, atau M4A. Pakai suara pendek (di bawah 2 detik), maksimal 300 KB.</p>'
  +'<h4>Data</h4>'+grp(mrow('Backup semua data','Simpan file JSON ke HP','up','bk','')+mrow('Pulihkan dari file','Ganti data dengan file backup','inbox','rfpick','')+mrow('Ekspor transaksi','File CSV untuk Excel','sale','cv','')+mrow('Ekspor stok','File CSV daftar stok','box','cvs',''))
  +'<input id="rf" type="file" accept=".json,application/json" hidden>'
- +'<p class="hint">Data tersimpan di browser HP ini ('+D.items.length+' barang, '+D.notas.length+' nota, sekitar '+sz+' KB). Backup rutin agar aman.</p>'
+ +'<p class="hint"><b>Mode demo:</b> belum terhubung ke database. Semua data hanya ada di browser HP ini dan bisa hilang kalau data browser dihapus. Data tersimpan di browser HP ini ('+D.items.length+' barang, '+D.notas.length+' nota, sekitar '+sz+' KB). Backup rutin agar aman.</p>'
  +'<h4>Hapus</h4>'+grp(mrow('Hapus semua data','Tidak bisa dibatalkan','trash','rs','','dn')),{})}
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 const csvText=rows=>'﻿'+rows.map(a=>a.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -672,6 +682,199 @@ function csvStok(){const st=cc().stock,r=[['Jenis','Barang','Kode pabrik','Satua
  D.items.forEach(x=>r.push([KL[kindOf(x)],x.name,x.pc||'',x.unit,st[x.id]||0,x.sell]));
  dl('bm-stok-'+today()+'.csv',csvText(r),'text/csv')}
 
+
+/* ================= Impor data barang ================= */
+const OSL5=['STD','25','50','75','100'];
+let IM={kind:'piston',recs:[],sizes:['STD','25','50','75','100'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
+const HSYN={name:/^(nama|nama barang|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk)$/,
+ os:/^(os|oversize|over size|ukuran|ukuran os|uk|size)$/,
+ seri:/^(seri|series|no seri|nomor seri|seri laher|kode laher|tipe laher|seri bearing)$/,
+ sell:/^(harga|harga jual|jual|price|hj|harga satuan|harga pcs|harga eceran)$/,
+ q:/^(stok|stock|qty|jumlah|sisa|ada|jml|stok awal|saldo|stok sekarang)$/,
+ pc:/^(kode|kode pabrik|part|part no|part number|no part|sku|kode model|barcode|kode barang)$/,
+ jenis:/^(jenis|jenis barang)$/,versi:/^(versi|version|varian)$/,unit:/^(satuan|unit|sat)$/,cat:/^(kategori|category|grup|group)$/,brand:/^(merek|merk|brand|pabrik)$/};
+function imOS(t){t=String(t==null?'':t).toLowerCase().replace(/\s+/g,'').replace(/^os/,'').replace(/^\+/,'');
+ if(/^(std|standar|standard|0|0[.,]0+|\.0+)$/.test(t))return'STD';
+ if(/^(0?[.,]25|025|25)$/.test(t))return'25';if(/^(0?[.,]50?|050|50)$/.test(t))return'50';
+ if(/^(0?[.,]75|075|75)$/.test(t))return'75';if(/^(1[.,]0{0,2}|100)$/.test(t))return'100';return''}
+function imPrice(s){s=String(s==null?'':s).toLowerCase().replace(/rp\.?/g,'').replace(/\s/g,'');if(!s)return 0;
+ let m=/^(\d+(?:[.,]\d+)?)(?:k|rb|ribu)$/.exec(s);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*1000);
+ m=/^(\d+(?:[.,]\d+)?)(?:jt|juta)$/.exec(s);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*1e6);
+ if(/^\d{1,3}([.,]\d{3})+$/.test(s))return+s.replace(/[.,]/g,'');if(/^\d+$/.test(s))return+s;return 0}
+const imQ=v=>{const s=String(v==null?'':v).trim().replace(',','.');if(s===''||!/^\d+(\.\d+)?$/.test(s))return null;return +s};
+const imStrip=s=>String(s||'').replace(/^\s*(?:\d{1,3}[.)]|[-•*·>])\s+/,'');
+function imTok(kind,text){let s=imStrip(String(text||'').replace(/\t+/g,' ')),o={os:[],seri:'',sell:0,q:null,unit:''},m;
+ const sub=(re,fn)=>{s=s.replace(re,(...a)=>{fn(...a);return' '})};
+ sub(/(?:\bstok\b|\bstock\b|\bqty\b|\bsisa\b|\bjml\b|\bjumlah\b)\s*[:=]?\s*(\d+(?:[.,]\d+)?)(?:\s*(pcs|pc|biji|buah|bh|set|paket|pak|unit|botol|liter|meter|kg|dus|box|lusin))?/i,(a,n,u)=>{o.q=imQ(n);if(u)o.unit=u.toLowerCase()});
+ if(o.q===null)sub(/(?<![A-Za-z0-9])[x×](\d{1,4})(?![\d.,A-Za-z])/i,(a,n)=>{o.q=+n});
+ if(o.q===null)sub(/(?<![\d.,])(\d+)\s*(pcs|pc|biji|buah|bh|set|paket|pak|unit|botol|liter|meter|kg|dus|box|lusin)\b/i,(a,n,u)=>{o.q=+n;o.unit=u.toLowerCase()});
+ if(kind==='bearing'){m=/(?<![\d])(\d{3,5})(?:\s?(ZZ|2RS|RS|DDU|NR|2Z|Z))?(?![\d])/i.exec(s);if(m){o.seri=(m[1]+(m[2]?' '+m[2].toUpperCase():''));s=s.replace(m[0],' ')}}
+ m=/(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{4,}|\d+(?:[.,]\d+)?\s?(?:k|rb|ribu|jt|juta)\b)/i.exec(s);
+ if(m){const p=imPrice(m[0]);if(p>=1000){o.sell=p;const ms=/^\s+(\d{1,4})\s*$/.exec(s.slice(m.index+m[0].length));if(ms&&o.q===null){o.q=+ms[1];s=s.slice(0,m.index+m[0].length)}s=s.replace(m[0],' ')}}
+ if(kind==='piston'){
+  m=/\b(?:os|oversize|over\s?size|ukuran|uk)\s*[:.=]?\s*((?:std|standar|standard|[+]?[01]?[.,]?\d{2,3})(?:\s*(?:[\/,&]|dan|-|s\/d|sd)\s*(?:std|[+]?[01]?[.,]?\d{2,3}))*)/i.exec(s);
+  if(m){const parts=m[1].split(/\s*(?:[\/,&]|dan|s\/d|sd|-)\s*/i),range=/s\/d|sd|-/i.test(m[1].replace(/[.,]/g,''))&&parts.length===2,v=parts.map(p=>imOS(p)||'?'+p.trim());
+   if(range&&OSL5.includes(v[0])&&OSL5.includes(v[1])){const a=OSL5.indexOf(v[0]),b=OSL5.indexOf(v[1]);o.os=OSL5.slice(Math.min(a,b),Math.max(a,b)+1)}else o.os=v;
+   s=s.replace(m[0],' ')}
+  else{m=/(?<![\d.,])(0[.,]\d{2}|\+(?:25|50|75|100)|1[.,]00)(?![\d])/.exec(s)||/(?<![\d.,A-Za-z])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
+   if(m){const v=imOS(m[1]||m[0]);if(v){o.os=[v];s=s.replace(m[0],' ')}}}}
+ o.name=s.replace(/\brp\.?\b/ig,' ').replace(/[|;:=]+/g,' ').replace(/\s[-–—]\s/g,' ').replace(/^[\s\-–—,.]+|[\s\-–—,.]+$/g,'').replace(/\s+/g,' ').trim();return o}
+function imHeader(row){const m={},osc=[];let hit=0;
+ row.forEach((c,i)=>{const t=String(c).toLowerCase().replace(/[._:]/g,' ').replace(/\s+/g,' ').trim();if(!t)return;
+  for(const f in HSYN){if(HSYN[f].test(t)){if(!Object.values(m).includes(f)){m[i]=f;hit++}return}}
+  if(/^(std|standar|standard|\+?0?[.,]?(25|50|75)|\+?1[.,]00?|100|\+?(25|50|75|100))$/.test(t.replace(/\s/g,'')))osc.push([i,imOS(t)])});
+ if(osc.length>=2&&!row.some(c=>imPrice(c)>=1000)){osc.forEach(o=>{m[o[0]]='os:'+o[1]});hit+=osc.length}
+ const keyc=Object.values(m).filter(f=>f==='name'||f==='seri'||f==='brand').length;
+ if(!keyc)return null;if(hit<2&&row.length>1)return null;return m}
+function imRows(kind,rows){const out=[];
+ rows=rows.map(r=>r.map(c=>String(c==null?'':c).trim())).filter(r=>r.some(c=>c));if(!rows.length)return out;
+ let hi=-1,map=null;for(let i=0;i<Math.min(rows.length,6);i++){const m=imHeader(rows[i]);if(m){hi=i;map=m;break}}
+ (hi>=0?rows.slice(hi+1):rows).forEach(r=>{
+  const g={};let osc=[];
+  if(map){Object.keys(map).forEach(i=>{const f=map[i];if(f.indexOf('os:')===0){osc.push([f.slice(3),r[i]]);return}if(g[f]===undefined||g[f]==='')g[f]=r[i]||''})}
+  else{g.name=r.join(' ');if(g.name.toLowerCase().split(/\s+/).every(w=>/^(no|nama|barang|os|oversize|ukuran|harga|stok|stock|qty|jumlah|seri|kode|jenis|versi|satuan|merek|merk|item|produk|model|tipe|keterangan|jual|pcs)$/.test(w)))return}
+  if(osc.length){osc.forEach(o=>{if(o[1]===''||o[1]==null)return;out.push(imRec(kind,Object.assign({},g,{os:o[0],q:o[1]})))});return}
+  imRec(kind,g,true).forEach(x=>out.push(x))});
+ return out}
+function imRec(kind,g,multi){
+ const t=imTok(kind,g.name||''),sell=g.sell!==undefined&&g.sell!==''?imPrice(g.sell):t.sell,q=g.q!==undefined&&g.q!==''?imQ(g.q):t.q;
+ const base={kind,name:t.name,sell,q,pc:String(g.pc||'').trim(),jenis:g.jenis||'',versi:g.versi||'',unit:(g.unit||t.unit||'').trim(),cat:g.cat||'',brand:g.brand||'',seri:String(g.seri||t.seri||'').trim(),os:''};
+ if(kind==='piston'){
+  if(g.os!==undefined&&g.os!==''){const v=imOS(g.os);base.os=v||'?'+g.os;return multi?[base]:base}
+  if(t.os.length){const l=t.os.map(v=>Object.assign({},base,{os:v,q:t.os.length>1?null:q}));return multi?l:l[0]}
+  if(!IM.sizes.length)return multi?[base]:base;
+  const l=IM.sizes.map(v=>Object.assign({},base,{os:v,q:null,assumed:true}));return multi?l:l[0]}
+ return multi?[base]:base}
+function imVal(r){const k=r.kind;let f,err='',unit=KU[k];
+ if(k==='piston'){const b=r.name.replace(/^(paket\s+piston|pkt\s+piston|piston)\s+/i,'').trim();f=fK(k,{base:b,os:r.os});
+  if(!f.base)err='Nama tidak terbaca';else if(!f.os)err='OS belum ada, pilih ukuran OS di halaman sebelumnya';else if(r.os.charAt(0)==='?')err='OS "'+r.os.slice(1)+'" tidak dikenal (STD, 25, 50, 75, 100)'}
+ else if(k==='bearing'){const seri=r.seri.toUpperCase().replace(/\s+/g,' ');let br=(r.brand||r.name).replace(/\b(laher|bearing|bantalan)\b/ig,' ').replace(/\s+/g,' ').trim();
+  f=fK(k,{base:br,seri});if(!/^\d{3,5}(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
+ else if(k==='stang'){let b=r.name;if(b&&!/^stang/i.test(b))b='Stang seher '+b;f=fK(k,{base:b,jenis:r.jenis,versi:r.versi});if(!f.base)err='Nama tidak terbaca'}
+ else{f=fK(k,{base:r.name});unit=r.unit||'pcs';if(!f.base)err='Nama tidak terbaca'}
+ const o={kind:k,ok:!err,err,f,unit,sell:r.sell||0,q:r.q,pc:r.pc,cat:r.cat,assumed:!!r.assumed,dup:0,skip:false};
+ if(!err){o.name=compose(k,f);o.key=keyOf(k,f);o.ex=D.items.find(x=>kindOf(x)===k&&keyOf(k,itemF(x))===o.key)||null;o.cur=o.ex?(cc().stock[o.ex.id]||0):0}else{o.name=r.name||r.seri||'(kosong)';o.skip=true}
+ return o}
+function imFinish(kind,recs){const seen={},out=[];
+ recs.forEach(r=>{const o=imVal(r);if(o.ok&&seen[o.key]){const p=seen[o.key];p.dup++;if(o.sell>0)p.sell=o.sell;if(o.q!==null)p.q=o.q;if(o.pc&&!p.pc)p.pc=o.pc;return}
+  if(o.ok)seen[o.key]=o;out.push(o)});return out}
+/* ---- pembaca file ---- */
+function imCsv(t,pasted){t=t.replace(/^\uFEFF/,'');const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return[];
+ const sm=lines.slice(0,12),need=Math.max(1,Math.ceil(sm.length*0.6));let d=null;
+ for(const c of(pasted?['\t',';','|']:['\t',';','|',','])){if(sm.filter(l=>l.indexOf(c)>=0).length>=need){d=c;break}}
+ if(!d)return lines.map(l=>[l]);
+ const rows=[];let row=[],cur='',q=false;
+ for(let i=0;i<t.length;i++){const ch=t[i];
+  if(q){if(ch==='"'){if(t[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+  else if(ch==='"'&&cur==='')q=true;else if(ch===d){row.push(cur);cur=''}
+  else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(cur);cur='';if(row.some(c=>c.trim()))rows.push(row);row=[]}
+  else cur+=ch}
+ row.push(cur);if(row.some(c=>c.trim()))rows.push(row);return rows}
+function imJson(t){const j=JSON.parse(t);let a=Array.isArray(j)?j:null;if(!a&&j&&typeof j==='object'){for(const k in j)if(Array.isArray(j[k])){a=j[k];break}}
+ if(!a)throw new Error('JSON harus berisi daftar barang');
+ if(a.every(x=>typeof x!=='object'))return a.map(x=>[String(x)]);
+ const keys=[];a.forEach(o=>Object.keys(o||{}).forEach(k=>{if(!keys.includes(k)&&typeof o[k]!=='object')keys.push(k)}));
+ return[keys].concat(a.map(o=>keys.map(k=>o&&o[k]!=null?String(o[k]):'')))}
+async function imUnzip(buf){if(typeof DecompressionStream==='undefined')throw new Error('Browser ini belum bisa membuka file Excel. Simpan sebagai CSV, atau tempel teksnya.');
+ const dv=new DataView(buf),u8=new Uint8Array(buf);let e=-1;
+ for(let i=u8.length-22;i>=Math.max(0,u8.length-65558);i--){if(dv.getUint32(i,true)===0x06054b50){e=i;break}}
+ if(e<0)throw new Error('File ini bukan Excel (.xlsx) yang valid');
+ const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const fl={};
+ for(let i=0;i<n;i++){if(dv.getUint32(p,true)!==0x02014b50)break;const method=dv.getUint16(p+10,true),csz=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),el=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true),nm=new TextDecoder().decode(u8.subarray(p+46,p+46+nl));fl[nm]={method,csz,off};p+=46+nl+el+cl}
+ return{names:Object.keys(fl),get:async nm=>{const f=fl[nm];if(!f)return null;const ln=dv.getUint16(f.off+26,true),le=dv.getUint16(f.off+28,true),st=f.off+30+ln+le,data=u8.subarray(st,st+f.csz);
+  if(f.method===0)return new TextDecoder().decode(data);if(f.method!==8)throw new Error('Jenis kompresi file tidak didukung');
+  const ds=new DecompressionStream('deflate-raw'),w=ds.writable.getWriter();w.write(data);w.close();return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer())}}}
+const imCol=r=>{const m=/^([A-Z]+)/.exec(r||'');if(!m)return 0;let n=0;for(const c of m[1])n=n*26+c.charCodeAt(0)-64;return n-1};
+async function imXlsx(file){const z=await imUnzip(await file.arrayBuffer()),dp=new DOMParser(),xml=s=>dp.parseFromString(s,'application/xml');
+ if(z.names.includes('content.xml')){const d=xml(await z.get('content.xml')),blocks=[];
+  [...d.getElementsByTagName('table:table')].forEach(tb=>{const rows=[];[...tb.getElementsByTagName('table:table-row')].forEach(tr=>{const r=[];[...tr.children].forEach(c=>{if(!/table-cell$/.test(c.nodeName))return;const rep=Math.min(+c.getAttribute('table:number-columns-repeated')||1,40),tx=[...c.getElementsByTagName('text:p')].map(p=>p.textContent).join(' ');for(let i=0;i<rep;i++)r.push(tx)});rows.push(r)});blocks.push(rows)});return blocks}
+ const ss=[],sst=await z.get('xl/sharedStrings.xml');if(sst)[...xml(sst).getElementsByTagName('si')].forEach(si=>ss.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join('')));
+ const sh=z.names.filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));if(!sh.length)throw new Error('Lembar Excel tidak ditemukan');
+ const blocks=[];for(const nm of sh){const d=xml(await z.get(nm)),rows=[];
+  [...d.getElementsByTagName('row')].forEach(tr=>{const r=[];[...tr.getElementsByTagName('c')].forEach(c=>{const ix=imCol(c.getAttribute('r')),t=c.getAttribute('t'),v=c.getElementsByTagName('v')[0];let val='';
+   if(t==='s'&&v)val=ss[+v.textContent]||'';else if(t==='inlineStr')val=[...c.getElementsByTagName('t')].map(x=>x.textContent).join('');else if(v)val=v.textContent;
+   while(r.length<ix)r.push('');r[ix]=val});rows.push(r)});blocks.push(rows)}
+ return blocks}
+function imLoadJs(urls,test){return new Promise((ok,no)=>{if(test())return ok(0);let i=0;const nx=()=>{if(i>=urls.length)return no(new Error('Pembaca PDF tidak bisa dimuat. Pastikan internet aktif.'));const k=i,s=document.createElement('script');s.src=urls[i++];s.onload=()=>test()?ok(k):nx();s.onerror=nx;document.head.appendChild(s)};nx()})}
+function imPdfRows(items){const ls=[];items.forEach(it=>{if(!it.str||!it.str.trim())return;const x=it.transform[4],y=it.transform[5],h=Math.abs(it.transform[3])||10;let L=ls.find(l=>Math.abs(l.y-y)<=h*0.4);if(!L){L={y,h,a:[]};ls.push(L)}L.a.push({x,w:it.width||0,s:it.str})});
+ ls.sort((a,b)=>b.y-a.y);return ls.map(l=>{l.a.sort((p,q)=>p.x-q.x);const cells=[];let cur='',end=null;l.a.forEach(t=>{if(end!==null&&t.x-end>l.h*1.2){cells.push(cur.trim());cur=''}else if(end!==null&&t.x-end>l.h*0.15&&!/\s$/.test(cur))cur+=' ';cur+=t.s;end=t.x+t.w});cells.push(cur.trim());return cells})}
+const imTxtRows=t=>String(t||'').split(/\r?\n/).filter(l=>l.trim()).map(l=>[l.trim().replace(/\s{2,}/g,' ')]);
+async function imOcrCanvas(cv){const w=await ocEngine();try{await w.setParameters({tessedit_pageseg_mode:'6',preserve_interword_spaces:'1'});const r=await w.recognize(cv);return imTxtRows(r.data.text)}finally{OCR.pmSet='6';OCR.pm='11'}}
+async function imPrep(img,w0,h0){const k=Math.min(2.5,2600/Math.max(w0,h0),Math.max(1,1500/Math.max(w0,h0)));const c=document.createElement('canvas');c.width=Math.round(w0*k);c.height=Math.round(h0*k);const x=c.getContext('2d');try{x.filter='grayscale(1) contrast(1.3)'}catch(e){}x.drawImage(img,0,0,c.width,c.height);return c}
+async function imPdf(file){const k=await imLoadJs(['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js','https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js'],()=>window.pdfjsLib);
+ const L=window.pdfjsLib;L.GlobalWorkerOptions.workerSrc=k===0?'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js':'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+ const pdf=await L.getDocument({data:await file.arrayBuffer()}).promise,n=Math.min(pdf.numPages,40);let rows=[],chars=0;
+ for(let p=1;p<=n;p++){const pg=await pdf.getPage(p),tc=await pg.getTextContent();chars+=tc.items.reduce((s,i)=>s+(i.str||'').length,0);rows=rows.concat(imPdfRows(tc.items))}
+ if(chars>=20)return rows;
+ rows=[];for(let p=1;p<=Math.min(n,10);p++){imSet('Membaca halaman '+p+' dengan pembaca tulisan');const pg=await pdf.getPage(p),vp=pg.getViewport({scale:2.2}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;rows=rows.concat(await imOcrCanvas(cv))}
+ return rows}
+async function imImage(file){const url=URL.createObjectURL(file);try{const img=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=()=>no(new Error('Foto tidak bisa dibuka'));i.src=url});
+ imSet('Membaca foto dengan pembaca tulisan, pertama kali butuh unduhan sekitar 10 MB');return await imOcrCanvas(await imPrep(img,img.naturalWidth,img.naturalHeight))}finally{URL.revokeObjectURL(url)}}
+async function imRead(file){const ext=(file.name.split('.').pop()||'').toLowerCase(),ty=file.type||'';
+ if(/^(csv|tsv|txt|text|md|log|dat)$/.test(ext)||ty.indexOf('text/')===0&&ext!=='html')return[imCsv(await file.text(),!/^(csv|tsv)$/.test(ext))];
+ if(ext==='json'||ty==='application/json')return[imJson(await file.text())];
+ if(/^(xlsx|xlsm|ods)$/.test(ext))return await imXlsx(file);
+ if(ext==='xls')throw new Error('File .xls versi lama belum bisa dibaca. Buka di Excel lalu simpan sebagai .xlsx atau .csv.');
+ if(ext==='pdf'||ty==='application/pdf')return[await imPdf(file)];
+ if(ty.indexOf('image/')===0||/^(jpe?g|png|webp|bmp|gif)$/.test(ext))return[await imImage(file)];
+ if(ext==='docx'||ext==='doc')throw new Error('File Word belum bisa dibaca. Salin isinya lalu tempel sebagai teks, atau simpan sebagai PDF.');
+ const t=await file.text();if(t&&!/[\x00-\x08\x0e-\x1f]/.test(t.slice(0,2000)))return[imCsv(t)];
+ throw new Error('Format ".'+ext+'" belum didukung. Pakai CSV, Excel (.xlsx), PDF, foto, atau tempel teks.')}
+const imSet=m=>{IM.busy=m;const e=document.getElementById('ims');if(e){e.textContent=m;e.hidden=!m}};
+async function imRun(job){IM.err='';imSet('Membaca data...');try{const blocks=await job();let recs=[];blocks.forEach(b=>{recs=recs.concat(imRows(IM.kind,b))});
+  if(!recs.length)throw new Error('Tidak ada barang yang bisa dibaca. Coba tempel teksnya, satu barang per baris.');
+  if(recs.length>1500)throw new Error('Terlalu banyak baris ('+recs.length+'). Pecah file, maksimal 1500 barang sekali impor.');
+  IM.recs=imFinish(IM.kind,recs);IM.lim=60;imSet('');openPage(pgImpRev,[],{live:true})}
+ catch(e){IM.err=String(e&&e.message||e||'Gagal membaca');imSet('');const el=document.getElementById('ime');if(el){el.textContent=IM.err;el.hidden=false}ping(false)}}
+/* ---- halaman ---- */
+const IMX={piston:'Satu barang per baris, misalnya "Blade OS 25 150.000" atau kolom Nama, OS, Harga, Stok. Baris yang hanya berisi nama dibuatkan semua ukuran OS yang Anda pilih di bawah.',
+ bearing:'Satu seri per baris, misalnya "6204", "6001 ZZ 25.000", atau kolom Seri, Harga, Stok. Nama disusun otomatis (Laher 6204).',
+ stang:'Satu barang per baris, misalnya "Vario 011-KVB-0705" atau kolom Nama, Jenis, Versi, Harga, Stok.',
+ umum:'Satu barang per baris, misalnya "Oli Yamalube 1 liter 55.000 stok 10" atau kolom Nama, Satuan, Harga, Stok.'};
+function pgImpKind(){return pgh('Impor data barang','<p class="date">Pilih jenis barang yang mau diisi dari file.</p>'+grp(KORD.map(k=>mrow(KL[k],'Impor daftar '+KS[k].toLowerCase(),k==='piston'||k==='stang'?'box':'inbox','impk','data-k="'+k+'"')).join('')))}
+function pgImpSrc(){const k=IM.kind;
+ return pgh('Impor '+KS[k].toLowerCase(),'<p class="hint" style="margin:8px 0 12px">'+esc(IMX[k])+'</p>'
+ +(k==='piston'?'<h4 style="margin-top:6px">Ukuran OS untuk baris tanpa OS</h4>'+'<div class="chips flat" style="flex-wrap:wrap;overflow:visible">'+OSL5.map(v=>'<button type="button" class="chip'+(IM.sizes.includes(v)?' on':'')+'" data-a="imos" data-v="'+v+'">'+(v==='STD'?'STD':'OS '+v)+'</button>').join('')+'</div>':'')
+ +'<button class="bt full" data-a="imfile" style="margin-top:14px">'+ic('up')+'Pilih file</button>'
+ +'<p class="hint">Excel, CSV, PDF, foto, atau file teks. Bisa pilih beberapa foto sekaligus.</p>'
+ +'<h4>Atau tempel teks</h4><textarea id="imt" class="in ta" placeholder="Salin daftar dari WhatsApp atau catatan, lalu tempel di sini" aria-label="Tempel daftar barang">'+esc(IM.txt)+'</textarea>'
+ +'<button class="bt sec full" data-a="imtext">Baca teks</button>'
+ +'<p class="no-r" id="ims" hidden></p><p class="err-t" id="ime"'+(IM.err?'':' hidden')+'>'+esc(IM.err)+'</p>'
+ +'<input id="imf" type="file" multiple hidden>')}
+function imCounts(){const o={nw:0,ex:0,bad:0,sk:0,sel:0};IM.recs.forEach(r=>{if(!r.ok)o.bad++;else if(r.skip)o.sk++;else{o.sel++;if(r.ex)o.ex++;else o.nw++}});return o}
+function imRow(r,i){const st=cc().stock;let sub,right;
+ if(!r.ok)return '<div class="r rv off"><div><b>'+esc(r.name)+'</b><small class="lw">'+esc(r.err)+'</small></div><div class="rt"><small>Dilewati</small></div></div>';
+ sub=(r.ex?'<i class="tag mu">Sudah ada</i>':'<i class="tag mu">Baru</i>')+(r.assumed?'<i class="tag mu">OS dibuat otomatis</i>':'')+(r.dup?'<i class="tag mu">Dobel digabung</i>':'');
+ const pr=r.sell>0?rp(r.sell):(r.ex&&r.ex.sell>0?rp(r.ex.sell):'Harga kosong');
+ const sq=r.q===null?'':(r.ex?(r.q!==r.cur?'Stok '+num(r.cur)+' → '+num(r.q):'Stok '+num(r.q)):'Stok '+num(r.q));
+ const note=r.ex&&r.sell>0&&r.ex.sell>0&&r.sell!==r.ex.sell?' <small class="lw" style="display:inline">harga tidak diubah</small>':'';
+ return '<div class="r rv'+(r.skip?' off':'')+'" data-a="imtog" data-i="'+i+'"><div><b>'+esc(r.name)+'</b><small>'+sub+note+'</small></div><div class="rt"><b>'+esc(pr)+'</b>'+(sq?'<small>'+esc(sq)+'</small>':'')+'</div><span class="ck'+(r.skip?'':' on')+'"></span></div>'}
+function imList(){const a=IM.recs.slice(0,IM.lim).map((r,i)=>imRow(r,i)).join('');return grp(a)+(IM.recs.length>IM.lim?'<button class="bt sec full" data-a="immore">Tampilkan '+Math.min(60,IM.recs.length-IM.lim)+' lagi ('+(IM.recs.length-IM.lim)+' tersisa)</button>':'')}
+function pgImpRev(){const c=imCounts();
+ return pgh('Tinjau impor','<p class="date" id="imc">'+imSum(c)+'</p><div id="iml">'+imList()+'</div>',{foot:'<div class="ft"><div><small>Akan disimpan</small><b id="imn">'+c.sel+' barang</b></div><button class="bt" data-a="imsave" id="imb"'+(c.sel?'':' disabled')+'>Simpan</button></div>'})}
+const imSum=c=>c.nw+' baru'+(c.ex?', '+c.ex+' sudah ada':'')+(c.bad?', '+c.bad+' dilewati':'')+'. Ketuk baris untuk melewati atau menyertakan.';
+function imUpd(){const c=imCounts();setT('imc',imSum(c));setT('imn',c.sel+' barang');const b=document.getElementById('imb');if(b)b.disabled=!c.sel}
+function imSave(){const c=clone(D),at=Date.now();let nn=0,nu=0,ns=0;const kind=IM.kind;
+ IM.recs.forEach(r=>{if(!r.ok||r.skip)return;const k=r.kind;let x=c.items.find(z=>kindOf(z)===k&&keyOf(k,itemF(z))===r.key),cur=0;
+  if(x){cur=cc().stock[x.id]||0;if(!(x.sell>0)&&r.sell>0)x.sell=r.sell;if(x.arch){x.arch=false}nu++}
+  else{x={id:uid(),kind:k,base:r.f.base,a:attrsOf(r.f),name:r.name,cat:r.cat||'',unit:r.unit,buy:0,sell:r.sell||0,min:0,arch:false,codes:[],pc:''};c.items.push(x);nn++}
+  if(r.pc&&!x.pc&&!(k==='piston'&&c.items.some(z=>z.id!==x.id&&kindOf(z)==='piston'&&z.pc&&cn(z.pc)===cn(r.pc))))x.pc=r.pc;
+  if(r.q!==null&&r.q!==cur){c.adj.push({id:uid(),i:x.id,name:x.name,unit:x.unit,delta:r4(r.q-cur),c:null,reason:'Impor data',d:today(),ts:at+(++ns),note:''})}});
+ if(!commit(c))return;const msg=nn+' barang baru'+(nu?', '+nu+' diperbarui':'')+'. Isi stoknya di sini.';
+ const n=PGS.length;back(n);render(false);SK={kind,q:'',f:'all',v:{}};setTimeout(()=>{openPage(pgStock,[],{live:false});toast(msg)},reduce()?0:60)}
+function skList(){const st=cc().stock,a=D.items.filter(x=>!x.arch&&kindOf(x)===SK.kind&&x.name.toLowerCase().includes(SK.q.toLowerCase())&&(SK.f==='all'||(SK.f==='zero'&&(st[x.id]||0)<=0)||(SK.f==='np'&&!(x.sell>0)))).sort((p,q)=>p.name.localeCompare(q.name,undefined,{numeric:true}));
+ if(!a.length)return '<p class="em">'+(D.items.some(x=>!x.arch&&kindOf(x)===SK.kind)?'Tidak ada barang yang cocok.':'Belum ada barang jenis ini. Impor atau tambah manual dulu.')+'</p>';
+ return a.map(x=>{const v=SK.v[x.id]||{},cur=st[x.id]||0;return '<div class="sk"><div class="skh"><b>'+esc(x.name)+'</b><small>Stok sekarang '+num(cur)+' '+esc(x.unit)+'</small></div><div class="two"><label class="fld sm"><span class="lb">Stok ('+esc(x.unit)+')</span><input class="in" data-sk="'+x.id+'" data-fmt="qty" inputmode="decimal" autocomplete="off" placeholder="'+fq(cur)+'" value="'+esc(v.q===undefined?'':v.q)+'"></label><label class="fld sm"><span class="lb">Harga jual'+(x.sell>0?'':' <span class="op" style="color:var(--er)">kosong</span>')+'</span><input class="in" data-sp="'+x.id+'" data-fmt="money" inputmode="numeric" autocomplete="off" placeholder="'+(x.sell>0?fmn(x.sell):'0')+'" value="'+esc(v.p===undefined?'':v.p)+'"></label></div></div>'}).join('')}
+function pgStkKind(){return pgh('Isi stok','<p class="date">Pilih jenis barang yang stoknya mau diisi.</p>'+grp(KORD.map(k=>{const n=D.items.filter(x=>!x.arch&&kindOf(x)===k).length;return mrow(KL[k],n+' barang','box','stkk','data-k="'+k+'"')}).join('')))}
+function pgStock(){return pgh('Isi stok '+KS[SK.kind].toLowerCase(),'<input id="skq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(SK.q)+'">'+chips([['all','Semua'],['zero','Stok kosong'],['np','Harga kosong']],SK.f,'skf')+'<p class="hint" style="margin:8px 0">Ketik jumlah yang ada di rak. Kolom yang dikosongkan tidak diubah.</p><div id="skl">'+skList()+'</div>',{foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
+const skCnt=()=>Object.keys(SK.v).filter(id=>{const v=SK.v[id];return v&&((v.q!==undefined&&v.q!=='')||(v.p!==undefined&&v.p!==''))}).length;
+function skSave(){const c=clone(D),at=Date.now();let n=0,ns=0,np=0;
+ for(const id of Object.keys(SK.v)){const v=SK.v[id],x=c.items.find(z=>z.id===id);if(!x)continue;let ch=false;
+  if(v.q!==undefined&&v.q!==''){const q=pq(v.q);if(!(q>=0))return bad('[data-sk="'+id+'"]','Jumlah tidak valid');const cur=cc().stock[id]||0;if(q!==cur){c.adj.push({id:uid(),i:id,name:x.name,unit:x.unit,delta:r4(q-cur),c:null,reason:'Isi stok',d:today(),ts:at+(++ns),note:''});ch=true}}
+  if(v.p!==undefined&&v.p!==''){const p=pm(v.p);if(!(p>0))return bad('[data-sp="'+id+'"]','Harga harus lebih dari 0');if(p!==x.sell){x.sell=p;np++;ch=true}}
+  if(ch)n++}
+ if(!n)return toast('Belum ada angka yang berubah');
+ if(!commit(c))return;SK.v={};done(n+' barang disimpan'+(np?' ('+np+' harga)':''))}
 
 /* ================= Scanner barcode ================= */
 let AC=null,SC=null,LQ='',LKK='all',HW={b:'',t:0};
@@ -774,7 +977,7 @@ function ocBuild(a,lines){const ctx=lines.filter(l=>ocNear(a.l,l)),txt=ocFix(ctx
  const bb=a.l.x0==null?null:{x:a.l.x0,y:a.l.y0,width:a.l.x1-a.l.x0,height:a.l.y1-a.l.y0};
  if(a.kind==='piston'){const OSL={B:'25',C:'50',D:'75',E:'100'},sg=suggestFromCode(a.pc),mo=/UKURAN\s*[:.]?\s*(0[.,]\s?(?:25|50|75)|1[.,]\s?00)/.exec(txt)||/(?<![0-9])(0[.,](?:25|50|75)|1[.,]00)(?![0-9])/.exec(txt);
   const byL=OSL[a.pc.slice(-1)]||'',byT=mo?String(parseInt(mo[1].replace(/[^0-9]/g,''),10)):'',os=byL||byT;
-  const R={kind:'piston',pc:a.pc,os,model,bb,base:(sg&&sg.base)||(model?'Paket piston '+model:'')};
+  const R={kind:'piston',pc:a.pc,os,model,bb,base:(sg&&sg.base)||model};
   if(byT&&byL&&byT!==byL)R.warn='Huruf kode menunjuk OS '+byL+', tulisan ukuran terbaca OS '+byT+'. Periksa stikernya.';
   R.label='Paket piston'+(model?' '+model:'')+(os?' OS '+os:'');return R}
  if(a.kind==='stang'){let base=model?'Stang seher '+model:'';if(!base){const m=a.pc.split('-')[1],pi=D.items.find(x=>kindOf(x)==='piston'&&x.pc&&cn(x.pc).split('-')[1]===m);if(pi)base='Stang seher '+(pi.base||pi.name)}
@@ -882,6 +1085,18 @@ const A={
  sndreset(){try{['ok','no'].forEach(k=>{localStorage.removeItem(SNDK[k]);localStorage.removeItem(SNDK[k]+'_n')})}catch(e){}delete AUD.ok;delete AUD.no;const p=PGS[PGS.length-1];if(p)paint(p);toast('Suara bawaan dipakai kembali');playSnd('ok')},back(){back()},
  theme(b){try{localStorage.setItem(KT,b.dataset.v)}catch(e){}applyTheme(b.dataset.v);const p=PGS[PGS.length-1];if(p)paint(p)},
  inp(){openProd(null)},
+ imp(){if(IK!=='all'){IM.kind=IK;IM.err='';openPage(pgImpSrc,[],{live:false})}else openPage(pgImpKind,[])},
+ impk(b){IM.kind=b.dataset.k;IM.err='';openPage(pgImpSrc,[],{live:false})},
+ imos(b){const v=b.dataset.v,i=IM.sizes.indexOf(v);if(i>=0)IM.sizes.splice(i,1);else IM.sizes.push(v);IM.sizes.sort((x,y)=>OSL5.indexOf(x)-OSL5.indexOf(y));b.classList.toggle('on',IM.sizes.includes(v))},
+ imfile(){const e=document.getElementById('imf');if(e)e.click()},
+ imtext(){const e=document.getElementById('imt'),t=e?e.value:'';if(!t.trim())return bad('#imt','Tempel daftar barangnya dulu');IM.txt=t;imRun(async()=>[imCsv(t,true)])},
+ imtog(b){const r=IM.recs[+b.dataset.i];if(!r||!r.ok)return;r.skip=!r.skip;const k=b.querySelector('.ck');b.classList.toggle('off',r.skip);if(k)k.classList.toggle('on',!r.skip);imUpd()},
+ immore(){IM.lim+=60;const l=document.getElementById('iml');if(l)l.innerHTML=imList()},
+ imsave(){imSave()},
+ stk(){SK={kind:IK==='all'?'piston':IK,q:'',f:'all',v:{}};if(IK!=='all')return openPage(pgStock,[],{live:false});openPage(pgStkKind,[])},
+ stkk(b){SK={kind:b.dataset.k,q:'',f:'all',v:{}};openPage(pgStock,[],{live:false})},
+ skf(b){SK.f=b.dataset.v;const l=document.getElementById('skl');if(l)l.innerHTML=skList();topPg().querySelectorAll('.chips .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===SK.f))},
+ sksave(){skSave()},
  kind(b){IFS.vals=Object.assign(IFS.vals,vals(topPg()));IFS.kind=b.dataset.v;const p=PGS[PGS.length-1];paint(p)},
  osc(b){const el=topPg().querySelector('[name=os]');el.value=b.dataset.v;IFS.vals.os=b.dataset.v;el.classList.remove('err');topPg().querySelectorAll('#osc .chip').forEach(c=>c.classList.toggle('on',c===b));updPv()},
  isave(){doSave(false)},
@@ -969,6 +1184,9 @@ document.addEventListener('scroll',()=>{if(SUGT)hideSug()},true);
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;if(t.classList)t.classList.remove('err');
  const fm=t.dataset.fmt;if(fm==='money')fmtMoney(t);else if(fm==='qty')fmtQty(t);
  if(t.dataset.sug)showSug(t);
+ if(t.id==='imt'){IM.txt=t.value;return}
+ if(t.id==='skq'){SK.q=t.value;const l=document.getElementById('skl');if(l)l.innerHTML=skList();return}
+ if(t.dataset.sk!==undefined||t.dataset.sp!==undefined){const id=t.dataset.sk!==undefined?t.dataset.sk:t.dataset.sp,v=SK.v[id]||(SK.v[id]={});if(t.dataset.sk!==undefined)v.q=t.value;else v.p=t.value;setT('skn',skCnt()+' barang');return}
  if(t.id==='q'){q=t.value;const l=document.getElementById('lst');if(l)l.innerHTML=itemsHtml()}
  else if(t.id.indexOf('nq-')===0){const k=t.id.slice(3);HF[k].q=t.value;HF[k].lim=30;const l=document.getElementById('nl-'+k);if(l)l.innerHTML=listNHtml(k)}
  else if(t.id==='hq'){hq=t.value;const l=document.getElementById('dl');if(l)l.innerHTML=partyListHtml()}
@@ -985,6 +1203,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
   updPv()}});
 const AMIME={mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',oga:'audio/ogg',m4a:'audio/mp4',aac:'audio/aac',mp4:'audio/mp4',webm:'audio/webm'};
 document.addEventListener('change',e=>{const s=e.target;
+ if(s.id==='imf'&&s.files&&s.files.length){const fl=[...s.files];s.value='';imRun(async()=>{let b=[];for(const f of fl){imSet('Membaca '+f.name);b=b.concat(await imRead(f))}return b});return}
  if(s.id&&s.id.indexOf('sf-')===0&&s.files&&s.files[0]){const k=s.id.slice(3),f=s.files[0];s.value='';
   if(f.size>307200)return toast('File terlalu besar, maksimal 300 KB');
   const r=new FileReader();r.onload=()=>{const ext=(f.name.split('.').pop()||'').toLowerCase(),mime=AMIME[ext]||(f.type&&f.type.indexOf('audio')===0?f.type:'');
