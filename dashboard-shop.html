@@ -741,6 +741,8 @@ const OCV=[];try{document.addEventListener('securitypolicyviolation',e=>{OCV.pus
 const ocMsg=e=>{const s=String(e&&e.message||(typeof e==='string'?e:'')||'').replace(/\s+/g,' ').slice(0,80);return s||'pekerja tidak bisa mulai (tanpa pesan)'};
 const ocTO=(p,ms,l)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error(l+' terlalu lama')),ms))]);
 function ocScript(src){return new Promise((ok,no)=>{if(window.Tesseract)return ok();const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('skrip tidak terunduh'));document.head.appendChild(s)})}
+async function ocHdr(){try{const r=await fetch(location.pathname,{cache:'no-store'}),c=r.headers.get('content-security-policy')||'',g=d=>{const m=new RegExp(d+'[^;]*').exec(c);return m?m[0].slice(0,60):d+' tidak ada'};
+ return ' | HEADER SITUS SAAT INI: '+g('worker-src')+', '+(/wasm-unsafe-eval|unsafe-eval/.test(c)?'wasm diizinkan':'wasm TIDAK diizinkan')+(navigator.serviceWorker&&navigator.serviceWorker.controller?', service worker aktif':'')}catch(e){return ''}}
 function ocEngine(){if(OCR.w)return Promise.resolve(OCR.w);if(OCR.p)return OCR.p;
  OCR.p=(async()=>{const errs=[];OCV.length=0;
   for(const h of OC_HOSTS){let st='skrip';OCR.last='';try{
@@ -750,7 +752,7 @@ function ocEngine(){if(OCR.w)return Promise.resolve(OCR.w);if(OCR.p)return OCR.p
       logger:m=>{if(m&&m.status){OCR.last=m.status;if(typeof m.progress==='number'&&SC&&!OCR.w&&/load|init/i.test(m.status))camMsg('Menyiapkan pembaca tulisan ('+h.n+') '+Math.round(m.progress*100)+'%')}}}),120000,'mesin');
     await w.setParameters({tessedit_pageseg_mode:'11',preserve_interword_spaces:'1'});OCR.w=w;return w}
    catch(e){errs.push(h.n+' ['+st+(OCR.last?', terakhir: '+OCR.last:'')+']: '+ocMsg(e))}}
-  OCR.p=null;OCR.err=errs.join(' | ')+(OCV.length?' | DIBLOKIR situs: '+OCV.slice(0,2).join(', '):'');throw new Error(OCR.err)})();
+  OCR.p=null;OCR.err=errs.join(' | ')+(OCV.length?' | DIBLOKIR situs: '+OCV.slice(0,2).join(', ')+await ocHdr():'');throw new Error(OCR.err)})();
  return OCR.p}
 function ocGrab(v){const W=v.videoWidth,H=v.videoHeight,k=Math.min(1,1800/Math.max(W,H)),cw=Math.round(W*k),ch=Math.round(H*k);
  const c=OCR.cv||(OCR.cv=document.createElement('canvas'));c.width=cw;c.height=ch;const x=c.getContext('2d');try{x.filter='grayscale(1) contrast(1.4)'}catch(e){}x.drawImage(v,0,0,cw,ch);return{c,k,W,H}}
