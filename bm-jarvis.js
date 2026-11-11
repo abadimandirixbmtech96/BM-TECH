@@ -538,11 +538,12 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
         line(buf);
       } else { (await r.text()).split('\n').forEach(line); }
       if (!got) throw new Error('Koneksi terputus sebelum jawaban selesai. Coba lagi.');
-      if (got.type === 'error') throw new Error(got.error || 'Jarvis gagal.');
+      if (got.type === 'error') { var er = new Error(got.error || 'Jarvis gagal.'); er.extra = got; throw er; }
       return got;
     } finally { clearTimeout(timer); }
   }
 
+  var RESUME_RE = /^\s*(ya\s+)?(tolong\s+)?(lanjut(kan|in)?|terus(kan|in)?|ulang(i)?|coba\s+lagi|gas|oke?\s+lanjut|sambung(kan)?)\W*$/i, pend = {};
   async function submit(text) {
     text = String(text || '').trim().slice(0, 1500);
     if (!text || busy) return;
@@ -550,13 +551,16 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
     busy = true; userStop = false; el.in.value = ''; setSendMode(true); stopListen(); pauseWake();
     var chips = el.log.querySelector('.bmj-chips'); if (chips) chips.remove();
     say('u', text);
+    var orig = text, send = text, resume = null, rmodel = '', pd = pend.x;
+    if (pd && RESUME_RE.test(text)) { orig = pd.text; send = pd.text.slice(0, 1150) + '\n(Lanjutkan permintaan ini dari titik terakhir; percobaan sebelumnya gagal: ' + pd.err + ')'; resume = pd.resume || null; rmodel = pd.model || ''; }
+    delete pend.x;
     var R = newReply();
     var tick = setInterval(function () {                                   // tanda hidup: pengguna tahu AI masih bekerja
       var idle = Math.round((Date.now() - R.last) / 1000);
       if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)';
     }, 1500);
     try {
-      var fin = await stream({ message: text, history: history.slice(-10) }, function (ev) {
+      var fin = await stream({ message: send, history: history.slice(-10), resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) {
         if (ev.type === 'status') setStatus(R, ev.text);
         else if (ev.type === 'step') onStep(R, ev);
       });
@@ -589,15 +593,25 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
       var bc = mk('button', '', '', ICON_COPY + '<span>Salin</span>');
       bc.onclick = function () { var t = reps.length ? reps.map(reportPlain).join('\n\n') : plainOf(blocks); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { bc.querySelector('span').textContent = 'Tersalin ✓'; }, function () { bc.querySelector('span').textContent = 'Gagal'; }); setTimeout(function () { bc.querySelector('span').textContent = 'Salin'; }, 1800); };
       acts.appendChild(bc); R.wrap.appendChild(acts);
-      history.push({ role: 'user', text: text }, { role: 'model', text: reply.slice(0, 1000) + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      history.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (history.length > 20) history = history.slice(-20);
       (fin.actions || []).forEach(runAction);
       (fin.proposals || []).forEach(showProposal);
       toBottom();
     } catch (e) {
       finishSteps(R, false);
-      var stopped = userStop; userStop = false;
-      R.wrap.appendChild(tx('div', 'bmj-m bmj-s', stopped ? 'Dihentikan.' : (e.message || 'Jarvis gagal.'))); resumeWake(); toBottom();
+      var stopped = userStop, ex = e.extra || {}; userStop = false;
+      var em = stopped ? 'Dihentikan.' : (e.message || 'Jarvis gagal.');
+      if (!stopped) {
+        pend.x = { text: orig, err: String(em).slice(0, 120), resume: ex.resume, model: ex.resume_model };
+        history.push({ role: 'user', text: orig }, { role: 'model', text: '[Permintaan di atas GAGAL di tengah jalan: ' + String(em).slice(0, 120) + '. Jika admin menjawab "lanjut", kerjakan permintaan itu sampai selesai, jangan tanya ulang.]' });
+        if (history.length > 20) history = history.slice(-20);
+        em += '\nKetik "lanjut" untuk meneruskan.';
+      }
+      R.wrap.appendChild(tx('div', 'bmj-m bmj-s', em)); resumeWake();
+      var pt = ex.partial || {};
+      (pt.reports || []).forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
+      (pt.actions || []).forEach(runAction); (pt.proposals || []).forEach(showProposal); toBottom();
     } finally { clearInterval(tick); busy = false; curAC = null; curCtl = null; setSendMode(false); }
   }
 
