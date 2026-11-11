@@ -102,6 +102,14 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .selbar button.dg{background:var(--danger);color:#fff}.selbar button:disabled{opacity:.45}
 /* popover model */
 #mpop{position:fixed;z-index:50;left:14px;top:calc(60px + var(--safe-top));width:min(88vw,330px);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:8px;box-shadow:0 18px 50px rgba(0,0,0,.45);opacity:0;transform:translateY(-8px) scale(.97);transform-origin:top left;pointer-events:none;transition:opacity .18s,transform .18s}
+#mpop{max-height:70vh;overflow:auto}
+.mgrp{padding:10px 12px 4px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-2)}
+.mcus select{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:12px;padding:0 6px;font:inherit;font-size:13px;max-width:92px}
+.ttl small{font-size:11.5px;font-weight:600;opacity:.6;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px}
+.bf{display:flex;flex-direction:column;gap:6px;padding:4px 6px 8px}.bf label{font-size:12.5px;color:var(--text-2);font-weight:600;margin-top:4px}
+.bf input,.bf select,.bf textarea{border:1px solid var(--border);background:var(--surface2);color:var(--text);border-radius:12px;padding:10px 12px;font:inherit;font-size:15px;width:100%;box-sizing:border-box}
+.bf textarea{min-height:180px;resize:vertical}.bf small{color:var(--text-2);font-size:12px}
+.bfa{display:flex;gap:8px;padding:10px 6px 4px}.bfa button{flex:1;padding:13px;border-radius:14px;font-weight:700;background:var(--surface2)}.bfa .pri{background:var(--accent);color:var(--on-accent)}.bfa .dg{color:#e5484d}
 #mpop.on{opacity:1;transform:none;pointer-events:auto}
 .mo{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;text-align:left}
 .mo:active,.mo.cur{background:var(--surface2)}
@@ -202,7 +210,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 <div id="app" hidden>
   <div class="top">
     <button class="hb gl" id="bMenu" aria-label="Menu"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/></svg></button>
-    <button class="ttl" id="bModel" aria-haspopup="true" aria-expanded="false"><span id="ttlTxt">Jarvis</span><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="ttl" id="bModel" aria-haspopup="true" aria-expanded="false"><span id="ttlTxt">Jarvis</span><small id="ttlSub"></small><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="pill gl">
       <button id="bSpk" aria-label="Suara jawaban"><svg class="i" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>
       <span class="sep"></span>
@@ -227,7 +235,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   <div class="dmenu">
     <button class="mi" id="dQuick"><svg class="i" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Perintah Cepat</button>
     <button class="mi" id="dMgr"><svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/><path d="m17 16 2 2 3-4"/></svg>Kelola Riwayat</button>
-    <button class="mi" id="dModel"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>Model AI</button>
+    <button class="mi" id="dBrain"><svg class="i" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3v.2A3.5 3.5 0 0 0 4.5 10c0 .9.35 1.7.9 2.3A3.5 3.5 0 0 0 7 18.9 3 3 0 0 0 12 20V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 3 3v.2a3.5 3.5 0 0 1 1.5 2.8c0 .9-.35 1.7-.9 2.3a3.5 3.5 0 0 1-1.6 6.6A3 3 0 0 1 12 20"/><path d="M9 9.5c1 0 1.5.5 1.5 1.5M15 9.5c-1 0-1.5.5-1.5 1.5M9 14.5c1 0 1.5-.5 1.5-1.5M15 14.5c-1 0-1.5-.5-1.5-1.5"/></svg>Otak</button>
   </div>
   <label class="srch"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="dSearch" type="search" placeholder="Cari obrolan" autocomplete="off"></label>
   <div id="hist"></div>
@@ -281,6 +289,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     add: '<svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg>',
     arrow: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     gear: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9 7 7M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg>',
+    brain: '<svg class="i" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3v.2A3.5 3.5 0 0 0 4.5 10c0 .9.35 1.7.9 2.3A3.5 3.5 0 0 0 7 18.9 3 3 0 0 0 12 20V5a3 3 0 0 0-3-1z"/><path d="M15 4a3 3 0 0 1 3 3v.2a3.5 3.5 0 0 1 1.5 2.8c0 .9-.35 1.7-.9 2.3a3.5 3.5 0 0 1-1.6 6.6A3 3 0 0 1 12 20"/><path d="M9 9.5c1 0 1.5.5 1.5 1.5M15 9.5c-1 0-1.5.5-1.5 1.5M9 14.5c1 0 1.5-.5 1.5-1.5M15 14.5c-1 0-1.5-.5-1.5-1.5"/></svg>',
+    prov: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
     test: '<svg class="i" viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>'
   };
   var el = {};
@@ -601,40 +611,154 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   }
   function groupKey(ts) { var d = new Date(ts), n = new Date(); return (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth()) ? 'Bulan Ini' : d.getFullYear() + '/' + (d.getMonth() + 1); }
 
-  /* ================= model ================= */
-  var MODEL_LIST = [
-    { id: '', name: 'Otomatis', desc: 'Server memilih model yang tersedia' },
-    { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', desc: 'Cepat dan seimbang' },
-    { id: 'gemini-3.6-flash', name: 'Gemini 3.6 Flash', desc: 'Cepat, stabil' },
-    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', desc: 'Ringan, hemat kuota' },
-    { id: 'gemini-3.1-flash-lite', name: 'Gemini 3.1 Flash Lite', desc: 'Paling ringan' }
+  /* ================= penyedia AI & model (router) ================= */
+  var PROV = [
+    { id: 'gemini', name: 'Gemini', by: 'Google', models: [['gemini-3.8-flash', 'Gemini 3.8 Flash', 'Cepat dan seimbang'], ['gemini-3.6-flash', 'Gemini 3.6 Flash', 'Cepat, stabil'], ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash Lite', 'Ringan, hemat kuota'], ['gemini-3.1-flash-lite', 'Gemini 3.1 Flash Lite', 'Paling ringan']] },
+    { id: 'claude', name: 'Claude', by: 'Anthropic', models: [['claude-sonnet-5-5', 'Claude Sonnet 5.5', 'Cerdas dan efisien'], ['claude-haiku-5-5', 'Claude Haiku 5.5', 'Cepat, hemat'], ['claude-opus-5-5', 'Claude Opus 5.5', 'Paling teliti']] },
+    { id: 'openai', name: 'OpenAI', by: 'OpenAI', models: [['gpt-5.4-mini', 'GPT 5.4 Mini', 'Cepat, hemat'], ['gpt-5.5', 'GPT 5.5', 'Seimbang']] },
+    { id: 'meta', name: 'Meta AI', by: 'Meta', models: [['Llama-4-Maverick-17B-128E-Instruct-FP8', 'Llama 4 Maverick', 'Pintar, serba guna'], ['Llama-4-Scout-17B-16E-Instruct-FP8', 'Llama 4 Scout', 'Ringan'], ['Llama-3.3-70B-Instruct', 'Llama 3.3 70B', 'Stabil']] }
   ];
-  var MODEL_RE = /^gemini-[a-z0-9.\-]{2,60}$/;
-  function modelId() { var m = ls(LS_MODEL) || ''; return MODEL_RE.test(m) ? m : ''; }
-  function allModels() {
-    var list = MODEL_LIST.slice(), ex = ls(LS_EXTRA) || '';
-    if (MODEL_RE.test(ex) && !list.some(function (m) { return m.id === ex; })) list.push({ id: ex, name: ex, desc: 'Model khusus' });
-    var cur = modelId(); if (cur && !list.some(function (m) { return m.id === cur; })) list.push({ id: cur, name: cur, desc: 'Model khusus' });
+  var LS_PROVS = 'bm-jarvis-providers', LS_SEL = 'bm-jarvis-sel', MODEL_RE = /^[A-Za-z0-9][A-Za-z0-9._:\-\/]{1,79}$/;
+  var provInfo = null, provAt = 0;
+  function provOf(id) { return PROV.filter(function (p) { return p.id === id; })[0]; }
+  function activeProvs() {
+    try { var a = JSON.parse(ls(LS_PROVS) || 'null'); if (Array.isArray(a)) { a = a.filter(function (x, i) { return provOf(x) && a.indexOf(x) === i; }); if (a.length) return a; } } catch (e) {}
+    return ['gemini'];
+  }
+  function curSel() {
+    var m = /^(gemini|claude|openai|meta)\|(.+)$/.exec(ls(LS_SEL) || '');
+    if (m && MODEL_RE.test(m[2]) && activeProvs().indexOf(m[1]) >= 0) return { p: m[1], m: m[2] };
+    var old = ls(LS_MODEL) || ''; if (!ls(LS_SEL) && /^gemini-[a-z0-9.\-]{2,60}$/.test(old) && activeProvs().indexOf('gemini') >= 0) return { p: 'gemini', m: old };
+    return null;
+  }
+  function payloadModel() { var c = curSel(); return { providers: activeProvs(), provider: c ? c.p : undefined, model: c ? c.m : undefined }; }
+  function modelsOf(pid) {
+    var p = provOf(pid), list = p.models.map(function (x) { return { id: x[0], name: x[1], desc: x[2] }; });
+    var add = function (id, desc) { if (MODEL_RE.test(id || '') && !list.some(function (m) { return m.id === id; })) list.push({ id: id, name: id, desc: desc }); };
+    if (provInfo) (provInfo.filter(function (x) { return x.id === pid; })[0] || { model: [] }).model.forEach(function (id) { add(id, 'Dari server'); });
+    add(ls('bm-jarvis-x-' + pid), 'Model khusus');
+    var c = curSel(); if (c && c.p === pid) add(c.m, 'Model khusus');
     return list;
   }
-  function modelName() { var id = modelId(), m = allModels().filter(function (x) { return x.id === id; })[0]; return m ? m.name : 'Otomatis'; }
-  function paintModel() { $('ttlTxt').textContent = 'Jarvis'; $('bModel').title = 'Model: ' + modelName(); }
+  function modelName() { var c = curSel(); if (!c) return 'Otomatis (router)'; var m = modelsOf(c.p).filter(function (x) { return x.id === c.m; })[0]; return provOf(c.p).name + ' · ' + (m ? m.name : c.m); }
+  function paintModel() { var c = curSel(), sub = c ? (modelsOf(c.p).filter(function (x) { return x.id === c.m; })[0] || { name: c.m }).name : 'Auto'; $('ttlSub').textContent = sub; $('bModel').title = 'Model: ' + modelName(); }
+  async function loadProv(force) {
+    if (provInfo && !force && Date.now() - provAt < 60000) return provInfo;
+    try {
+      var tk = await token(); if (!tk) return provInfo;
+      var ac = new AbortController(), to = setTimeout(function () { ac.abort(); }, 8000);
+      var r = await fetch(API + '?providers=1', { headers: { Authorization: 'Bearer ' + tk }, signal: ac.signal }); clearTimeout(to);
+      var j = await r.json(); if (j && Array.isArray(j.penyedia)) { provInfo = j.penyedia; provAt = Date.now(); }
+    } catch (e) {}
+    return provInfo;
+  }
+  function keyState(pid) { if (!provInfo) return null; var x = provInfo.filter(function (y) { return y.id === pid; })[0]; return x ? x.aktif : null; }
   function openModelPop() {
     var pop = $('mpop'); pop.textContent = '';
-    var cur = modelId();
-    allModels().forEach(function (m) {
-      var b = mk('button', '', 'mo' + (m.id === cur ? ' cur' : '')), t = mk('div', '', 't');
-      t.append(tx('b', '', m.name), tx('small', '', m.desc)); b.append(t, mk('span', '', 'ck', I.check));
-      b.onclick = function () { ls(LS_MODEL, m.id); paintModel(); closeModelPop(); toast('Model: ' + m.name); };
-      pop.appendChild(b);
+    var cur = curSel();
+    function row(name, desc, on, fn, warn) {
+      var b = mk('button', '', 'mo' + (on ? ' cur' : '')), t = mk('div', '', 't');
+      t.append(tx('b', '', name), tx('small', '', desc)); b.append(t, mk('span', '', 'ck', I.check)); b.onclick = fn; return b;
+    }
+    pop.appendChild(row('Otomatis (router)', 'Pakai penyedia aktif; pindah sendiri jika kena limit', !cur, function () { ls(LS_SEL, ''); ls(LS_MODEL, ''); paintModel(); closeModelPop(); toast('Model: otomatis'); }));
+    activeProvs().forEach(function (pid) {
+      var p = provOf(pid), ks = keyState(pid);
+      pop.appendChild(tx('div', 'mgrp', p.name + ' · ' + p.by + (ks === false ? ' — kunci belum dipasang' : '')));
+      modelsOf(pid).forEach(function (m) {
+        pop.appendChild(row(m.name, m.desc, cur && cur.p === pid && cur.m === m.id, function () { ls(LS_SEL, pid + '|' + m.id); paintModel(); closeModelPop(); toast('Model: ' + p.name + ' · ' + m.name); }));
+      });
     });
-    var row = mk('div', '', 'mcus'), inp = mk('input'), ok = tx('button', '', 'Pakai'); inp.placeholder = 'ID model lain, mis. gemini-3.8-flash'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false;
-    ok.onclick = function () { var v = inp.value.trim().toLowerCase(); if (!MODEL_RE.test(v)) return toast('ID model harus diawali "gemini-"'); ls(LS_EXTRA, v); ls(LS_MODEL, v); paintModel(); closeModelPop(); toast('Model: ' + v); };
-    row.append(inp, ok); pop.appendChild(row);
+    var rowc = mk('div', '', 'mcus'), sel = mk('select'), inp = mk('input'), ok = tx('button', '', 'Pakai');
+    activeProvs().forEach(function (pid) { var o = mk('option'); o.value = pid; o.textContent = provOf(pid).name; sel.appendChild(o); });
+    if (cur) sel.value = cur.p;
+    inp.placeholder = 'ID model lain'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false;
+    ok.onclick = function () { var v = inp.value.trim(); if (!MODEL_RE.test(v)) return toast('ID model tidak valid'); ls('bm-jarvis-x-' + sel.value, v); ls(LS_SEL, sel.value + '|' + v); paintModel(); closeModelPop(); toast('Model: ' + v); };
+    rowc.append(sel, inp, ok); pop.appendChild(rowc);
     pop.classList.add('on'); $('bModel').classList.add('on'); $('bModel').setAttribute('aria-expanded', 'true');
     $('bModel').classList.add('open');
+    if (!provInfo) loadProv().then(function () { if ($('mpop').classList.contains('on')) openModelPop(); });
   }
   function closeModelPop() { $('mpop').classList.remove('on'); $('bModel').classList.remove('open'); $('bModel').setAttribute('aria-expanded', 'false'); }
+  async function providersSheet() {
+    closeDrawer(); toast('Memeriksa penyedia…'); await loadProv(true);
+    openSheet('Penyedia AI', function (b) {
+      var act = activeProvs();
+      PROV.forEach(function (p) {
+        var ks = keyState(p.id), sub = (ks === true ? 'Kunci terpasang' : ks === false ? 'Kunci belum dipasang di Vercel' : 'Status belum diketahui') + ' · ' + p.by;
+        b.appendChild(toggleRow(p.name, sub, act.indexOf(p.id) >= 0, function (on) {
+          var cur = activeProvs(); if (on && cur.indexOf(p.id) < 0) cur.push(p.id); if (!on) cur = cur.filter(function (x) { return x !== p.id; });
+          if (!cur.length) { toast('Minimal satu penyedia aktif'); closeSheet(); setTimeout(providersSheet, 250); return; }
+          ls(LS_PROVS, JSON.stringify(cur)); var c = curSel(); if (c && cur.indexOf(c.p) < 0) ls(LS_SEL, ''); paintModel();
+          if (on && ks === false) toast(p.name + ': pasang kunci API di Vercel dulu');
+        }));
+      });
+      b.appendChild(item(I.prov, 'Pilih model', 'Sekarang: ' + modelName(), function () { closeSheet(); setTimeout(openModelPop, 250); }));
+      b.appendChild(tx('div', 'note', 'Penyedia yang aktif muncul di pilihan model pada layar obrolan. Router: jika satu penyedia atau model kena batas pemakaian (rate limit), Jarvis otomatis pindah ke yang lain tanpa menghentikan pekerjaan. Kunci API disimpan di Vercel (GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, META_API_KEY), tidak pernah di HP.'));
+    });
+  }
+  /* ================= OTAK (pengetahuan tambahan) ================= */
+  var KINDS = [['harga', 'Harga'], ['dokumen', 'Dokumen'], ['aturan', 'Aturan'], ['catatan', 'Catatan']];
+  function kindLabel(k) { var x = KINDS.filter(function (y) { return y[0] === k; })[0]; return x ? x[1] : k; }
+  function brainErr(e) { var m = String((e && e.message) || e || ''); return /jarvis_brain|relation|schema cache/i.test(m) ? 'Tabel Otak belum dibuat. Jalankan supabase/jarvis_setup.sql.' : (m || 'Gagal'); }
+  async function brainSheet() {
+    closeDrawer();
+    openSheet('Otak Jarvis', function (b) {
+      b.appendChild(item(I.add, 'Isi data baru', 'Harga, dokumen, aturan. Terpisah dari data bengkel', function () { brainForm(null); }));
+      var up = item(I.dl, 'Unggah file', 'txt, csv, md, json (maks 60.000 huruf)', function () { pickFile(function (d) { brainForm(null, d); }); });
+      b.appendChild(up);
+      var box = mk('div', '', 'bbox'); box.appendChild(tx('div', 'note', 'Memuat…')); b.appendChild(box);
+      supabaseClient.from('jarvis_brain').select('id,title,kind,content,pinned,active,updated_at').order('updated_at', { ascending: false }).limit(200).then(function (r) {
+        box.textContent = '';
+        if (r.error) { box.appendChild(tx('div', 'note', brainErr(r.error))); return; }
+        var rows = r.data || [];
+        if (!rows.length) box.appendChild(tx('div', 'note', 'Otak masih kosong. Contoh: daftar harga jasa las dan bubut, aturan diskon, isi dokumen penting. Jarvis membacanya saat menjawab.'));
+        rows.forEach(function (x) {
+          box.appendChild(item(I.book, x.title, kindLabel(x.kind) + ' · ' + x.content.length.toLocaleString('id-ID') + ' huruf' + (x.pinned ? ' · disematkan' : '') + (x.active ? '' : ' · nonaktif'), function () { brainForm(x); }));
+        });
+        if (rows.length) box.appendChild(tx('div', 'note', 'Jarvis selalu melihat judul entri aktif. Entri yang disematkan dibaca penuh; yang lain dicari lewat kata kunci saat dibutuhkan. Minta "ingat bahwa ..." di obrolan untuk menambah entri (perlu persetujuanmu).'));
+      }, function (e) { box.textContent = ''; box.appendChild(tx('div', 'note', brainErr(e))); });
+    });
+  }
+  function pickFile(cb) {
+    var f = mk('input'); f.type = 'file'; f.accept = '.txt,.csv,.tsv,.md,.json,.log,text/*,application/json'; f.style.display = 'none'; document.body.appendChild(f);
+    f.onchange = function () {
+      var file = f.files && f.files[0]; f.remove(); if (!file) return;
+      if (file.size > 400 * 1024) return toast('File terlalu besar (maks 400 KB)');
+      var rd = new FileReader(); rd.onerror = function () { toast('Gagal membaca file'); };
+      rd.onload = function () { var t = String(rd.result || '').replace(/\u0000/g, ''); if (/�{3,}/.test(t.slice(0, 2000))) return toast('Format file tidak didukung. Pakai teks (txt, csv, md, json)'); cb({ title: file.name.replace(/\.[^.]+$/, '').slice(0, 120), kind: 'dokumen', content: t.slice(0, 60000), cut: t.length > 60000 }); };
+      rd.readAsText(file);
+    };
+    f.click();
+  }
+  function brainForm(row, pre) {
+    row = row || null; var d = row || pre || {}; var st = { pinned: !!d.pinned, active: row ? !!row.active : true };
+    openSheet(row ? 'Ubah data Otak' : 'Isi data baru', function (b) {
+      var fm = mk('div', '', 'bf'), ti = mk('input'), kd = mk('select'), ta = mk('textarea');
+      ti.maxLength = 120; ti.placeholder = 'Judul, mis. Daftar harga jasa'; ti.value = d.title || '';
+      KINDS.forEach(function (k) { var o = mk('option'); o.value = k[0]; o.textContent = k[1]; kd.appendChild(o); }); kd.value = d.kind || 'harga';
+      ta.placeholder = 'Isi: harga, aturan, atau isi dokumen. Satu hal per baris lebih mudah dicari.\nContoh:\nLas bracket 50.000\nBubut as roda 75.000 per buah'; ta.value = d.content || ''; ta.maxLength = 60000;
+      var cnt = tx('small', '', ''); function cc() { cnt.textContent = ta.value.length.toLocaleString('id-ID') + ' / 60.000 huruf'; } ta.oninput = cc; cc();
+      fm.append(tx('label', '', 'Judul'), ti, tx('label', '', 'Jenis'), kd, tx('label', '', 'Isi'), ta, cnt);
+      if (pre && pre.cut) fm.appendChild(tx('small', '', 'File dipotong sampai 60.000 huruf pertama.'));
+      b.appendChild(fm);
+      b.appendChild(item(I.dl, 'Isi dari file', 'txt, csv, md, json', function () { pickFile(function (x) { if (!ti.value.trim()) ti.value = x.title; ta.value = x.content; kd.value = x.kind; cc(); if (x.cut) toast('File dipotong 60.000 huruf'); }); }));
+      b.appendChild(toggleRow('Sematkan', 'Selalu dibaca penuh oleh Jarvis (hemat: yang penting saja)', st.pinned, function (v) { st.pinned = v; }));
+      b.appendChild(toggleRow('Aktif', 'Matikan agar tidak dibaca tanpa menghapus', st.active, function (v) { st.active = v; }));
+      var act = mk('div', '', 'bfa'), sv = tx('button', 'pri', 'Simpan'), bk = tx('button', '', 'Kembali');
+      sv.onclick = async function () {
+        var title = ti.value.trim(), content = ta.value.trim();
+        if (!title) return toast('Judul wajib diisi'); if (!content) return toast('Isi wajib diisi');
+        sv.disabled = true; sv.textContent = 'Menyimpan…';
+        var rec = { title: title.slice(0, 120), kind: kd.value, content: content.slice(0, 60000), pinned: st.pinned, active: st.active };
+        var res = row ? await supabaseClient.from('jarvis_brain').update(Object.assign({ updated_at: new Date().toISOString() }, rec)).eq('id', row.id) : await supabaseClient.from('jarvis_brain').insert(rec);
+        if (res.error) { sv.disabled = false; sv.textContent = 'Simpan'; return toast(brainErr(res.error)); }
+        toast('Tersimpan ke Otak'); closeSheet(); setTimeout(brainSheet, 250);
+      };
+      bk.onclick = function () { closeSheet(); setTimeout(brainSheet, 250); };
+      act.append(bk); if (row) { var dl = tx('button', 'dg', 'Hapus'); dl.onclick = async function () { var ok = await dlg({ title: 'Hapus dari Otak?', text: row.title, ok: 'Hapus', danger: true }); if (!ok) return; var r2 = await supabaseClient.from('jarvis_brain').delete().eq('id', row.id); if (r2.error) return toast(brainErr(r2.error)); toast('Dihapus'); closeSheet(); setTimeout(brainSheet, 250); }; act.appendChild(dl); }
+      act.appendChild(sv); b.appendChild(act);
+    });
+  }
 
   /* ================= tampilan: beranda, pesan ================= */
   var home = null;
@@ -786,6 +910,14 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     [I.sum, 'Total Buku Besar bulan ini', 'Jumlah harga', 'Total harga Buku Besar bulan ini'],
     [I.usr, 'Customer terbanyak', 'Peringkat customer', 'Siapa customer terbanyak?'],
     [I.book, 'Ringkas Kasbon & Hutang Piutang', 'Sisa tagihan', 'Ringkas Buku Kasbon dan Buku Hutang Piutang'],
+    [I.find, 'Cek data belum lengkap', 'Customer, barang, PJ, harga kosong', 'Cek data Buku Besar yang belum lengkap'],
+    [I.book, 'Cek barang ditinggal', 'Masih di bengkel', 'Cek barang yang masih ditinggal di bengkel'],
+    [I.find, 'Cek tanpa foto bukti', 'Bulan ini', 'Cek data Buku Besar bulan ini yang tidak punya foto bukti'],
+    [I.find, 'Cek harga kosong', 'Baris tanpa harga', 'Cek data Buku Besar yang harga kosong'],
+    [I.sum, 'Bandingkan bulan ini dan lalu', 'Total Buku Besar', 'Bandingkan total harga Buku Besar bulan ini dengan bulan lalu'],
+    [I.tbl, 'Rekap hari ini', 'Transaksi hari ini', 'Rekap transaksi hari ini'],
+    [I.brain, 'Tanya harga di Otak…', 'Dari daftar harga yang kamu isi', 'Berapa harga ', true],
+    [I.brain, 'Ingat ke Otak…', 'Perlu persetujuanmu', 'Ingat bahwa ', true],
     [I.find, 'Cari data…', 'Isi nama atau barang', 'Cari data: ', true],
     [I.add, 'Tambah data…', 'Perlu persetujuanmu', 'Tambah data ke Buku Besar: ', true]
   ];
@@ -802,7 +934,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         toggleRow('Suara jawaban', 'Jarvis membacakan ringkasan', voiceOut, function (v) { voiceOut = v; ls(LS_VOICE, v ? '1' : '0'); if (!v) stopSpeak(); paintSpk(); }),
         toggleRow('Efek mengetik', 'Jawaban muncul seperti diketik', !typeOff, function (v) { typeOff = !v; REDUCED = typeOff; ls(LS_TYPE, v ? '1' : '0'); }),
         item(I.gear, 'Gaya nota', 'Sekarang: ' + (ls('bm-jarvis-nota-style') === 'bengkel' ? 'Bengkel (rapi, huruf besar)' : 'Tulisan tangan'), function () { closeSheet(); setTimeout(notaStyleSheet, 250); }),
-        item(I.gear, 'Model AI', 'Sekarang: ' + modelName(), function () { closeSheet(); setTimeout(openModelPop, 250); }),
+        item(I.brain, 'Otak (skill)', 'Tambah harga, dokumen, aturan untuk Jarvis', function () { closeSheet(); setTimeout(brainSheet, 250); }),
+        item(I.prov, 'Penyedia dan model AI', 'Sekarang: ' + modelName(), function () { closeSheet(); setTimeout(providersSheet, 250); }),
         item(I.test, 'Uji koneksi server', 'Sama seperti mengetik /tes', function () { closeSheet(); diagnose(); }),
         item(I.dl, 'Unduh cadangan riwayat', 'File JSON dari HP ini', function () { closeSheet(); exportAll(); }),
         item(I.del, 'Hapus semua riwayat', store.chats.length + ' obrolan', function () { closeSheet(); if (!store.chats.length) return toast('Riwayat kosong'); delChats(store.chats.map(function (c) { return c.id; })); }, true),
@@ -869,7 +1002,23 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var R = newReply();
     var tick = setInterval(function () { var idle = Math.round((Date.now() - R.last) / 1000); if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)'; }, 1500);
     try {
-      var fin = await stream({ message: send, history: c.hist.slice(-10), model: modelId(), resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
+      var pm = payloadModel(), acc = { actions: [], proposals: [], notas: [], reports: [] }, tries = 0, fin;
+      for (;;) {
+        try {
+          fin = await stream({ message: send, history: c.hist.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
+          break;
+        } catch (e2) {
+          var x = e2.extra || {};
+          ['actions', 'proposals', 'notas', 'reports'].forEach(function (k) { if (x.partial && x.partial[k]) acc[k] = acc[k].concat(x.partial[k]); });
+          if (x.resume) { resume = x.resume; rmodel = x.resume_model || rmodel; }
+          if (x.auto && !userStop && tries < 5) {   // waktu server habis / batas langkah: lanjut sendiri, bukan berhenti di tengah
+            tries++; onStep(R, { id: 'au' + tries, state: 'run', text: 'Melanjutkan otomatis' }); onStep(R, { id: 'au' + tries, state: 'ok', text: 'Bagian ' + (tries + 1) });
+            await new Promise(function (rs) { setTimeout(rs, 500); }); if (userStop) { throw e2; } continue;
+          }
+          e2.extra = Object.assign({}, x, { partial: acc, resume: resume, resume_model: rmodel }); throw e2;
+        }
+      }
+      ['actions', 'proposals', 'notas', 'reports'].forEach(function (k) { fin[k] = acc[k].concat(fin[k] || []); });
       clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
@@ -985,7 +1134,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     $('dNm').textContent = nm; $('dAv').textContent = nm.charAt(0).toUpperCase();
 
     el.log = $('bmj-log'); el.in = $('in'); el.mic = $('mic'); el.send = $('send');
-    buildHome(nm); showHome(); try { var lc = JSON.parse(ls('bm-jarvis-last') || 'null'); ls('bm-jarvis-last', ''); if (lc && Date.now() - lc.t < 30 * 60e3) { var oc = store.chats.filter(function (x) { return x.id === lc.id; })[0]; if (oc) { chat = oc; restore(oc); } } } catch (e) {} paintModel(); paintSpk(); syncBtns(); paintHist();
+    paintModel(); buildHome(nm); showHome(); try { var lc = JSON.parse(ls('bm-jarvis-last') || 'null'); ls('bm-jarvis-last', ''); if (lc && Date.now() - lc.t < 30 * 60e3) { var oc = store.chats.filter(function (x) { return x.id === lc.id; })[0]; if (oc) { chat = oc; restore(oc); } } } catch (e) {} paintModel(); paintSpk(); syncBtns(); paintHist();
     $('boot').hidden = true; $('app').hidden = false;
 
     $('bMenu').onclick = openDrawer; $('ov').onclick = closeDrawer; $('bExit').onclick = exitPage;
@@ -993,7 +1142,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     document.addEventListener('click', function (e) { if ($('mpop').classList.contains('on') && !e.target.closest('#mpop') && !e.target.closest('#bModel')) closeModelPop(); });
     $('bSpk').onclick = function () { voiceOut = !voiceOut; ls(LS_VOICE, voiceOut ? '1' : '0'); if (!voiceOut) stopSpeak(); paintSpk(); toast(voiceOut ? 'Suara jawaban aktif' : 'Suara jawaban mati'); };
     $('bPlus').onclick = quickSheet; $('dQuick').onclick = quickSheet; $('bSet').onclick = settingsSheet;
-    $('dModel').onclick = function () { closeDrawer(); setTimeout(openModelPop, 280); };
+    $('dBrain').onclick = function () { setTimeout(brainSheet, 280); };
     $('dMgr').onclick = function () { if (!store.chats.length) return toast('Belum ada riwayat'); setSel(!sel); };
     $('dNew').onclick = newChat; $('dSearch').oninput = paintHist;
     $('sDone').onclick = function () { setSel(false); };
