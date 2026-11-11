@@ -209,6 +209,8 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 <nav id="nv" aria-label="Menu utama"><i></i></nav>
 </div>
 <div id="pages"></div><div id="mn"></div><div id="sug"></div><div id="dlg"></div><div id="ts" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="bm-shop-sync.js"></script>
 <script>
 /* ================= Util ================= */
 const $=s=>document.querySelector(s);
@@ -222,7 +224,7 @@ const pq=v=>{const n=+String(v==null?'':v).replace(',','.');return isFinite(n)?n
 const fq=v=>v===''||v==null?'':String(r4(v)).replace('.',',');
 const fmn=v=>v===''||v==null?'':thou(Math.round(v));
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const uid=()=>window.BMShopSync?BMShopSync.uuid():(Date.now().toString(36)+Math.random().toString(36).slice(2,7));
 const pad=(n,l)=>String(n).padStart(l||2,'0');
 const dstr=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const today=()=>dstr(new Date());
@@ -268,14 +270,15 @@ function migrate(o){const n=blank(),items=Array.isArray(o.items)?o.items:[],move
   if(open!==0)n.adj.push({id:uid(),i:x.id,name:x.name,unit:x.unit,delta:open,c:open>0?(+x.buy||0):null,reason:'Saldo awal',d:minD,ts:0,note:'Hasil migrasi data lama'})});
  pays.forEach((p,ix)=>{const pid=party(p.who);if(pid)n.pays.push({id:p.id||uid(),partyId:pid,notaId:null,a:+p.a||0,d:p.d||today(),ts:ix+1,note:''})});
  return n}
-function load(){let r=null;try{r=JSON.parse(localStorage.getItem(K2))}catch(e){}
+function load(){if(window.BMShopSync){const c=BMShopSync.cached();return c?norm(c):blank()}
+let r=null;try{r=JSON.parse(localStorage.getItem(K2))}catch(e){}
  if(r&&r.v===2&&Array.isArray(r.items))return norm(r);
  try{const o=JSON.parse(localStorage.getItem(K1));if(o&&Array.isArray(o.items))return migrate(o)}catch(e){}
  return blank()}
 let D=load(),C=null,AL={};
 const inval=()=>{C=null;AL={}};
-function save(){inval();try{localStorage.setItem(K2,JSON.stringify(D));return true}catch(e){toast('Gagal menyimpan: penyimpanan penuh');return false}}
-try{if(!localStorage.getItem(K2)&&(D.items.length||D.notas.length))save()}catch(e){}
+function save(){inval();if(window.BMShopSync)return true;try{localStorage.setItem(K2,JSON.stringify(D));return true}catch(e){toast('Gagal menyimpan: penyimpanan penuh');return false}}
+try{if(!window.BMShopSync&&!localStorage.getItem(K2)&&(D.items.length||D.notas.length))save()}catch(e){}
 
 /* ================= Mesin stok & biaya (diturunkan dari riwayat) ================= */
 function events(dd){const ev=[];let o=0;
@@ -300,7 +303,7 @@ function tryApply(fn){const c=clone(D),b=calc(D);fn(c);const a=calc(c);
 /* ================= Nota, hutang, statistik ================= */
 const itm=id=>D.items.find(x=>x.id===id),nOf=id=>D.notas.find(n=>n.id===id),pOf=id=>D.parties.find(p=>p.id===id);
 const partyName=id=>id?((pOf(id)||{}).name||'(dihapus)'):'Umum';
-const nno=n=>(n.t==='out'?'J-':'M-')+pad(n.no,4);
+const nno=n=>n.kode?n.kode:(n.no?(n.t==='out'?'J-':'M-')+pad(n.no,4):'Nomor menyusul');
 const nTotal=n=>n.lines.reduce((s,l)=>s+l.q*l.p,0);
 const retsOf=id=>D.rets.filter(r=>r.notaId===id);
 const retVal=r=>r.lines.reduce((s,l)=>s+l.q*l.p,0);
@@ -320,9 +323,9 @@ const PERS=[['today','Hari ini'],['7','7 hari'],['month','Bulan ini'],['all','Se
 const debtors=()=>D.parties.filter(p=>p.k==='c').map(p=>({p,a:al(p.id)}));
 const retLeft=n=>{const rs=retsOf(n.id);return n.lines.map(l=>({l,max:r4(l.q-rs.reduce((s,r)=>s+r.lines.filter(x=>x.i===l.i).reduce((t,x)=>t+x.q,0),0))}))};
 function stats(p){let om=0,lb=0,cnt=0,beli=0,ret=0;const top={},day={};
- D.notas.forEach(n=>{if(n.void||!inPer(p,n.d))return;
+ D.notas.forEach(n=>{if(n.void||n.src==='bengkel'||!inPer(p,n.d))return;
   if(n.t==='out'){cnt++;n.lines.forEach(l=>{const v=l.q*l.p;om+=v;lb+=l.q*(l.p-l.c);day[n.d]=(day[n.d]||0)+v;const t=top[l.i]||(top[l.i]={name:l.name,unit:l.unit,q:0,v:0});t.q+=l.q;t.v+=v})}else beli+=nTotal(n)});
- D.rets.forEach(r=>{const n=nOf(r.notaId);if(!n||n.void||!inPer(p,r.d))return;
+ D.rets.forEach(r=>{const n=nOf(r.notaId);if(!n||n.void||n.src==='bengkel'||!inPer(p,r.d))return;
   if(n.t==='out'){const v=retVal(r);om-=v;ret+=v;day[r.d]=(day[r.d]||0)-v;lb-=r.lines.reduce((s,l)=>s+l.q*(l.p-l.c),0);r.lines.forEach(l=>{const t=top[l.i];if(t){t.q-=l.q;t.v-=l.q*l.p}})}else beli-=retVal(r)});
  return{om,lb,cnt,beli,ret,top:Object.values(top).filter(t=>t.q>0).sort((a,b)=>b.q-a.q),days:Object.entries(day).sort((a,b)=>a[0]<b[0]?1:-1)}}
 
@@ -438,7 +441,7 @@ function back(n){n=Math.min(n||1,PGS.length);if(!n)return;
 if(typeof window.addEventListener==='function'){window.addEventListener('popstate',e=>{const d=(e.state&&e.state.pg)||0;while(PGS.length>d)popTop()});try{if(HOK!==false)history.replaceState({pg:0},'')}catch(e){HOK=false}}
 function refresh(){render(false);PGS.forEach(p=>{if(p.live)paint(p)})}
 function done(msg){back(1);refresh();if(msg)toast(msg)}
-function commit(c,msg){D=c;if(!save())return false;fresh=null;if(msg)toast(msg);return true}
+function commit(c,msg){if(window.BMShopSync&&!BMShopSync.commit(D,c))return false;D=c;if(!save())return false;if(window.BMShopSync)BMShopSync.saved(D);fresh=null;if(msg)toast(msg);return true}
 function bad(sel,m){toast(m);const t=topPg();if(sel&&t){const e=t.querySelector(sel);if(e){e.classList.add('err');if(e.focus)e.focus()}}return false}
 function vals(el){const o={};if(el)el.querySelectorAll('input[name]').forEach(i=>{o[i.name]=i.value});return o}
 function countUp(root){if(reduce())return;(root||document).querySelectorAll('[data-cnt]').forEach(el=>{const to=+el.dataset.cnt;if(!to)return;const t0=performance.now(),du=650;(function f(t){const p=Math.min(1,(t-t0)/du),e=1-Math.pow(1-p,3);el.textContent=rp(to*e);if(p<1)requestAnimationFrame(f)})(t0)})}
@@ -694,6 +697,7 @@ function waText(pid){const p=pOf(pid),a=al(pid),rows=a.rows.filter(r=>r.out>0.5)
 function theme(){try{return localStorage.getItem(KT)||'dark'}catch(e){return'dark'}}
 function applyTheme(t){const r=document.documentElement;if(t==='light'||t==='dark')r.setAttribute('data-theme',t);else r.removeAttribute('data-theme')}
 function pgPlus(){return ''}
+function syncHint(sz){if(!window.BMShopSync)return '<p class="hint"><b>Mode demo:</b> belum terhubung ke database. Semua data hanya ada di browser HP ini dan bisa hilang kalau data browser dihapus. Data tersimpan di browser HP ini ('+D.items.length+' barang, '+D.notas.length+' nota, sekitar '+sz+' KB). Backup rutin agar aman.</p>';const s=BMShopSync.status();return '<p class="hint"><b>Database BM-TECH:</b> '+esc(s.text)+(s.lastSync?'. Terakhir sinkron '+new Date(s.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'')+'. Data tersimpan di server, salinannya ada di HP ini untuk dipakai saat offline ('+D.items.length+' barang, '+D.notas.length+' nota).'+(s.pending?' <b>'+s.pending+' perubahan belum terkirim.</b>':'')+'</p>'}
 function pgSettings(){const sz=Math.round(JSON.stringify(D).length/1024);
  return pgh('Pengaturan','<h4 style="margin-top:8px">Tampilan</h4>'+chips([['auto','Otomatis'],['light','Terang'],['dark','Gelap']],theme(),'theme').replace('class="chips"','class="chips flat"')
  +'<h4>Suara scan</h4>'+chips([['1','Hidup'],['0','Mati']],sndOn()?'1':'0','snd').replace('class="chips"','class="chips flat"')
@@ -702,7 +706,7 @@ function pgSettings(){const sz=Math.round(JSON.stringify(D).length/1024);
  +'<p class="hint">Format MP3, WAV, OGG, atau M4A. Pakai suara pendek (di bawah 2 detik), maksimal 300 KB.</p>'
  +'<h4>Data</h4>'+grp(mrow('Backup semua data','Simpan file JSON ke HP','up','bk','')+mrow('Pulihkan dari file','Ganti data dengan file backup','inbox','rfpick','')+mrow('Ekspor transaksi','File CSV untuk Excel','sale','cv','')+mrow('Ekspor stok','File CSV daftar stok','box','cvs',''))
  +'<input id="rf" type="file" accept=".json,application/json" hidden>'
- +'<p class="hint"><b>Mode demo:</b> belum terhubung ke database. Semua data hanya ada di browser HP ini dan bisa hilang kalau data browser dihapus. Data tersimpan di browser HP ini ('+D.items.length+' barang, '+D.notas.length+' nota, sekitar '+sz+' KB). Backup rutin agar aman.</p>'
+ +syncHint(sz)
  +'<h4>Hapus</h4>'+grp(mrow('Hapus semua data','Tidak bisa dibatalkan','trash','rs','','dn')),{})}
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 const csvText=rows=>'﻿'+rows.map(a=>a.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -1213,8 +1217,8 @@ const A={
   if(commit(c))done('Tersimpan')},
  pdelp(b){const c=clone(D);c.parties=c.parties.filter(z=>z.id!==b.dataset.id);if(commit(c))done('Pelanggan dihapus')},
  bk(){dl('bm-warung-backup-'+today()+'.json',JSON.stringify(D),'application/json')},cv(){csvTx()},cvs(){csvStok()},
- rfpick(){const e=document.getElementById('rf');if(e)e.click()},
- rs(){ask({title:'Hapus semua data',msg:'Semua barang, nota, dan hutang akan dihapus. Pastikan sudah backup.',ok:'Lanjut',danger:1},()=>{ask({title:'Yakin?',msg:'Data yang dihapus tidak bisa dikembalikan.',ok:'Hapus semua',danger:1},()=>{D=blank();if(save()){back(PGS.length);render(true);toast('Semua data dihapus')}})})},
+ rfpick(){if(window.BMShopSync)return toast('Tidak tersedia saat tersambung database');const e=document.getElementById('rf');if(e)e.click()},
+ rs(){if(window.BMShopSync)return toast('Tidak tersedia saat tersambung database');ask({title:'Hapus semua data',msg:'Semua barang, nota, dan hutang akan dihapus. Pastikan sudah backup.',ok:'Lanjut',danger:1},()=>{ask({title:'Yakin?',msg:'Data yang dihapus tidak bisa dikembalikan.',ok:'Hapus semua',danger:1},()=>{D=blank();if(save()){back(PGS.length);render(true);toast('Semua data dihapus')}})})},
  dyes(){const f=askCb;askClose();if(f)f()},dno(){askClose()},
  sel(b){const key=b.dataset.o,opts=OPT[key]||[],h=b.previousElementSibling,hook=b.dataset.hook;
   openMenu(b,opts,h?h.value:'',v=>{if(h)h.value=v;const s=b.querySelector('span');if(s)s.textContent=(opts.find(o=>o[0]===v)||['',v])[1];if(hook&&HOOK[hook])HOOK[hook](v);closeMenu()})},
@@ -1283,4 +1287,5 @@ document.addEventListener('change',e=>{const s=e.target;
 try{applyTheme(theme())}catch(e){}
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 buildNav();render(true);
+if(window.BMShopSync)BMShopSync.start({get:()=>D,set:v=>{D=v;inval()},refresh:()=>{try{refresh()}catch(e){render(false)}},toast:m=>toast(m),pages:()=>PGS.length,blank});
 </script></body></html>
