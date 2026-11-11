@@ -544,6 +544,13 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
   }
 
   var RESUME_RE = /^\s*(ya\s+)?(tolong\s+)?(lanjut(kan|in)?|terus(kan|in)?|ulang(i)?|coba\s+lagi|gas|oke?\s+lanjut|sambung(kan)?)\W*$/i, pend = {};
+  function panelModel() {   // pilihan penyedia/model dibagi dengan halaman Jarvis AI lewat localStorage
+    function g(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+    var provs = ['gemini']; try { var a = JSON.parse(g('bm-jarvis-providers') || 'null'); if (Array.isArray(a) && a.length) provs = a.filter(function (x) { return /^(gemini|claude|openai|meta)$/.test(x); }); if (!provs.length) provs = ['gemini']; } catch (e) {}
+    var m = /^(gemini|claude|openai|meta)\|(.+)$/.exec(g('bm-jarvis-sel')), o = { providers: provs };
+    if (m && provs.indexOf(m[1]) >= 0 && /^[A-Za-z0-9][A-Za-z0-9._:\-\/]{1,79}$/.test(m[2])) { o.provider = m[1]; o.model = m[2]; }
+    return o;
+  }
   async function submit(text) {
     text = String(text || '').trim().slice(0, 1500);
     if (!text || busy) return;
@@ -560,10 +567,26 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
       if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)';
     }, 1500);
     try {
-      var fin = await stream({ message: send, history: history.slice(-10), resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) {
-        if (ev.type === 'status') setStatus(R, ev.text);
-        else if (ev.type === 'step') onStep(R, ev);
-      });
+      var pm = panelModel(), acc = { actions: [], proposals: [], notas: [], reports: [] }, tries = 0, fin;
+      for (;;) {
+        try {
+          fin = await stream({ message: send, history: history.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) {
+            if (ev.type === 'status') setStatus(R, ev.text);
+            else if (ev.type === 'step') onStep(R, ev);
+          });
+          break;
+        } catch (e2) {
+          var x = e2.extra || {};
+          ['actions', 'proposals', 'notas', 'reports'].forEach(function (k) { if (x.partial && x.partial[k]) acc[k] = acc[k].concat(x.partial[k]); });
+          if (x.resume) { resume = x.resume; rmodel = x.resume_model || rmodel; }
+          if (x.auto && !userStop && tries < 5) {       // waktu server habis / batas langkah: lanjut sendiri
+            tries++; onStep(R, { id: 'au' + tries, state: 'run', text: 'Melanjutkan otomatis' }); onStep(R, { id: 'au' + tries, state: 'ok', text: 'Bagian ' + (tries + 1) });
+            await new Promise(function (rs) { setTimeout(rs, 500); }); if (userStop) throw e2; continue;
+          }
+          e2.extra = Object.assign({}, x, { partial: acc, resume: resume, resume_model: rmodel }); throw e2;
+        }
+      }
+      ['actions', 'proposals', 'notas', 'reports'].forEach(function (k) { fin[k] = acc[k].concat(fin[k] || []); });
       clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
