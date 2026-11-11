@@ -508,10 +508,10 @@ const fT=(n,l,v,o)=>{o=o||{};return '<label class="fld"><span class="lb">'+l+(o.
 const fCode=(n,l,v,w,ph)=>'<div class="fld"><span class="lb">'+l+'<span class="op">opsional</span></span><span class="cw2"><input class="in" name="'+n+'" value="'+esc(v||'')+'" autocomplete="off" autocapitalize="'+(w==='pc'?'characters':'off')+'" spellcheck="false" placeholder="'+esc(ph)+'"><button type="button" class="scb" data-a="scf" data-w="'+w+'" aria-label="'+(w==='pc'?'Scan QR':'Scan barcode')+'">'+ic('scan')+'</button></span></div>';
 const fM=(n,l,v,o)=>fT(n,l,v,Object.assign({fmt:'money',mode:'numeric',cap:'off',ph:'0'},o));
 const fQ=(n,l,v,o)=>fT(n,l,v,Object.assign({fmt:'qty',mode:'decimal',cap:'off',ph:'0'},o));
-const OSV=['STD','25','50','75','100'];
+const OSV=['STD','25','50','75','100','125','150','175','200'];
 function prodFields(k,v,edit){let h='';
  if(k==='piston'){h+=fT('base','Nama piston',v.base,{ph:'Contoh: Supra X 125',sug:'nm:piston'})
-  +fT('os','Oversize piston',v.os,{ph:'STD, 25, 50, 75, 100',cap:'characters'})+'<div class="chips flat" id="osc">'+OSV.map(o=>'<button type="button" class="chip'+(normOS(v.os)===o?' on':'')+'" data-a="osc" data-v="'+o+'">'+(o==='STD'?'STD':'OS '+o)+'</button>').join('')+'</div>'}
+  +fT('os','Oversize piston',v.os,{ph:'STD, 25, 50 … 200',cap:'characters'})+'<div class="chips flat" id="osc">'+OSV.map(o=>'<button type="button" class="chip'+(normOS(v.os)===o?' on':'')+'" data-a="osc" data-v="'+o+'">'+(o==='STD'?'STD':'OS '+o)+'</button>').join('')+'</div>'}
  else if(k==='bearing'){h+=fT('seri','Seri barang',v.seri,{ph:'Contoh: 6204',cap:'characters'})+'<p class="hint" id="bdim" style="margin:8px 0 14px">'+esc(bdimTxt(v.seri))+'</p>'+fT('base','Nama atau merek',v.base,{opt:1,ph:'Otomatis: Laher',sug:'nm:bearing'})}
  else if(k==='stang'){h+=fT('base','Nama barang',v.base,{ph:'Contoh: Stang seher Blade',sug:'nm:stang'})+fT('jenis','Jenis barang',v.jenis,{opt:1,ph:'Contoh: Standar'})+fT('versi','Versi',v.versi,{opt:1,ph:'Contoh: Ori / KW / v2'})}
  else{h+=fT('base','Nama barang',v.base,{ph:'Nama barang',sug:'nm:umum'})+fT('cat','Kategori',v.cat,{opt:1,ph:'Contoh: Oli'})+fT('unit','Satuan',v.unit==null?'pcs':v.unit,{ph:'pcs, botol, kg',cap:'none'})}
@@ -684,8 +684,8 @@ function csvStok(){const st=cc().stock,r=[['Jenis','Barang','Kode pabrik','Satua
 
 
 /* ================= Impor data barang ================= */
-const OSL5=['STD','25','50','75','100'];
-let IM={kind:'piston',recs:[],sizes:['STD','25','50','75','100'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
+const OSL5=['STD','25','50','75','100','125','150','175','200'];
+let IM={kind:'piston',recs:[],sizes:['STD','25','50','75','100','125','150','175','200'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
 const HSYN={name:/^(nama|nama barang|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk)$/,
  os:/^(os|oversize|over size|ukuran|ukuran os|uk|size)$/,
  seri:/^(seri|series|no seri|nomor seri|seri laher|kode laher|tipe laher|seri bearing)$/,
@@ -695,8 +695,10 @@ const HSYN={name:/^(nama|nama barang|barang|item|produk|model|tipe|type|motor|je
  jenis:/^(jenis|jenis barang)$/,versi:/^(versi|version|varian)$/,unit:/^(satuan|unit|sat)$/,cat:/^(kategori|category|grup|group)$/,brand:/^(merek|merk|brand|pabrik)$/};
 function imOS(t){t=String(t==null?'':t).toLowerCase().replace(/\s+/g,'').replace(/^os/,'').replace(/^\+/,'');
  if(/^(std|standar|standard|0|0[.,]0+|\.0+)$/.test(t))return'STD';
- if(/^(0?[.,]25|025|25)$/.test(t))return'25';if(/^(0?[.,]50?|050|50)$/.test(t))return'50';
- if(/^(0?[.,]75|075|75)$/.test(t))return'75';if(/^(1[.,]0{0,2}|100)$/.test(t))return'100';return''}
+ if(!/^\d*[.,]?\d+$/.test(t))return'';
+ const dec=/[.,]/.test(t)||/^0\d/.test(t);let n=parseFloat(t.replace(',','.'));if(!(n>0))return'';
+ if(dec&&n<=2.5)n=Math.round(n*100);else if(dec&&n<25)return'';
+ return n>=25&&n<=200&&n%25===0?String(n):''}
 function imPrice(s){s=String(s==null?'':s).toLowerCase().replace(/rp\.?/g,'').replace(/\s/g,'');if(!s)return 0;
  let m=/^(\d+(?:[.,]\d+)?)(?:k|rb|ribu)$/.exec(s);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*1000);
  m=/^(\d+(?:[.,]\d+)?)(?:jt|juta)$/.exec(s);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*1e6);
@@ -712,17 +714,17 @@ function imTok(kind,text){let s=imStrip(String(text||'').replace(/\t+/g,' ')),o=
  m=/(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{4,}|\d+(?:[.,]\d+)?\s?(?:k|rb|ribu|jt|juta)\b)/i.exec(s);
  if(m){const p=imPrice(m[0]);if(p>=1000){o.sell=p;const ms=/^\s+(\d{1,4})\s*$/.exec(s.slice(m.index+m[0].length));if(ms&&o.q===null){o.q=+ms[1];s=s.slice(0,m.index+m[0].length)}s=s.replace(m[0],' ')}}
  if(kind==='piston'){
-  m=/\b(?:os|oversize|over\s?size|ukuran|uk)\s*[:.=]?\s*((?:std|standar|standard|[+]?[01]?[.,]?\d{2,3})(?:\s*(?:[\/,&]|dan|-|s\/d|sd)\s*(?:std|[+]?[01]?[.,]?\d{2,3}))*)/i.exec(s);
+  m=/\b(?:os|oversize|over\s?size|ukuran|uk)\s*[:.=]?\s*((?:std|standar|standard|[+]?[0-2]?[.,]?\d{2,3})(?:\s*(?:[\/,&]|dan|-|s\/d|sd)\s*(?:std|[+]?[0-2]?[.,]?\d{2,3}))*)/i.exec(s);
   if(m){const parts=m[1].split(/\s*(?:[\/,&]|dan|s\/d|sd|-)\s*/i),range=/s\/d|sd|-/i.test(m[1].replace(/[.,]/g,''))&&parts.length===2,v=parts.map(p=>imOS(p)||'?'+p.trim());
    if(range&&OSL5.includes(v[0])&&OSL5.includes(v[1])){const a=OSL5.indexOf(v[0]),b=OSL5.indexOf(v[1]);o.os=OSL5.slice(Math.min(a,b),Math.max(a,b)+1)}else o.os=v;
    s=s.replace(m[0],' ')}
-  else{m=/(?<![\d.,])(0[.,]\d{2}|\+(?:25|50|75|100)|1[.,]00)(?![\d])/.exec(s)||/(?<![\d.,A-Za-z])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
+  else{m=/(?<![\d.,])([0-2][.,](?:00|25|50|75)|\+(?:25|50|75|100|125|150|175|200))(?![\d])/.exec(s)||/(?<![\d.,A-Za-z])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
    if(m){const v=imOS(m[1]||m[0]);if(v){o.os=[v];s=s.replace(m[0],' ')}}}}
  o.name=s.replace(/\brp\.?\b/ig,' ').replace(/[|;:=]+/g,' ').replace(/\s[-–—]\s/g,' ').replace(/^[\s\-–—,.]+|[\s\-–—,.]+$/g,'').replace(/\s+/g,' ').trim();return o}
 function imHeader(row){const m={},osc=[];let hit=0;
  row.forEach((c,i)=>{const t=String(c).toLowerCase().replace(/[._:]/g,' ').replace(/\s+/g,' ').trim();if(!t)return;
   for(const f in HSYN){if(HSYN[f].test(t)){if(!Object.values(m).includes(f)){m[i]=f;hit++}return}}
-  if(/^(std|standar|standard|\+?0?[.,]?(25|50|75)|\+?1[.,]00?|100|\+?(25|50|75|100))$/.test(t.replace(/\s/g,'')))osc.push([i,imOS(t)])});
+  if(/^(std|standar|standard|\+?[0-2][.,](?:00|25|50|75)|\+?(25|50|75|100|125|150|175|200))$/.test(t.replace(/\s/g,'')))osc.push([i,imOS(t)])});
  if(osc.length>=2&&!row.some(c=>imPrice(c)>=1000)){osc.forEach(o=>{m[o[0]]='os:'+o[1]});hit+=osc.length}
  const keyc=Object.values(m).filter(f=>f==='name'||f==='seri'||f==='brand').length;
  if(!keyc)return null;if(hit<2&&row.length>1)return null;return m}
@@ -730,6 +732,9 @@ function imRows(kind,rows){const out=[];
  rows=rows.map(r=>r.map(c=>String(c==null?'':c).trim())).filter(r=>r.some(c=>c));if(!rows.length)return out;
  let hi=-1,map=null;for(let i=0;i<Math.min(rows.length,6);i++){const m=imHeader(rows[i]);if(m){hi=i;map=m;break}}
  (hi>=0?rows.slice(hi+1):rows).forEach(r=>{
+  const tx=r.join(' ');
+   if(/\b(tidak|belum)\s+(ada|tersedia|dijual)\b|\bdi\s?atas\b/i.test(tx))return;
+   if(!map&&imPrice(tx)<1000&&!/\d[.,]\d{3}\b|\b\d+\s?(k|rb|jt)\b/i.test(tx)&&(/^\s*(harga|dokumen|gunakan|urutan|konversi|ukuran|kalau|catatan|piston yang)\b/i.test(tx)||tx.split(/\s+/).length>14))return;
   const g={};let osc=[];
   if(map){Object.keys(map).forEach(i=>{const f=map[i];if(f.indexOf('os:')===0){osc.push([f.slice(3),r[i]]);return}if(g[f]===undefined||g[f]==='')g[f]=r[i]||''})}
   else{g.name=r.join(' ');if(g.name.toLowerCase().split(/\s+/).every(w=>/^(no|nama|barang|os|oversize|ukuran|harga|stok|stock|qty|jumlah|seri|kode|jenis|versi|satuan|merek|merk|item|produk|model|tipe|keterangan|jual|pcs)$/.test(w)))return}
@@ -747,7 +752,7 @@ function imRec(kind,g,multi){
  return multi?[base]:base}
 function imVal(r){const k=r.kind;let f,err='',unit=KU[k];
  if(k==='piston'){const b=r.name.replace(/^(paket\s+piston|pkt\s+piston|piston)\s+/i,'').trim();f=fK(k,{base:b,os:r.os});
-  if(!f.base)err='Nama tidak terbaca';else if(!f.os)err='OS belum ada, pilih ukuran OS di halaman sebelumnya';else if(r.os.charAt(0)==='?')err='OS "'+r.os.slice(1)+'" tidak dikenal (STD, 25, 50, 75, 100)'}
+  if(!f.base)err='Nama tidak terbaca';else if(!f.os)err='OS belum ada, pilih ukuran OS di halaman sebelumnya';else if(r.os.charAt(0)==='?')err='OS "'+r.os.slice(1)+'" tidak dikenal (STD, 25 sampai 200)'}
  else if(k==='bearing'){const seri=r.seri.toUpperCase().replace(/\s+/g,' ');let br=(r.brand||r.name).replace(/\b(laher|bearing|bantalan)\b/ig,' ').replace(/\s+/g,' ').trim();
   f=fK(k,{base:br,seri});if(!/^\d{3,5}(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
  else if(k==='stang'){let b=r.name;if(b&&!/^stang/i.test(b))b='Stang seher '+b;f=fK(k,{base:b,jenis:r.jenis,versi:r.versi});if(!f.base)err='Nama tidak terbaca'}
@@ -891,7 +896,7 @@ function playSnd(k){const src=sndSrc(k);let a=AUD[k];if(!a||a.dataset.s!==src){a
  try{a.currentTime=0}catch(e){}try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>synth(k==='ok'))}catch(e){synth(k==='ok')}}
 function ping(ok){try{if(navigator.vibrate)navigator.vibrate(ok?40:[60,50,60])}catch(e){}if(!sndOn())return;playSnd(ok?'ok':'no')}
 function suggestFromCode(code){const c=cn(code),m=c.match(/^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z])$/);if(!m)return null;
- const OSL={B:'25',C:'50',D:'75',E:'100'},fam=m[1]+'-'+m[2],sib=D.items.filter(x=>x.pc&&cn(x.pc).indexOf(fam+'-')===0&&cn(x.pc)!==c),s=sib[0];
+ const OSL={B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'},fam=m[1]+'-'+m[2],sib=D.items.filter(x=>x.pc&&cn(x.pc).indexOf(fam+'-')===0&&cn(x.pc)!==c),s=sib[0];
  return{fam,os:OSL[m[3]]||'',sib,base:s?(s.base||s.name):'',kind:s?kindOf(s):'piston'}}
 function scIdle(){return '<p class="hint" style="text-align:center;margin-top:14px">'+(SC&&SC.ctx==='field'?'Arahkan kamera ke stiker paket piston. Tulisan dan QR dibaca otomatis.':'Arahkan kamera ke stiker atau tulisan di kotak. Tulisan dan QR dibaca otomatis.')+'</p>'}
 function pgScan(){return pgh('Scan barang','<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><p class="camm" id="camm">Menyalakan kamera</p></div>'
@@ -975,7 +980,7 @@ function ocNear(a,l){if(a.x0==null||l.x0==null)return true;const aw=a.x1-a.x0,h=
  return Math.abs(lc-ac)<=Math.max(aw*1.3,h*6)&&l.y0>=a.y0-h*3.5&&l.y0<=a.y1+h*10}
 function ocBuild(a,lines){const ctx=lines.filter(l=>ocNear(a.l,l)),txt=ocFix(ctx.map(l=>l.t).join(' | ')),model=ocModel(txt);
  const bb=a.l.x0==null?null:{x:a.l.x0,y:a.l.y0,width:a.l.x1-a.l.x0,height:a.l.y1-a.l.y0};
- if(a.kind==='piston'){const OSL={B:'25',C:'50',D:'75',E:'100'},sg=suggestFromCode(a.pc),mo=/UKURAN\s*[:.]?\s*(0[.,]\s?(?:25|50|75)|1[.,]\s?00)/.exec(txt)||/(?<![0-9])(0[.,](?:25|50|75)|1[.,]00)(?![0-9])/.exec(txt);
+ if(a.kind==='piston'){const OSL={B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'},sg=suggestFromCode(a.pc),mo=/UKURAN\s*[:.]?\s*([0-2][.,]\s?(?:25|50|75|00))/.exec(txt)||/(?<![0-9])([0-2][.,](?:25|50|75|00))(?![0-9])/.exec(txt);
   const byL=OSL[a.pc.slice(-1)]||'',byT=mo?String(parseInt(mo[1].replace(/[^0-9]/g,''),10)):'',os=byL||byT;
   const R={kind:'piston',pc:a.pc,os,model,bb,base:(sg&&sg.base)||model};
   if(byT&&byL&&byT!==byL)R.warn='Huruf kode menunjuk OS '+byL+', tulisan ukuran terbaca OS '+byT+'. Periksa stikernya.';
