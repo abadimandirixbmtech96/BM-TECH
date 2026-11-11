@@ -567,7 +567,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         line(buf);
       } else { (await r.text()).split('\n').forEach(line); }
       if (!got) throw new Error('Koneksi terputus sebelum jawaban selesai. Coba lagi.');
-      if (got.type === 'error') throw new Error(got.error || 'Jarvis gagal.');
+      if (got.type === 'error') { var er = new Error(got.error || 'Jarvis gagal.'); er.extra = got; throw er; }
       return got;
     } finally { clearTimeout(timer); }
   }
@@ -854,6 +854,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   }
   function stopListen() { if (rec) { try { rec.stop(); } catch (e) {} } listening = false; if (el.mic) el.mic.classList.remove('rec'); if (el.in) el.in.placeholder = 'Tanya saya kapan saja...'; }
 
+  var RESUME_RE = /^\s*(ya\s+)?(tolong\s+)?(lanjut(kan|in)?|terus(kan|in)?|ulang(i)?|coba\s+lagi|gas|oke?\s+lanjut|sambung(kan)?)\W*$/i, pend = {};
   async function submit(text) {
     text = String(text || '').trim().slice(0, 1500);
     if (!text || busy) return;
@@ -862,10 +863,13 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     setBusy(true); userStop = false; stopListen(); stopSpeak(); closeModelPop();
     var c = ensureChat(text); if (home && home.parentNode) home.remove();
     addUser(text);
+    var cid = c.id, orig = text, send = text, resume = null, rmodel = '', pd = pend[cid];
+    if (pd && RESUME_RE.test(text)) { orig = pd.text; send = pd.text.slice(0, 1150) + '\n(Lanjutkan permintaan ini dari titik terakhir; percobaan sebelumnya gagal: ' + pd.err + ')'; resume = pd.resume || null; rmodel = pd.model || ''; }
+    delete pend[cid];
     var R = newReply();
     var tick = setInterval(function () { var idle = Math.round((Date.now() - R.last) / 1000); if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)'; }, 1500);
     try {
-      var fin = await stream({ message: text, history: c.hist.slice(-10), model: modelId() }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
+      var fin = await stream({ message: send, history: c.hist.slice(-10), model: modelId(), resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
       clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
@@ -877,7 +881,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var notas = fin.notas || []; notas.forEach(function (n) { R.wrap.appendChild(window.BMNota.render(n)); });
       R.wrap.appendChild(buildActs(reps, blocks, text));
       c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, reps: reps, notas: notas });
-      c.hist.push({ role: 'user', text: text }, { role: 'model', text: reply.slice(0, 1000) + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      c.hist.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (c.hist.length > 20) c.hist = c.hist.slice(-20);
       c.updated = Date.now(); save(); if (saveWarn) { saveWarn = false; toast('Memori HP penuh: obrolan lama dihapus otomatis'); }
       (fin.actions || []).forEach(showAction);
@@ -885,9 +889,19 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       toBottom();
     } catch (e) {
       finishSteps(R, false);
-      var stopped = userStop, msg; userStop = false; msg = stopped ? 'Dihentikan.' : (e.message || 'Jarvis gagal.');
+      var stopped = userStop, msg, ex = e.extra || {}; userStop = false; msg = stopped ? 'Dihentikan.' : (e.message || 'Jarvis gagal.');
+      if (!stopped) {
+        pend[cid] = { text: orig, err: String(msg).slice(0, 120), resume: ex.resume, model: ex.resume_model };
+        c.hist.push({ role: 'user', text: orig }, { role: 'model', text: '[Permintaan di atas GAGAL di tengah jalan: ' + String(msg).slice(0, 120) + '. Jika admin menjawab "lanjut", kerjakan permintaan itu sampai selesai, jangan tanya ulang.]' });
+        if (c.hist.length > 20) c.hist = c.hist.slice(-20);
+        msg += '\nKetik "lanjut" untuk meneruskan.';
+      }
       R.wrap.appendChild(tx('div', 'bmj-m bmj-s', msg));
+      var pt = ex.partial || {};
+      (pt.reports || []).forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
+      (pt.notas || []).forEach(function (n) { R.wrap.appendChild(window.BMNota.render(n)); });
       c.msgs.push({ r: 'u', text: text }, { r: 's', text: msg }); c.updated = Date.now(); save(); toBottom();
+      (pt.actions || []).forEach(showAction); (pt.proposals || []).forEach(showProposal);
     } finally { clearInterval(tick); curAC = null; curCtl = null; setBusy(false); if ($('drw').classList.contains('on')) paintHist(); }
   }
 
