@@ -760,6 +760,31 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       }, function (e) { box.textContent = ''; box.appendChild(tx('div', 'note', brainErr(e))); });
     });
   }
+  /* ================= MEMORI (ditulis Jarvis sendiri) ================= */
+  var MEMK = { pelajaran: 'Pelajaran', fakta: 'Fakta', preferensi: 'Preferensi' };
+  function memSheet() {
+    openSheet('Memori Jarvis', function (b) {
+      b.appendChild(tx('div', 'note', 'Jarvis menyimpan ini sendiri dari obrolan: fakta tentang bengkel, cara Anda ingin dilayani, dan pelajaran dari kesalahannya. Semuanya dibaca di setiap percakapan. Ketuk untuk melupakan yang salah.'));
+      var box = mk('div', '', 'bbox'); box.appendChild(tx('div', 'note', 'Memuat…')); b.appendChild(box);
+      supabaseClient.from('jarvis_memori').select('id,jenis,isi,alasan,updated_at').eq('aktif', true).order('updated_at', { ascending: false }).limit(200).then(function (r) {
+        box.textContent = '';
+        if (r.error) { box.appendChild(tx('div', 'note', /jarvis_memori|relation|schema cache/i.test(r.error.message || '') ? 'Tabel memori belum dibuat.' : (r.error.message || 'Gagal memuat'))); return; }
+        var rows = r.data || [];
+        if (!rows.length) box.appendChild(tx('div', 'note', 'Belum ada memori. Contoh: katakan "ingat, ukuran OS piston paling tinggi 200".'));
+        ['pelajaran', 'preferensi', 'fakta'].forEach(function (k) {
+          var g = rows.filter(function (x) { return x.jenis === k; }); if (!g.length) return;
+          box.appendChild(tx('div', 'note', MEMK[k] + ' (' + g.length + ')'));
+          g.forEach(function (x) {
+            box.appendChild(item(k === 'pelajaran' ? I.test : I.book, x.isi, (x.alasan ? x.alasan.slice(0, 90) + ' · ' : '') + String(x.updated_at).slice(0, 10), async function () {
+              var ok = await dlg({ title: 'Lupakan memori ini?', text: x.isi, ok: 'Lupakan', danger: true }); if (!ok) return;
+              var r2 = await supabaseClient.from('jarvis_memori').update({ aktif: false, updated_at: new Date().toISOString() }).eq('id', x.id);
+              if (r2.error) return toast(r2.error.message || 'Gagal'); toast('Memori dilupakan'); closeSheet(); setTimeout(memSheet, 250);
+            }));
+          });
+        });
+      }, function (e) { box.textContent = ''; box.appendChild(tx('div', 'note', String((e && e.message) || e))); });
+    });
+  }
   function pickFile(cb) {
     var f = mk('input'); f.type = 'file'; f.accept = '.txt,.csv,.tsv,.md,.json,.log,text/*,application/json'; f.style.display = 'none'; document.body.appendChild(f);
     f.onchange = function () {
@@ -978,6 +1003,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         toggleRow('Efek mengetik', 'Jawaban muncul seperti diketik', !typeOff, function (v) { typeOff = !v; REDUCED = typeOff; ls(LS_TYPE, v ? '1' : '0'); }),
         item(I.gear, 'Gaya nota', 'Sekarang: ' + (ls('bm-jarvis-nota-style') === 'bengkel' ? 'Bengkel (rapi, huruf besar)' : 'Tulisan tangan'), function () { closeSheet(); setTimeout(notaStyleSheet, 250); }),
         item(I.brain, 'Otak (skill)', 'Tambah harga, dokumen, aturan untuk Jarvis', function () { closeSheet(); setTimeout(brainSheet, 250); }),
+        item(I.book, 'Memori Jarvis', 'Fakta, preferensi, dan pelajaran yang Jarvis ingat sendiri', function () { closeSheet(); setTimeout(memSheet, 250); }),
         item(I.prov, 'Penyedia dan model AI', 'Sekarang: ' + modelName(), function () { closeSheet(); setTimeout(providersSheet, 250); }),
         item(I.test, 'Uji koneksi server', 'Sama seperti mengetik /tes', function () { closeSheet(); diagnose(); }),
         item(I.dl, 'Unduh cadangan riwayat', 'File JSON dari HP ini', function () { closeSheet(); exportAll(); }),
