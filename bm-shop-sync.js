@@ -307,22 +307,21 @@
       loginEl = document.createElement('div');
       loginEl.id = 'bm-login'; loginEl.hidden = true;
       loginEl.setAttribute('role', 'dialog'); loginEl.setAttribute('aria-modal', 'true'); loginEl.setAttribute('aria-labelledby', 'bm-login-t');
-      loginEl.innerHTML = '<form novalidate><h2 id="bm-login-t">Masuk ke Kasir</h2>'
-        + '<p class="s">Pakai akun BM-TECH yang punya akses kasir. Data tersimpan di database bengkel.</p>'
-        + '<label>Email<input name="e" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required></label>'
-        + '<label>Kata sandi<input name="p" type="password" autocomplete="current-password" required></label>'
+      /* Satu pintu masuk: login di Profil BM, lalu semua aplikasi (Dashboard, Warung, Jarvis) ikut terbuka. */
+      loginEl.innerHTML = '<form novalidate><h2 id="bm-login-t">Masuk dulu</h2>'
+        + '<p class="s">Masuk lewat Profil BM. Setelah itu Dashboard Warung, Dashboard, dan Jarvis langsung bisa dipakai tanpa login lagi.</p>'
         + '<p class="m" role="alert"></p>'
-        + '<button type="submit" class="ok">Masuk</button>'
+        + '<button type="submit" class="ok">Masuk di Profil BM</button>'
         + '<button type="button" class="no">Nanti saja</button></form>';
       document.body.appendChild(loginEl);
       var f = loginEl.querySelector('form');
-      f.addEventListener('submit', function (ev) { ev.preventDefault(); doLogin(f.e.value.trim(), f.p.value); });
+      f.addEventListener('submit', function (ev) { ev.preventDefault(); (window.top || window).location.href = '/admin-login.html'; });
       loginEl.querySelector('.no').addEventListener('click', hideLogin);
       loginEl.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') hideLogin(); });
     }
     loginEl.querySelector('.m').textContent = msg || '';
     loginEl.hidden = false;
-    setTimeout(function () { var e = loginEl.querySelector('input[name=e]'); (e.value ? loginEl.querySelector('input[name=p]') : e).focus(); }, 50);
+    setTimeout(function () { var b = loginEl.querySelector('.ok'); if (b) b.focus(); }, 50);
   }
   function hideLogin() { if (loginEl) loginEl.hidden = true; }
   async function doLogin(email, pass) {
@@ -474,6 +473,7 @@
 
   async function afterSession(session) {
     userId = session.user && session.user.id;
+    try { if (window.BMJarvis && window.BMJarvis.refresh) setTimeout(window.BMJarvis.refresh, 300); } catch (e) {}   // tombol Jarvis muncul begitu sesi siap
     if (cache && cache.uid && cache.uid !== userId) {
       cache = null; ls(K_CACHE, null);
       app.set(app.blank()); app.refresh();
