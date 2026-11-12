@@ -233,6 +233,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .bmj-acts button.pri{background:var(--text);color:var(--bg)}
 .bmj-m{white-space:pre-wrap}
 .bmj-rep,.bmj-tw{border-color:var(--border)}
+.bmj-mdl{font-size:11.5px;opacity:.7;padding:0 4px;line-height:1.4;word-break:break-word}.bmj-mdl-w{opacity:1;color:#d9480f;font-weight:700}
 </style>
 </head>
 <body>
@@ -581,6 +582,15 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     else { row.ic.className = 'bmj-ic ' + ev.state; row.ic.textContent = ev.state === 'ok' ? '✓' : '✗'; row.sub.textContent = ev.text; setStatus(R, ev.text); }
     toBottom();
   }
+  /* bukti model: siapa yang benar-benar menjawab (dilaporkan server penyedia) */
+  function modelLine(mi) {
+    var d = document.createElement('div'); d.className = 'bmj-mdl' + (mi && mi.cocok === false ? ' bmj-mdl-w' : '');
+    if (!mi || !mi.dipakai) { d.textContent = 'Model tidak diketahui'; return d; }
+    var u = mi.dipakai, nm = u.penyedia + ' · ' + u.id + (u.dilaporkan && u.dilaporkan !== u.id ? ' (server: ' + u.dilaporkan + ')' : u.dilaporkan ? ' ✓ dikonfirmasi server' : '');
+    if (mi.cocok === false && mi.diminta && mi.diminta.id) d.textContent = 'Model pilihan ' + mi.diminta.penyedia + ' · ' + mi.diminta.id + ' tidak menjawab' + (mi.gagal && mi.gagal.length ? ' (' + mi.gagal[0] + ')' : '') + '. Dijawab cadangan: ' + nm;
+    else d.textContent = 'Dijawab oleh ' + nm;
+    return d;
+  }
   function finishSteps(R, ok) {
     R.steps.classList.remove('live'); R.spin.className = 'bmj-ic ' + (ok ? 'ok' : 'err'); R.spin.textContent = ok ? '✓' : '✗';
     var sec = Math.max(1, Math.round((Date.now() - R.t0) / 1000));
@@ -752,9 +762,24 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     inp.placeholder = 'Atau ketik nama model'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false;
     ok.onclick = function () { var v = inp.value.trim(); if (!MODEL_RE.test(v)) return toast('ID model tidak valid'); ls('bm-jarvis-x-' + sel.value, v); ls(LS_SEL, sel.value + '|' + v); paintModel(); closeModelPop(); toast('Model: ' + v); };
     rowc.append(sel, inp, ok); pop.appendChild(rowc);
+    if (cur) pop.appendChild(row('Uji model terpilih', 'Kirim pesan uji langsung ke ' + provOf(cur.p).name + ' · ' + cur.m + ', tanpa cadangan', false, function () { closeModelPop(); testModel(cur); }));
     pop.classList.add('on'); $('bModel').classList.add('on'); $('bModel').setAttribute('aria-expanded', 'true');
     $('bModel').classList.add('open');
     if (!provInfo) loadProv().then(function () { if ($('mpop').classList.contains('on')) openModelPop(); });
+  }
+  /* Uji satu model persis: server memanggil HANYA model ini dan menampilkan nama model yang dilaporkan penyedianya */
+  async function testModel(c) {
+    toast('Menguji ' + c.m + '…');
+    try {
+      var tk = await token();
+      var r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify({ test_model: { provider: c.p, model: c.m }, keys: clientKeys() }) });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+      var txt = j.ok
+        ? 'Berfungsi. Penyedia: ' + j.penyedia + '. Diminta: ' + j.diminta + '. Dilaporkan server ' + j.penyedia + ': ' + (j.dilaporkan || '(tidak disebut)') + '. Waktu: ' + (j.ms / 1000).toFixed(1) + ' dtk. Jawaban: "' + (j.jawab || '') + '".'
+        : 'Model ini TIDAK berfungsi: ' + (j.error || 'tanpa alasan') + '. Jika dipilih, Jarvis akan memakai cadangan (model lain) dan menuliskannya di bawah kartu langkah.';
+      await dlg({ title: j.ok ? 'Model berfungsi' : 'Model gagal', text: txt, ok: 'Oke' });
+    } catch (e) { toast('Uji gagal: ' + (e.message || e)); }
   }
   function closeModelPop() { $('mpop').classList.remove('on'); $('bModel').classList.remove('open'); $('bModel').setAttribute('aria-expanded', 'false'); }
   async function providersSheet() {
@@ -924,6 +949,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       if (m.r === 'u') { lastQ = m.text; addUserQuiet(m.text); }
       else if (m.r === 'a') {
         var wrap = mk('div', '', 'bmj-r'), blocks = parseBlocks(m.text), reps = m.reps || [];
+        if (m.model) wrap.appendChild(modelLine(m.model));
         var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); wrap.appendChild(ans);
         reps.forEach(function (r) { wrap.appendChild(renderReport(r)); });
         (m.notas || []).forEach(function (n) { wrap.appendChild(window.BMNota.render(n)); });
@@ -1142,6 +1168,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       ['actions', 'proposals', 'notas', 'reports', 'visuals'].forEach(function (k) { fin[k] = acc[k].concat(fin[k] || []); });
       clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
+      if (fin.model) R.wrap.appendChild(modelLine(fin.model));
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
       var ctl = curCtl = { skip: false }; ans.onclick = function () { ctl.skip = true; };
       speak(spokenOf(blocks, reps));
@@ -1151,7 +1178,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var notas = fin.notas || []; notas.forEach(function (n) { R.wrap.appendChild(window.BMNota.render(n)); });
       var vis = fin.visuals || []; vis.forEach(function (v) { if (window.BMVisual) R.wrap.appendChild(window.BMVisual.render(v)); });
       R.wrap.appendChild(buildActs(reps, blocks, text));
-      c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, reps: reps, notas: notas, vis: vis.filter(function (v) { return JSON.stringify(v).length < 60000; }) });
+      c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, model: fin.model, reps: reps, notas: notas, vis: vis.filter(function (v) { return JSON.stringify(v).length < 60000; }) });
       c.hist.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + vis.map(function (v) { return '\n[' + (v.tipe === 'grafik' ? 'Grafik' : v.tipe === 'kartu' ? 'Kartu angka' : 'Gambar') + ' "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (c.hist.length > 20) c.hist = c.hist.slice(-20);
       c.updated = Date.now(); save(); if (saveWarn) { saveWarn = false; toast('Memori HP penuh: obrolan lama dihapus otomatis'); }
