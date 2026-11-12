@@ -37,10 +37,14 @@ const PROVIDERS = {
 const PROV_IDS = Object.keys(PROVIDERS);
 const MODEL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:\-\/]{1,79}$/;
 function anyKey() { return PROV_IDS.some((id) => PROVIDERS[id].key()); }
+/* Kunci API boleh dikirim dari HP admin (disimpan di localStorage HP itu). Dipakai hanya untuk permintaan ini, tidak disimpan/dicatat.
+   Bila kosong, kunci env Vercel dipakai sebagai cadangan. */
+function cleanKeys(k) { const o = {}; if (k && typeof k === 'object') PROV_IDS.forEach((id) => { const v = typeof k[id] === 'string' ? k[id].trim() : ''; if (v && v.length <= 300 && /^[\x21-\x7e]+$/.test(v)) o[id] = v; }); return o; }
+function keyFor(p, keys) { return (keys && keys[p]) || PROVIDERS[p].key() || ''; }
 const COOL = new Map();   // "provider|model" -> waktu boleh dicoba lagi (router menghindari model yang kena limit)
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v19-memori-refleksi-2026-11-12';
+const VERSION = 'jarvis-v20-cepat-kunci-hp-2026-11-12';
 const MAX_TOOL_ROUNDS = 8;
 const ROUND_BUDGET_MS = 34000;   // lewat ini -> hentikan rapi & minta browser melanjutkan otomatis
 const MAX_RESULT_CHARS = 14000;
@@ -583,6 +587,9 @@ async function nav_app_setting(q, a) {
   return { error: 'Pengaturan yang bisa diubah: tema, teks_tebal, font, warna_aksen, bahasa' };
 }
 
+const DATA_WORD = /(rekap|total|jumlah|harga|stok|nota|hutang|piutang|omzet|omset|cari|buka|tampil|lihat|berapa|siapa|kapan|dimana|di mana|data|catat|tambah|hapus|ubah|ganti|isi|laporan|grafik|chart|kurva|gambar|diagram|customer|pelanggan|barang|piston|laher|bearing|stang|buku|kasbon|gaji|jual|beli|transaksi|bulan|minggu|tahun|hari ini|kemarin|ingat|lupa|memori|kosong|belum|folder|editor|kasir|warung|nota|servis|lemer|jasa|\d)/i;
+const CHAT_START = /^(hai+|halo+|hallo+|hi+|hey+|hei+|woy+|woi+|oi+|p+|bro+|bang|mas|pak|pagi|siang|sore|malam|selamat|assalam\w*|makasih|terima ?kasih|thanks?|thx|oke+|ok+|sip+|siap|mantap\w*|keren|wkw\w*|haha\w*|hehe\w*|apa kabar|lagi apa|test|tes|jarvis|good|nice)\b/i;
+function isChat(m) { const t = String(m || '').trim(); if (/^(siapa kamu|kamu siapa|apa kabar|kamu bisa apa|bisa apa aja)\W*$/i.test(t)) return true; if (!t || t.length > 80 || DATA_WORD.test(t)) return false; return SMALLTALK.test(t) || (t.split(/\s+/).length <= 7 && CHAT_START.test(t)); }
 const SMALLTALK = /^\s*(hai|halo|hi|hello|hey|oke?|ok|terima kasih|makasih|thanks|siapa kamu|kamu siapa|test|tes)\b[\s\S]{0,25}$/i;
 
 /* ---------- OTAK: pengetahuan tambahan (tabel jarvis_brain, hanya admin) ---------- */
@@ -681,7 +688,8 @@ async function prepare_ingat_otak(q, a) {
 /* ---------- pemeriksaan data (belum lengkap, barang ditinggal, dll) ---------- */
 async function t_cek_data(q, a) {
   const jenis = lower(a.jenis).replace(/ /g, '_');
-  if (!['belum_lengkap', 'barang_ditinggal', 'tanpa_bukti', 'harga_kosong'].includes(jenis)) return { error: 'jenis: belum_lengkap, barang_ditinggal, tanpa_bukti, harga_kosong' };
+  const JENIS = ['belum_lengkap', 'barang_ditinggal', 'tanpa_bukti', 'harga_kosong', 'dibawa_ditinggal_kosong', 'keterangan_kosong', 'customer_kosong', 'pj_kosong', 'semua_kosong'];
+  if (!JENIS.includes(jenis)) return { error: 'jenis: ' + JENIS.join(', ') };
   const folderId = ((await resolveFolder(q, a.folder || 'BUKU BESAR')) || {}).id;
   if (!folderId) return { error: 'Folder "' + (a.folder || 'BUKU BESAR') + '" tidak ditemukan' };
   let notes = (await fetchNotes(q, folderId)).filter((n) => n.content && Array.isArray(n.content.records));
@@ -691,9 +699,17 @@ async function t_cek_data(q, a) {
   notes.forEach((n) => (n.content.records || []).forEach((r, i) => {
     if (!r || typeof r !== 'object') return; baris++;
     const miss = [];
-    if (!String(r.customer || '').trim()) miss.push('customer'); if (!String(r.barang || '').trim()) miss.push('barang'); if (!String(r.pj || '').trim()) miss.push('pj'); if (!(parseMoney(r.harga) > 0)) miss.push('harga');
+    if (!String(r.customer || '').trim()) miss.push('customer'); if (!String(r.barang || '').trim()) miss.push('barang'); if (!String(r.pj || '').trim()) miss.push('pj'); if (!(parseMoney(r.harga) > 0) && !/^\s*(✓|v|lunas|sudah)\s*$/i.test(String(r.harga || ''))) miss.push('harga');
+    const kosong = (v) => !String(v == null ? '' : v).trim();
+    if (kosong(r.barangKeluar) && kosong(r.stokBarang)) miss.push('dibawa/ditinggal'); if (kosong(r.keterangan)) miss.push('keterangan');
     const base = { tanggal: noteDay(n), note_id: n.id, nomor_baris: i + 1, rec_id: r.id, customer: r.customer || '', barang: clip(r.barang || '', 60) };
-    if (jenis === 'belum_lengkap' && miss.length) out.push(Object.assign(base, { kurang: miss }));
+    const pokok = miss.filter((m) => m !== 'keterangan');
+    if (jenis === 'belum_lengkap' && pokok.length) out.push(Object.assign(base, { kurang: pokok }));
+    else if (jenis === 'semua_kosong' && miss.length) out.push(Object.assign(base, { kurang: miss }));
+    else if (jenis === 'dibawa_ditinggal_kosong' && miss.includes('dibawa/ditinggal')) out.push(base);
+    else if (jenis === 'keterangan_kosong' && miss.includes('keterangan')) out.push(base);
+    else if (jenis === 'customer_kosong' && miss.includes('customer')) out.push(base);
+    else if (jenis === 'pj_kosong' && miss.includes('pj')) out.push(base);
     else if (jenis === 'harga_kosong' && miss.includes('harga')) out.push(base);
     else if (jenis === 'tanpa_bukti' && !(Array.isArray(r.bukti) && r.bukti.length)) out.push(base);
     else if (jenis === 'barang_ditinggal' && filled(r.stokBarang)) out.push(Object.assign(base, { masih_ditinggal: clip(r.stokBarang, 80) }));
@@ -753,6 +769,73 @@ async function kasirMirip(q, teks, ketatDulu) {
   } catch (e) { return null; }
 }
 async function t_kasir_cocok(q) { return kasirRpc(q, 'shop_j_cocok', {}); }
+
+/* ---------- visual: grafik, kartu angka, gambar dari kode (tampil di layar admin, bisa diunduh PNG) ---------- */
+const numArr = (a, n) => (Array.isArray(a) ? a.slice(0, n) : []).map((x) => { const v = typeof x === 'number' ? x : parseMoney(x); return isFinite(v) ? v : 0; });
+function t_buat_grafik(q, a) {
+  const label = (Array.isArray(a.label) ? a.label : []).slice(0, 62).map((x) => clip(String(x), 24));
+  if (label.length < 2) return { error: 'label minimal 2 titik (mis. tanggal atau nama)' };
+  const seri = (Array.isArray(a.seri) ? a.seri : []).slice(0, 4).map((x) => ({ nama: clip(String((x && x.nama) || ''), 30), nilai: numArr(x && x.nilai, label.length) })).filter((x) => x.nilai.length);
+  if (!seri.length) return { error: 'seri kosong: [{nama, nilai:[angka...]}] sepanjang label' };
+  if (seri.some((x) => x.nilai.length !== label.length)) return { error: 'Panjang nilai tiap seri harus sama dengan label (' + label.length + ')' };
+  const v = { tipe: 'grafik', jenis: lower(a.jenis) === 'batang' ? 'batang' : 'garis', judul: clip(a.judul || 'Grafik', 80), sub: clip(a.sub || '', 100), satuan: lower(a.satuan) === 'rp' ? 'rp' : '', label, seri };
+  return { visual: v, ringkasan: 'Grafik ' + v.jenis + ' ' + label.length + ' titik, ' + seri.length + ' seri' };
+}
+function t_kartu_angka(q, a) {
+  const kartu = (Array.isArray(a.kartu) ? a.kartu : []).slice(0, 8).map((k) => ({ label: clip(String((k && k.label) || ''), 40), nilai: clip(String((k && k.nilai) == null ? '' : k.nilai), 40), ket: clip(String((k && k.ket) || ''), 60) })).filter((k) => k.label);
+  if (!kartu.length) return { error: 'kartu kosong: [{label, nilai, ket}]' };
+  return { visual: { tipe: 'kartu', judul: clip(a.judul || 'Ringkasan', 80), kartu }, ringkasan: kartu.length + ' kartu angka' };
+}
+function t_buat_gambar(q, a) {
+  const mode = lower(a.mode) === 'canvas' ? 'canvas' : 'svg';
+  const svg = String(a.svg || ''), kode = String(a.kode || '');
+  if (mode === 'svg' && !/^\s*<svg[\s>]/i.test(svg)) return { error: 'svg harus diawali <svg ...>' };
+  if (mode === 'svg' && svg.length > 40000) return { error: 'SVG terlalu panjang (maks 40.000 huruf)' };
+  if (mode === 'canvas' && (!kode.trim() || kode.length > 20000)) return { error: 'kode canvas wajib dan maks 20.000 huruf' };
+  const lebar = Math.max(120, Math.min(1200, Number(a.lebar) || 640)), tinggi = Math.max(80, Math.min(1200, Number(a.tinggi) || 400));
+  return { visual: { tipe: 'gambar', mode, judul: clip(a.judul || 'Gambar', 80), svg: mode === 'svg' ? svg : undefined, kode: mode === 'canvas' ? kode : undefined, lebar, tinggi }, ringkasan: 'Gambar ' + mode + ' ' + lebar + 'x' + tinggi };
+}
+/* Omzet bersih gabungan = uang masuk Buku Besar (harga = barang + jasa) + omzet kasir warung (nota J-, dikurangi retur).
+   Salinan hutang B- di kasir tidak dihitung (sudah ada di Buku Besar/Hutang Piutang). */
+function periodeDari(a) {
+  let dari = DATE_RE.test(String(a.dari || '')) ? a.dari : '', sampai = DATE_RE.test(String(a.sampai || '')) ? a.sampai : '', label = '';
+  const pk = lower(a.pekan), today = todayWib();
+  if (pk) { let ref = today; if (pk === 'lalu') { const d = utcDate(ref); d.setUTCDate(d.getUTCDate() - 7); ref = ymd(d); } else if (DATE_RE.test(pk)) ref = pk; const wk = weekInfo(ref); dari = wk.dari; sampai = wk.sampai; label = wk.label; }
+  else if (/^\d{4}-\d{2}$/.test(String(a.bulan || ''))) { const [y, m] = a.bulan.split('-').map(Number); dari = a.bulan + '-01'; sampai = ymd(new Date(Date.UTC(y, m, 0))); label = MONTH_SHORT[m - 1] + ' ' + y; }
+  if (!dari) dari = today.slice(0, 8) + '01';
+  if (!sampai) sampai = today;
+  if (!label) label = dmy(dari) + ' s/d ' + dmy(sampai);
+  return { dari, sampai, label };
+}
+async function t_omzet_gabungan(q, a) {
+  const P = periodeDari(a);
+  if (P.sampai < P.dari) return { error: 'Tanggal akhir sebelum tanggal awal' };
+  const per = ['hari', 'minggu', 'bulan'].includes(lower(a.per)) ? lower(a.per) : (utcDate(P.sampai) - utcDate(P.dari) > 62 * 864e5 ? 'bulan' : 'hari');
+  const bb = await resolveFolder(q, 'BUKU BESAR');
+  const bengkel = {}; let nBengkel = 0;
+  if (bb) (await fetchNotes(q, bb.id)).forEach((n) => rowsOf(n).forEach((r) => {
+    const t = r.tgl || noteDay(n); if (!t || t < P.dari || t > P.sampai) return;
+    const v = parseMoney(r.raw.harga); if (!(v > 0)) return; bengkel[t] = (bengkel[t] || 0) + v; nBengkel++;
+  }));
+  let warung = {}, kas = null;
+  try { kas = await kasirRpc(q, 'shop_j_penjualan', { dari: P.dari, sampai: P.sampai }); (kas.per_hari || []).forEach((x) => { warung[x.tanggal] = Number(x.omzet) || 0; }); } catch (e) { kas = { error: e.message }; }
+  const keyOf = (d) => per === 'hari' ? d : per === 'bulan' ? d.slice(0, 7) : weekInfo(d).dari;
+  const lab = (k) => per === 'hari' ? k.slice(8, 10) + '/' + k.slice(5, 7) : per === 'bulan' ? MONTH_SHORT[+k.slice(5, 7) - 1] + ' ' + k.slice(2, 4) : 'Pk ' + k.slice(8, 10) + '/' + k.slice(5, 7);
+  const keys = []; for (let d = utcDate(P.dari); ymd(d) <= P.sampai; d.setUTCDate(d.getUTCDate() + 1)) { const k = keyOf(ymd(d)); if (!keys.includes(k)) keys.push(k); }
+  const sum = (m) => { const o = {}; Object.keys(m).forEach((d) => { const k = keyOf(d); o[k] = (o[k] || 0) + m[d]; }); return o; };
+  const B = sum(bengkel), W = sum(warung);
+  const tb = Object.values(bengkel).reduce((x, y) => x + y, 0), tw = Object.values(warung).reduce((x, y) => x + y, 0);
+  const rows = keys.map((k) => ({ periode: lab(k), bengkel: B[k] || 0, warung: W[k] || 0, total: (B[k] || 0) + (W[k] || 0) }));
+  const out = { periode: P.label, dari: P.dari, sampai: P.sampai, per, omzet_bersih: tb + tw, omzet_bengkel: tb, omzet_warung: tw, baris_buku_besar: nBengkel, nota_warung: kas && kas.jumlah_nota,
+    catatan: 'Bengkel = jumlah kolom Harga Buku Besar (barang + jasa). Warung = penjualan kasir J- dikurangi retur. Salinan hutang B- tidak dihitung, jadi tidak dobel.' + (kas && kas.error ? ' Data warung gagal dibaca: ' + clip(kas.error, 80) : ''),
+    rincian: rows.length > 40 ? rows.filter((r) => r.total) : rows };
+  if (a.grafik !== false && keys.length >= 2) {
+    out.visual = { tipe: 'grafik', jenis: lower(a.jenis) === 'batang' ? 'batang' : 'garis', judul: 'Omzet bersih ' + P.label, sub: 'Total ' + rp(tb + tw) + ' · bengkel ' + rp(tb) + ' · warung ' + rp(tw), satuan: 'rp', label: rows.map((r) => r.periode),
+      seri: [{ nama: 'Total', nilai: rows.map((r) => r.total) }, { nama: 'Bengkel', nilai: rows.map((r) => r.bengkel) }, { nama: 'Warung', nilai: rows.map((r) => r.warung) }] };
+    out.ringkasan = Object.assign({}, out); delete out.ringkasan.visual; delete out.ringkasan.ringkasan;
+  }
+  return out;
+}
 const tanpaId = (a) => (Array.isArray(a) ? a.map((b) => { const o = Object.assign({}, b); delete o.id; return o; }) : a);
 
 /* ---------- tulis ke kasir: stok, harga, barang baru (USULAN; dijalankan setelah admin menekan Setuju) ----------
@@ -921,7 +1004,11 @@ const TOOLS = {
   kasir_ubah_harga: { fn: prepare_kasir_ubah_harga, write: true, decl: { name: 'kasir_ubah_harga', description: 'USULKAN mengubah HARGA JUAL barang di kasir (perlu persetujuan admin). Bisa banyak barang sekaligus. harga dalam rupiah (150000).', parameters: { type: 'OBJECT', properties: { daftar: { type: 'ARRAY', items: { type: 'OBJECT', properties: { barang: { type: 'STRING' }, harga: { type: 'NUMBER' } }, required: ['barang', 'harga'] } } }, required: ['daftar'] } } },
   kasir_barang_baru: { fn: prepare_kasir_barang_baru, write: true, decl: { name: 'kasir_barang_baru', description: 'USULKAN menambah BARANG BARU ke katalog kasir (perlu persetujuan admin). jenis: piston (wajib OS, mis. nama "Blade OS 50" atau os="50"/"STD"), laher (wajib seri, mis. 6202), stang, umum, atau nama jenis kustom yang sudah dibuat admin (mis. baut). harga = harga jual, wajib. stok opsional (stok awal). Barang yang sudah ada ditolak; untuk itu pakai kasir_isi_stok / kasir_ubah_harga.', parameters: { type: 'OBJECT', properties: { daftar: { type: 'ARRAY', items: { type: 'OBJECT', properties: { nama: { type: 'STRING' }, jenis: { type: 'STRING' }, harga: { type: 'NUMBER' }, stok: { type: 'NUMBER' }, satuan: { type: 'STRING' }, os: { type: 'STRING' }, seri: { type: 'STRING' } }, required: ['nama', 'harga'] } } }, required: ['daftar'] } } },
   cari_otak: { fn: t_cari_otak, decl: { name: 'cari_otak', description: 'Cari di OTAK (pengetahuan tambahan admin: daftar harga, dokumen, aturan). Isi kata kunci (mis. "las bracket") atau judul entri untuk membaca isinya utuh. Pakai untuk pertanyaan harga/tarif/aturan/dokumen.', parameters: { type: 'OBJECT', properties: { kata: { type: 'STRING' }, judul: { type: 'STRING' } } } } },
-  cek_data: { fn: t_cek_data, decl: { name: 'cek_data', description: 'Periksa kualitas data sebuah buku (default BUKU BESAR): belum_lengkap (customer/barang/pj/harga kosong), barang_ditinggal (kolom Stok Barang masih berisi), tanpa_bukti (tanpa foto), harga_kosong. Opsional bulan YYYY-MM.', parameters: { type: 'OBJECT', properties: { jenis: { type: 'STRING' }, folder: { type: 'STRING' }, bulan: { type: 'STRING' } }, required: ['jenis'] } } },
+  cek_data: { fn: t_cek_data, decl: { name: 'cek_data', description: 'Cari DATA YANG BELUM LENGKAP / KOLOM KOSONG di buku (default BUKU BESAR). jenis: dibawa_ditinggal_kosong (kolom Barang Keluar/dibawa dan Stok Barang/ditinggal dua-duanya belum diisi, sering tertinggal), harga_kosong, keterangan_kosong, customer_kosong, pj_kosong, belum_lengkap (customer/barang/pj/harga/dibawa-ditinggal), semua_kosong (termasuk keterangan), barang_ditinggal (barang customer masih di bengkel), tanpa_bukti (tanpa foto). Opsional bulan YYYY-MM. Hasil berisi tanggal & nomor baris untuk dibuka di editor.', parameters: { type: 'OBJECT', properties: { jenis: { type: 'STRING' }, folder: { type: 'STRING' }, bulan: { type: 'STRING' } }, required: ['jenis'] } } },
+  omzet_gabungan: { fn: t_omzet_gabungan, decl: { name: 'omzet_gabungan', description: 'OMZET BERSIH GABUNGAN bengkel + warung (total uang masuk) dalam periode, dengan rincian per hari/minggu/bulan dan GRAFIK otomatis. Pakai untuk "omzet", "omset", "pendapatan", "pemasukan", "grafik omzet". Bengkel = kolom Harga Buku Besar; warung = penjualan kasir.', parameters: { type: 'OBJECT', properties: { dari: { type: 'STRING', description: 'YYYY-MM-DD' }, sampai: { type: 'STRING', description: 'YYYY-MM-DD' }, bulan: { type: 'STRING', description: 'YYYY-MM' }, pekan: { type: 'STRING', description: 'ini, lalu, atau YYYY-MM-DD' }, per: { type: 'STRING', description: 'hari, minggu, atau bulan' }, jenis: { type: 'STRING', description: 'garis atau batang' }, grafik: { type: 'BOOLEAN' } } } } },
+  buat_grafik: { fn: t_buat_grafik, decl: { name: 'buat_grafik', description: 'Tampilkan GRAFIK garis/batang di layar (bisa diunduh PNG). Angka WAJIB dari hasil alat lain di percakapan ini, jangan mengarang. Untuk omzet pakai omzet_gabungan (sudah ada grafiknya).', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, sub: { type: 'STRING' }, jenis: { type: 'STRING', description: 'garis atau batang' }, satuan: { type: 'STRING', description: 'rp atau kosong' }, label: { type: 'ARRAY', items: { type: 'STRING' } }, seri: { type: 'ARRAY', items: { type: 'OBJECT', properties: { nama: { type: 'STRING' }, nilai: { type: 'ARRAY', items: { type: 'NUMBER' } } }, required: ['nilai'] } } }, required: ['label', 'seri'] } } },
+  kartu_angka: { fn: t_kartu_angka, decl: { name: 'kartu_angka', description: 'Tampilkan KARTU RINGKASAN angka (2-8 kartu: label, nilai, keterangan), mis. total hari ini. Angka wajib dari hasil alat.', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, kartu: { type: 'ARRAY', items: { type: 'OBJECT', properties: { label: { type: 'STRING' }, nilai: { type: 'STRING' }, ket: { type: 'STRING' } }, required: ['label', 'nilai'] } } }, required: ['kartu'] } } },
+  buat_gambar: { fn: t_buat_gambar, decl: { name: 'buat_gambar', description: 'Gambar dari KODE: diagram, sketsa, denah, ilustrasi sederhana, logo sederhana. mode "svg" (isi svg lengkap diawali <svg viewBox=...>) atau "canvas" (isi kode JavaScript yang menggambar ke variabel ctx, canvas, W, H). Dijalankan terisolasi tanpa internet; bisa diunduh PNG.', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, mode: { type: 'STRING', description: 'svg atau canvas' }, svg: { type: 'STRING' }, kode: { type: 'STRING' }, lebar: { type: 'NUMBER' }, tinggi: { type: 'NUMBER' } }, required: ['mode'] } } },
   ingat_sendiri: { fn: t_ingat_sendiri, decl: { name: 'ingat_sendiri', description: 'Simpan ke MEMORI PRIBADI Jarvis (langsung tersimpan, tanpa persetujuan): fakta tetap tentang bengkel/data (mis. "ukuran OS piston paling tinggi 200") atau preferensi admin (mis. "admin ingin jawaban singkat"). Jangan untuk hal sesaat atau data rahasia. Memori yang mirip otomatis diperbarui, tidak dobel.', parameters: { type: 'OBJECT', properties: { jenis: { type: 'STRING', description: 'fakta atau preferensi' }, isi: { type: 'STRING', description: 'satu kalimat jelas yang berdiri sendiri' }, alasan: { type: 'STRING' } }, required: ['jenis', 'isi'] } } },
   refleksi: { fn: t_refleksi, decl: { name: 'refleksi', description: 'INTROSPEKSI: catat pelajaran dari kesalahanmu sendiri agar tidak terulang (dibaca di setiap percakapan berikutnya). Panggil saat admin mengoreksi/protes atau kamu sadar jawabanmu salah atau bertentangan. aturan_baru = aturan konkret yang akan kamu ikuti, mis. "Sebelum bilang harga tidak ada, cari di kasir_barang DAN cari_otak".', parameters: { type: 'OBJECT', properties: { kesalahan: { type: 'STRING' }, penyebab: { type: 'STRING' }, aturan_baru: { type: 'STRING' } }, required: ['kesalahan', 'aturan_baru'] } } },
   baca_memori: { fn: t_baca_memori, decl: { name: 'baca_memori', description: 'Baca memori pribadi Jarvis (fakta, preferensi, pelajaran) lengkap dengan id. Pakai saat admin bertanya "apa yang kamu ingat".', parameters: { type: 'OBJECT', properties: { kata: { type: 'STRING' } } } } },
@@ -1007,6 +1094,10 @@ function stepLabel(name, a) {
     case 'cek_data': return 'Memeriksa data (' + clip(a.jenis, 24) + ')';
     case 'ingat_otak': return 'Menyiapkan usulan simpan ke Otak';
     case 'ingat_sendiri': return 'Mengingat: ' + clip(a.isi, 40);
+    case 'omzet_gabungan': return 'Menghitung omzet bengkel + warung';
+    case 'buat_grafik': return 'Menggambar grafik';
+    case 'kartu_angka': return 'Menyusun kartu ringkasan';
+    case 'buat_gambar': return 'Menggambar dari kode';
     case 'refleksi': return 'Introspeksi: mencatat pelajaran';
     case 'baca_memori': return 'Membuka memori' + (a.kata ? ': ' + clip(a.kata, 30) : '');
     case 'lupakan_memori': return 'Melupakan memori ' + clip(a.id || a.kata, 30);
@@ -1040,6 +1131,8 @@ function stepDone(name, r) {
     case 'open_folder': case 'open_note': case 'open_page': case 'app_setting': return 'Perintah dikirim ke layar';
     case 'cari_otak': return (r.jumlah_cocok != null ? r.jumlah_cocok + ' cocok' : (r.judul ? 'Dokumen dibaca' : 'Selesai')) + ' di Otak' + (r.katalog_kasir ? ' · ' + r.katalog_kasir.jumlah_cocok + ' di katalog kasir' : '');
     case 'cek_data': return (r.jumlah_ditemukan || 0) + ' temuan · ' + (r.diperiksa ? r.diperiksa.jumlah_baris : 0) + ' baris diperiksa';
+    case 'omzet_gabungan': return r && r.error ? 'Gagal' : 'Omzet ' + rp((r.ringkasan || r).omzet_bersih) + ' (bengkel ' + rp((r.ringkasan || r).omzet_bengkel) + ', warung ' + rp((r.ringkasan || r).omzet_warung) + ')';
+    case 'buat_grafik': case 'kartu_angka': case 'buat_gambar': return r && r.error ? 'Gagal: ' + clip(r.error, 60) : 'Tampil di layar';
     case 'ingat_sendiri': case 'refleksi': return r && r.error ? 'Gagal disimpan' : (r && r.diperbarui ? 'Memori diperbarui' : 'Tersimpan di memori');
     case 'baca_memori': return (r.jumlah || 0) + ' memori';
     case 'lupakan_memori': return r && r.ok ? r.dilupakan.length + ' memori dilupakan' : 'Tidak ada yang dilupakan';
@@ -1067,6 +1160,8 @@ function systemPrompt(email, extra) {
     'PEMERIKSAAN DATA: "cek data yang belum lengkap" = cek_data jenis=belum_lengkap; "cek barang ditinggal / masih di bengkel" = cek_data jenis=barang_ditinggal; "tanpa foto bukti" = tanpa_bukti; "harga kosong" = harga_kosong. Sebut nomor baris + tanggal + customer supaya admin bisa membuka editornya (open_editor dengan rec/nama).',
     'KASIR: data aplikasi kasir/Dashboard Warung (katalog barang jadi, stok, nota J-/M-, pembayaran) ada di database tersendiri. Harga BARANG (piston, laher/bearing, stang seher, dll): panggil kasir_barang. Harga JASA (lemer, las, bubut, setel) ada di Otak (cari_otak). Pertanyaan gabungan (mis. lemer + piston dari bengkel): panggil KEDUANYA lalu jumlahkan; harga barang ambil dari katalog kasir. cari_otak juga melampirkan katalog_kasir bila ada barang yang cocok. Jika harga katalog dan Otak berbeda, sebut keduanya dan katakan yang dipakai kasir adalah katalog. Jika tidak ada di keduanya, katakan belum ada (JANGAN menebak). Stok/barang perlu dibeli: kasir_barang. Omzet/laba/terlaris kasir: kasir_penjualan. Hutang pelanggan versi kasir: kasir_hutang (nota B- adalah salinan dari Buku Hutang Piutang). Selisih kasir vs Hutang Piutang: kasir_cocok. sisa_tagihan membaca Buku Kasbon & Hutang Piutang (pencatatan), kasir_hutang membaca kasir: sebut sumbernya, jangan dijumlahkan. KASBON karyawan tidak ada di kasir. Membuka aplikasi kasir: open_page kasir.',
     'KASIR TULIS: mengisi stok ("stok blade os 50 jadi 5", "barang masuk laher 6202 10 pcs") = kasir_isi_stok (cara jadi/tambah); ubah harga jual = kasir_ubah_harga; barang yang belum ada = kasir_barang_baru. Banyak barang dari satu pesan atau daftar = SATU panggilan berisi semua baris. Ketiganya hanya USULAN; katakan admin perlu menekan Setuju. Jika alat mengembalikan pilihan (nama cocok lebih dari satu) atau catatan barang yang tidak masuk, tanyakan/sebutkan, jangan menebak.',
+    'VISUAL: kamu bisa menampilkan grafik (buat_grafik), kartu angka (kartu_angka), dan gambar dari kode SVG/canvas (buat_gambar). Omzet/pendapatan/pemasukan = omzet_gabungan (grafik otomatis). Bila admin minta "grafik", "kurva", "diagram", atau "gambar", WAJIB pakai alat visual itu, jangan hanya teks. Angka grafik harus dari hasil alat.',
+    'DATA KOSONG: "yang belum diisi dibawa/ditinggal", "kolom kosong", "data belum lengkap" = cek_data dengan jenis yang sesuai; tampilkan tanggal & baris, tawarkan membuka editornya.',
     'CARA BERPIKIR: sebelum menjawab (1) pahami maksud admin, (2) rencanakan alat yang dibutuhkan, (3) baca hasil alat dengan teliti sebelum menyimpulkan, (4) cek konsistensi dengan jawabanmu sebelumnya di percakapan ini; bila bertentangan, katakan mana yang benar dan buktinya. Jangan menyatakan sesuatu "tidak ada" sebelum mencari di semua sumber yang relevan (harga barang: kasir_barang DAN cari_otak). Jawaban akhir harus sesuai data alat, bukan tebakan.',
     'MEMORI DIRI: kamu punya memori pribadi (bagian MEMORI JARVIS di bawah) yang kamu tulis sendiri. Bila admin menyebut fakta tetap tentang bengkel/data atau cara ia ingin dilayani, simpan dengan ingat_sendiri (langsung tersimpan). Jangan menyimpan hal sesaat, tebakanmu sendiri, atau data rahasia. Bila admin bilang memori itu salah, perbaiki dengan ingat_sendiri atau lupakan_memori.',
     'REFLEKSI: bila admin mengoreksi/protes atau kamu sadar keliru (jawaban bertentangan, angka salah, salah alat): periksa ulang dengan alat, akui singkat apa yang salah tanpa berbelit atau mengarang alasan, panggil refleksi (kesalahan, penyebab, aturan_baru yang konkret), lalu beri jawaban yang benar. Bila setelah dicek jawabanmu memang benar, jelaskan buktinya dengan sopan dan tidak perlu refleksi.',
@@ -1147,14 +1242,14 @@ function withSig(contents, model) {   // Gemini 3 menuntut tanda tangan pikiran 
 }
 function retryAfter(r) { const v = Number(r.headers && r.headers.get && r.headers.get('retry-after')); return v > 0 ? Math.min(v, 600) : 0; }
 async function invoke(entry, contents, sys, tools, ctx) {
-  const P = PROVIDERS[entry.p], key = P.key(), model = entry.m, maxTok = ctx.maxTokens || 4096;
-  const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 20000);
+  const P = PROVIDERS[entry.p], key = keyFor(entry.p, ctx.keys), model = entry.m, maxTok = ctx.maxTokens || 4096, noTools = !tools || !tools.length;
+  const ac = new AbortController(); const to = setTimeout(() => ac.abort(), ctx.timeoutMs || 22000);
   try {
     let r, j;
     if (entry.p === 'gemini') {
       r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent', {
         method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-        body: JSON.stringify({ systemInstruction: { parts: [{ text: sys }] }, contents: withSig(contents, model), tools: [{ functionDeclarations: tools }], toolConfig: { functionCallingConfig: { mode: ctx.mode || 'AUTO' } }, generationConfig: { maxOutputTokens: maxTok } })
+        body: JSON.stringify(Object.assign({ systemInstruction: { parts: [{ text: sys }] }, contents: withSig(contents, model) }, noTools ? {} : { tools: [{ functionDeclarations: tools }], toolConfig: { functionCallingConfig: { mode: ctx.mode || 'AUTO' } } }, { generationConfig: { maxOutputTokens: maxTok } }))
       });
       j = await r.json().catch(() => null);
       return { ok: r.ok && !!j, status: r.status, json: j, msg: (j && j.error && j.error.message) || r.status, ra: retryAfter(r) };
@@ -1162,7 +1257,7 @@ async function invoke(entry, contents, sys, tools, ctx) {
     if (entry.p === 'claude') {
       r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model, max_tokens: maxTok, system: sys, messages: toClaude(contents), tools: tools.map((t) => ({ name: t.name, description: t.description, input_schema: lowerSchema(t.parameters) })), tool_choice: { type: ctx.mode === 'ANY' ? 'any' : 'auto' } })
+        body: JSON.stringify(Object.assign({ model, max_tokens: maxTok, system: sys, messages: toClaude(contents) }, noTools ? {} : { tools: tools.map((t) => ({ name: t.name, description: t.description, input_schema: lowerSchema(t.parameters) })), tool_choice: { type: ctx.mode === 'ANY' ? 'any' : 'auto' } }))
       });
       j = await r.json().catch(() => null);
       if (r.ok && j && Array.isArray(j.content)) {
@@ -1173,8 +1268,8 @@ async function invoke(entry, contents, sys, tools, ctx) {
       return { ok: false, status: r.status, json: j, msg: (j && j.error && j.error.message) || r.status, ra: retryAfter(r) };
     }
     /* openai & meta: format chat completions */
-    const body = { model, messages: toOpenAI(contents, sys), tools: tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: lowerSchema(t.parameters) } })) };
-    body.tool_choice = (ctx.mode === 'ANY' && entry.p === 'openai') ? 'required' : 'auto';
+    const body = { model, messages: toOpenAI(contents, sys) };
+    if (!noTools) { body.tools = tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: lowerSchema(t.parameters) } })); body.tool_choice = (ctx.mode === 'ANY' && entry.p === 'openai') ? 'required' : 'auto'; }
     if (entry.p === 'openai') body.max_completion_tokens = Math.max(maxTok, 6000); else body.max_tokens = maxTok;
     r = await fetch(P.base() + '/chat/completions', { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body: JSON.stringify(body) });
     j = await r.json().catch(() => null);
@@ -1186,20 +1281,54 @@ async function invoke(entry, contents, sys, tools, ctx) {
     }
     return { ok: false, status: r.status, json: j, msg: (j && j.error && (j.error.message || j.error)) || r.status, ra: retryAfter(r) };
   } catch (e) {
-    return { ok: false, status: 0, msg: e.name === 'AbortError' ? 'timeout 20 dtk' : e.message };
+    return { ok: false, status: 0, msg: e.name === 'AbortError' ? 'timeout ' + Math.round((ctx.timeoutMs || 22000) / 1000) + ' dtk' : e.message };
   } finally { clearTimeout(to); }
 }
 /* rantai percobaan: pilihan pengguna dulu, lalu model lain & penyedia aktif lain. Model yang baru kena limit dipindah ke belakang. */
-function buildChain(body, resumeModel) {
-  const keyed = PROV_IDS.filter((id) => PROVIDERS[id].key());
-  let active = (Array.isArray(body.providers) ? body.providers : []).filter((id, i, a) => PROVIDERS[id] && a.indexOf(id) === i && PROVIDERS[id].key());
+/* Nama model yang mudah dibaca + keterangan singkat */
+function modelKet(id) {
+  const t = lower(id);
+  if (/opus|\bpro\b|-pro|gpt-5\.5$|maverick|405b/.test(t)) return 'Paling pintar, sedikit lebih lambat';
+  if (/lite|nano|haiku|scout|8b|mini/.test(t)) return 'Cepat dan hemat kuota';
+  if (/flash|sonnet|70b/.test(t)) return 'Cepat dan seimbang';
+  return 'Model umum';
+}
+function prettyModel(id) {
+  return String(id).replace(/^models\//, '').replace(/-(\d{8}|latest|preview-\d{2}-\d{2}|\d{3})$/i, (m) => m).split(/[-_]/).map((w) => /^(gpt|ai)$/i.test(w) ? w.toUpperCase() : /^\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(' ').replace(/Gpt/g, 'GPT');
+}
+async function listModels(pid, key) {
+  const ac = new AbortController(); const to = setTimeout(() => ac.abort(), 12000);
+  try {
+    let out = [];
+    if (pid === 'gemini') {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': key }, signal: ac.signal });
+      const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + r.status));
+      out = (j.models || []).filter((m) => (m.supportedGenerationMethods || []).includes('generateContent') && /^models\/gemini/.test(m.name) && !/embedding|aqa|tts|image|imagen|veo|live|audio|robotics|computer-use/i.test(m.name))
+        .map((m) => ({ id: m.name.replace(/^models\//, ''), name: m.displayName || prettyModel(m.name) }));
+    } else if (pid === 'claude') {
+      const r = await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, signal: ac.signal });
+      const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + r.status));
+      out = (j.data || []).map((m) => ({ id: m.id, name: m.display_name || prettyModel(m.id) }));
+    } else {
+      const r = await fetch(PROVIDERS[pid].base() + '/models', { headers: { Authorization: 'Bearer ' + key }, signal: ac.signal });
+      const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.error && (j.error.message || j.error)) || ('HTTP ' + r.status));
+      out = (j.data || []).map((m) => ({ id: m.id, name: prettyModel(m.id) }));
+      if (pid === 'openai') out = out.filter((m) => /^(gpt|o\d|chatgpt)/i.test(m.id) && !/audio|realtime|tts|transcribe|image|embedding|search|moderation|dall|instruct|codex/i.test(m.id));
+    }
+    return out.filter((m) => MODEL_ID_RE.test(m.id)).slice(0, 80).map((m) => ({ id: m.id, name: clip(m.name, 60), ket: modelKet(m.id) }));
+  } finally { clearTimeout(to); }
+}
+function buildChain(body, resumeModel, keys) {
+  const has = (id) => !!keyFor(id, keys);
+  const keyed = PROV_IDS.filter(has);
+  let active = (Array.isArray(body.providers) ? body.providers : []).filter((id, i, a) => PROVIDERS[id] && a.indexOf(id) === i && has(id));
   if (!active.length) active = keyed.includes('gemini') ? ['gemini'] : keyed.slice(0, 1);
   let prefP = PROVIDERS[body.provider] ? body.provider : '', prefM = (typeof body.model === 'string' && MODEL_ID_RE.test(body.model)) ? body.model : '';
   if (!prefP && /^gemini-/.test(prefM)) prefP = 'gemini';
-  if (typeof resumeModel === 'string' && resumeModel.includes('|')) { const [rp, rm] = resumeModel.split('|'); if (PROVIDERS[rp] && MODEL_ID_RE.test(rm || '')) { prefP = rp; prefM = rm; if (!active.includes(rp) && PROVIDERS[rp].key()) active.push(rp); } }
+  if (typeof resumeModel === 'string' && resumeModel.includes('|')) { const [rp, rm] = resumeModel.split('|'); if (PROVIDERS[rp] && MODEL_ID_RE.test(rm || '')) { prefP = rp; prefM = rm; if (!active.includes(rp) && has(rp)) active.push(rp); } }
   else if (/^gemini-[a-z0-9.\-]{2,60}$/.test(resumeModel || '')) { prefP = 'gemini'; prefM = resumeModel; }
   const list = []; const add = (p, m) => { if (m && !list.some((e) => e.p === p && e.m === m)) list.push({ p, m }); };
-  if (prefP && PROVIDERS[prefP].key() && prefM) add(prefP, prefM);
+  if (prefP && has(prefP) && prefM) add(prefP, prefM);
   const order = (prefP && active.includes(prefP)) ? [prefP].concat(active.filter((x) => x !== prefP)) : active;
   order.forEach((p, k) => PROVIDERS[p].models().slice(0, (k === 0 || !prefP) ? 8 : 2).forEach((m) => add(p, m)));
   const now = Date.now();
@@ -1214,7 +1343,11 @@ async function callModel(contents, email, tools, ctx, extra) {
     if (Date.now() - ctx.t0 > 45000) { errs.push('waktu habis'); break; }
     if (mid && ctx.badProv === e.p) continue;
     if (ctx.skipProv && ctx.skipProv.has(e.p)) continue;
-    const o = await invoke(e, contents, sys, tools, ctx);
+    let o = await invoke(e, contents, sys, tools, ctx);
+    if (!o.ok && (o.status === 0 || o.status === 500 || o.status === 503 || o.status === 529) && i === 0 && Date.now() - ctx.t0 < 30000) {
+      if (ctx.onRetry) ctx.onRetry(PROVIDERS[e.p].name + ' lambat, mencoba lagi');
+      o = await invoke(e, contents, sys, tools, ctx);   // gangguan sesaat: coba sekali lagi model yang sama sebelum pindah
+    }
     if (o.ok) { ctx.model = e.m; ctx.prov = e.p; return o.json; }
     errs.push(PROVIDERS[e.p].name + ' ' + e.m + ': ' + clip(String(o.msg), 140));
     const k = e.p + '|' + e.m;
@@ -1228,14 +1361,43 @@ async function callModel(contents, email, tools, ctx, extra) {
     if (o.status === 400 && mid) ctx.badProv = e.p;   // tengah percakapan: jangan ganti model dalam penyedia yang sama (tanda tangan pikiran beda)
     if (![0, 400, 401, 403, 404, 408, 429, 500, 502, 503, 504, 529].includes(o.status)) break;
   }
-  throw new Error('AI menolak: ' + errs.join(' | '));
+  const sementara = errs.length && errs.every((x) => /timeout|waktu habis|\b(429|500|502|503|504|529)\b|overload|unavailable|rate|limit|quota|fetch failed|ECONN|socket/i.test(x));
+  throw Object.assign(new Error('AI menolak: ' + errs.join(' | ')), { auto: sementara ? true : undefined });
+}
+
+/* ---------- saran pertanyaan yang berganti-ganti (waktu + kondisi data) ---------- */
+const SARAN_UMUM = ['Rangkum transaksi minggu ini', 'Siapa customer terbanyak bulan ini?', 'Grafik omzet bulan ini', 'Bandingkan omzet bengkel dan warung bulan ini',
+  'Barang warung terlaris bulan ini', 'Barang warung yang perlu dibeli', 'Harga piston Blade semua ukuran', 'Cari catatan tanpa foto bukti', 'Total kasbon karyawan bulan ini',
+  'Sisa hutang pelanggan', 'Buka Buku Besar hari ini', 'Apa saja yang kamu ingat?', 'Kartu ringkasan omzet bulan ini', 'Gambar diagram alur servis bengkel',
+  'Customer yang barangnya masih ditinggal', 'Catatan bulan ini yang harganya kosong', 'Pemasukan pekan lalu', 'Bandingkan omzet pekan ini dan pekan lalu',
+  'Laher apa saja yang ada di warung?', 'Grafik batang omzet per minggu bulan ini', 'Siapa yang masih berhutang?', 'Total harga Buku Besar bulan ini'];
+const SARAN_WAKTU = { pagi: ['Rekap transaksi kemarin', 'Omzet kemarin bengkel dan warung', 'Catatan kemarin yang belum lengkap'], siang: ['Omzet hari ini sejauh ini', 'Transaksi hari ini', 'Stok piston yang hampir habis'], malam: ['Rekap transaksi hari ini', 'Grafik omzet 7 hari terakhir', 'Data hari ini yang belum diisi dibawa/ditinggal'] };
+const SARAN_CACHE = new Map();
+async function saranUntuk(q, uid) {
+  const c = SARAN_CACHE.get(uid); let data = c && Date.now() - c.t < 300000 ? c.d : null;
+  if (!data) {
+    data = [];
+    try {
+      const f = await resolveFolder(q, 'BUKU BESAR'), batas = ymd(new Date(Date.now() + 7 * 3600e3 - 30 * 864e5));
+      let nDb = 0, nH = 0;
+      if (f) (await fetchNotes(q, f.id)).forEach((n) => { if (noteDay(n) < batas) return; ((n.content && n.content.records) || []).forEach((r) => {
+        if (!r || typeof r !== 'object') return; const k = (v) => !String(v == null ? '' : v).trim();
+        if (k(r.barangKeluar) && k(r.stokBarang)) nDb++; if (!(parseMoney(r.harga) > 0) && !/^\s*(✓|v|lunas|sudah)\s*$/i.test(String(r.harga || ''))) nH++; }); });
+      if (nDb) data.push('Tampilkan ' + nDb + ' catatan yang belum diisi dibawa/ditinggal');
+      if (nH) data.push(nH + ' catatan 30 hari terakhir harganya kosong, tampilkan');
+    } catch (e) {}
+    SARAN_CACHE.set(uid, { t: Date.now(), d: data });
+  }
+  const h = +new Date(Date.now() + 7 * 3600e3).toISOString().slice(11, 13), wk = h >= 4 && h < 11 ? 'pagi' : h < 17 ? 'siang' : 'malam';
+  const acak = (a) => a.map((x) => [Math.random(), x]).sort((x, y) => x[0] - y[0]).map((x) => x[1]);
+  const out = data.slice(0, 2).concat(acak(SARAN_WAKTU[wk]).slice(0, 1), acak(SARAN_UMUM));
+  return out.filter((x, i) => out.indexOf(x) === i).slice(0, 6);
 }
 
 /* ---------- handler ---------- */
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST' && req.method !== 'GET') { res.setHeader('Allow', 'GET, POST'); return res.status(405).json({ error: 'Method not allowed' }); }
-  if (!anyKey()) return res.status(500).json({ error: 'Belum ada kunci API AI di Vercel (GEMINI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY / META_API_KEY)' });
 
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
@@ -1252,6 +1414,7 @@ module.exports = async function handler(req, res) {
     if (!rateOk(user.id)) return res.status(429).json({ error: 'Terlalu sering. Tunggu sebentar.' });
 
     /* --- diagnosa: GET dengan token admin. Menguji tiap model dengan 1 kalimat pendek --- */
+    if (req.method === 'GET' && /[?&]saran=1/.test(req.url || '')) return res.status(200).json({ saran: await saranUntuk(q, user.id) });
     if (req.method === 'GET') {
       const provInfo = PROV_IDS.map((id) => ({ id, nama: PROVIDERS[id].name, aktif: !!PROVIDERS[id].key(), env: PROVIDERS[id].env, model: PROVIDERS[id].models() }));
       if (/[?&]providers=1/.test(req.url || '')) return res.status(200).json({ versi: VERSION, penyedia: provInfo });
@@ -1275,6 +1438,17 @@ module.exports = async function handler(req, res) {
     }
 
     const body = await readJson(req);
+    const keys = cleanKeys(body.keys);
+
+    /* --- daftar model dari penyedia (pakai kunci HP atau Vercel) --- */
+    if (body.list_models) {
+      const pid = String(body.list_models);
+      if (!PROVIDERS[pid]) return res.status(400).json({ error: 'Penyedia tidak dikenal' });
+      const k = keyFor(pid, keys);
+      if (!k) return res.status(400).json({ error: 'Kunci ' + PROVIDERS[pid].name + ' belum diisi' });
+      try { return res.status(200).json({ ok: true, models: await listModels(pid, k) }); }
+      catch (e) { return res.status(400).json({ error: clip(e.message, 200) }); }
+    }
 
     /* --- jalur persetujuan aksi tulis --- */
     if (body.approve) {
@@ -1287,6 +1461,7 @@ module.exports = async function handler(req, res) {
     }
 
     /* --- jalur percakapan --- */
+    if (!anyKey() && !Object.keys(keys).length) return res.status(400).json({ error: 'Belum ada kunci API. Isi di Jarvis: Pengaturan > Penyedia dan model AI.' });
     const msg = clip(body.message, MAX_MSG_CHARS).trim();
     if (!msg) return res.status(400).json({ error: 'Pesan kosong' });
     const hist = Array.isArray(body.history) ? body.history.slice(-MAX_HISTORY) : [];
@@ -1314,19 +1489,32 @@ module.exports = async function handler(req, res) {
     const proposals = [];    // usulan tulis (bertanda tangan)
     const notas = [];        // data nota (digambar di layar dengan kode)
     const reports = [];      // tabel rekap buatan server (tampil + PDF)
+    const visuals = [];      // grafik, kartu angka, gambar dari kode
     let reply = '';
     const resumeModel = (typeof body.resume_model === 'string' && contents.length > resumeBase) ? body.resume_model : '';
-    const brainRows = await loadBrain(q);
+    const chatOnly = isChat(msg) && !resumeParts.length;
+    const brainRows = chatOnly ? [] : await loadBrain(q);
     const memRows = await loadMemori(q);
     const brainTxt = brainPrompt(brainRows) + '\n' + memoriPrompt(memRows)
       + (KOREKSI.test(msg) ? '\nPESAN TERBARU TAMPAKNYA KOREKSI/PROTES DARI ADMIN: periksa ulang jawabanmu sebelumnya dengan alat. Bila memang keliru, akui singkat dan WAJIB panggil refleksi sebelum menjawab ulang.' : '');
-    const gctx = { t0: Date.now(), model: '', prov: '', list: buildChain(body, resumeModel) };
-    if (!gctx.list.length) return finish({ error: 'Penyedia AI yang dipilih belum punya kunci API di Vercel' }, 400);
+    const gctx = { t0: Date.now(), model: '', prov: '', keys, list: buildChain(body, resumeModel, keys), onRetry: (t) => emit({ type: 'status', text: t + '…' }) };
+    if (!gctx.list.length) return finish({ error: 'Penyedia AI yang dipilih belum punya kunci API. Isi di Jarvis: Pengaturan > Penyedia dan model AI.' }, 400);
+
+    /* --- obrolan ringan ("hai jarvis", "woyy"): jawab langsung, tanpa membuka data --- */
+    if (chatOnly) {
+      emit({ type: 'status', text: 'Membalas…' });
+      try {
+        const g = await callModel(contents, user.email, [], Object.assign(gctx, { maxTokens: 400, timeoutMs: 15000 }), memoriPrompt(memRows) + '\nINI OBROLAN RINGAN: balas singkat dan ramah (1-2 kalimat), sebut dirimu Jarvis, tawarkan bantuan seputar data bengkel/warung. Jangan mengarang data atau angka.');
+        const parts = ((g.candidates && g.candidates[0] && g.candidates[0].content) || {}).parts || [];
+        const t = parts.filter((p) => p.text).map((p) => p.text).join('').trim();
+        return finish({ reply: t || 'Halo! Jarvis siap membantu. Mau cek data apa?', actions: [], proposals: [], reports: [], notas: [] });
+      } catch (e) { return finish({ reply: 'Halo! Jarvis siap membantu. Mau cek data apa?', actions: [], proposals: [], reports: [], notas: [] }); }
+    }
 
     try {
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
       if (round > 0 && Date.now() - gctx.t0 > ROUND_BUDGET_MS) throw Object.assign(new Error('Waktu server hampir habis, melanjutkan otomatis'), { auto: true });
-      gctx.mode = (round === 0 && !SMALLTALK.test(msg) && !resumeParts.length) ? 'ANY' : 'AUTO';   // pertanyaan data WAJIB lewat alat, tidak boleh dijawab dari kepala model
+      gctx.mode = (round === 0 && !resumeParts.length) ? 'ANY' : 'AUTO';   // pertanyaan data WAJIB lewat alat, tidak boleh dijawab dari kepala model
       emit({ type: 'status', text: round === 0 ? 'Memahami permintaan…' : 'Menyusun jawaban…' });
       const g = await callModel(contents, user.email, decls, gctx, brainTxt);
       const cand = g.candidates && g.candidates[0];
@@ -1350,6 +1538,7 @@ module.exports = async function handler(req, res) {
             if (result && result.report) { reports.push(result.report); const summ = result.ringkasan; result = { ringkasan: summ, report: undefined }; result.__rep = true; }
             if (result && result.nota) { notas.push(result.nota); result = { ok: true, catatan: 'Gambar nota sudah ditampilkan ke admin lengkap dengan tombol unduh.', ringkasan: result.ringkasan }; }
             if (result && result.ui) { actions.push(result.ui); result = { ok: true, catatan: 'Perintah tampilan dikirim ke layar admin.' }; }
+            if (result && result.visual) { visuals.push(result.visual); const summ = result.ringkasan || result; delete summ.visual; result = { ok: true, catatan: 'Visual sudah tampil di layar admin (bisa diunduh PNG). Jangan tulis ulang semua angkanya; cukup beri kesimpulan singkat.', ringkasan: summ }; }
             if (result && result.proposal) {
               const pr = result.proposal;
               const id = sign({ uid: user.id, exp: Date.now() + PROPOSAL_TTL_MS, proposal: pr });
@@ -1367,14 +1556,27 @@ module.exports = async function handler(req, res) {
       contents.push({ role: 'user', parts: respParts });
     }
     if (!reply) throw Object.assign(new Error('Batas langkah per permintaan tercapai, melanjutkan otomatis'), { auto: true });
+    /* --- berpikir ulang: cocokkan jawaban dengan hasil alat sebelum dikirim --- */
+    if (contents.length > resumeBase && Date.now() - gctx.t0 < 30000 && reply.length > 20) {
+      const sid = 'cek_' + Math.random().toString(36).slice(2, 6);
+      emit({ type: 'step', id: sid, state: 'run', text: 'Memeriksa ulang jawaban' });
+      try {
+        const rv = contents.concat([{ role: 'model', parts: [{ text: reply }] }, { role: 'user', parts: [{ text: 'PERIKSA ULANG jawaban terakhirmu terhadap hasil alat di atas: angka, nama, tanggal, jumlah baris, dan apakah pertanyaan admin terjawab tuntas tanpa bertentangan dengan jawabanmu sebelumnya. Jika semuanya sudah benar, balas persis: OK. Jika ada yang salah atau kurang, tulis ulang JAWABAN LENGKAP yang sudah diperbaiki (langsung jawabannya, tanpa menyebut bahwa kamu memeriksa ulang).' }] }]);
+        const g2 = await callModel(rv, user.email, [], Object.assign({}, gctx, { maxTokens: 3000, timeoutMs: 14000, list: gctx.prov ? [{ p: gctx.prov, m: gctx.model }].concat(gctx.list) : gctx.list, onRetry: null }), brainTxt);
+        const t2 = ((((g2.candidates || [])[0] || {}).content || {}).parts || []).filter((p) => p.text).map((p) => p.text).join('').trim();
+        const fixed = t2 && !/^ok[.!]?$/i.test(t2) && t2.length > 20;
+        if (fixed) reply = t2;
+        emit({ type: 'step', id: sid, state: 'ok', text: fixed ? 'Jawaban diperbaiki' : 'Jawaban sudah sesuai data' });
+      } catch (e) { emit({ type: 'step', id: sid, state: 'ok', text: 'Dilewati' }); }
+    }
     } catch (e) {   // gagal di tengah jalan: kirim hasil sementara supaya bisa dilanjutkan, bukan diulang dari nol
-      e.partial = { actions, proposals, notas, reports };
+      e.partial = { actions, proposals, notas, reports, visuals };
       const rs = contents.slice(resumeBase); let sz = 0; try { sz = JSON.stringify(rs).length; } catch (x) { sz = 1e9; }
       if (rs.length && rs[rs.length - 1].role === 'user' && sz <= 90000) { e.resume = rs; e.resume_model = gctx.model ? (gctx.prov + '|' + gctx.model) : ''; }
       if (e.auto === undefined) e.auto = /waktu habis|timeout|hampir habis|batas langkah/i.test(e.message || '');
       throw e;
     }
-    return finish({ reply, actions, proposals, reports, notas });
+    return finish({ reply, actions, proposals, reports, notas, visuals });
   } catch (err) {
     if (res.headersSent || res.getHeader('Content-Type') === 'application/x-ndjson; charset=utf-8') { try { res.write(JSON.stringify({ type: 'error', error: clip(err.message || 'Jarvis gagal', 200), partial: err.partial, resume: err.resume, resume_model: err.resume_model, auto: err.auto === true }) + '\n'); return res.end(); } catch (e) { return; } }
     return res.status(err.status || 500).json({ error: clip(err.message || 'Jarvis gagal', 200) });
