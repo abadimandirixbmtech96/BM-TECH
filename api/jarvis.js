@@ -640,10 +640,31 @@ async function t_cek_data(q, a) {
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 function kasirRpc(q, fn, body) { return q('/rest/v1/rpc/' + fn, { method: 'POST', body: JSON.stringify(body || {}) }); }
 const kata = (v, n) => { const t = String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, n); return t || null; };
+const fmtQty = (n) => { const v = Math.round((Number(n) || 0) * 10000) / 10000; return String(v).replace('.', ','); };
 async function t_kasir_barang(q, a) {
-  const r = await kasirRpc(q, 'shop_j_barang', { kata: kata(a.kata, 80), hanya_perlu_belanja: a.perlu_belanja === true, batas: Math.min(Math.max(parseInt(a.batas, 10) || 40, 1), 100) });
-  if (r && r.jumlah_cocok === 0) r.catatan = 'Tidak ada di katalog kasir. Jangan menebak harga: cek cari_otak, atau katakan belum ada di katalog.';
-  return r;
+  const perlu = a.perlu_belanja === true, cari = kata(a.kata, 80);
+  const r = await kasirRpc(q, 'shop_j_barang', { kata: cari, hanya_perlu_belanja: perlu, batas: 400 });
+  if (!r || !Array.isArray(r.barang)) return r;
+  const catatan = [];
+  if (r.jumlah_cocok === 0 && !perlu) catatan.push('Tidak ada di katalog kasir. Jangan menebak harga: cek cari_otak, atau katakan belum ada di katalog.');
+  if (perlu && r.jumlah_cocok === 0) catatan.push('Tidak ada barang yang stoknya tercatat habis atau di bawah minimum.');
+  if (r.jumlah_stok_belum_dicatat > 0) catatan.push(r.jumlah_stok_belum_dicatat + ' barang stoknya BELUM PERNAH DICATAT (belum ada stok awal). Itu bukan berarti habis atau perlu dibeli: sarankan admin mengisi stok awal di kasir (menu Barang). Jangan menyebutnya stok habis.');
+  const ringkas = Object.assign({}, r, { barang: r.barang.slice(0, 15), barang_ditampilkan_ke_model: Math.min(15, r.barang.length) });
+  if (catatan.length) ringkas.catatan = catatan.join(' ');
+  // Daftar panjang: tabel lengkap + PDF dibuat server (seperti rekap), model cukup meringkas.
+  if (r.barang.length > 10 || a.tabel === true) {
+    const judul = perlu ? 'Barang perlu dibeli' : ('Katalog kasir' + (cari ? ': ' + cari : ''));
+    const report = {
+      title: judul, folder: 'Kasir', periode: 'Per ' + dmy(todayWib()),
+      columns: ['No', 'Nama Barang', 'Jenis', 'Harga', 'Stok', 'Status'], keys: ['no', 'nama', 'jenis', 'harga', 'stok', 'status'],
+      rows: r.barang.map((b, i) => [String(i + 1).padStart(3, '0'), String(b.nama || ''), String(b.jenis || ''), fmtId(b.harga_jual),
+        b.stok_dicatat ? fmtQty(b.stok) + ' ' + (b.satuan || '') : '-', String(b.status || '') + (b.status === 'perlu dibeli' && Number(b.stok_minimum) > 0 ? ' (min ' + fmtQty(b.stok_minimum) + ')' : '')]),
+      totals: [], truncated: r.jumlah_cocok > r.barang.length || undefined, total_baris: r.jumlah_cocok, orientation: 'portrait'
+    };
+    ringkas.tampilan = 'Tabel lengkap ' + r.jumlah_cocok + ' barang dan tombol Unduh PDF sudah tampil otomatis di layar admin. JANGAN menulis ulang tabelnya; cukup ringkas jumlahnya dan hal penting (mis. berapa yang perlu dibeli, berapa yang stoknya belum dicatat).';
+    return { report, ringkasan: ringkas };
+  }
+  return ringkas;
 }
 async function t_kasir_hutang(q, a) { return kasirRpc(q, 'shop_j_hutang', { kata: kata(a.nama, 60) }); }
 async function t_kasir_penjualan(q, a) {
@@ -663,7 +684,7 @@ const TOOLS = {
   sum_field: { fn: t_sum_field, decl: { name: 'sum_field', description: 'Jumlahkan sebuah field angka (harga, total, dibayar, nominal, …) di satu note, satu folder, atau semua folder, opsional dalam rentang tanggal (YYYY-MM-DD) dan dikelompokkan per field lain (mis. customer). WAJIB dipakai untuk setiap total/rekap; jangan menghitung sendiri.', parameters: { type: 'OBJECT', properties: { field: { type: 'STRING' }, folder: { type: 'STRING' }, note_id: { type: 'STRING' }, dari: { type: 'STRING' }, sampai: { type: 'STRING' }, kelompok: { type: 'STRING', description: 'nama field untuk pengelompokan, mis. customer' } }, required: ['field'] } } },
   buat_nota: { fn: t_nota, decl: { name: 'buat_nota', description: 'Buat GAMBAR NOTA (nota kontan bergaya tulisan tangan, dibuat dengan kode, bukan AI gambar). Isi nama pelanggan, daftar barang/jasa, dan harga HANYA bila disebut pengguna atau ada di data; jangan mengarang harga. Bila ada harga, tulis di jumlah; bila ada banyak x harga, jumlah dihitung otomatis. Tanggal default hari ini. Untuk nota dari data yang sudah ada, baca datanya dulu (search_data/get_note).', parameters: { type: 'OBJECT', properties: { pelanggan: { type: 'STRING', description: 'nama pelanggan/toko, mis. Yanto' }, barang: { type: 'ARRAY', description: 'baris nota', items: { type: 'OBJECT', properties: { nama: { type: 'STRING', description: 'nama barang/jasa, mis. Lemer grand' }, banyak: { type: 'STRING' }, harga: { type: 'NUMBER', description: 'harga satuan (kalau ada banyak)' }, jumlah: { type: 'NUMBER', description: 'jumlah rupiah baris ini' } } } }, tanggal: { type: 'STRING', description: 'YYYY-MM-DD, kosong = hari ini' }, nomor_nota: { type: 'STRING' }, pakai_cap: { type: 'BOOLEAN', description: 'true HANYA bila pengguna minta pakai cap/stempel bengkel' }, pakai_rekening: { type: 'BOOLEAN', description: 'true HANYA bila pengguna minta pakai stempel/nomor rekening' } }, required: ['pelanggan'] } } },
   sisa_tagihan: { fn: t_sisa_tagihan, decl: { name: 'sisa_tagihan', description: 'Daftar SISA hutang/kasbon/piutang per orang (total dikurangi dibayar) dari Buku Kasbon & Hutang Piutang, diurutkan terbesar. Pakai untuk "siapa yang masih berhutang / kasbon siapa yang belum lunas / sisa hutang si X".', parameters: { type: 'OBJECT', properties: { folder: { type: 'STRING', description: 'opsional, mis. BUKU KASBON' }, nama: { type: 'STRING', description: 'opsional, filter nama' } } } } },
-  kasir_barang: { fn: t_kasir_barang, decl: { name: 'kasir_barang', description: 'Cari barang di KATALOG KASIR (Dashboard Warung): harga jual, modal terakhir, stok sekarang, stok minimum. Pakai untuk pertanyaan harga barang (piston, laher/bearing, stang seher, dll), stok, atau "barang apa yang perlu dibeli" (perlu_belanja=true). Kata dicocokkan per kata, mis. "piston vixion 50".', parameters: { type: 'OBJECT', properties: { kata: { type: 'STRING' }, perlu_belanja: { type: 'BOOLEAN' }, batas: { type: 'INTEGER' } } } } },
+  kasir_barang: { fn: t_kasir_barang, decl: { name: 'kasir_barang', description: 'Cari barang di KATALOG KASIR (Dashboard Warung): harga jual, modal terakhir, stok, status (stok belum dicatat / perlu dibeli / aman). Pakai untuk harga barang (piston, laher/bearing, stang seher, dll), stok, atau "barang apa yang perlu dibeli" (perlu_belanja=true). Barang yang stoknya belum dicatat BUKAN perlu dibeli. Daftar lebih dari 10 barang otomatis tampil sebagai tabel lengkap + PDF. Kata dicocokkan per kata, mis. "piston beat os 25".', parameters: { type: 'OBJECT', properties: { kata: { type: 'STRING' }, perlu_belanja: { type: 'BOOLEAN' }, batas: { type: 'INTEGER' } } } } },
   kasir_hutang: { fn: t_kasir_hutang, decl: { name: 'kasir_hutang', description: 'Sisa hutang pelanggan menurut KASIR: penjualan hutang di kasir (nota J-) ditambah salinan Buku Hutang Piutang (nota B-), dikurangi pembayaran di kasir. Ada umur tagihan tertua (hari). Opsional filter nama.', parameters: { type: 'OBJECT', properties: { nama: { type: 'STRING' } } } } },
   kasir_penjualan: { fn: t_kasir_penjualan, decl: { name: 'kasir_penjualan', description: 'Rekap penjualan KASIR dalam periode: omzet, laba kotor, jumlah nota, retur, pembelian barang, pembayaran hutang diterima, 10 barang terlaris, omzet per hari. Default bulan berjalan. Tanggal YYYY-MM-DD.', parameters: { type: 'OBJECT', properties: { dari: { type: 'STRING' }, sampai: { type: 'STRING' } } } } },
   kasir_cocok: { fn: t_kasir_cocok, decl: { name: 'kasir_cocok', description: 'Bandingkan sisa hutang di KASIR dengan Buku Hutang Piutang: pelanggan yang selisih (mis. sudah bayar di kasir tapi belum dicatat di Hutang Piutang) dan salinan yang record aslinya sudah berubah/dihapus.', parameters: { type: 'OBJECT', properties: {} } } },
@@ -768,7 +789,7 @@ function stepDone(name, r) {
     case 'open_editor': return 'Catatan ditemukan: ' + clip(r.dibuka, 40);
     case 'buat_nota': return 'Nota siap' + (r.ringkasan && r.ringkasan.total != null ? ' · total ' + rp(r.ringkasan.total) : '');
     case 'sisa_tagihan': return (r.jumlah_orang || 0) + ' orang masih punya sisa · ' + rp(r.total_sisa);
-    case 'kasir_barang': return (r.jumlah_cocok || 0) + ' barang cocok dari ' + (r.jumlah_katalog || 0) + ' di katalog';
+    case 'kasir_barang': { const x = r.ringkasan || r; return (x.jumlah_cocok || 0) + ' barang cocok dari ' + (x.jumlah_katalog || 0) + ' di katalog' + (x.jumlah_stok_belum_dicatat ? ' · ' + x.jumlah_stok_belum_dicatat + ' stok belum dicatat' : ''); }
     case 'kasir_hutang': return (r.jumlah_orang || 0) + ' orang berhutang · ' + rp(r.total_sisa);
     case 'kasir_penjualan': return 'Omzet ' + rp(r.omzet) + ' · ' + (r.jumlah_nota || 0) + ' nota';
     case 'kasir_cocok': return ((r.pelanggan_perlu_dicocokkan || []).length) + ' pelanggan perlu dicocokkan';
