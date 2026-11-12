@@ -239,15 +239,34 @@
     return [K.accent, K.font, K.bold, K.custom, K.theme, K.lang].map(get).join('|');
   }
   var bootSignature = signature();
+  var bootLang = get(K.lang) || '';
+  /* Pasang ulang warna & font tanpa memuat ulang halaman. Kelas tema/font di <body> milik tiap halaman
+     ikut disesuaikan bila halaman memakai pola yang sama (theme-light, font-*, font-bold-mode). */
+  var FONT_CLASS = { serif: 'font-serif', klasik: 'font-klasik', humanis: 'font-humanis', kompak: 'font-kompak', mono: 'font-mono', rounded: 'font-rounded', custom: 'font-custom' };
+  function reapply() {
+    var f = getFont();
+    applyAccent(getAccent());
+    applyFont(f);
+    if (f === 'custom') ensureCustom();
+    var b = d.body;
+    if (b) {
+      var light = get(K.theme) === 'light';
+      if (b.classList.contains('theme-light') !== light && (b.classList.contains('theme-light') || b.hasAttribute('data-bm-theme-body'))) b.classList.toggle('theme-light', light);
+      if (root.classList.contains('theme-light') !== light) root.classList.toggle('theme-light', light);
+      var had = false;
+      Object.keys(FONT_CLASS).forEach(function (k) { if (b.classList.contains(FONT_CLASS[k])) { had = true; b.classList.remove(FONT_CLASS[k]); } });
+      if (had || b.hasAttribute('data-bm-font-body')) { if (FONT_CLASS[f]) b.classList.add(FONT_CLASS[f]); }
+      if (b.classList.contains('font-bold-mode') || get(K.bold) === 'on') b.classList.toggle('font-bold-mode', get(K.bold) === 'on');
+    }
+    bootSignature = signature();
+    try { w.dispatchEvent(new CustomEvent('bm:theme')); } catch (e) {}
+  }
+  /* Kembali lewat tombol back (bfcache) setelah pengaturan berubah: pasang ulang langsung.
+     Hanya perubahan bahasa yang butuh muat ulang (teks seluruh halaman diterjemahkan saat dimuat). */
   w.addEventListener('pageshow', function (e) {
     if (!e.persisted || signature() === bootSignature) return;
-    setTimeout(function () {
-      try {
-        var s = d.getElementById('settingsScreen');
-        if (s && s.classList.contains('open')) sessionStorage.setItem('bm-return-settings', '1');
-      } catch (err) {}
-      location.reload();
-    }, 0);
+    if ((get(K.lang) || '') !== bootLang) { setTimeout(function () { location.reload(); }, 0); return; }
+    reapply();
   });
 
   w.BMTheme = {
@@ -266,6 +285,8 @@
     customName: customName,
     ensureCustom: ensureCustom,
     saveCustom: saveCustom,
-    removeCustom: removeCustom
+    removeCustom: removeCustom,
+    reapply: reapply,
+    langChangedSinceLoad: function () { return (get(K.lang) || '') !== bootLang; }
   };
 })(window, document);

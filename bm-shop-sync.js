@@ -443,6 +443,7 @@
       window.addEventListener('online', syncNow);
       window.addEventListener('offline', function () { setMode('offline'); });
       document.addEventListener('visibilitychange', function () { if (!document.hidden) syncNow(); });
+      window.addEventListener('bm:refresh', function (e) { e.preventDefault(); syncNow(); });
       setInterval(function () {
         if (document.hidden) return;
         if (pendingData && app.pages() === 0 && !myOut().length) {
