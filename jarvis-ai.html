@@ -15,13 +15,14 @@
   (function () { try { var r = document.documentElement; if (localStorage.getItem('bm-theme') === 'light') r.classList.add('theme-light'); if (localStorage.getItem('bm-font-bold') === 'on') r.classList.add('bold-mode'); } catch (e) {} })();
 </script>
 <style>
-:root{--bg:#000;--surface:#121214;--surface2:#1d1d21;--border:rgba(255,255,255,.08);--text:#fff;--text-2:#8a8a90;--accent:#F0A529;--accent-rgb:240,165,41;--on-accent:#1C1B19;
---glass-pill-bg:rgba(255,255,255,.09);--glass-pill-border:rgba(255,255,255,.12);--text-secondary:#8a8a90;--accent-yellow:#F0A529;--danger:#e5484d;
+:root{--bg:#000;--surface:#121214;--surface2:#1d1d21;--border:rgba(255,255,255,.08);--text:#fff;--text-2:#7C7C82;--accent:#F0A529;--accent-rgb:240,165,41;--on-accent:#1C1B19;
+--glass-pill-bg:rgba(255,255,255,.09);--glass-pill-border:rgba(255,255,255,.12);--text-secondary:#7C7C82;--accent-yellow:#F0A529;--danger:#e5484d;
 --safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);--g1:#7c5cff;--g2:#2f9bff;--g3:#22d3b0}
-:root.theme-light{--bg:#f4f4f6;--surface:#fff;--surface2:#ececf0;--border:rgba(0,0,0,.09);--text:#111;--text-2:#6b6b72;--glass-pill-bg:rgba(0,0,0,.06);--glass-pill-border:rgba(0,0,0,.1);--text-secondary:#6b6b72;--on-accent:#1C1B19}
+:root.theme-light{--bg:#F5F5F7;--surface:#fff;--surface2:#ececf0;--border:rgba(0,0,0,.08);--text:#000;--text-2:#6b6b72;--glass-pill-bg:rgba(0,0,0,.06);--glass-pill-border:rgba(0,0,0,.1);--text-secondary:#6b6b72;--on-accent:#1C1B19}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:var(--bm-font,Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);overscroll-behavior:none;-webkit-text-size-adjust:100%}
 body.bold-mode,:root.bold-mode body{font-weight:600}
+textarea,select,input{font-family:inherit}
 [hidden]{display:none!important}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
 svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
@@ -437,7 +438,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var doc = new JsPDF({ orientation: wide ? 'landscape' : 'portrait', unit: 'pt', format: 'a4' });
     var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40, y = 0;
     var title = (blocks.filter(function (b) { return b.t === 'h'; })[0] || {}).text || question || 'Laporan';
-    doc.setFillColor(240, 165, 41); doc.rect(0, 0, W, 6, 'F');
+    doc.setFillColor.apply(doc, accRGB()); doc.rect(0, 0, W, 6, 'F');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(28, 27, 25); doc.text('BM-TECH', M, 44);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(110); doc.text('Laporan Jarvis  |  ' + stamp().replace('T', ' ') + ' WIB', M, 58);
     doc.setDrawColor(220); doc.line(M, 68, W - M, 68);
@@ -453,7 +454,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       else if (b.t === 'table') {
         room(60);
         doc.autoTable({ startY: y + 4, head: [b.head.map(pdfText)], body: b.rows.map(function (r) { return b.head.map(function (_, k) { return pdfText(r[k]); }); }), theme: 'grid', margin: { left: M, right: M, bottom: 50 },
-          styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, lineColor: [225, 225, 225], textColor: [28, 27, 25] }, headStyles: { fillColor: [240, 165, 41], textColor: [28, 27, 25], fontStyle: 'bold' }, alternateRowStyles: { fillColor: [247, 245, 240] },
+          styles: { font: 'helvetica', fontSize: 9, cellPadding: 4, lineColor: [225, 225, 225], textColor: [28, 27, 25] }, headStyles: { fillColor: accRGB(), textColor: onAccRGB(), fontStyle: 'bold' }, alternateRowStyles: { fillColor: [247, 245, 240] },
           didParseCell: function (d) { if (d.section === 'body' && /^(Rp\s?)?-?[\d.,]+%?$/.test(String(d.cell.raw))) d.cell.styles.halign = 'right'; } });
         y = doc.lastAutoTable.finalY + 10;
       }
@@ -465,6 +466,17 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 
   /* ---------- kartu rekap: tabel sama dengan aplikasi ---------- */
   var MONEYCOL = /^(harga|price|total|total tagihan|dibayar|sisa|sisa tagihan)$/i, WIDECOL = /^(keterangan|remarks|barang|item|nama barang)$/i;
+  // Warna aksen dari pengaturan (dipasang bm-theme.js) untuk PDF; cadangan = oranye BM-TECH.
+  function accRGB() {
+    try { var v = getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').split(',').map(function (x) { return parseInt(x, 10); });
+      if (v.length === 3 && v.every(function (n) { return n >= 0 && n <= 255; })) return v; } catch (e) {}
+    return [240, 165, 41];
+  }
+  function onAccRGB() {
+    try { var h = getComputedStyle(document.documentElement).getPropertyValue('--on-accent').trim();
+      if (/^#[0-9a-f]{6}$/i.test(h)) return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; } catch (e) {}
+    return [28, 27, 25];
+  }
   function renderReport(rep) {
     var card = mk('div', '', 'bmj-rep bmj-fade'), h = mk('div', '', 'bmj-rh');
     h.appendChild(tx('b', '', rep.title));
@@ -1069,6 +1081,25 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   }
 
   /* ===== kendali aplikasi: pindah halaman / buka editor / ubah tampilan ===== */
+  // Ikut pengaturan tampilan dashboard: bila diubah di halaman/tab lain, langsung diterapkan di sini.
+  function syncLook() {
+    try {
+      var r = document.documentElement, T = window.BMTheme;
+      r.classList.toggle('theme-light', localStorage.getItem('bm-theme') === 'light');
+      r.classList.toggle('bold-mode', localStorage.getItem('bm-font-bold') === 'on');
+      if (!T) return;
+      // Hanya MEMASANG tanpa menulis ke penyimpanan, agar tidak menimpa perubahan dari halaman lain.
+      var st = r.style, hex = T.getAccent(), c = [1, 3, 5].map(function (i) { return parseInt(hex.slice(i, i + 2), 16); }), rgb = c.join(', ');
+      st.setProperty('--accent', hex); st.setProperty('--accent-yellow', hex); st.setProperty('--accent-rgb', rgb);
+      st.setProperty('--accent-glow', 'rgba(' + rgb + ', 0.28)'); st.setProperty('--accent-yellow-glow', 'rgba(' + rgb + ', 0.28)');
+      st.setProperty('--on-accent', T.contrast(hex, '#1C1B19') >= T.contrast(hex, '#FFFFFF') ? '#1C1B19' : '#FFFFFF');
+      var meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', hex);
+      var f = T.getFont(); st.setProperty('--bm-font', T.STACKS[f] || T.STACKS['default']);
+      if (f === 'custom') T.ensureCustom();
+    } catch (e) {}
+  }
+  window.addEventListener('storage', function (e) { if (!e.key || /^bm-(theme|font|font-bold|accent|font-custom-name)$/.test(e.key)) syncLook(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) syncLook(); });
   var URL_OK = /^\/[a-z0-9\-]+\.html(\?[A-Za-z0-9_=&%.\-]*)?$/;
   function applySetting(a) {
     var T = window.BMTheme, v = a.value, r = document.documentElement;
