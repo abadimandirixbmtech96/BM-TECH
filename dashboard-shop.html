@@ -585,10 +585,12 @@ const fT=(n,l,v,o)=>{o=o||{};return '<label class="fld"><span class="lb">'+l+(o.
 const fCode=(n,l,v,w,ph)=>'<div class="fld"><span class="lb">'+l+'<span class="op">opsional</span></span><span class="cw2"><input class="in" name="'+n+'" value="'+esc(v||'')+'" autocomplete="off" autocapitalize="'+(w==='pc'?'characters':'off')+'" spellcheck="false" placeholder="'+esc(ph)+'"><button type="button" class="scb" data-a="scf" data-w="'+w+'" aria-label="'+(w==='pc'?'Scan QR':'Scan barcode')+'">'+ic('scan')+'</button></span></div>';
 const fM=(n,l,v,o)=>fT(n,l,v,Object.assign({fmt:'money',mode:'numeric',cap:'off',ph:'0'},o));
 const fQ=(n,l,v,o)=>fT(n,l,v,Object.assign({fmt:'qty',mode:'decimal',cap:'off',ph:'0'},o));
+/* Ukuran di atas OS 200 hanya ada di model tertentu (saat ini RX-K): tombolnya hanya tampil untuk model itu. */
+const osBig=v=>+normOS(v.os)>200||/^rx.?k\b/i.test(String(v.base||'').trim())||(!!v.base&&pcModelItems(v.base).some(x=>+normOS((x.a||{}).os||'')>200));
 const OSV=['STD','25','50','75','100','125','150','175','200','225','250','275','300'];
 function prodFields(k,v,edit){let h='';
  if(k==='piston'){h+=fT('base','Nama piston',v.base,{ph:'Contoh: Supra X 125',sug:'nm:piston'})
-  +'<input type="hidden" name="os" value="'+esc(v.os||'')+'"><div class="lb" style="margin-top:2px">Oversize (OS)</div><div class="chips flat" id="osc" style="flex-wrap:wrap;overflow:visible">'+OSV.map(o=>'<button type="button" class="chip'+(normOS(v.os)===o?' on':'')+'" data-a="osc" data-v="'+o+'">'+(o==='STD'?'STD':'OS '+o)+'</button>').join('')+'</div>'}
+  +'<input type="hidden" name="os" value="'+esc(v.os||'')+'"><div class="lb" style="margin-top:2px">Oversize (OS)</div><div class="chips flat" id="osc" style="flex-wrap:wrap;overflow:visible">'+OSV.filter(o=>!(+o>200)||osBig(v)).map(o=>'<button type="button" class="chip'+(normOS(v.os)===o?' on':'')+'" data-a="osc" data-v="'+o+'">'+(o==='STD'?'STD':'OS '+o)+'</button>').join('')+'</div>'}
  else if(k==='bearing'){h+=fT('seri','Seri barang',v.seri,{ph:'Contoh: 6204',cap:'characters'})+'<p class="hint" id="bdim" style="margin:8px 0 14px">'+esc(bdimTxt(v.seri))+'</p>'+fT('base','Nama atau merek',v.base,{opt:1,ph:'Otomatis: Laher',sug:'nm:bearing'})}
  else if(k==='stang'){h+=fT('base','Nama barang',v.base,{ph:'Contoh: Stang seher Blade',sug:'nm:stang'})+fT('jenis','Jenis barang',v.jenis,{opt:1,ph:'Contoh: Standar'})+fT('versi','Versi',v.versi,{opt:1,ph:'Contoh: Ori / KW / v2'})}
  else{const cu=k!=='umum';h+=fT('base','Nama barang',v.base,{ph:cu?'Nama '+KS[k].toLowerCase()+' lengkap dengan ukuran':'Nama barang',sug:'nm:'+k})+fT('cat','Kategori',v.cat,{opt:1,ph:cu?'Contoh: Mesin':'Contoh: Oli'})+fT('unit','Satuan',v.unit==null?(KU[k]||'pcs'):v.unit,{ph:'pcs, botol, kg',cap:'none'})}
@@ -1372,7 +1374,8 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
   ctUpd()}
  else if(t.closest&&t.closest('#pf')){IFS.vals[t.name]=t.value;if(t.name==='os'){const o=normOS(t.value);document.querySelectorAll('#osc .chip').forEach(c=>c.classList.toggle('on',c.dataset.v===o))}
   if(t.name==='seri'){const d=document.getElementById('bdim');if(d)d.textContent=bdimTxt(t.value)}
-  if(t.name==='base')IFS.note='';
+  if(t.name==='base'){IFS.note='';const oc=document.getElementById('osc');if(oc&&IFS.kind==='piston'){const big=osBig({base:t.value,os:IFS.vals.os}),has=!!oc.querySelector('[data-v="225"]');
+   if(big!==has)oc.innerHTML=OSV.filter(o=>!(+o>200)||big).map(o=>'<button type="button" class="chip'+(normOS(IFS.vals.os)===o?' on':'')+'" data-a="osc" data-v="'+o+'">'+(o==='STD'?'STD':'OS '+o)+'</button>').join('')}}
   if(t.name==='sell')IFS.auto=false;
   if(['base','os','seri','jenis','versi'].includes(t.name))autoPrice();
   if(t.name==='pc'&&IFS.kind==='stang'&&!IFS.edit)stangSuggest(t.value);
