@@ -167,6 +167,20 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 .sg:active{background:var(--act)}
 .dlg{position:fixed;z-index:61;left:50%;top:50%;width:min(86vw,340px);transform:translate(-50%,-50%);background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:20px 18px 18px;animation:dlgin .22s var(--ease) both}
 .dlg p{margin:0 0 16px;color:var(--mu)}
+.pzd p{margin:0 0 12px}.pzb{position:relative;height:96px;border-radius:12px;margin-bottom:12px;overflow:hidden;border:1px solid var(--bd);background:repeating-linear-gradient(135deg,var(--sf2,rgba(127,127,127,.08)) 0 10px,transparent 10px 20px),var(--bg)}
+.pzb i{position:absolute;left:8px;width:46px;height:46px;border-radius:12px}
+.pzh{border:2px dashed var(--mu);background:rgba(0,0,0,.08)}
+.pzp{background:var(--ac);box-shadow:0 6px 16px rgba(0,0,0,.25);transition:background .2s}.pzp::before{content:"";position:absolute;top:-9px;left:15px;width:16px;height:16px;border-radius:50%;background:inherit}
+.pzh::before{content:"";position:absolute;top:-10px;left:13px;width:16px;height:16px;border-radius:50%;border:2px dashed var(--mu);border-bottom-color:transparent;border-right-color:transparent;transform:rotate(45deg)}
+.pzb.ok .pzp{background:#16a34a}.pzb.sh{animation:pzsh .3s}
+@keyframes pzsh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pztr{position:relative;height:48px;border-radius:999px;background:var(--bg);border:1px solid var(--bd);display:flex;align-items:center;overflow:hidden;touch-action:none}
+.pztr em{position:absolute;left:0;right:0;text-align:center;font-style:normal;font-size:13px;color:var(--mu);pointer-events:none}
+.pzf{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(127,127,127,.12)}
+.pzk{position:relative;z-index:1;width:46px;height:46px;border-radius:50%;background:var(--ac);color:var(--on);display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.pzk:focus-visible{outline:2px solid var(--tx);outline-offset:2px}
+.pzm{min-height:1.2em;margin:10px 0 12px!important;font-size:13px;color:var(--tx)!important;text-align:center}
+@media (prefers-reduced-motion:reduce){.pzb.sh{animation:none}}
 #dlg .scrim{z-index:60}
 #ts{position:fixed;top:calc(12px + env(safe-area-inset-top));left:50%;transform:translate(-50%,-80px);opacity:0;padding:10px 18px;border-radius:10px;z-index:70;font-weight:600;font-size:var(--f2);background:var(--tx);color:var(--bg);transition:transform .35s var(--ease),opacity .25s;pointer-events:none;max-width:92vw;text-align:center}
 #ts.o{transform:translate(-50%,0);opacity:1}
@@ -251,11 +265,21 @@ const KS={piston:'Piston',bearing:'Laher',stang:'Stang seher',umum:'Lainnya'};
 const KU={piston:'paket',bearing:'pcs',stang:'set',umum:'pcs'};
 const KM={piston:2,bearing:5,stang:2,umum:5};
 const KH={piston:'Nama, oversize, harga per paket',bearing:'Seri, harga (nama otomatis)',stang:'Nama, jenis, versi, harga',umum:'Barang lain yang dijual'};
-const KORD=['piston','bearing','stang','umum'];
+const KORD=['piston','bearing','stang','umum'],KBASE=KORD.slice(),KCH=[];
+/* Jenis kustom (baut, blok, ...): kode k_..., berperilaku seperti Barang lain, tersimpan di database. */
+const isUm=k=>k==='umum'||/^k_/.test(k||'');
+const kSlug=n=>'k_'+String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'').slice(0,24);
+function regKinds(list,items){Object.keys(KL).forEach(k=>{if(/^k_/.test(k))[KL,KS,KU,KM,KH,KI].forEach(o=>{delete o[k]})});
+ KORD.length=0;KBASE.forEach(k=>KORD.push(k));const add=(k,name,unit)=>{if(KL[k]||!/^k_[a-z0-9_]{1,30}$/.test(k))return;KL[k]=name;KS[k]=name;KU[k]=unit||'pcs';KM[k]=5;KH[k]='Jenis kustom';KI[k]=KI.umum;KORD.splice(KORD.length-1,0,k)};
+ (list||[]).slice().sort((a,b)=>(+a.ts||0)-(+b.ts||0)||String(a.name).localeCompare(String(b.name))).forEach(j=>add(j.id,String(j.name||'').trim()||j.id,j.unit));
+ (items||[]).forEach(x=>{const k=x.kind;if(/^k_/.test(k||''))add(k,k.slice(2).replace(/_/g,' ').replace(/^./,c=>c.toUpperCase()),x.unit)});
+ KCH.length=0;KCH.push(['all','Semua']);KORD.forEach(k=>KCH.push([k,KS[k]]))}
+regKinds([]);
 
 /* ================= Data v2 + migrasi ================= */
-const blank=()=>({v:2,items:[],parties:[],notas:[],rets:[],pays:[],adj:[],seq:{out:0,in:0}});
+const blank=()=>({v:2,items:[],parties:[],notas:[],rets:[],pays:[],adj:[],seq:{out:0,in:0},kinds:[]});
 function norm(r){const b=blank();['items','parties','notas','rets','pays','adj'].forEach(k=>{b[k]=Array.isArray(r[k])?r[k]:[]});b.seq={out:+(r.seq&&r.seq.out)||0,in:+(r.seq&&r.seq.in)||0};
+ b.kinds=(Array.isArray(r.kinds)?r.kinds:[]).filter(j=>j&&/^k_[a-z0-9_]{1,30}$/.test(j.id)&&String(j.name||'').trim());regKinds(b.kinds,Array.isArray(r.items)?r.items:[]);
  b.notas.forEach(n=>{n.lines=Array.isArray(n.lines)?n.lines:[];n.dp=+n.dp||0;n.ts=+n.ts||0});
  b.parties.forEach(p=>{p.k=p.k||'c'});
  b.items.forEach(x=>{x.kind=KU[x.kind]?x.kind:'umum';x.a=x.a||{};if((x.kind||'')==='stang'){x.name=String(x.name||'').replace(/stang seger/gi,'Stang seher');if(x.base)x.base=String(x.base).replace(/stang seger/gi,'Stang seher')}
@@ -363,10 +387,10 @@ function checkProd(k,v){const f=fK(k,v);
  if(!f.base)return perr('[name=base]','Isi nama barang');
  if(k==='piston'&&!f.os)return perr('[name=os]','Isi oversize piston (STD jika standar)');
  if(k==='bearing'&&!f.seri)return perr('[name=seri]','Isi seri barang');
- const unit=k==='umum'?String(v.unit||'').trim():KU[k];if(!unit)return perr('[name=unit]','Isi satuan');
+ const unit=isUm(k)?String(v.unit||'').trim():KU[k];if(!unit)return perr('[name=unit]','Isi satuan');
  const sell=pm(v.sell);if(!(sell>0))return perr('[name=sell]','Isi harga jual');
  const buy=0,min=0;
- return{ok:true,f,unit,sell,buy,min,cat:k==='umum'?String(v.cat||'').trim():'',codes:parseCodes(v.codes),pc:String(v.pc||'').trim()}}
+ return{ok:true,f,unit,sell,buy,min,cat:isUm(k)?String(v.cat||'').trim():'',codes:parseCodes(v.codes),pc:String(v.pc||'').trim()}}
 const attrsOf=f=>({os:f.os,seri:f.seri,jenis:f.jenis,versi:f.versi});
 function saveProduct(k,v){const p=checkProd(k,v);if(!p.ok)return p;
  const q=(v.q===''||v.q==null)?0:pq(v.q);if(!(q>=0))return perr('[name=q]','Jumlah tidak valid');
@@ -382,7 +406,7 @@ function updateProduct(id,k,v){const p=checkProd(k,v);if(!p.ok)return p;
  if(findDup(k,p.f,id))return perr('[name=base]','Barang dengan data yang sama sudah ada');
  {const ce=codeErr(p.codes,id,k==='piston'?p.pc:'');if(ce)return ce}
  const c=clone(D),x=c.items.find(z=>z.id===id);if(!x)return perr('','Barang tidak ditemukan');
- x.base=p.f.base;x.a=attrsOf(p.f);x.name=compose(k,p.f);x.cat=p.cat;if(k==='umum')x.unit=p.unit;x.sell=p.sell;x.min=p.min;x.codes=p.codes;x.pc=p.pc;if(p.buy>0)x.buy=p.buy;
+ x.base=p.f.base;x.a=attrsOf(p.f);x.name=compose(k,p.f);x.cat=p.cat;if(isUm(k))x.unit=p.unit;x.sell=p.sell;x.min=p.min;x.codes=p.codes;x.pc=p.pc;if(p.buy>0)x.buy=p.buy;
  if(!commit(c))return{ok:false,msg:'Gagal menyimpan'};fresh=id;return{ok:true,id}}
 
 /* ================= State UI ================= */
@@ -393,8 +417,30 @@ const OPT={},HOOK={};let tt;
 /* ================= Kontrol buatan sendiri ================= */
 function toast(m){const t=$('#ts');t.textContent=m;t.classList.add('o');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('o'),2600)}
 let askCb=null;
-function ask(o,cb){askCb=cb;const d=$('#dlg');d.innerHTML='<div class="scrim" data-a="dno"></div><div class="dlg" role="alertdialog" aria-modal="true"><h3>'+esc(o.title||'Konfirmasi')+'</h3><p>'+esc(o.msg||'')+'</p><div class="two"><button class="bt sec" data-a="dno">Batal</button><button class="bt'+(o.danger?' dgf':'')+'" data-a="dyes">'+esc(o.ok||'Ya')+'</button></div></div>';d.classList.add('o')}
-function askClose(){const d=$('#dlg');d.classList.remove('o');d.innerHTML='';askCb=null}
+function ask(o,cb){if(o&&o.puzzle&&window.BMShopSync&&cb){const f=cb;cb=()=>puzzle(o,f)}askCb=cb;const d=$('#dlg');d.innerHTML='<div class="scrim" data-a="dno"></div><div class="dlg" role="alertdialog" aria-modal="true"><h3>'+esc(o.title||'Konfirmasi')+'</h3><p>'+esc(o.msg||'')+'</p><div class="two"><button class="bt sec" data-a="dno">Batal</button><button class="bt'+(o.danger?' dgf':'')+'" data-a="dyes">'+esc(o.ok||'Ya')+'</button></div></div>';d.classList.add('o')}
+function askClose(){const d=$('#dlg');d.classList.remove('o');d.innerHTML='';askCb=null;PZ=null}
+/* Verifikasi puzzle sebelum menghapus data yang sudah tersimpan di database: geser kepingan ke lubangnya. */
+let PZ=null;
+function puzzle(o,cb){const d=$('#dlg');
+ d.innerHTML='<div class="scrim" data-a="dno"></div><div class="dlg pzd" role="dialog" aria-modal="true" aria-labelledby="pzt"><h3 id="pzt">Verifikasi: '+esc(o.title||'Hapus')+'</h3><p>Geser kepingan sampai masuk ke lubangnya.</p>'
+ +'<div class="pzb" id="pzb"><i class="pzh" id="pzh"></i><i class="pzp" id="pzp"></i></div>'
+ +'<div class="pztr" id="pztr"><span class="pzf" id="pzf"></span><span class="pzk" id="pzk" role="slider" tabindex="0" aria-label="Geser kepingan" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">'+ic('chev')+'</span><em id="pze">Geser ke kanan</em></div>'
+ +'<p class="pzm" id="pzm" role="status" aria-live="polite"></p><button class="bt sec" data-a="dno" style="width:100%">Batal</button></div>';
+ d.classList.add('o');
+ const tr=$('#pztr'),k=$('#pzk'),pc=$('#pzp'),ho=$('#pzh'),fl=$('#pzf'),m=$('#pzm'),B=$('#pzb');
+ const P={cb,x:0,t:0,fail:0,done:false};PZ=P;
+ const W=()=>Math.max(1,tr.clientWidth-k.offsetWidth);
+ function place(x){P.x=Math.max(0,Math.min(W(),x));k.style.transform='translateX('+P.x+'px)';fl.style.width=(P.x+k.offsetWidth/2)+'px';pc.style.transform='translateX('+(P.x*(B.clientWidth-pc.offsetWidth)/W())+'px)';k.setAttribute('aria-valuenow',String(Math.round(P.x/W()*100)))}
+ function fresh(){P.t=W()*(.42+Math.random()*.46);ho.style.transform='translateX('+(P.t*(B.clientWidth-pc.offsetWidth)/W())+'px)';const y=10+Math.round(Math.random()*30);ho.style.top=pc.style.top=y+'px';place(0)}
+ function check(){if(P.done)return;const ok=Math.abs(P.x-P.t)<=Math.max(6,W()*.03);
+  if(ok){P.done=true;B.classList.add('ok');m.textContent='Terverifikasi';k.setAttribute('aria-valuenow','100');setTimeout(()=>{if(PZ!==P)return;askClose();P.cb()},380)}
+  else{P.fail++;m.textContent=P.fail>=3?'Belum pas. Posisi lubang diacak ulang.':'Belum pas, coba lagi.';B.classList.remove('sh');void B.offsetWidth;B.classList.add('sh');setTimeout(()=>{if(PZ!==P)return;if(P.fail>=3){P.fail=0;fresh()}else place(0)},320)}}
+ let drag=null;
+ k.addEventListener('pointerdown',e=>{if(P.done)return;drag={sx:e.clientX,x0:P.x};try{k.setPointerCapture(e.pointerId)}catch(x){}e.preventDefault()});
+ k.addEventListener('pointermove',e=>{if(drag)place(drag.x0+e.clientX-drag.sx)});
+ const up=()=>{if(!drag)return;drag=null;check()};k.addEventListener('pointerup',up);k.addEventListener('pointercancel',()=>{drag=null;place(0)});
+ k.addEventListener('keydown',e=>{if(P.done)return;if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();place(P.x+(e.key==='ArrowRight'?4:-4))}else if(e.key==='Enter'||e.key===' '){e.preventDefault();check()}});
+ requestAnimationFrame(()=>{fresh();k.focus({preventScroll:true})})}
 let MN=null,CAL=null;
 function closeMenu(){const m=$('#mn');m.classList.remove('o');m.innerHTML='';MN=null;CAL=null}
 function menuPos(anchor,w,h){const r=anchor.getBoundingClientRect(),vh=window.innerHeight||800,vw=window.innerWidth||400;let top=r.bottom+6,up=false;
@@ -463,8 +509,7 @@ function vHome(){const st=cc().stock,t=today(),low=D.items.filter(x=>!x.arch&&(s
  +'<h4>Nota terakhir</h4>'+(rc.length?grp(rc.map(notaRow).join('')):'<p class="em">Belum ada nota.</p>')}
 
 /* ================= Tab: Barang ================= */
-const KCH=[['all','Semua']].concat(KORD.map(k=>[k,KS[k]]));
-const GO={},OSX=['STD','25','50','75','100','125','150','175','200'];
+const GO={},OSX=['STD','25','50','75','100','125','150','175','200','225','250','275','300'];
 const bareB=x=>String(x.base||x.name).replace(/^(paket piston|piston)\s+/i,'').trim();
 const osTxt=x=>{const o=normOS((x.a||{}).os||'');return o?(o==='STD'?'OS STD':'OS '+o):x.name};
 function pgroups(a){const m=new Map();a.forEach(x=>{const b=bareB(x),k=nk(b);if(!m.has(k))m.set(k,{k,b,a:[]});m.get(k).a.push(x)});
@@ -540,14 +585,14 @@ const fT=(n,l,v,o)=>{o=o||{};return '<label class="fld"><span class="lb">'+l+(o.
 const fCode=(n,l,v,w,ph)=>'<div class="fld"><span class="lb">'+l+'<span class="op">opsional</span></span><span class="cw2"><input class="in" name="'+n+'" value="'+esc(v||'')+'" autocomplete="off" autocapitalize="'+(w==='pc'?'characters':'off')+'" spellcheck="false" placeholder="'+esc(ph)+'"><button type="button" class="scb" data-a="scf" data-w="'+w+'" aria-label="'+(w==='pc'?'Scan QR':'Scan barcode')+'">'+ic('scan')+'</button></span></div>';
 const fM=(n,l,v,o)=>fT(n,l,v,Object.assign({fmt:'money',mode:'numeric',cap:'off',ph:'0'},o));
 const fQ=(n,l,v,o)=>fT(n,l,v,Object.assign({fmt:'qty',mode:'decimal',cap:'off',ph:'0'},o));
-const OSV=['STD','25','50','75','100','125','150','175','200'];
+const OSV=['STD','25','50','75','100','125','150','175','200','225','250','275','300'];
 function prodFields(k,v,edit){let h='';
  if(k==='piston'){h+=fT('base','Nama piston',v.base,{ph:'Contoh: Supra X 125',sug:'nm:piston'})
   +'<input type="hidden" name="os" value="'+esc(v.os||'')+'"><div class="lb" style="margin-top:2px">Oversize (OS)</div><div class="chips flat" id="osc" style="flex-wrap:wrap;overflow:visible">'+OSV.map(o=>'<button type="button" class="chip'+(normOS(v.os)===o?' on':'')+'" data-a="osc" data-v="'+o+'">'+(o==='STD'?'STD':'OS '+o)+'</button>').join('')+'</div>'}
  else if(k==='bearing'){h+=fT('seri','Seri barang',v.seri,{ph:'Contoh: 6204',cap:'characters'})+'<p class="hint" id="bdim" style="margin:8px 0 14px">'+esc(bdimTxt(v.seri))+'</p>'+fT('base','Nama atau merek',v.base,{opt:1,ph:'Otomatis: Laher',sug:'nm:bearing'})}
  else if(k==='stang'){h+=fT('base','Nama barang',v.base,{ph:'Contoh: Stang seher Blade',sug:'nm:stang'})+fT('jenis','Jenis barang',v.jenis,{opt:1,ph:'Contoh: Standar'})+fT('versi','Versi',v.versi,{opt:1,ph:'Contoh: Ori / KW / v2'})}
- else{h+=fT('base','Nama barang',v.base,{ph:'Nama barang',sug:'nm:umum'})+fT('cat','Kategori',v.cat,{opt:1,ph:'Contoh: Oli'})+fT('unit','Satuan',v.unit==null?'pcs':v.unit,{ph:'pcs, botol, kg',cap:'none'})}
- const un=k==='umum'?'':' ('+KU[k]+')',per=k==='umum'?'per satuan':'per '+KU[k];
+ else{const cu=k!=='umum';h+=fT('base','Nama barang',v.base,{ph:cu?'Nama '+KS[k].toLowerCase()+' lengkap dengan ukuran':'Nama barang',sug:'nm:'+k})+fT('cat','Kategori',v.cat,{opt:1,ph:cu?'Contoh: Mesin':'Contoh: Oli'})+fT('unit','Satuan',v.unit==null?(KU[k]||'pcs'):v.unit,{ph:'pcs, botol, kg',cap:'none'})}
+ const un=isUm(k)?'':' ('+KU[k]+')',per=isUm(k)?'per satuan':'per '+KU[k];
  if(!edit)h+=fQ('q','Jumlah barang'+un,v.q)+'<div class="qk"><button type="button" data-a="fq" data-d="1">+1</button><button type="button" data-a="fq" data-d="5">+5</button><button type="button" data-a="fq" data-d="10">+10</button><button type="button" data-a="fq" data-d="0">Reset</button></div><div style="height:14px"></div>';
  h+=fM('sell','Harga jual '+per,v.sell)+(k==='piston'?fCode('pc','Kode pabrik (QR)',v.pc,'pc','Scan QR atau ketik, contoh: AKH-GN5-D'):k==='stang'?fT('pc','Kode model',v.pc,{opt:1,ph:'Dari stiker, contoh: 011-KWB-0705',cap:'characters'}):'');
  return h}
@@ -704,6 +749,7 @@ function pgSettings(){const sz=Math.round(JSON.stringify(D).length/1024);
  +'<div style="height:10px"></div>'+grp(mrow('Suara berhasil',sndName('ok')||'Bawaan, ketuk untuk ganti','up','sndpick','data-k="ok"')+mrow('Suara kode tidak dikenal',sndName('no')||'Bawaan, ketuk untuk ganti','up','sndpick','data-k="no"')+(sndName('ok')||sndName('no')?mrow('Kembalikan suara bawaan','Hapus suara buatan sendiri','inbox','sndreset',''):''))
  +'<input id="sf-ok" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden><input id="sf-no" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden>'
  +'<p class="hint">Format MP3, WAV, OGG, atau M4A. Pakai suara pendek (di bawah 2 detik), maksimal 300 KB.</p>'
+ +'<h4>Barang</h4>'+grp(mrow('Jenis barang',(KORD.length-KBASE.length)+' jenis kustom. Tambah, impor ulang, kosongkan','box','kman',''))
  +'<h4>Data</h4>'+grp(mrow('Backup semua data','Simpan file JSON ke HP','up','bk','')+mrow('Pulihkan dari file','Ganti data dengan file backup','inbox','rfpick','')+mrow('Ekspor transaksi','File CSV untuk Excel','sale','cv','')+mrow('Ekspor stok','File CSV daftar stok','box','cvs',''))
  +'<input id="rf" type="file" accept=".json,application/json" hidden>'
  +syncHint(sz)
@@ -720,7 +766,7 @@ function csvStok(){const st=cc().stock,r=[['Jenis','Barang','Kode pabrik','Satua
 
 
 /* ================= Impor data barang ================= */
-const OSL5=['STD','25','50','75','100','125','150','175','200'];
+const OSL5=['STD','25','50','75','100','125','150','175','200','225','250','275','300'];
 let IM={kind:'piston',recs:[],sizes:['STD','25','50','75','100','125','150','175','200'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
 const HSYN={name:/^(nama|nama barang|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk)$/,
  os:/^(os|oversize|over size|ukuran|ukuran os|uk|size)$/,
@@ -733,8 +779,8 @@ function imOS(t){t=String(t==null?'':t).toLowerCase().replace(/\s+/g,'').replace
  if(/^(std|standar|standard|0|0[.,]0+|\.0+)$/.test(t))return'STD';
  if(!/^\d*[.,]?\d+$/.test(t))return'';
  const dec=/[.,]/.test(t)||/^0\d/.test(t);let n=parseFloat(t.replace(',','.'));if(!(n>0))return'';
- if(dec&&n<=2.5)n=Math.round(n*100);else if(dec&&n<25)return'';
- return n>=25&&n<=200&&n%25===0?String(n):''}
+ if(dec&&n<=3)n=Math.round(n*100);else if(dec&&n<25)return'';
+ return n>=25&&n<=300&&n%25===0?String(n):''}
 function imPrice(s){s=String(s==null?'':s).toLowerCase().replace(/rp\.?/g,'').replace(/\s/g,'');if(!s)return 0;
  let m=/^(\d+(?:[.,]\d+)?)(?:k|rb|ribu)$/.exec(s);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*1000);
  m=/^(\d+(?:[.,]\d+)?)(?:jt|juta)$/.exec(s);if(m)return Math.round(parseFloat(m[1].replace(',','.'))*1e6);
@@ -750,11 +796,11 @@ function imTok(kind,text){let s=imStrip(String(text||'').replace(/\t+/g,' ')),o=
  m=/(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{4,}|\d+(?:[.,]\d+)?\s?(?:k|rb|ribu|jt|juta)\b)/i.exec(s);
  if(m){const p=imPrice(m[0]);if(p>=1000){o.sell=p;const ms=/^\s+(\d{1,4})\s*$/.exec(s.slice(m.index+m[0].length));if(ms&&o.q===null){o.q=+ms[1];s=s.slice(0,m.index+m[0].length)}s=s.replace(m[0],' ')}}
  if(kind==='piston'){
-  m=/\b(?:os|oversize|over\s?size|ukuran|uk)\s*[:.=]?\s*((?:std|standar|standard|[+]?[0-2]?[.,]?\d{2,3})(?:\s*(?:[\/,&]|dan|-|s\/d|sd)\s*(?:std|[+]?[0-2]?[.,]?\d{2,3}))*)/i.exec(s);
+  m=/\b(?:os|oversize|over\s?size|ukuran|uk)\s*[:.=]?\s*((?:std|standar|standard|[+]?[0-3]?[.,]?\d{2,3})(?:\s*(?:[\/,&]|dan|-|s\/d|sd)\s*(?:std|[+]?[0-3]?[.,]?\d{2,3}))*)/i.exec(s);
   if(m){const parts=m[1].split(/\s*(?:[\/,&]|dan|s\/d|sd|-)\s*/i),range=/s\/d|sd|-/i.test(m[1].replace(/[.,]/g,''))&&parts.length===2,v=parts.map(p=>imOS(p)||'?'+p.trim());
    if(range&&OSL5.includes(v[0])&&OSL5.includes(v[1])){const a=OSL5.indexOf(v[0]),b=OSL5.indexOf(v[1]);o.os=OSL5.slice(Math.min(a,b),Math.max(a,b)+1)}else o.os=v;
    s=s.replace(m[0],' ')}
-  else{m=/(?<![\d.,])([0-2][.,](?:00|25|50|75)|\+(?:25|50|75|100|125|150|175|200))(?![\d])/.exec(s)||/(?<![\d.,A-Za-z])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
+  else{m=/(?<![\d.,])([0-3][.,](?:00|25|50|75)|\+(?:25|50|75|100|125|150|175|200|225|250|275|300))(?![\d])/.exec(s)||/(?<![\d.,A-Za-z])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
    if(m){const v=imOS(m[1]||m[0]);if(v){o.os=[v];s=s.replace(m[0],' ')}}}}
  o.name=s.replace(/\brp\.?\b/ig,' ').replace(/[|;:=]+/g,' ').replace(/\s[-–—]\s/g,' ').replace(/^[\s\-–—,.]+|[\s\-–—,.]+$/g,'').replace(/\s+/g,' ').trim();return o}
 function imHeader(row){const m={},osc=[];let hit=0;
@@ -792,7 +838,7 @@ function imVal(r){const k=r.kind;let f,err='',unit=KU[k];
  else if(k==='bearing'){const seri=r.seri.toUpperCase().replace(/\s+/g,' ');let br=(r.brand||r.name).replace(/\b(laher|bearing|bantalan)\b/ig,' ').replace(/\s+/g,' ').trim();
   f=fK(k,{base:br,seri});if(!/^\d{3,5}(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
  else if(k==='stang'){let b=r.name;if(b&&!/^stang/i.test(b))b='Stang seher '+b;f=fK(k,{base:b,jenis:r.jenis,versi:r.versi});if(!f.base)err='Nama tidak terbaca'}
- else{f=fK(k,{base:r.name});unit=r.unit||'pcs';if(!f.base)err='Nama tidak terbaca'}
+ else{f=fK(k,{base:r.name});unit=r.unit||KU[k]||'pcs';if(!f.base)err='Nama tidak terbaca'}
  const o={kind:k,ok:!err,err,f,unit,sell:r.sell||0,q:r.q,pc:r.pc,cat:r.cat,assumed:!!r.assumed,dup:0,skip:false};
  if(!err){o.name=compose(k,f);o.key=keyOf(k,f);o.ex=D.items.find(x=>kindOf(x)===k&&keyOf(k,itemF(x))===o.key)||null;o.cur=o.ex?(cc().stock[o.ex.id]||0):0}else{o.name=r.name||r.seri||'(kosong)';o.skip=true}
  return o}
@@ -872,9 +918,24 @@ const IMX={piston:'Satu barang per baris, misalnya "Blade OS 25 150.000" atau ko
  bearing:'Satu seri per baris, misalnya "6204", "6001 ZZ 25.000", atau kolom Seri, Harga, Stok. Nama disusun otomatis (Laher 6204).',
  stang:'Satu barang per baris, misalnya "Vario 011-KVB-0705" atau kolom Nama, Jenis, Versi, Harga, Stok.',
  umum:'Satu barang per baris, misalnya "Oli Yamalube 1 liter 55.000 stok 10" atau kolom Nama, Satuan, Harga, Stok.'};
-function pgImpKind(){return pgh('Impor data barang','<p class="date">Pilih jenis barang yang mau diisi dari file.</p>'+grp(KORD.map(k=>mrow(KL[k],'Impor daftar '+KS[k].toLowerCase(),k==='piston'||k==='stang'?'box':'inbox','impk','data-k="'+k+'"')).join('')))}
+function pgImpKind(){return pgh('Impor data barang','<p class="date">Pilih jenis barang yang mau diisi dari file.</p>'+grp(KORD.map(k=>mrow(KL[k],'Impor daftar '+KS[k].toLowerCase(),k==='piston'||k==='stang'?'box':'inbox','impk','data-k="'+k+'"')).join(''))
+ +grp(mrow('Jenis kustom baru','Misalnya baut, blok, gasket. Punya tombol impor sendiri','plus','kadd','data-next="imp"')+mrow('Kelola jenis barang','Ubah nama, kosongkan, atau hapus jenis','cog','kman','')))}
+/* ---- jenis barang kustom ---- */
+let KNX='',KED='';
+const kCount=k=>D.items.filter(x=>kindOf(x)===k).length;
+function pgKindNew(){return pgh('Jenis barang baru','<p class="hint" style="margin:6px 0 12px">Jenis baru langsung muncul di Input barang, Impor, Isi stok, dan filter daftar barang. Tersimpan di database, terbaca juga oleh Jarvis.</p>'
+ +fT('kname','Nama jenis','',{ph:'Contoh: Baut'})+fT('kunit','Satuan bawaan','pcs',{ph:'pcs, set, meter',cap:'none'}),{foot:'<button class="bt" style="width:100%" data-a="ksave" data-enter="1">Simpan jenis</button>'})}
+function pgKinds(){const row=k=>mrow(KL[k],kCount(k)+' barang'+(/^k_/.test(k)?' · kustom':''),/^k_/.test(k)?'inbox':'box','ked','data-k="'+k+'"');
+ return pgh('Jenis barang','<p class="date">Ketuk jenis untuk impor ulang, mengosongkan, atau mengubahnya.</p>'+grp(KORD.map(row).join(''))+grp(mrow('Jenis kustom baru','Misalnya baut, blok, gasket','plus','kadd','')))}
+function kUsed(){const u=new Set();D.notas.forEach(n=>n.lines.forEach(l=>{if(l.i)u.add(l.i)}));D.rets.forEach(r=>r.lines.forEach(l=>{if(l.i)u.add(l.i)}));return u}
+function pgKindEd(k){if(!KL[k])return pgh('Jenis barang','<p class="em">Jenis ini sudah tidak ada.</p>');const cu=/^k_/.test(k),all=D.items.filter(x=>kindOf(x)===k),u=kUsed(),used=all.filter(x=>u.has(x.id)).length;
+ return pgh(KL[k],(cu?fT('kname','Nama jenis',KL[k])+fT('kunit','Satuan bawaan',KU[k],{cap:'none'})+'<button class="bt sec full" data-a="kedsave" data-k="'+k+'">Simpan nama dan satuan</button>':'')
+ +'<h4>Data</h4>'+grp(mrow('Impor '+KS[k].toLowerCase(),'Tambah atau perbarui dari file. Yang sudah ada tidak dobel','up','impk','data-k="'+k+'"')+mrow('Isi stok','Ketik jumlah atau scan per kotak','stock','stkk','data-k="'+k+'"'))
+ +'<h4>Hapus</h4>'+grp((all.length?mrow('Kosongkan '+KS[k].toLowerCase(),all.length+' barang. '+(used?used+' pernah ada di nota, dinonaktifkan saja. ':'')+'Perlu verifikasi puzzle','trash','kclr','data-k="'+k+'"','dn'):'')
+  +(cu?mrow('Hapus jenis ini',all.length?'Kosongkan dulu barangnya':'Perlu verifikasi puzzle','trash','kdel','data-k="'+k+'"','dn'):''))
+ +(all.length?'':'<p class="em">Belum ada barang jenis ini.</p>'))}
 function pgImpSrc(){const k=IM.kind;
- return pgh('Impor '+KS[k].toLowerCase(),'<p class="hint" style="margin:8px 0 12px">'+esc(IMX[k])+'</p>'
+ return pgh('Impor '+KS[k].toLowerCase(),'<p class="hint" style="margin:8px 0 12px">'+esc(IMX[k]||'Satu barang per baris: nama '+KS[k].toLowerCase()+', harga, stok. Misalnya "'+KS[k]+' 8 x 20 2.000 stok 50", atau kolom Nama, Satuan, Harga, Stok.')+'</p>'
  +(k==='piston'?'<h4 style="margin-top:6px">Ukuran OS untuk baris tanpa OS</h4>'+'<div class="chips flat" style="flex-wrap:wrap;overflow:visible">'+OSL5.map(v=>'<button type="button" class="chip'+(IM.sizes.includes(v)?' on':'')+'" data-a="imos" data-v="'+v+'">'+(v==='STD'?'STD':'OS '+v)+'</button>').join('')+'</div>':'')
  +'<button class="bt full" data-a="imfile" style="margin-top:14px">'+ic('up')+'Pilih file</button>'
  +'<p class="hint">Excel, CSV, PDF, foto, atau file teks. Bisa pilih beberapa foto sekaligus.</p>'
@@ -921,7 +982,15 @@ function skList(){const st=cc().stock,s=SK.q.toLowerCase(),a=D.items.filter(x=>!
   return gcard(key,g.b,g.a.length+' ukuran'+(ed?' · '+ed+' diubah':''),g.a.map(x=>skRow(x,osTxt(x))).join(''),open||GO[key])}).join('')}
  return grp(a.map(x=>skRow(x)).join(''))}
 function pgStkKind(){return pgh('Isi stok','<p class="date">Pilih jenis barang yang stoknya mau diisi.</p>'+grp(KORD.map(k=>{const n=D.items.filter(x=>!x.arch&&kindOf(x)===k).length;return mrow(KL[k],n+' barang','box','stkk','data-k="'+k+'"')}).join('')))}
-function pgStock(){return pgh('Isi stok '+KS[SK.kind].toLowerCase(),'<input id="skq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(SK.q)+'">'+chips([['all','Semua'],['zero','Stok kosong'],['np','Harga kosong']],SK.f,'skf')+'<p class="hint" style="margin:8px 0">Atur jumlah yang ada di rak dengan tombol \u2212, +, +5, +10. Yang tidak disentuh tidak diubah.</p><div id="skl">'+skList()+'</div>',{foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
+function pgStock(){return pgh('Isi stok '+KS[SK.kind].toLowerCase(),'<input id="skq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(SK.q)+'">'+chips([['all','Semua'],['zero','Stok kosong'],['np','Harga kosong']],SK.f,'skf')+'<p class="hint" style="margin:8px 0">Atur jumlah yang ada di rak dengan tombol \u2212, +, +5, +10, atau ketuk ikon scan di atas lalu scan kotak satu per satu (+1 tiap kotak). Yang tidak disentuh tidak diubah.</p><div id="skl">'+skList()+'</div>',{act:'<button class="ib" data-a="sks" aria-label="Scan kotak untuk isi stok">'+ic('scan')+'</button>',foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
+function skSync(id,n,cur){const e=document.querySelector('[data-skv="'+id+'"]');if(e){e.textContent=String(n);e.classList.toggle('ch',n!==cur)}const n2=document.getElementById('skn');if(n2)n2.textContent=skCnt()+' barang'}
+/* Isi stok dengan scan: tiap kotak yang terbaca menambah 1. Belum tersimpan sampai tombol Simpan di halaman Isi stok. */
+function skBump(x,quiet){if(x.arch){scPanel('<div class="rs"><b>'+esc(x.name)+'</b><span class="no">Barang nonaktif. Aktifkan dulu di halaman barang.</span></div>');if(!quiet)ping(false);return}
+ const id=x.id,cur=cc().stock[id]||0,v=SK.v[id]=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=r4(base+1);v.q=String(n);skSync(id,n,cur);if(!quiet)ping(true);
+ const other=kindOf(x)!==SK.kind?'<small style="display:block;color:var(--mu)">Jenis '+esc(KS[kindOf(x)])+', tetap ikut tersimpan.</small>':'';
+ scPanel('<div class="rs"><div class="rsh"><b>'+esc(x.name)+'</b><small>+1 · '+skCnt()+' barang diisi, belum disimpan</small></div>'
+ +'<div class="kv"><span>Stok di catatan</span><b>'+num(cur)+' '+esc(x.unit)+'</b></div><div class="kv"><span>Setelah scan</span><b>'+num(n)+' '+esc(x.unit)+' (+'+num(r4(n-cur))+')</b></div>'+other
+ +'<div class="two" style="margin-top:12px"><button class="bt sec" data-a="skun" data-id="'+id+'">Batalkan 1</button><button class="bt" data-a="back">Selesai</button></div></div>')}
 const skCnt=()=>Object.keys(SK.v).filter(id=>{const v=SK.v[id];return v&&((v.q!==undefined&&v.q!=='')||(v.p!==undefined&&v.p!==''))}).length;
 function skSave(){const c=clone(D),at=Date.now();let n=0,ns=0,np=0;
  for(const id of Object.keys(SK.v)){const v=SK.v[id],x=c.items.find(z=>z.id===id);if(!x)continue;let ch=false;
@@ -945,11 +1014,17 @@ function tone(f,t0,d,v){const o=AC.createOscillator(),g=AC.createGain();o.type='
 function playSnd(k){const src=sndSrc(k);let a=AUD[k];if(!a||a.dataset.s!==src){a=new Audio(src);a.preload='auto';a.dataset.s=src;AUD[k]=a}
  try{a.currentTime=0}catch(e){}try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>synth(k==='ok'))}catch(e){synth(k==='ok')}}
 function ping(ok){try{if(navigator.vibrate)navigator.vibrate(ok?40:[60,50,60])}catch(e){}if(!sndOn())return;playSnd(ok?'ok':'no')}
+const OSL={B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'};
+/* Kode pabrik piston = keluarga mesin + huruf ukuran (AKH-KWB-C: keluarga AKH-KWB, ukuran C = OS 50).
+   Cukup satu kotak dihubungkan, ukuran lain model yang sama langsung dikenali dari keluarganya. */
 function suggestFromCode(code){const c=cn(code),m=c.match(/^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z])$/);if(!m)return null;
- const OSL={B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'},fam=m[1]+'-'+m[2],sib=D.items.filter(x=>x.pc&&cn(x.pc).indexOf(fam+'-')===0&&cn(x.pc)!==c),s=sib[0];
- return{fam,os:OSL[m[3]]||'',sib,base:s?(s.base||s.name):'',kind:s?kindOf(s):'piston'}}
-function scIdle(){return '<p class="hint" style="text-align:center;margin-top:14px">'+(SC&&SC.ctx==='field'?'Arahkan kamera ke stiker paket piston. Tulisan dan QR dibaca otomatis.':'Arahkan kamera ke stiker atau tulisan di kotak. Tulisan dan QR dibaca otomatis.')+'</p>'}
-function pgScan(){return pgh('Scan barang','<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><p class="camm" id="camm">Menyalakan kamera</p></div>'
+ const fam=m[1]+'-'+m[2],own=x=>[x.pc].concat(x.codes||[]).some(p=>p&&cn(p)!==c&&cn(p).indexOf(fam+'-')===0);
+ const sib=D.items.filter(x=>!x.arch&&kindOf(x)==='piston'&&own(x)),cnt={};sib.forEach(x=>{const b=x.base||x.name;cnt[b]=(cnt[b]||0)+1});
+ const base=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0]||'',os=OSL[m[3]]||'',model=base?pcModelItems(base):[];
+ const hit=os?(model.find(x=>normOS((x.a||{}).os||'')===normOS(os))||null):null;
+ return{fam,os,sib,base,model,hit,kind:'piston'}}
+function scIdle(){return '<p class="hint" style="text-align:center;margin-top:14px">'+(SC&&SC.ctx==='stock'?'Scan kotak satu per satu. Tiap kotak menambah stok 1. Untuk kotak yang sama, jauhkan kamera sebentar lalu scan lagi.':SC&&SC.ctx==='field'?'Arahkan kamera ke stiker paket piston. Tulisan dan QR dibaca otomatis.':'Arahkan kamera ke stiker atau tulisan di kotak. Tulisan dan QR dibaca otomatis.')+'</p>'}
+function pgScan(){return pgh(SC&&SC.ctx==='stock'?'Scan untuk isi stok':'Scan barang','<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><p class="camm" id="camm">Menyalakan kamera</p></div>'
  +'<div class="cw2" style="margin-top:12px"><input id="scm" class="in" placeholder="Tidak terbaca? Ketik kode atau seri" aria-label="Ketik kode atau seri" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="scb" data-a="scgo" aria-label="Cari kode">'+ic('search')+'</button></div>'
  +'<div id="scr">'+scIdle()+'</div>')}
 function openScan(ctx,fld,code){if(ctx==='cart'&&!CT)ctx='items';
@@ -1030,7 +1105,7 @@ function ocNear(a,l){if(a.x0==null||l.x0==null)return true;const aw=a.x1-a.x0,h=
  return Math.abs(lc-ac)<=Math.max(aw*1.3,h*6)&&l.y0>=a.y0-h*3.5&&l.y0<=a.y1+h*10}
 function ocBuild(a,lines){const ctx=lines.filter(l=>ocNear(a.l,l)),txt=ocFix(ctx.map(l=>l.t).join(' | ')),model=ocModel(txt);
  const bb=a.l.x0==null?null:{x:a.l.x0,y:a.l.y0,width:a.l.x1-a.l.x0,height:a.l.y1-a.l.y0};
- if(a.kind==='piston'){const OSL={B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'},sg=suggestFromCode(a.pc),mo=/UKURAN\s*[:.]?\s*([0-2][.,]\s?(?:25|50|75|00))/.exec(txt)||/(?<![0-9])([0-2][.,](?:25|50|75|00))(?![0-9])/.exec(txt);
+ if(a.kind==='piston'){const sg=suggestFromCode(a.pc),mo=/UKURAN\s*[:.]?\s*([0-3][.,]\s?(?:25|50|75|00))/.exec(txt)||/(?<![0-9])([0-3][.,](?:25|50|75|00))(?![0-9])/.exec(txt);
   const byL=OSL[a.pc.slice(-1)]||'',byT=mo?String(parseInt(mo[1].replace(/[^0-9]/g,''),10)):'',os=byL||byT;
   const R={kind:'piston',pc:a.pc,os,model,bb,base:(sg&&sg.base)||model};
   if(byT&&byL&&byT!==byL)R.warn='Huruf kode menunjuk OS '+byL+', tulisan ukuran terbaca OS '+byT+'. Periksa stikernya.';
@@ -1050,7 +1125,7 @@ function ocTyped(v){const t=ocFix(v).replace(/\s+/g,' ').trim(),m=/^(6[0-3]\d\d)
  const seri=m[1]+(m[2]?' '+m[2]:'');return{kind:'bearing',seri,bb:null,base:'',label:'Laher '+seri+(bdim(seri)?' · '+bdim(seri)+' mm':''),strong:true}}
 function ocHandle(R){const S=SC;if(!S)return;S.ocr=R;S.cur=R.pc||R.seri;
  if(S.ctx==='field'){if(R.kind==='piston'&&R.pc)return scField(R.pc);return scWarn('Ini bukan paket piston',R.label,'Arahkan kamera ke stiker paket piston.')}
- const x=ocFind(R);if(x){learnCode(x,R.pc);S.item=x;scShow(x);ping(true)}else{S.item=null;const m=R.kind==='piston'?pcModelItems(R.base||R.model):[];if(m.length){ocPick(R,m);ping(true)}else{ocNone(R);ping(false)}}}
+ const x=ocFind(R);if(x){learnCode(x,R.pc);S.item=x;if(S.ctx==='stock')skBump(x);else{scShow(x);ping(true)}}else{S.item=null;const m=R.kind==='piston'?pcModelItems(R.base||R.model):[];if(m.length){ocPick(R,m);ping(true)}else{ocNone(R);ping(false)}}}
 function learnCode(x,pc){if(!pc||findByCode(pc)||x.pc&&cn(x.pc)===cn(pc))return;const c=clone(D),it=c.items.find(z=>z.id===x.id);if(!it)return;if(it.pc)it.codes=(it.codes||[]).concat([pc]);else it.pc=pc;commit(c)}
 function ocPick(R,m){const st=cc().stock;scPanel('<div class="rs"><div class="rsh"><b>'+esc((R.base||R.model))+(R.os?'':', pilih ukuran')+'</b><small>'+esc(R.label)+'</small></div>'+grp(pgroups(m)[0].a.map(x=>mrow(osTxt(x),rp(x.sell)+' · stok '+num(st[x.id]||0),'box','scpick','data-id="'+x.id+'"')).join(''))+grp(mrow('Input barang baru','Terisi dari yang terbaca, periksa dulu','plus','scnew',''))+'</div>')}
 function ocNone(R){scPanel('<div class="rs"><div class="rsh"><b>Terbaca, belum ada di daftar</b><small>'+esc(R.label)+(R.pc?' · '+esc(R.pc):'')+'</small></div>'+(R.warn?'<span class="no">'+esc(R.warn)+'</span>':'')
@@ -1074,8 +1149,13 @@ function scPanel(h){const e=document.getElementById('scr');if(e)e.innerHTML=h}
 function scHandle(raw,quiet,fmt){const code=String(raw||'').trim();if(!code||!SC)return;SC.cur=code;
  if(SC.ctx==='field')return scField(code);
  const x=findByCode(code);
- const sg=x?null:suggestFromCode(code),y=x||(sg&&sg.base&&sg.os?pcFind(sg.base,sg.os):null);
- if(y){learnCode(y,x?null:code);SC.item=y;scShow(y);if(!quiet)ping(true)}else{SC.item=null;scNone(code);if(!quiet)ping(false)}}
+ const sg=x?null:suggestFromCode(code),y=x||(sg&&(sg.hit||(sg.base&&sg.os?pcFind(sg.base,sg.os):null)));
+ if(y){learnCode(y,x?null:code);SC.item=y;if(SC.ctx==='stock')skBump(y,quiet);else{scShow(y);if(!quiet)ping(true)}if(!x&&sg)toast('Dikenali dari keluarga '+sg.fam+': '+y.name)}
+ else if(sg&&sg.model.length){SC.item=null;SC.ocr=null;famPick(code,sg);if(!quiet)ping(true)}
+ else{SC.item=null;scNone(code);if(!quiet)ping(false)}}
+function famPick(code,sg){const st=cc().stock,L=code.slice(-1);
+ scPanel('<div class="rs"><div class="rsh"><b>'+esc(sg.base)+', pilih ukuran</b><small>Keluarga '+esc(sg.fam)+' dikenal. Huruf '+esc(L)+(sg.os?' = OS '+esc(sg.os)+', belum ada di daftar':' belum dikenal')+'. Pilih sekali, berikutnya otomatis.</small></div>'
+ +grp(pgroups(sg.model)[0].a.map(x=>mrow(osTxt(x),rp(x.sell)+' · stok '+num(st[x.id]||0),'box','scpick','data-id="'+x.id+'"')).join(''))+grp(mrow('Input barang baru',sg.base+(sg.os?' OS '+sg.os:''),'plus','scnew',''))+'</div>')}
 function scWarn(t,code,msg){ping(false);scPanel('<div class="rs"><b>'+t+'</b><small class="mono" style="display:block;color:var(--mu)">'+esc(code)+'</small><span class="no">'+msg+'</span></div>')}
 function scField(code){const S=SC,inp=S.fld;
  if(!inp||!inp.isConnected){back(1);return}
@@ -1100,8 +1180,10 @@ function scShow(x){const ctx=SC.ctx,out=!!CT&&CT.t==='out',st=cc().stock[x.id]||
 function scNone(code){const sg=suggestFromCode(code),hint=sg&&sg.base?'Disarankan: '+sg.base+(sg.os?' OS '+sg.os:''):(sg&&sg.os?'Disarankan: ukuran OS '+sg.os:'Kode pabrik terisi otomatis');
  scPanel('<div class="rs"><div class="rsh"><b>Kode belum dikenal</b><small class="mono">'+esc(code)+'</small></div>'
  +grp(mrow('Hubungkan ke barang yang ada','Pilih dari daftar, kode ini diingat','box','sclink','')+mrow('Input barang baru',hint,'plus','scnew',''))+'</div>')}
-function lnkList(){const s=LQ.toLowerCase(),sg=SC&&SC.cur?suggestFromCode(SC.cur):null,sib=new Set(sg?sg.sib.map(x=>x.id):[]);
- const a=D.items.filter(x=>!x.arch&&(LKK==='all'||kindOf(x)===LKK)&&(x.name+' '+x.cat+' '+(x.pc||'')).toLowerCase().includes(s)).sort((a,b)=>(sib.has(b.id)?1:0)-(sib.has(a.id)?1:0)||KORD.indexOf(kindOf(a))-KORD.indexOf(kindOf(b))||a.name.localeCompare(b.name));
+function lnkList(){const s=LQ.toLowerCase(),sg=SC&&SC.cur?suggestFromCode(SC.cur):null,R=SC&&SC.ocr&&SC.ocr.pc===SC.cur?SC.ocr:null,os=(sg&&sg.os)||(R&&R.os)||'';
+ const mb=(sg&&sg.base)||(R&&(R.base||R.model))||'',sib=new Set((mb?pcModelItems(mb):[]).concat(sg?sg.sib:[]).map(x=>x.id));
+ const sc=x=>(sib.has(x.id)?2:0)+(os&&kindOf(x)==='piston'&&normOS((x.a||{}).os||'')===normOS(os)?1:0);
+ const a=D.items.filter(x=>!x.arch&&(LKK==='all'||kindOf(x)===LKK)&&(x.name+' '+x.cat+' '+(x.pc||'')).toLowerCase().includes(s)).sort((a,b)=>sc(b)-sc(a)||KORD.indexOf(kindOf(a))-KORD.indexOf(kindOf(b))||a.name.localeCompare(b.name));
  return a.length?grp(a.map(x=>'<div class="r" data-a="lnkpick" data-id="'+x.id+'"><div><b>'+esc(x.name)+'</b><small>'+(x.pc?esc(x.pc):'Belum ada kode pabrik')+(sib.has(x.id)?'&nbsp; Model sama':'')+'</small></div></div>').join('')):'<p class="em">Barang tidak ditemukan. Gunakan Input barang baru.</p>'}
 function pgLink(){return pgh('Hubungkan ke barang','<p style="margin:0 0 12px;color:var(--mu)">Kode <b class="mono" style="color:var(--tx)">'+esc(SC?SC.cur:'')+'</b> akan diingat untuk barang yang dipilih.</p><input id="lq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(LQ)+'">'+chips(KCH,LKK,'lkk')+'<div id="lql" style="margin-top:12px">'+lnkList()+'</div>')}
 
@@ -1128,7 +1210,10 @@ const A={
   if(out&&tot>st+1e-9)return bad('#scq','Stok hanya '+num(st)+' '+x.unit);
   if(l)l.q=tot;else CT.lines.push({i:x.id,q:qn,p:out?x.sell:(x.buy||'')});
   SC.item=null;SC.lastSeen=Date.now();toast(x.name+' +'+num(qn));scPanel('<div class="rs"><b>Ditambahkan ke nota</b><small style="display:block;color:var(--mu)">'+esc(x.name)+', total '+num(tot)+' '+esc(x.unit)+'. Scan barang berikutnya.</small></div>')},
- scpick(b){const x=D.items.find(z=>z.id===b.dataset.id);if(x&&SC){SC.item=x;learnCode(x,SC.ocr&&SC.ocr.pc);scShow(x)}},
+ scpick(b){const x=D.items.find(z=>z.id===b.dataset.id);if(x&&SC){SC.item=x;const code=SC.ocr?SC.ocr.pc:SC.cur;if(code&&!pcOwner(code,x.id))learnCode(x,code);if(SC.ctx==='stock')skBump(x);else scShow(x)}},
+ sks(){openScan('stock')},
+ skun(b){const id=b.dataset.id,x=itm(id);if(!x)return;const cur=cc().stock[id]||0,v=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=Math.max(0,r4(base-1));if(n===cur)delete v.q;else{v.q=String(n);SK.v[id]=v}
+  skSync(id,n,cur);scPanel('<div class="rs"><b>Dibatalkan</b><small style="display:block;color:var(--mu)">'+esc(x.name)+': '+num(cur)+' menjadi '+num(n)+'. Scan kotak berikutnya.</small></div>')},
  sclink(){LQ='';LKK='all';openPage(pgLink,[])},
  scnew(){if(!SC)return;SC.wait=true;const R=SC.ocr&&(SC.ocr.pc||SC.ocr.seri)===SC.cur?SC.ocr:null;
   if(R){const pr={kind:R.kind};if(R.pc)pr.pc=R.pc;if(R.base)pr.base=R.base;if(R.os)pr.os=R.os;if(R.seri)pr.seri=R.seri;pr.hint='Terbaca dari kamera: '+R.label+'. Periksa sebelum menyimpan.';return openProd(null,pr)}
@@ -1136,6 +1221,32 @@ const A={
   if(sg){pre.kind=sg.kind;if(sg.base)pre.base=sg.base;if(sg.os)pre.os=sg.os;pre.hint='Disarankan dari kode '+SC.cur+(sg.sib.length?', model sama dengan '+sg.sib[0].name:'')+(sg.os?', ukuran OS '+sg.os:'')+'. Periksa sebelum menyimpan.'}
   openProd(null,pre)},
  lkk(b){LKK=b.dataset.v;paint(PGS[PGS.length-1])},
+ kadd(b){KNX=b.dataset.next||'';openPage(pgKindNew,[])},
+ kman(){openPage(pgKinds,[],{live:true})},
+ ked(b){KED=b.dataset.k;openPage(pgKindEd,[b.dataset.k],{live:true})},
+ ksave(){const v=vals(topPg()),name=String(v.kname||'').trim().replace(/\s+/g,' '),unit=String(v.kunit||'').trim()||'pcs';
+  if(!name)return bad('[name=kname]','Isi nama jenis');if(name.length>30)return bad('[name=kname]','Nama jenis maksimal 30 huruf');
+  if(KORD.some(k=>KL[k].toLowerCase()===name.toLowerCase()||KS[k].toLowerCase()===name.toLowerCase()))return bad('[name=kname]','Jenis "'+name+'" sudah ada');
+  let id=kSlug(name);if(id.length<3)id='k_jenis';while(KL[id])id=id.slice(0,24)+'_'+Math.random().toString(36).slice(2,5);
+  const c=clone(D);c.kinds=(c.kinds||[]).concat([{id,name,unit,ts:Date.now()}]);regKinds(c.kinds,c.items);
+  if(!commit(c)){regKinds(D.kinds,D.items);return}
+  const nx=KNX;KNX='';back(1);refresh();toast('Jenis '+name+' dibuat');
+  if(nx==='imp'){IM.kind=id;IM.err='';setTimeout(()=>openPage(pgImpSrc,[],{live:false}),reduce()?0:60)}},
+ kedsave(b){const k=b.dataset.k,v=vals(topPg()),name=String(v.kname||'').trim().replace(/\s+/g,' '),unit=String(v.kunit||'').trim()||'pcs';
+  if(!name)return bad('[name=kname]','Isi nama jenis');if(name.length>30)return bad('[name=kname]','Nama jenis maksimal 30 huruf');
+  if(KORD.some(z=>z!==k&&(KL[z].toLowerCase()===name.toLowerCase()||KS[z].toLowerCase()===name.toLowerCase())))return bad('[name=kname]','Jenis "'+name+'" sudah ada');
+  const c=clone(D);c.kinds=(c.kinds||[]);let j=c.kinds.find(z=>z.id===k);if(!j){j={id:k,ts:Date.now()};c.kinds.push(j)}j.name=name;j.unit=unit;regKinds(c.kinds,c.items);
+  if(!commit(c)){regKinds(D.kinds,D.items);return}refresh();toast('Jenis disimpan')},
+ kclr(b){const k=b.dataset.k;if(window.BMShopSync&&!BMShopSync.status().admin)return toast('Hanya admin yang boleh mengosongkan data');
+  const all=D.items.filter(x=>kindOf(x)===k),u=kUsed(),keep=all.filter(x=>u.has(x.id)),del=all.filter(x=>!u.has(x.id));if(!all.length)return toast('Belum ada barang');
+  ask({title:'Kosongkan '+KS[k].toLowerCase(),msg:(del.length?del.length+' barang dihapus permanen beserta catatan stoknya. ':'')+(keep.length?keep.length+' barang pernah ada di nota, jadi hanya dinonaktifkan. ':'')+'Untuk mengisi lagi, cukup impor ulang.',ok:'Kosongkan',danger:1,puzzle:1},()=>{
+   const c=clone(D),ds=new Set(del.map(x=>x.id)),ks=new Set(keep.map(x=>x.id));c.items=c.items.filter(x=>!ds.has(x.id));c.adj=c.adj.filter(a=>!ds.has(a.i));c.items.forEach(x=>{if(ks.has(x.id))x.arch=true});
+   if(commit(c)){refresh();toast(KS[k]+' dikosongkan: '+del.length+' dihapus'+(keep.length?', '+keep.length+' dinonaktifkan':''))}})},
+ kdel(b){const k=b.dataset.k;if(!/^k_/.test(k))return;if(window.BMShopSync&&!BMShopSync.status().admin)return toast('Hanya admin yang boleh menghapus jenis');
+  const all=D.items.filter(x=>kindOf(x)===k),u=kUsed();if(all.some(x=>!u.has(x.id)))return toast('Kosongkan dulu barang jenis ini');
+  ask({title:'Hapus jenis '+KL[k],msg:all.length?all.length+' barang yang pernah terjual dipindah ke Barang lain, riwayatnya tetap ada.':'Jenis ini dihapus dari daftar.',ok:'Hapus jenis',danger:1,puzzle:1},()=>{
+   const c=clone(D),nm=KL[k];c.items.forEach(x=>{if(kindOf(x)===k){x.kind='umum';if(!x.cat)x.cat=nm}});c.kinds=(c.kinds||[]).filter(z=>z.id!==k);regKinds(c.kinds,c.items);
+   if(!commit(c)){regKinds(D.kinds,D.items);return}if(IK===k)IK='all';back(1);refresh();toast('Jenis '+nm+' dihapus')})},
  lnkpick(b){const x=itm(b.dataset.id),code=SC&&SC.cur;if(!x||!code)return;const o=pcOwner(code);if(o)return toast('Kode sudah dipakai '+o.name);
   const go=()=>{const c=clone(D),y=c.items.find(z=>z.id===x.id);y.pc=code;if(commit(c)){SC.wait=true;back(1);toast('Kode dihubungkan ke '+x.name)}};
   if(x.pc&&cn(x.pc)!==cn(code))ask({title:'Ganti kode pabrik',msg:x.name+' sudah punya kode '+x.pc+'. Ganti dengan '+code+'?',ok:'Ganti'},go);else go()},
@@ -1147,8 +1258,7 @@ const A={
  imp(){if(IK!=='all'){IM.kind=IK;IM.err='';openPage(pgImpSrc,[],{live:false})}else openPage(pgImpKind,[])},
  impk(b){IM.kind=b.dataset.k;IM.err='';openPage(pgImpSrc,[],{live:false})},
  skm(b){const id=b.dataset.id,x=D.items.find(z=>z.id===id);if(!x)return;const cur=cc().stock[id]||0,v=SK.v[id]=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=Math.max(0,r4(base+ +b.dataset.d));
-  if(n===cur)delete v.q;else v.q=String(n);const e=document.querySelector('[data-skv="'+id+'"]');if(e){e.textContent=String(n);e.classList.toggle('ch',n!==cur)}
-  const n2=document.getElementById('skn');if(n2)n2.textContent=skCnt()+' barang'},
+  if(n===cur)delete v.q;else v.q=String(n);skSync(id,n,cur)},
  imos(b){const v=b.dataset.v,i=IM.sizes.indexOf(v);if(i>=0)IM.sizes.splice(i,1);else IM.sizes.push(v);IM.sizes.sort((x,y)=>OSL5.indexOf(x)-OSL5.indexOf(y));b.classList.toggle('on',IM.sizes.includes(v))},
  imfile(){const e=document.getElementById('imf');if(e)e.click()},
  imtext(){const e=document.getElementById('imt'),t=e?e.value:'';if(!t.trim())return bad('#imt','Tempel daftar barangnya dulu');IM.txt=t;imRun(async()=>[imCsv(t,true)])},
@@ -1177,9 +1287,9 @@ const A={
   const cost=delta>0&&AD.mode==='add'&&pm(v.c)>0?pm(v.c):null;
   const r=tryApply(c=>{c.adj.push({id:uid(),i:id,name:x.name,unit:x.unit,delta,c:cost,reason:v.reason,d:v.d,ts:Date.now(),note:(v.note||'').trim()})});
   if(!r.ok)return bad('[name=v]','Stok tidak boleh minus');if(!commit(r.data))return;AD=null;done('Stok disesuaikan')},
- iarch(b){const x=itm(b.dataset.id);x.arch=!x.arch;if(save()){if(b.dataset.from)done(x.arch?'Barang dinonaktifkan':'Barang diaktifkan');else{refresh();toast(x.arch?'Barang dinonaktifkan':'Barang diaktifkan')}}},
- idel(b){const x=itm(b.dataset.id);ask({title:'Hapus barang',msg:'Hapus "'+x.name+'"? Barang ini belum punya riwayat.',ok:'Hapus',danger:1},()=>{D.items=D.items.filter(z=>z.id!==x.id);if(save()){back(b.dataset.from?2:1);refresh();toast('Barang dihapus')}})},
- adel(b){const a=D.adj.find(z=>z.id===b.dataset.id);if(!a)return;ask({title:'Batalkan penyesuaian',msg:'Stok akan kembali seperti sebelum penyesuaian ini.',ok:'Batalkan',danger:1},()=>{
+ iarch(b){const c=clone(D),x=c.items.find(z=>z.id===b.dataset.id);if(!x)return;x.arch=!x.arch;if(commit(c)){if(b.dataset.from)done(x.arch?'Barang dinonaktifkan':'Barang diaktifkan');else{refresh();toast(x.arch?'Barang dinonaktifkan':'Barang diaktifkan')}}},
+ idel(b){const x=itm(b.dataset.id);if(!x)return;ask({title:'Hapus barang',msg:'Hapus "'+x.name+'"? Barang ini belum punya riwayat.',ok:'Hapus',danger:1,puzzle:1},()=>{const c=clone(D);c.items=c.items.filter(z=>z.id!==x.id);c.adj=c.adj.filter(z=>z.i!==x.id);if(commit(c)){back(b.dataset.from?2:1);refresh();toast('Barang dihapus')}})},
+ adel(b){const a=D.adj.find(z=>z.id===b.dataset.id);if(!a)return;ask({title:'Batalkan penyesuaian',msg:'Stok akan kembali seperti sebelum penyesuaian ini.',ok:'Batalkan',danger:1,puzzle:1},()=>{
   const r=tryApply(d=>{d.adj=d.adj.filter(z=>z.id!==a.id)});if(!r.ok)return toast('Tidak bisa: stok '+r.item.name+' akan minus');if(commit(r.data,'Penyesuaian dibatalkan'))refresh()})},
  cnew(b){openCart(b.dataset.t)},cadd(){PK='';PKK='all';openPage(pgPicker,[],{rev:true})},
  pick(b){const l=CT.lines.find(z=>z.i===b.dataset.id),x=itm(b.dataset.id);
@@ -1191,7 +1301,7 @@ const A={
  nd(b){openPage(pgNota,[b.dataset.id],{live:true})},nmenu(b){const id=b.dataset.id;openMenu(b,NMENU[id]||[],'',v=>{closeMenu();const f=A[v];if(f)f({dataset:{id}})})},
  pty(b,e){if(e&&e.preventDefault)e.preventDefault();openPage(pgParty,[b.dataset.id],{live:true})},
  ne(b){const n=nOf(b.dataset.id);if(retsOf(n.id).length)return toast('Batalkan retur dulu sebelum mengedit');openCart(n.t,n.id)},
- nv(b){const n=nOf(b.dataset.id);ask({title:'Batalkan nota',msg:'Nota '+nno(n)+' akan dibatalkan dan stok dikembalikan.',ok:'Batalkan nota',danger:1},()=>{
+ nv(b){const n=nOf(b.dataset.id);ask({title:'Batalkan nota',msg:'Nota '+nno(n)+' akan dibatalkan dan stok dikembalikan.',ok:'Batalkan nota',danger:1,puzzle:1},()=>{
   const r=tryApply(d=>{d.notas.find(z=>z.id===n.id).void=true});if(!r.ok)return toast('Tidak bisa: stok '+r.item.name+' akan minus');if(commit(r.data,'Nota dibatalkan'))refresh()})},
  nrest(b){const n=nOf(b.dataset.id);const r=tryApply(d=>{d.notas.find(z=>z.id===n.id).void=false});if(!r.ok)return toast('Stok '+r.item.name+' tidak cukup untuk memulihkan');if(commit(r.data,'Nota dipulihkan'))refresh()},
  nr(b){openPage(pgRet,[b.dataset.id])},
@@ -1206,8 +1316,8 @@ const A={
  paysave(b){const pid=b.dataset.pid,nid=b.dataset.nid,v=vals(topPg()),a=pm(v.a),n=nid?nOf(nid):null,max=n?((rowOf(n)||{out:0}).out):al(pid).debt;
   if(!(a>0)||a>max+0.5)return bad('[name=a]','Jumlah bayar tidak valid (maks '+rp(max)+')');
   const c=clone(D);c.pays.push({id:uid(),partyId:pid,notaId:nid||null,a,d:v.d,ts:Date.now(),note:(v.note||'').trim()});if(commit(c))done('Pembayaran dicatat')},
- pdel(b){const p=D.pays.find(z=>z.id===b.dataset.id);if(!p)return;ask({title:'Batalkan pembayaran',msg:'Pembayaran '+rp(p.a)+' akan dihapus dari catatan.',ok:'Batalkan',danger:1},()=>{const c=clone(D);c.pays=c.pays.filter(z=>z.id!==p.id);if(commit(c,'Pembayaran dibatalkan'))refresh()})},
- rdel(b){const r0=D.rets.find(z=>z.id===b.dataset.id);if(!r0)return;ask({title:'Batalkan retur',msg:'Stok dan hutang akan dihitung ulang tanpa retur ini.',ok:'Batalkan',danger:1},()=>{
+ pdel(b){const p=D.pays.find(z=>z.id===b.dataset.id);if(!p)return;ask({title:'Batalkan pembayaran',msg:'Pembayaran '+rp(p.a)+' akan dihapus dari catatan.',ok:'Batalkan',danger:1,puzzle:1},()=>{const c=clone(D);c.pays=c.pays.filter(z=>z.id!==p.id);if(commit(c,'Pembayaran dibatalkan'))refresh()})},
+ rdel(b){const r0=D.rets.find(z=>z.id===b.dataset.id);if(!r0)return;ask({title:'Batalkan retur',msg:'Stok dan hutang akan dihitung ulang tanpa retur ini.',ok:'Batalkan',danger:1,puzzle:1},()=>{
   const r=tryApply(d=>{d.rets=d.rets.filter(z=>z.id!==r0.id)});if(!r.ok)return toast('Tidak bisa: stok '+r.item.name+' akan minus');if(commit(r.data,'Retur dibatalkan'))refresh()})},
  nwa(b){const n=nOf(b.dataset.id),pt=pOf(n.partyId);waOpen(pt.phone,waText(pt.id))},pwa(b){const pt=pOf(b.dataset.id);waOpen(pt.phone,waText(pt.id))},
  pnew(){openPage(pgPartyEdit,[''])},ped(b){openPage(pgPartyEdit,[b.dataset.id])},
@@ -1215,7 +1325,7 @@ const A={
   if(D.parties.some(p=>p.k==='c'&&p.id!==id&&p.name.toLowerCase()===name.toLowerCase()))return bad('[name=name]','Nama pelanggan sudah ada');
   const c=clone(D);if(id){const p=c.parties.find(z=>z.id===id);p.name=name;p.phone=(v.phone||'').trim()}else c.parties.push({id:uid(),k:'c',name,phone:(v.phone||'').trim(),ts:Date.now()});
   if(commit(c))done('Tersimpan')},
- pdelp(b){const c=clone(D);c.parties=c.parties.filter(z=>z.id!==b.dataset.id);if(commit(c))done('Pelanggan dihapus')},
+ pdelp(b){const pid=b.dataset.id,p=D.parties.find(z=>z.id===pid);if(!p)return;ask({title:'Hapus pelanggan',msg:'Hapus "'+p.name+'" dari daftar?',ok:'Hapus',danger:1,puzzle:1},()=>{const c=clone(D);c.parties=c.parties.filter(z=>z.id!==pid);if(commit(c))done('Pelanggan dihapus')})},
  bk(){dl('bm-warung-backup-'+today()+'.json',JSON.stringify(D),'application/json')},cv(){csvTx()},cvs(){csvStok()},
  rfpick(){if(window.BMShopSync)return toast('Tidak tersedia saat tersambung database');const e=document.getElementById('rf');if(e)e.click()},
  rs(){if(window.BMShopSync)return toast('Tidak tersedia saat tersambung database');ask({title:'Hapus semua data',msg:'Semua barang, nota, dan hutang akan dihapus. Pastikan sudah backup.',ok:'Lanjut',danger:1},()=>{ask({title:'Yakin?',msg:'Data yang dihapus tidak bisa dikembalikan.',ok:'Hapus semua',danger:1},()=>{D=blank();if(save()){back(PGS.length);render(true);toast('Semua data dihapus')}})})},
@@ -1287,6 +1397,6 @@ document.addEventListener('change',e=>{const s=e.target;
 try{applyTheme(theme())}catch(e){}
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 buildNav();render(true);
-if(window.BMShopSync)BMShopSync.start({get:()=>D,set:v=>{D=v;inval()},refresh:()=>{try{refresh()}catch(e){render(false)}},toast:m=>toast(m),pages:()=>PGS.length,blank});
+if(window.BMShopSync)BMShopSync.start({get:()=>D,set:v=>{D=v;if(!Array.isArray(D.kinds))D.kinds=[];regKinds(D.kinds,D.items);inval()},refresh:()=>{try{refresh()}catch(e){render(false)}},toast:m=>toast(m),pages:()=>PGS.length,blank});
 </script><script src="/bm-jarvis.js" defer></script>
 </body></html>
