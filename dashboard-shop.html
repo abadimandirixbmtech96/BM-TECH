@@ -1014,8 +1014,8 @@ function tone(f,t0,d,v){const o=AC.createOscillator(),g=AC.createGain();o.type='
 function playSnd(k){const src=sndSrc(k);let a=AUD[k];if(!a||a.dataset.s!==src){a=new Audio(src);a.preload='auto';a.dataset.s=src;AUD[k]=a}
  try{a.currentTime=0}catch(e){}try{const pr=a.play();if(pr&&pr.catch)pr.catch(()=>synth(k==='ok'))}catch(e){synth(k==='ok')}}
 function ping(ok){try{if(navigator.vibrate)navigator.vibrate(ok?40:[60,50,60])}catch(e){}if(!sndOn())return;playSnd(ok?'ok':'no')}
-const OSL={B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'};
-/* Kode pabrik piston = keluarga mesin + huruf ukuran (AKH-KWB-C: keluarga AKH-KWB, ukuran C = OS 50).
+const OSL={A:'STD',B:'25',C:'50',D:'75',E:'100',F:'125',G:'150',H:'175',I:'200'};
+/* Kode pabrik piston = keluarga mesin + huruf ukuran (AKH-KWB-C: keluarga AKH-KWB, ukuran C = OS 50; A = STD sampai I = OS 200).
    Cukup satu kotak dihubungkan, ukuran lain model yang sama langsung dikenali dari keluarganya. */
 function suggestFromCode(code){const c=cn(code),m=c.match(/^([A-Z0-9]+)-([A-Z0-9]+)-([A-Z])$/);if(!m)return null;
  const fam=m[1]+'-'+m[2],own=x=>[x.pc].concat(x.codes||[]).some(p=>p&&cn(p)!==c&&cn(p).indexOf(fam+'-')===0);
@@ -1106,10 +1106,10 @@ function ocNear(a,l){if(a.x0==null||l.x0==null)return true;const aw=a.x1-a.x0,h=
 function ocBuild(a,lines){const ctx=lines.filter(l=>ocNear(a.l,l)),txt=ocFix(ctx.map(l=>l.t).join(' | ')),model=ocModel(txt);
  const bb=a.l.x0==null?null:{x:a.l.x0,y:a.l.y0,width:a.l.x1-a.l.x0,height:a.l.y1-a.l.y0};
  if(a.kind==='piston'){const sg=suggestFromCode(a.pc),mo=/UKURAN\s*[:.]?\s*([0-2][.,]\s?(?:25|50|75|00))/.exec(txt)||/(?<![0-9])([0-2][.,](?:25|50|75|00))(?![0-9])/.exec(txt);
-  const byL=OSL[a.pc.slice(-1)]||'',byT=mo?String(parseInt(mo[1].replace(/[^0-9]/g,''),10)):'',os=byL||byT;
+  const byL=OSL[a.pc.slice(-1)]||'',byN=mo?parseInt(mo[1].replace(/[^0-9]/g,''),10):NaN,byT=isNaN(byN)?(/\bSTD\b|STANDAR/.test(txt)?'STD':''):byN===0?'STD':String(byN),os=byL||byT;
   const R={kind:'piston',pc:a.pc,os,model,bb,base:(sg&&sg.base)||model};
-  if(byT&&byL&&byT!==byL)R.warn='Huruf kode menunjuk OS '+byL+', tulisan ukuran terbaca OS '+byT+'. Periksa stikernya.';
-  R.label='Paket piston'+(model?' '+model:'')+(os?' OS '+os:'');return R}
+  if(byT&&byL&&byT!==byL)R.warn='Huruf kode menunjuk '+osTxt({kind:'piston',a:{os:byL}})+', tulisan ukuran terbaca '+osTxt({kind:'piston',a:{os:byT}})+'. Periksa stikernya.';
+  R.label='Paket piston'+(model?' '+model:'')+(os?(os==='STD'?' STD':' OS '+os):'');return R}
  if(a.kind==='stang'){let base=model?'Stang seher '+model:'';if(!base){const m=a.pc.split('-')[1],pi=D.items.find(x=>kindOf(x)==='piston'&&x.pc&&cn(x.pc).split('-')[1]===m);if(pi)base='Stang seher '+(pi.base||pi.name)}
   return{kind:'stang',pc:a.pc,model,bb,base,label:'Stang seher'+(model?' '+model:'')+' · '+a.pc}}
  if(a.kind==='bearing'){const ev=/BEARING|LAHER|BANTALAN|NACHI|NSK|KOYO|SKF|FAG|NTN|TIMKEN|YAMAHA/.test(txt);if(!a.sfx&&!ev)return null;
