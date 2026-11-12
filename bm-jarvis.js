@@ -124,7 +124,7 @@
 .bmj-rt{display:flex;gap:14px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid var(--bmj-bd);font-size:13px;font-weight:800}\
 #bmj-sheet{--bmj-bg:#121214;--bmj-tx:#f2f2f2;--bmj-mu:#8d8d93;--bmj-pill:rgba(255,255,255,.08);--bmj-bd:rgba(255,255,255,.13);font-family:var(--bm-font,inherit);color-scheme:dark}\
 #bmj-sheet.bmj-lt{--bmj-bg:#ffffff;--bmj-tx:#161616;--bmj-mu:#6b6b70;--bmj-pill:rgba(0,0,0,.055);--bmj-bd:rgba(0,0,0,.12);color-scheme:light}\
-#bmj-sheet button,#bmj-sheet input{font-family:inherit}#bmj-in::placeholder{color:var(--bmj-mu)}';
+#bmj-sheet button,#bmj-sheet input{font-family:inherit}.bmj-mdl{font-size:11.5px;opacity:.7;padding:0 4px;line-height:1.4;word-break:break-word}.bmj-mdl-w{opacity:1;color:#d9480f;font-weight:700}#bmj-in::placeholder{color:var(--bmj-mu)}';
 
   var ICON_HUD = '<svg viewBox="-50 -50 100 100" aria-hidden="true"><g class="bmj-r"><circle r="39" class="bmj-tk"/></g><g class="bmj-r bmj-r2"><circle r="31" class="bmj-a2"/></g><circle r="22" class="bmj-th"/><circle r="9" class="bmj-core"/></svg>';
   var ICON_BOT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/></svg>';
@@ -446,6 +446,15 @@
     else { row.ic.className = 'bmj-ic bmj-' + ev.state; row.ic.textContent = ev.state === 'ok' ? '✓' : '✗'; row.sub.textContent = ev.text; setStatus(R, ev.text); }
     toBottom();
   }
+  /* bukti model: siapa yang benar-benar menjawab (dilaporkan server penyedia) */
+  function modelLine(mi) {
+    var d = document.createElement('div'); d.className = 'bmj-mdl' + (mi && mi.cocok === false ? ' bmj-mdl-w' : '');
+    if (!mi || !mi.dipakai) { d.textContent = 'Model tidak diketahui'; return d; }
+    var u = mi.dipakai, nm = u.penyedia + ' · ' + u.id + (u.dilaporkan && u.dilaporkan !== u.id ? ' (server: ' + u.dilaporkan + ')' : u.dilaporkan ? ' ✓ dikonfirmasi server' : '');
+    if (mi.cocok === false && mi.diminta && mi.diminta.id) d.textContent = 'Model pilihan ' + mi.diminta.penyedia + ' · ' + mi.diminta.id + ' tidak menjawab' + (mi.gagal && mi.gagal.length ? ' (' + mi.gagal[0] + ')' : '') + '. Dijawab cadangan: ' + nm;
+    else d.textContent = 'Dijawab oleh ' + nm;
+    return d;
+  }
   function finishSteps(R, ok) {
     R.steps.classList.remove('bmj-live'); R.spin.className = 'bmj-ic ' + (ok ? 'bmj-ok' : 'bmj-err'); R.spin.textContent = ok ? '✓' : '✗';
     var sec = Math.max(1, Math.round((Date.now() - R.t0) / 1000));
@@ -632,6 +641,7 @@
       ['actions', 'proposals', 'notas', 'reports', 'visuals'].forEach(function (k) { fin[k] = acc[k].concat(fin[k] || []); });
       clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
+      if (fin.model) R.wrap.appendChild(modelLine(fin.model));
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
       var ctl = curCtl = { skip: false }; ans.onclick = function () { ctl.skip = true; };      // ketuk jawaban = lewati animasi
       speak(spokenOf(blocks, reps), resumeWake);                                              // suara jalan bersamaan dengan efek mengetik
