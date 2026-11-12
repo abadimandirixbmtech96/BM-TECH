@@ -774,10 +774,10 @@ function csvStok(){const st=cc().stock,r=[['Jenis','Barang','Kode pabrik','Satua
 /* ================= Impor data barang ================= */
 const OSL5=['STD','25','50','75','100','125','150','175','200'];
 let IM={kind:'piston',recs:[],sizes:['STD','25','50','75','100','125','150','175','200'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
-const HSYN={name:/^(nama|nama barang|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk)$/,
- os:/^(os|oversize|over size|ukuran|ukuran os|uk|size)$/,
+const HSYN={name:/^(nama|nama barang|nama piston|nama motor|nama laher|nama stang|nama item|nama model|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk)$/,
+ os:/^(os|oversize|over size|ukuran|ukuran os|uk|size|os piston)$/,
  seri:/^(seri|series|no seri|nomor seri|seri laher|kode laher|tipe laher|seri bearing)$/,
- sell:/^(harga|harga jual|jual|price|hj|harga satuan|harga pcs|harga eceran)$/,
+ sell:/^(harga|harga jual|jual|price|hj|harga satuan|harga pcs|harga eceran|harga paket)$/,
  q:/^(stok|stock|qty|jumlah|sisa|ada|jml|stok awal|saldo|stok sekarang)$/,
  pc:/^(kode|kode pabrik|part|part no|part number|no part|sku|kode model|barcode|kode barang)$/,
  jenis:/^(jenis|jenis barang)$/,versi:/^(versi|version|varian)$/,unit:/^(satuan|unit|sat)$/,cat:/^(kategori|category|grup|group)$/,brand:/^(merek|merk|brand|pabrik)$/};
@@ -806,7 +806,7 @@ function imTok(kind,text){let s=imStrip(String(text||'').replace(/\t+/g,' ')),o=
   if(m){const parts=m[1].split(/\s*(?:[\/,&]|dan|s\/d|sd|-)\s*/i),range=/s\/d|sd|-/i.test(m[1].replace(/[.,]/g,''))&&parts.length===2,v=parts.map(p=>imOS(p)||'?'+p.trim());
    if(range&&OSL5.includes(v[0])&&OSL5.includes(v[1])){const a=OSL5.indexOf(v[0]),b=OSL5.indexOf(v[1]);o.os=OSL5.slice(Math.min(a,b),Math.max(a,b)+1)}else o.os=v;
    s=s.replace(m[0],' ')}
-  else{m=/(?<![\d.,])([0-2][.,](?:00|25|50|75)|\+(?:25|50|75|100|125|150|175|200))(?![\d])/.exec(s)||/(?<![\d.,A-Za-z])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
+  else{m=/(?<![\d.,])([0-2][.,](?:00|25|50|75)|\+(?:25|50|75|100|125|150|175|200))(?![\d])/.exec(s)||/(?<![\d.,A-Za-z-])(25|50|75|100)(?![\d.,A-Za-z])/.exec(s)||/\b(std|standar)\b/i.exec(s);
    if(m){const v=imOS(m[1]||m[0]);if(v){o.os=[v];s=s.replace(m[0],' ')}}}}
  o.name=s.replace(/\brp\.?\b/ig,' ').replace(/[|;:=]+/g,' ').replace(/\s[-–—]\s/g,' ').replace(/^[\s\-–—,.]+|[\s\-–—,.]+$/g,'').replace(/\s+/g,' ').trim();return o}
 function imHeader(row){const m={},osc=[];let hit=0;
@@ -833,7 +833,7 @@ function imRec(kind,g,multi){
  const t=imTok(kind,g.name||''),sell=g.sell!==undefined&&g.sell!==''?imPrice(g.sell):t.sell,q=g.q!==undefined&&g.q!==''?imQ(g.q):t.q;
  const base={kind,name:t.name,sell,q,pc:String(g.pc||'').trim(),jenis:g.jenis||'',versi:g.versi||'',unit:(g.unit||t.unit||'').trim(),cat:g.cat||'',brand:g.brand||'',seri:String(g.seri||t.seri||'').trim(),os:''};
  if(kind==='piston'){
-  if(g.os!==undefined&&g.os!==''){const v=imOS(g.os);base.os=v||'?'+g.os;return multi?[base]:base}
+  if(g.os!==undefined&&g.os!==''){const v=imOS(g.os);base.os=v||'?'+g.os;base.name=String(g.name||'').replace(/\s+/g,' ').trim()||base.name;return multi?[base]:base}   /* kolom OS ada: nama dipakai apa adanya (RC-100 tetap RC-100) */
   if(t.os.length){const l=t.os.map(v=>Object.assign({},base,{os:v,q:t.os.length>1?null:q}));return multi?l:l[0]}
   if(!IM.sizes.length)return multi?[base]:base;
   const l=IM.sizes.map(v=>Object.assign({},base,{os:v,q:null,assumed:true}));return multi?l:l[0]}
@@ -855,6 +855,8 @@ function imFinish(kind,recs){const seen={},out=[];
 function imCsv(t,pasted){t=t.replace(/^\uFEFF/,'');const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return[];
  const sm=lines.slice(0,12),need=Math.max(1,Math.ceil(sm.length*0.6));let d=null;
  for(const c of(pasted?['\t',';','|']:['\t',';','|',','])){if(sm.filter(l=>l.indexOf(c)>=0).length>=need){d=c;break}}
+ /* teks tempelan berformat CSV (baris judul tanpa angka, jumlah koma sama di tiap baris): pakai koma sebagai pemisah kolom */
+ if(!d&&pasted&&sm.length>=2&&!/\d/.test(sm[0])){const n=(l)=>(l.match(/,/g)||[]).length,k=n(sm[0]);if(k>=1&&sm.every(l=>n(l)===k))d=','}
  if(!d)return lines.map(l=>[l]);
  const rows=[];let row=[],cur='',q=false;
  for(let i=0;i<t.length;i++){const ch=t[i];
