@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v37'; // dinaikkan: kode keluarga mesin, jenis barang kustom, isi stok dengan scan, puzzle hapus, Jarvis isi kasir
+const CACHE_NAME = 'bmtech-shell-v38'; // dinaikkan: OS maksimal 200, hapus semua barang dengan puzzle, memori dan refleksi Jarvis
 
 const APP_SHELL = [
   '/dashboard-shop.html',
