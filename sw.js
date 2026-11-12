@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v41'; // dinaikkan: bukti model yang menjawab, uji model, grafik omzet rapi
+const CACHE_NAME = 'bmtech-shell-v42'; // dinaikkan: impor CSV nama_piston,os,harga
 
 const APP_SHELL = [
   '/dashboard-shop.html',
