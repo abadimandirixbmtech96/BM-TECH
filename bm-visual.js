@@ -71,7 +71,7 @@
     }
     var step = Math.max(1, Math.ceil(n / 8)), slot = iw / Math.max(n, 1);
     labels.forEach(function (lb, i) {
-      if (i % step && i !== n - 1) return;
+      if (i !== n - 1 && (i % step || n - 1 - i < step * 0.6)) return;   // label terakhir selalu tampil, label sebelumnya yang terlalu dekat dilewati
       var t = sv('text', { x: L + slot * (i + .5), y: H - B + 18, 'text-anchor': 'middle', fill: 'currentColor', 'fill-opacity': .7 }); t.textContent = lb.length > 10 ? lb.slice(0, 9) + '…' : lb; svg.appendChild(t);
     });
     var hits = [];
