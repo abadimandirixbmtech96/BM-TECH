@@ -44,7 +44,7 @@ function keyFor(p, keys) { return (keys && keys[p]) || PROVIDERS[p].key() || '';
 const COOL = new Map();   // "provider|model" -> waktu boleh dicoba lagi (router menghindari model yang kena limit)
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v20-cepat-kunci-hp-2026-11-12';
+const VERSION = 'jarvis-v21-bukti-model-2026-11-12';
 const MAX_TOOL_ROUNDS = 8;
 const ROUND_BUDGET_MS = 34000;   // lewat ini -> hentikan rapi & minta browser melanjutkan otomatis
 const MAX_RESULT_CHARS = 14000;
@@ -831,7 +831,7 @@ async function t_omzet_gabungan(q, a) {
     rincian: rows.length > 40 ? rows.filter((r) => r.total) : rows };
   if (a.grafik !== false && keys.length >= 2) {
     out.visual = { tipe: 'grafik', jenis: lower(a.jenis) === 'batang' ? 'batang' : 'garis', judul: 'Omzet bersih ' + P.label, sub: 'Total ' + rp(tb + tw) + ' · bengkel ' + rp(tb) + ' · warung ' + rp(tw), satuan: 'rp', label: rows.map((r) => r.periode),
-      seri: [{ nama: 'Total', nilai: rows.map((r) => r.total) }, { nama: 'Bengkel', nilai: rows.map((r) => r.bengkel) }, { nama: 'Warung', nilai: rows.map((r) => r.warung) }] };
+      seri: [{ nama: 'Total', nilai: rows.map((r) => r.total) }].concat(tb && tw ? [{ nama: 'Bengkel', nilai: rows.map((r) => r.bengkel) }, { nama: 'Warung', nilai: rows.map((r) => r.warung) }] : []) };   // satu sumber kosong: cukup garis Total (tidak ada garis bertumpuk)
     out.ringkasan = Object.assign({}, out); delete out.ringkasan.visual; delete out.ringkasan.ringkasan;
   }
   return out;
@@ -1252,7 +1252,7 @@ async function invoke(entry, contents, sys, tools, ctx) {
         body: JSON.stringify(Object.assign({ systemInstruction: { parts: [{ text: sys }] }, contents: withSig(contents, model) }, noTools ? {} : { tools: [{ functionDeclarations: tools }], toolConfig: { functionCallingConfig: { mode: ctx.mode || 'AUTO' } } }, { generationConfig: { maxOutputTokens: maxTok } }))
       });
       j = await r.json().catch(() => null);
-      return { ok: r.ok && !!j, status: r.status, json: j, msg: (j && j.error && j.error.message) || r.status, ra: retryAfter(r) };
+      return { ok: r.ok && !!j, status: r.status, json: j, real: j && j.modelVersion, msg: (j && j.error && j.error.message) || r.status, ra: retryAfter(r) };
     }
     if (entry.p === 'claude') {
       r = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1263,7 +1263,7 @@ async function invoke(entry, contents, sys, tools, ctx) {
       if (r.ok && j && Array.isArray(j.content)) {
         const parts = []; let id = 0;
         j.content.forEach((b) => { if (b.type === 'text' && b.text) parts.push({ text: b.text }); else if (b.type === 'tool_use') parts.push({ functionCall: { name: b.name, args: b.input || {} } }); id++; });
-        return { ok: true, status: 200, json: { candidates: [{ content: { parts } }] } };
+        return { ok: true, status: 200, real: j.model, json: { candidates: [{ content: { parts } }] } };
       }
       return { ok: false, status: r.status, json: j, msg: (j && j.error && j.error.message) || r.status, ra: retryAfter(r) };
     }
@@ -1277,7 +1277,7 @@ async function invoke(entry, contents, sys, tools, ctx) {
     if (r.ok && m) {
       const parts = []; if (typeof m.content === 'string' && m.content) parts.push({ text: m.content });
       (m.tool_calls || []).forEach((tc) => { let args = {}; try { args = JSON.parse((tc.function && tc.function.arguments) || '{}'); } catch (e) {} parts.push({ functionCall: { name: tc.function && tc.function.name, args } }); });
-      return { ok: true, status: 200, json: { candidates: [{ content: { parts } }] } };
+      return { ok: true, status: 200, real: j.model, json: { candidates: [{ content: { parts } }] } };
     }
     return { ok: false, status: r.status, json: j, msg: (j && j.error && (j.error.message || j.error)) || r.status, ra: retryAfter(r) };
   } catch (e) {
@@ -1348,7 +1348,7 @@ async function callModel(contents, email, tools, ctx, extra) {
       if (ctx.onRetry) ctx.onRetry(PROVIDERS[e.p].name + ' lambat, mencoba lagi');
       o = await invoke(e, contents, sys, tools, ctx);   // gangguan sesaat: coba sekali lagi model yang sama sebelum pindah
     }
-    if (o.ok) { ctx.model = e.m; ctx.prov = e.p; return o.json; }
+    if (o.ok) { ctx.model = e.m; ctx.prov = e.p; ctx.real = o.real || ''; if (!ctx.firstErrs) ctx.firstErrs = errs.slice(); return o.json; }
     errs.push(PROVIDERS[e.p].name + ' ' + e.m + ': ' + clip(String(o.msg), 140));
     const k = e.p + '|' + e.m;
     if (o.status === 429) {
@@ -1365,6 +1365,12 @@ async function callModel(contents, email, tools, ctx, extra) {
   throw Object.assign(new Error('AI menolak: ' + errs.join(' | ')), { auto: sementara ? true : undefined });
 }
 
+/* Bukti model: penyedia + id model yang DIMINTA, dan nama model yang dilaporkan server penyedia itu sendiri */
+function modelInfo(body, g) {
+  const minta = PROVIDERS[body.provider] && typeof body.model === 'string' ? { penyedia: PROVIDERS[body.provider].name, id: body.model } : null;
+  const dipakai = g.prov ? { penyedia: PROVIDERS[g.prov].name, id: g.model, dilaporkan: clip(String(g.real || ''), 80) || undefined } : null;
+  return { diminta: minta || 'otomatis', dipakai, cocok: !minta || !!(dipakai && body.provider === g.prov && body.model === g.model), gagal: (g.firstErrs || []).slice(0, 4).map((x) => clip(x, 160)) };
+}
 /* ---------- saran pertanyaan yang berganti-ganti (waktu + kondisi data) ---------- */
 const SARAN_UMUM = ['Rangkum transaksi minggu ini', 'Siapa customer terbanyak bulan ini?', 'Grafik omzet bulan ini', 'Bandingkan omzet bengkel dan warung bulan ini',
   'Barang warung terlaris bulan ini', 'Barang warung yang perlu dibeli', 'Harga piston Blade semua ukuran', 'Cari catatan tanpa foto bukti', 'Total kasbon karyawan bulan ini',
@@ -1460,6 +1466,17 @@ module.exports = async function handler(req, res) {
       return res.status(ok ? 200 : 400).json(ok ? { ok: true, message: msg } : { error: msg });
     }
 
+    /* --- uji satu model persis (tanpa router/cadangan): bukti model benar-benar berjalan --- */
+    if (body.test_model) {
+      const t = body.test_model, pid = t && t.provider, mid = t && t.model;
+      if (!PROVIDERS[pid] || !MODEL_ID_RE.test(String(mid || ''))) return res.status(400).json({ error: 'Penyedia atau model tidak sah' });
+      if (!keyFor(pid, keys)) return res.status(400).json({ error: 'Kunci ' + PROVIDERS[pid].name + ' belum diisi' });
+      const t0 = Date.now();
+      const o = await invoke({ p: pid, m: mid }, [{ role: 'user', parts: [{ text: 'Balas persis satu kata: SIAP' }] }], 'Ikuti perintah dengan singkat.', [], { keys, maxTokens: 64, t0, timeoutMs: 25000 });
+      const txt = o.ok ? ((((o.json.candidates || [])[0] || {}).content || {}).parts || []).filter((x) => x.text).map((x) => x.text).join('').trim() : '';
+      return res.status(200).json({ ok: !!o.ok, penyedia: PROVIDERS[pid].name, diminta: mid, dilaporkan: o.real || '', ms: Date.now() - t0, jawab: clip(txt, 60), error: o.ok ? undefined : clip(String(o.msg), 200) });
+    }
+
     /* --- jalur percakapan --- */
     if (!anyKey() && !Object.keys(keys).length) return res.status(400).json({ error: 'Belum ada kunci API. Isi di Jarvis: Pengaturan > Penyedia dan model AI.' });
     const msg = clip(body.message, MAX_MSG_CHARS).trim();
@@ -1507,7 +1524,7 @@ module.exports = async function handler(req, res) {
         const g = await callModel(contents, user.email, [], Object.assign(gctx, { maxTokens: 400, timeoutMs: 15000 }), memoriPrompt(memRows) + '\nINI OBROLAN RINGAN: balas singkat dan ramah (1-2 kalimat), sebut dirimu Jarvis, tawarkan bantuan seputar data bengkel/warung. Jangan mengarang data atau angka.');
         const parts = ((g.candidates && g.candidates[0] && g.candidates[0].content) || {}).parts || [];
         const t = parts.filter((p) => p.text).map((p) => p.text).join('').trim();
-        return finish({ reply: t || 'Halo! Jarvis siap membantu. Mau cek data apa?', actions: [], proposals: [], reports: [], notas: [] });
+        return finish({ reply: t || 'Halo! Jarvis siap membantu. Mau cek data apa?', actions: [], proposals: [], reports: [], notas: [], model: modelInfo(body, gctx) });
       } catch (e) { return finish({ reply: 'Halo! Jarvis siap membantu. Mau cek data apa?', actions: [], proposals: [], reports: [], notas: [] }); }
     }
 
@@ -1576,7 +1593,8 @@ module.exports = async function handler(req, res) {
       if (e.auto === undefined) e.auto = /waktu habis|timeout|hampir habis|batas langkah/i.test(e.message || '');
       throw e;
     }
-    return finish({ reply, actions, proposals, reports, notas, visuals });
+    const mInfo = modelInfo(body, gctx);
+    return finish({ reply, actions, proposals, reports, notas, visuals, model: mInfo });
   } catch (err) {
     if (res.headersSent || res.getHeader('Content-Type') === 'application/x-ndjson; charset=utf-8') { try { res.write(JSON.stringify({ type: 'error', error: clip(err.message || 'Jarvis gagal', 200), partial: err.partial, resume: err.resume, resume_model: err.resume_model, auto: err.auto === true }) + '\n'); return res.end(); } catch (e) { return; } }
     return res.status(err.status || 500).json({ error: clip(err.message || 'Jarvis gagal', 200) });
