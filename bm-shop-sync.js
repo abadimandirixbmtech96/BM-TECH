@@ -1,5 +1,5 @@
 /* BM-TECH Kasir <-> Supabase
- * Versi: shop-sync-v2-2026-11-12
+ * Versi: shop-sync-v3-2026-11-12
  *
  * Cara kerja:
  * - Data kasir dimuat dari database lewat RPC shop_ambil_semua (RLS tetap berlaku).
@@ -79,7 +79,10 @@
     });
     var seq = { out: 0, in: 0 };
     notas.forEach(function (n) { if (n.src === 'kasir' && (n.no || 0) > seq[n.t]) seq[n.t] = n.no; });
-    return { v: 2, items: items, parties: parties, notas: notas, rets: rets, pays: pays, adj: adj, seq: seq };
+    var kinds = (s.jenis || []).map(function (j) {
+      return { id: j.kode, name: j.nama, unit: j.satuan || 'pcs', ts: num(j.urut) };
+    });
+    return { v: 2, items: items, parties: parties, notas: notas, rets: rets, pays: pays, adj: adj, seq: seq, kinds: kinds };
   }
 
   /* ---------------- Bentuk data kasir -> baris database ---------------- */
@@ -88,6 +91,7 @@
       kategori: x.cat || '', satuan: x.unit || 'pcs', harga_jual: +x.sell || 0, harga_beli: +x.buy || 0,
       stok_min: +x.min || 0, kode: (x.codes || []).map(String), kode_pabrik: x.pc || '', arsip: !!x.arch };
   }
+  function kindRow(k) { return { kode: k.id, nama: String(k.name || '').trim(), satuan: k.unit || 'pcs', urut: +k.ts || 0 }; }
   function partyRow(p) { return { id: p.id, jenis: p.k === 's' ? 'pemasok' : 'customer', nama: String(p.name || '').trim(), telp: p.phone || '' }; }
   function lineRow(l) {
     return { barang_id: l.i || null, nama: l.name, satuan: l.unit || 'pcs', qty: +l.q, harga: +l.p || 0, modal: l.c == null ? null : +l.c };
@@ -124,6 +128,10 @@
     var pA = byId(A.parties), pB = byId(B.parties);
     for (k in pB) if (!pA[k] || J(partyRow(pA[k])) !== J(partyRow(pB[k]))) ops.push({ op: 'party_upsert', row: partyRow(pB[k]) });
     for (k in pA) if (!pB[k]) dels.push({ op: 'party_delete', id: k, _o: 5 });
+
+    var kA = byId(A.kinds), kB = byId(B.kinds);
+    for (k in kB) if (!kA[k] || J(kindRow(kA[k])) !== J(kindRow(kB[k]))) ops.push({ op: 'kind_upsert', row: kindRow(kB[k]) });
+    for (k in kA) if (!kB[k]) dels.push({ op: 'kind_delete', id: k, _o: 6 });
 
     var iA = byId(A.items), iB = byId(B.items);
     for (k in iB) if (!iA[k] || J(itemRow(iA[k])) !== J(itemRow(iB[k]))) ops.push({ op: 'item_upsert', row: itemRow(iB[k]) });
@@ -166,7 +174,7 @@
     for (k in aA) if (!aB[k]) dels.push({ op: 'adj_delete', id: k, _o: 3 });
 
     // Urutan: pihak, barang, nota, retur, bayar, stok; lalu hapus dari yang paling bergantung.
-    var ord = { party_upsert: 1, item_upsert: 2, nota_upsert: 3, ret_insert: 4, pay_insert: 5, adj_insert: 6 };
+    var ord = { kind_upsert: 0, party_upsert: 1, item_upsert: 2, nota_upsert: 3, ret_insert: 4, pay_insert: 5, adj_insert: 6 };
     ops.sort(function (x, y) { return ord[x.op] - ord[y.op]; });
     dels.sort(function (x, y) { return x._o - y._o; });
     dels.forEach(function (d) { delete d._o; });
@@ -408,7 +416,7 @@
 
   /* ---------------- API untuk dashboard-shop.html ---------------- */
   window.BMShopSync = {
-    version: 'shop-sync-v2-2026-11-12',
+    version: 'shop-sync-v3-2026-11-12',
     cached: function () {
       cache = ls(K_CACHE); outbox = ls(K_OUT) || [];
       return cache && cache.data ? cache.data : null;
