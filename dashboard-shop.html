@@ -222,7 +222,7 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 .acts{display:flex;gap:8px;margin-top:10px}.acts .bt{flex:1;padding:0 var(--s2);height:42px;font-size:14px}
 .demo{margin-left:6px;vertical-align:2px}
 html.bold-mode body *{font-weight:700!important}
-</style></head><body>
+/* tablet & desktop: lebar mengikuti layar */@media(min-width:760px){header,main,.tbi,.pin{max-width:720px}.grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}@media(min-width:1100px){header,main,.tbi,.pin{max-width:960px}}</style></head><body>
 <div id="app">
 <header><div><div class="app">Buku Warung BM TECH<i class="tag mu demo">Demo</i></div><h1 id="ttl"></h1></div><button class="ib cog" data-a="st" aria-label="Pengaturan" id="gear"></button></header>
 <main id="v"></main>
@@ -230,6 +230,7 @@ html.bold-mode body *{font-weight:700!important}
 </div>
 <div id="pages"></div><div id="mn"></div><div id="sug"></div><div id="dlg"></div><div id="ts" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/bm-app.js"></script>
 <script src="bm-shop-sync.js"></script>
 <script>
 /* ================= Util ================= */

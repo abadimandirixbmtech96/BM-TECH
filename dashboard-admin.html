@@ -3306,6 +3306,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/bm-app.js"></script>
 <script src="/bm-session.js"></script>
 <script src="/bm-jarvis.js" defer></script>
 <script>
@@ -5805,8 +5806,18 @@
   (function () {
     const t = document.getElementById('drawerTitleRefresh');
     if (!t) return;
-    const go = () => location.reload();
+    // Segarkan data tanpa memuat ulang halaman
+    const go = () => {
+      t.classList.add('bm-spin');
+      Promise.resolve(loadCategories()).catch(() => {}).then(() => {
+        try { refreshTrashCount(); } catch (e) {}
+        try { refreshTasksIfVisible(); } catch (e) {}
+        t.classList.remove('bm-spin');
+        showMiniToast('Data diperbarui');
+      });
+    };
     t.addEventListener('click', go);
+    window.addEventListener('bm:refresh', (e) => { e.preventDefault(); go(); });
     t.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   })();
 
@@ -8311,6 +8322,17 @@
     } catch (e) { return ''; }
   }
 
+  function applyAppearanceLive() {
+    const light = localStorage.getItem('bm-theme') === 'light';
+    document.body.classList.toggle('theme-light', light);
+    themeCheckbox.checked = !light;
+    Object.values(FONT_CLASS_BY_ID).forEach(c => document.body.classList.remove(c));
+    const f = localStorage.getItem('bm-font');
+    if (f && FONT_CLASS_BY_ID[f]) document.body.classList.add(FONT_CLASS_BY_ID[f]);
+    document.body.classList.toggle('font-bold-mode', localStorage.getItem('bm-font-bold') === 'on');
+    if (window.BMTheme && BMTheme.reapply) BMTheme.reapply();
+  }
+
   function openPageModal(file, watchTheme) {
     document.getElementById('drawer').classList.remove('open');
     document.getElementById('drawerOverlay').classList.remove('open');
@@ -8334,9 +8356,14 @@
     setTimeout(() => { if (!pageModal.classList.contains('open')) navigateFrame(pageFrame, 'about:blank'); }, 500);
     // Kalau pengaturan tampilan berubah, dashboard dimuat ulang sekali (setelah panel turun)
     // supaya warna/font/bahasa baru langsung berlaku, lalu layar Settings dibuka lagi.
+    // Warna/font/tema berubah: dipasang langsung tanpa reload. Hanya ganti bahasa yang perlu muat ulang.
     if (pageThemeSnap !== null && themeSnapshot() !== pageThemeSnap) {
-      try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
-      setTimeout(() => location.reload(), 360);
+      if (window.BMTheme && BMTheme.langChangedSinceLoad && !BMTheme.langChangedSinceLoad()) {
+        applyAppearanceLive();
+      } else {
+        try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
+        setTimeout(() => location.reload(), 360);
+      }
     }
     pageThemeSnap = null;
   }
