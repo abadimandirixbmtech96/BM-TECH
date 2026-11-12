@@ -280,6 +280,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 <div id="toast"></div>
 
 <script src="/bm-nota.js"></script>
+<script src="/bm-visual.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 (function () {
@@ -672,9 +673,14 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var old = ls(LS_MODEL) || ''; if (!ls(LS_SEL) && /^gemini-[a-z0-9.\-]{2,60}$/.test(old) && activeProvs().indexOf('gemini') >= 0) return { p: 'gemini', m: old };
     return null;
   }
-  function payloadModel() { var c = curSel(); return { providers: activeProvs(), provider: c ? c.p : undefined, model: c ? c.m : undefined }; }
+  /* Kunci API pribadi: disimpan di HP ini saja (localStorage), dikirim ke server Jarvis per permintaan, tidak disimpan di server */
+  function keyOf(pid) { return (ls('bm-jarvis-key-' + pid) || '').trim(); }
+  function clientKeys() { var o = {}; PROV.forEach(function (p) { var k = keyOf(p.id); if (k) o[p.id] = k; }); return o; }
+  function fetchedModels(pid) { try { var a = JSON.parse(ls('bm-jarvis-models-' + pid) || 'null'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function payloadModel() { var c = curSel(); return { providers: activeProvs(), provider: c ? c.p : undefined, model: c ? c.m : undefined, keys: clientKeys() }; }
   function modelsOf(pid) {
-    var p = provOf(pid), list = p.models.map(function (x) { return { id: x[0], name: x[1], desc: x[2] }; });
+    var p = provOf(pid), list = fetchedModels(pid).filter(function (x) { return MODEL_RE.test(x.id || ''); }).map(function (x) { return { id: x.id, name: x.name || x.id, desc: x.ket || '' }; });
+    p.models.forEach(function (x) { if (!list.some(function (m) { return m.id === x[0]; })) list.push({ id: x[0], name: x[1], desc: x[2] }); });
     var add = function (id, desc) { if (MODEL_RE.test(id || '') && !list.some(function (m) { return m.id === id; })) list.push({ id: id, name: id, desc: desc }); };
     if (provInfo) (provInfo.filter(function (x) { return x.id === pid; })[0] || { model: [] }).model.forEach(function (id) { add(id, 'Dari server'); });
     add(ls('bm-jarvis-x-' + pid), 'Model khusus');
@@ -693,7 +699,38 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     } catch (e) {}
     return provInfo;
   }
-  function keyState(pid) { if (!provInfo) return null; var x = provInfo.filter(function (y) { return y.id === pid; })[0]; return x ? x.aktif : null; }
+  function keyState(pid) { if (keyOf(pid)) return true; if (!provInfo) return null; var x = provInfo.filter(function (y) { return y.id === pid; })[0]; return x ? x.aktif : null; }
+  function keySub(pid) { if (keyOf(pid)) return 'Kunci tersimpan di HP ini'; var ks = provInfo && (provInfo.filter(function (y) { return y.id === pid; })[0] || {}).aktif; return ks ? 'Memakai kunci Vercel' : 'Belum ada kunci'; }
+  function keySheet(p) {
+    openSheet('Kunci ' + p.name, function (b) {
+      var fm = mk('div', '', 'bf'), inp = mk('input'), msg = tx('small', '', '');
+      inp.type = 'password'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.spellcheck = false; inp.maxLength = 300;
+      inp.placeholder = 'Tempel kunci API ' + p.name; inp.value = keyOf(p.id);
+      fm.append(tx('label', '', 'Kunci API ' + p.name + ' (' + p.by + ')'), inp, msg);
+      b.appendChild(fm);
+      b.appendChild(toggleRow('Tampilkan kunci', 'Untuk memeriksa salah ketik', false, function (v) { inp.type = v ? 'text' : 'password'; }));
+      var act = mk('div', '', 'bfa'), sv = tx('button', 'pri', 'Simpan dan cek'), bk = tx('button', '', 'Kembali');
+      sv.onclick = async function () {
+        var k = inp.value.trim(); if (!k) return toast('Kunci masih kosong');
+        if (!/^[\x21-\x7e]{10,300}$/.test(k)) return toast('Kunci tidak valid (ada spasi atau huruf aneh)');
+        sv.disabled = true; sv.textContent = 'Mengecek…'; msg.textContent = '';
+        try {
+          var tk = await token(); var ks = {}; ks[p.id] = k;
+          var r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify({ list_models: p.id, keys: ks }) });
+          var j = await r.json().catch(function () { return {}; });
+          if (!r.ok || !j.ok) throw new Error(j.error || ('HTTP ' + r.status));
+          ls('bm-jarvis-key-' + p.id, k); ls('bm-jarvis-models-' + p.id, JSON.stringify(j.models || []));
+          var cur = activeProvs(); if (cur.indexOf(p.id) < 0) { cur.push(p.id); ls(LS_PROVS, JSON.stringify(cur)); }
+          paintModel(); toast('Kunci ' + p.name + ' tersimpan. ' + (j.models || []).length + ' model tersedia'); closeSheet(); setTimeout(providersSheet, 250);
+        } catch (e) { sv.disabled = false; sv.textContent = 'Simpan dan cek'; msg.textContent = 'Kunci ditolak: ' + (e.message || e); }
+      };
+      bk.onclick = function () { closeSheet(); setTimeout(providersSheet, 250); };
+      act.append(bk);
+      if (keyOf(p.id)) { var dl = tx('button', 'dg', 'Hapus kunci'); dl.onclick = function () { try { localStorage.removeItem('bm-jarvis-key-' + p.id); localStorage.removeItem('bm-jarvis-models-' + p.id); } catch (e) {} var c = curSel(); if (c && c.p === p.id && !(provInfo || []).some(function (y) { return y.id === p.id && y.aktif; })) ls(LS_SEL, ''); paintModel(); toast('Kunci dihapus dari HP ini'); closeSheet(); setTimeout(providersSheet, 250); }; act.appendChild(dl); }
+      act.appendChild(sv); b.appendChild(act);
+      b.appendChild(tx('div', 'note', 'Kunci hanya disimpan di HP ini, dipakai untuk permintaan Anda sendiri, dan tidak disimpan di server. Di HP lain perlu diisi lagi. Setelah dicek, daftar model dari ' + p.name + ' muncul di pilihan model dengan nama yang mudah dibaca.'));
+    });
+  }
   function openModelPop() {
     var pop = $('mpop'); pop.textContent = '';
     var cur = curSel();
@@ -712,7 +749,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var rowc = mk('div', '', 'mcus'), sel = mk('select'), inp = mk('input'), ok = tx('button', '', 'Pakai');
     activeProvs().forEach(function (pid) { var o = mk('option'); o.value = pid; o.textContent = provOf(pid).name; sel.appendChild(o); });
     if (cur) sel.value = cur.p;
-    inp.placeholder = 'ID model lain'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false;
+    inp.placeholder = 'Atau ketik nama model'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false;
     ok.onclick = function () { var v = inp.value.trim(); if (!MODEL_RE.test(v)) return toast('ID model tidak valid'); ls('bm-jarvis-x-' + sel.value, v); ls(LS_SEL, sel.value + '|' + v); paintModel(); closeModelPop(); toast('Model: ' + v); };
     rowc.append(sel, inp, ok); pop.appendChild(rowc);
     pop.classList.add('on'); $('bModel').classList.add('on'); $('bModel').setAttribute('aria-expanded', 'true');
@@ -725,16 +762,17 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     openSheet('Penyedia AI', function (b) {
       var act = activeProvs();
       PROV.forEach(function (p) {
-        var ks = keyState(p.id), sub = (ks === true ? 'Kunci terpasang' : ks === false ? 'Kunci belum dipasang di Vercel' : 'Status belum diketahui') + ' · ' + p.by;
+        var ks = keyState(p.id), sub = keySub(p.id) + ' · ' + p.by;
         b.appendChild(toggleRow(p.name, sub, act.indexOf(p.id) >= 0, function (on) {
           var cur = activeProvs(); if (on && cur.indexOf(p.id) < 0) cur.push(p.id); if (!on) cur = cur.filter(function (x) { return x !== p.id; });
           if (!cur.length) { toast('Minimal satu penyedia aktif'); closeSheet(); setTimeout(providersSheet, 250); return; }
           ls(LS_PROVS, JSON.stringify(cur)); var c = curSel(); if (c && cur.indexOf(c.p) < 0) ls(LS_SEL, ''); paintModel();
-          if (on && ks === false) toast(p.name + ': pasang kunci API di Vercel dulu');
+          if (on && !keyState(p.id)) { toast(p.name + ': isi kunci API dulu'); closeSheet(); setTimeout(function () { keySheet(p); }, 250); }
         }));
+        b.appendChild(item(I.gear, 'Kunci API ' + p.name, keySub(p.id) + (fetchedModels(p.id).length ? ' · ' + fetchedModels(p.id).length + ' model' : ''), function () { closeSheet(); setTimeout(function () { keySheet(p); }, 250); }));
       });
       b.appendChild(item(I.prov, 'Pilih model', 'Sekarang: ' + modelName(), function () { closeSheet(); setTimeout(openModelPop, 250); }));
-      b.appendChild(tx('div', 'note', 'Penyedia yang aktif muncul di pilihan model pada layar obrolan. Router: jika satu penyedia atau model kena batas pemakaian (rate limit), Jarvis otomatis pindah ke yang lain tanpa menghentikan pekerjaan. Kunci API disimpan di Vercel (GEMINI_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY, META_API_KEY), tidak pernah di HP.'));
+      b.appendChild(tx('div', 'note', 'Isi kunci API tiap penyedia di sini (tersimpan di HP ini saja). Setelah dicek, pilih modelnya dari daftar, tidak perlu menghafal ID. Router: jika satu penyedia atau model kena batas pemakaian atau lambat, Jarvis otomatis mencoba lagi atau pindah ke yang lain tanpa menghentikan pekerjaan. Kunci di Vercel tetap dipakai sebagai cadangan.'));
     });
   }
   /* ================= OTAK (pengetahuan tambahan) ================= */
@@ -833,17 +871,29 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var orb = mk('div', '', 'orb'), h = tx('h1', '', 'Halo! Saya '), sub = tx('p', 'sub', 'Asisten data bengkel BM-TECH. Tanyakan rekap, cari data, atau perintahkan saya.');
     var ban = mk('button', '', 'ban'); var bt = mk('div'); bt.append(tx('b', '', 'Rekap pekan ini'), tx('span', '', 'Tabel lengkap dari Buku Besar plus PDF siap unduh')); ban.append(bt, mk('span', '', 'go', I.arrow));
     ban.onclick = function () { submit('Rekap transaksi pekan ini'); };
-    var sugs = mk('div', '', 'sugs');
-    [[I.add, 'Buat nota Yanto, lemer grand', 'BARU'], [I.usr, 'Siapa yang masih berhutang?', ''], [I.sum, 'Total harga Buku Besar bulan ini', ''], [I.book, 'Buka editor Buku Besar hari ini', '']].forEach(function (s) {
-      var b = mk('button', '', 'sug'), ic = mk('span', '', 'ic', s[0]); b.append(ic, tx('span', '', s[1])); if (s[2]) b.appendChild(tx('small', '', s[2]));
-      b.onclick = function () { if (/^Buat nota/.test(s[1])) { el.in.value = 'Buatkan nota atas nama '; autoGrow(); syncBtns(); el.in.focus(); } else if (/^(Tambah|Cari)/.test(s[1])) { el.in.value = /^Tambah/.test(s[1]) ? 'Tambah data ke Buku Besar: ' : 'Cari data: '; autoGrow(); el.in.focus(); } else submit(s[1]); };
-      sugs.appendChild(b);
-    });
+    var sugs = mk('div', '', 'sugs'); homeSugs = sugs; fillSugs(localSaran());
     orb.setAttribute('aria-hidden', 'true'); orb.innerHTML = document.querySelector('#boot .orb').innerHTML;   // cincin HUD (markup statis)
     h.appendChild(tx('span', 'jv-name', 'Jarvis'));
     home.append(orb, h, sub, ban, sugs);
   }
-  function showHome() { el.log.textContent = ''; el.log.appendChild(home); }
+  /* saran berganti-ganti: dari server (waktu + kondisi data); cadangan acak dari daftar lokal */
+  var homeSugs = null, saranAt = 0, saranList = null;
+  var SARAN_LOKAL = ['Rangkum transaksi minggu ini', 'Grafik omzet bulan ini', 'Siapa yang masih berhutang?', 'Barang warung yang perlu dibeli', 'Customer yang barangnya masih ditinggal', 'Catatan bulan ini yang harganya kosong', 'Bandingkan omzet bengkel dan warung bulan ini', 'Apa saja yang kamu ingat?', 'Total harga Buku Besar bulan ini', 'Data hari ini yang belum diisi dibawa/ditinggal'];
+  function localSaran() { return SARAN_LOKAL.map(function (x) { return [Math.random(), x]; }).sort(function (a, b) { return a[0] - b[0]; }).slice(0, 4).map(function (x) { return x[1]; }); }
+  function fillSugs(list) {
+    if (!homeSugs) return; homeSugs.textContent = '';
+    list.slice(0, 4).forEach(function (q) {
+      var icon = /grafik|omzet|omset|pemasukan|total|kartu/i.test(q) ? I.sum : /hutang|customer|siapa/i.test(q) ? I.usr : /nota|buat|gambar/i.test(q) ? I.add : I.book;
+      var b = mk('button', '', 'sug'), ic = mk('span', '', 'ic', icon); b.append(ic, tx('span', '', q));
+      if (/^\d+ catatan|^Tampilkan \d+/.test(q)) b.appendChild(tx('small', '', 'DATA'));
+      b.onclick = function () { submit(q); }; homeSugs.appendChild(b);
+    });
+  }
+  async function loadSaran() {
+    if (saranList && Date.now() - saranAt < 120000) { fillSugs(saranList.slice().sort(function () { return Math.random() - .5; }).sort(function (a, b) { return (/^\d+ catatan|^Tampilkan \d+/.test(b) ? 1 : 0) - (/^\d+ catatan|^Tampilkan \d+/.test(a) ? 1 : 0); })); return; }
+    try { var tk = await token(); if (!tk) return; var r = await fetch(API + '?saran=1', { headers: { Authorization: 'Bearer ' + tk } }); var j = await r.json(); if (j && Array.isArray(j.saran) && j.saran.length) { saranList = j.saran; saranAt = Date.now(); fillSugs(j.saran); } } catch (e) {}
+  }
+  function showHome() { el.log.textContent = ''; el.log.appendChild(home); fillSugs(localSaran()); loadSaran(); }
   function addUser(t) { var d = mk('div', '', 'bmj-m bmj-u'); d.textContent = t; el.log.appendChild(d); toBottom(); return d; }
 
   function buildActs(reps, blocks, question) {
@@ -877,6 +927,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); wrap.appendChild(ans);
         reps.forEach(function (r) { wrap.appendChild(renderReport(r)); });
         (m.notas || []).forEach(function (n) { wrap.appendChild(window.BMNota.render(n)); });
+        (m.vis || []).forEach(function (v) { if (window.BMVisual) wrap.appendChild(window.BMVisual.render(v)); });
         wrap.appendChild(buildActs(reps, blocks, lastQ)); wrap.style.animation = 'none'; el.log.appendChild(wrap);
       } else { var s = tx('div', 'bmj-m bmj-s', m.text); el.log.appendChild(s); }
     });
@@ -1072,14 +1123,14 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var R = newReply();
     var tick = setInterval(function () { var idle = Math.round((Date.now() - R.last) / 1000); if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)'; }, 1500);
     try {
-      var pm = payloadModel(), acc = { actions: [], proposals: [], notas: [], reports: [] }, tries = 0, fin;
+      var pm = payloadModel(), acc = { actions: [], proposals: [], notas: [], reports: [], visuals: [] }, tries = 0, fin;
       for (;;) {
         try {
-          fin = await stream({ message: send, history: c.hist.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
+          fin = await stream({ message: send, history: c.hist.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
           break;
         } catch (e2) {
           var x = e2.extra || {};
-          ['actions', 'proposals', 'notas', 'reports'].forEach(function (k) { if (x.partial && x.partial[k]) acc[k] = acc[k].concat(x.partial[k]); });
+          ['actions', 'proposals', 'notas', 'reports', 'visuals'].forEach(function (k) { if (x.partial && x.partial[k]) acc[k] = acc[k].concat(x.partial[k]); });
           if (x.resume) { resume = x.resume; rmodel = x.resume_model || rmodel; }
           if (x.auto && !userStop && tries < 5) {   // waktu server habis / batas langkah: lanjut sendiri, bukan berhenti di tengah
             tries++; onStep(R, { id: 'au' + tries, state: 'run', text: 'Melanjutkan otomatis' }); onStep(R, { id: 'au' + tries, state: 'ok', text: 'Bagian ' + (tries + 1) });
@@ -1088,7 +1139,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
           e2.extra = Object.assign({}, x, { partial: acc, resume: resume, resume_model: rmodel }); throw e2;
         }
       }
-      ['actions', 'proposals', 'notas', 'reports'].forEach(function (k) { fin[k] = acc[k].concat(fin[k] || []); });
+      ['actions', 'proposals', 'notas', 'reports', 'visuals'].forEach(function (k) { fin[k] = acc[k].concat(fin[k] || []); });
       clearInterval(tick); finishSteps(R, true);
       var reply = fin.reply || '…', blocks = parseBlocks(reply), reps = fin.reports || [];
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
@@ -1098,9 +1149,10 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       await typeInto(ans, ctl);
       reps.forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
       var notas = fin.notas || []; notas.forEach(function (n) { R.wrap.appendChild(window.BMNota.render(n)); });
+      var vis = fin.visuals || []; vis.forEach(function (v) { if (window.BMVisual) R.wrap.appendChild(window.BMVisual.render(v)); });
       R.wrap.appendChild(buildActs(reps, blocks, text));
-      c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, reps: reps, notas: notas });
-      c.hist.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      c.msgs.push({ r: 'u', text: text }, { r: 'a', text: reply, reps: reps, notas: notas, vis: vis.filter(function (v) { return JSON.stringify(v).length < 60000; }) });
+      c.hist.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + vis.map(function (v) { return '\n[' + (v.tipe === 'grafik' ? 'Grafik' : v.tipe === 'kartu' ? 'Kartu angka' : 'Gambar') + ' "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (c.hist.length > 20) c.hist = c.hist.slice(-20);
       c.updated = Date.now(); save(); if (saveWarn) { saveWarn = false; toast('Memori HP penuh: obrolan lama dihapus otomatis'); }
       (fin.actions || []).forEach(showAction);
@@ -1119,6 +1171,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var pt = ex.partial || {};
       (pt.reports || []).forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
       (pt.notas || []).forEach(function (n) { R.wrap.appendChild(window.BMNota.render(n)); });
+      (pt.visuals || []).forEach(function (v) { if (window.BMVisual) R.wrap.appendChild(window.BMVisual.render(v)); });
       c.msgs.push({ r: 'u', text: text }, { r: 's', text: msg }); c.updated = Date.now(); save(); toBottom();
       (pt.actions || []).forEach(showAction); (pt.proposals || []).forEach(showProposal);
     } finally { clearInterval(tick); curAC = null; curCtl = null; setBusy(false); if ($('drw').classList.contains('on')) paintHist(); }
