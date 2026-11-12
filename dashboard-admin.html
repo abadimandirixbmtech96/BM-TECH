@@ -2916,6 +2916,10 @@
       <span class="settings-item-title">Daftar Nomor Customer</span>
       <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
+    <div class="settings-item" id="btnOpenKasir">
+      <span class="settings-item-title">Kasir (Dashboard Warung)</span>
+      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
     <div class="settings-item" id="btnOpenSystem">
       <span class="settings-item-title">System Management</span>
       <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
@@ -8469,6 +8473,10 @@
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
   document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
   document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
+  // Kasir dibuka sebagai halaman penuh (aplikasi terpisah dengan menu sendiri).
+  document.getElementById('btnOpenKasir').addEventListener('click', () => {
+    try { window.top.location.href = '/dashboard-shop.html'; } catch (e) { window.location.href = '/dashboard-shop.html'; }
+  });
 
 </script>
 <script>
