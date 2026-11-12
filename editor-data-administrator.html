@@ -845,6 +845,10 @@
   input, textarea, select, [contenteditable="true"]{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
   input::selection, textarea::selection{ background:rgba(var(--accent-rgb),0.35); color:inherit; }
   img{ -webkit-user-select:auto; user-select:auto; -webkit-touch-callout:default; }
+  #statIncompleteCard{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s,box-shadow .2s}
+  #statIncompleteCard:active{transform:scale(.97)}
+  #statIncompleteCard.on{box-shadow:0 0 0 2px var(--accent,#F0A529) inset}
+  .r-miss{display:block;margin-top:2px;font-size:11.5px;font-weight:700;color:#d9480f}
 </style>
 <script>
   // Isi halaman disembunyikan sampai data selesai dimuat, lalu muncul halus (tanpa kedip kosong-lalu-terisi).
@@ -972,10 +976,10 @@
         <div class="stat-card"><div class="stat-label">Total Data</div><div class="stat-value" id="statTotal">0</div></div>
         <div class="stat-card"><div class="stat-label">Hari Ini</div><div class="stat-value" id="statToday">0</div></div>
         <div class="stat-card"><div class="stat-label">Total Harga</div><div class="stat-value money" id="statHargaTotal">Rp 0</div></div>
-        <div class="stat-card"><div class="stat-label">Belum Lengkap</div><div class="stat-value" id="statIncomplete">0</div></div>
+        <div class="stat-card tap" id="statIncompleteCard" role="button" tabindex="0" title="Ketuk untuk melihat data yang belum lengkap"><div class="stat-label">Belum Lengkap</div><div class="stat-value" id="statIncomplete">0</div></div>
       </div>
 
-      <div class="section-label">Daftar Data Tersedia</div>
+      <div class="section-label" id="recentLabel">Daftar Data Tersedia</div>
       <div id="recentList"></div>
       <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk tombol "+" di bawah untuk mulai.</p>
     </div>
@@ -1046,6 +1050,11 @@
       <div class="field">
         <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
         <input type="text" id="inputBarang" placeholder="Contoh: Blok kph, askruk blade 3pcs" autocomplete="off">
+      </div>
+
+      <div class="field">
+        <label class="lbl-in">Barang dari Warung <span class="opt-tag">(opsional · stok warung ikut berkurang)</span></label>
+        <div id="wpAdd"></div>
       </div>
 
       <div class="field">
@@ -1139,6 +1148,11 @@
           <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
           <div class="val" id="detBarangView">—</div>
           <input type="text" id="detBarangEdit" style="display:none;">
+        </div>
+        <div class="detail-row" id="detWarungRow">
+          <label class="lbl-in">Barang dari Warung</label>
+          <div class="val" id="detWarungView">—</div>
+          <div id="detWarungEdit" style="display:none;"></div>
         </div>
         <div class="detail-row">
           <label class="lbl-out">Barang Keluar <span class="opt-tag">(yang dibawa pulang)</span></label>
@@ -1425,6 +1439,7 @@
     </div>
   </div>
 
+<script src="/bm-warung-pick.js"></script>
 <script>
   // =====================================================================
   // KONSTAN & STATE
@@ -2113,6 +2128,11 @@
     btnGaleri: document.getElementById('detBtnBuktiGaleri'), btnKamera: document.getElementById('detBtnBuktiKamera')
   });
 
+  /* Barang dari warung: pilih dari katalog Dashboard Warung (piston per OS, laher, dll); stok warung dipotong saat disimpan */
+  BMWarungPick.init({ client: supabaseClient, toast: function (t) { try { showMigrationToast(t); } catch (e) {} } });
+  const wpAdd = BMWarungPick.mount(document.getElementById('wpAdd'));
+  const wpDet = BMWarungPick.mount(document.getElementById('detWarungEdit'));
+
   function renderDetailBuktiView(list){
     const el = document.getElementById('detBuktiView');
     if (!list || !list.length) { el.innerHTML = 'Belum diisi'; el.classList.add('empty'); return; }
@@ -2265,6 +2285,15 @@
   function isRecordIncomplete(r){
     return !r.customer || !r.barangKeluar || !r.stokBarang || !r.keterangan || !r.harga;
   }
+  /* Kolom apa saja yang masih kosong (untuk filter "Belum lengkap") */
+  function missingOf(r){
+    const k = (v) => !String(v == null ? '' : v).trim(), out = [];
+    if (k(r.barangKeluar) && k(r.stokBarang)) out.push('dibawa/ditinggal');
+    else { if (k(r.barangKeluar)) out.push('barang keluar'); if (k(r.stokBarang)) out.push('barang ditinggal'); }
+    if (!r.harga) out.push('harga'); if (k(r.customer)) out.push('customer'); if (k(r.keterangan)) out.push('keterangan');
+    return out;
+  }
+  let onlyIncomplete = false;
 
   // =====================================================================
   // MIGRASI DATA LAMA (columns/rows freehand table -> records baru)
@@ -2772,6 +2801,8 @@
   // =====================================================================
   // HOME
   // =====================================================================
+  document.addEventListener('click', (e) => { const c = e.target.closest && e.target.closest('#statIncompleteCard'); if (!c) return; onlyIncomplete = !onlyIncomplete; renderRecentList(); });
+  document.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.id === 'statIncompleteCard') { e.preventDefault(); onlyIncomplete = !onlyIncomplete; renderRecentList(); } });
   function renderHome(){
     const now = new Date();
     document.getElementById('statTotal').textContent = records.length;
@@ -2787,7 +2818,11 @@
   function renderRecentList(){
     const all = sortedRecords();
     const noMap = new Map(all.map((r, i) => [r.id, i + 1]));
-    const recent = all.slice().reverse(); // tampilkan SEMUA data (terbaru di atas), bukan cuma beberapa terakhir
+    let recent = all.slice().reverse(); // tampilkan SEMUA data (terbaru di atas), bukan cuma beberapa terakhir
+    if (onlyIncomplete) recent = recent.filter(isRecordIncomplete);
+    const lbl = document.getElementById('recentLabel');
+    if (lbl) lbl.textContent = onlyIncomplete ? 'Belum lengkap (' + recent.length + ') · ketuk kartu lagi untuk semua data' : 'Daftar Data Tersedia';
+    const card = document.getElementById('statIncompleteCard'); if (card) card.classList.toggle('on', onlyIncomplete);
     const listEl = document.getElementById('recentList');
     const emptyEl = document.getElementById('recentEmptyHint');
 
@@ -2807,7 +2842,7 @@
           <div class="r-no">${pad3(noMap.get(r.id))}</div>
           <div class="r-mid">
             <b>${escapeHtml(r.customer) || '(tanpa customer)'}</b>
-            <span>${escapeHtml(r.pj) || '—'} · ${escapeHtml(r.barang) || '—'}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>
+            <span>${escapeHtml(r.pj) || '—'} · ${escapeHtml(r.barang) || '—'}${r.keterangan ? ' · ' + escapeHtml(r.keterangan) : ''} · ${fmtTanggalFromISO(r.created_at)} ${fmtWaktuFromISO(r.created_at)}</span>${onlyIncomplete ? '<span class="r-miss">Kosong: ' + escapeHtml(missingOf(r).join(', ')) + '</span>' : ''}
           </div>
           ${rightHtml}
         </div>
@@ -2835,6 +2870,7 @@
     document.getElementById('inputKeterangan').value = '';
     document.getElementById('inputHarga').value = '';
     addBukti.reset();
+    wpAdd.reset();
     addMetode.set('');
     resetPickupForm();
     restoreFormDraft();
@@ -3164,6 +3200,7 @@
     setPreviewOptional('cfMetode', metodeText(metode, addMetode.split()));
 
     pendingNewRecord = { pj, customer, barang, barangKeluar, stokBarang, keterangan, harga, bukti };
+    const warungDipakai = wpAdd.get(); if (warungDipakai.length) pendingNewRecord.warung = warungDipakai;
     applyMetodeToRecord(pendingNewRecord, addMetode);
     const pickupLinks = resolvePickupLinks(barang);
     if (pickupLinks.length) {
@@ -3212,7 +3249,10 @@
       pendingNewRecord.hargaScope = pendingScope;
     }
     const now = new Date().toISOString();
-    records.push({ id: uid(), ...pendingNewRecord, created_at: now });
+    const recBaru = { id: uid(), ...pendingNewRecord, created_at: now };
+    records.push(recBaru);
+    BMWarungPick.sync(recBaru);   // potong stok warung (bila ada barang dari warung)
+    wpAdd.reset();
     pendingNewRecord = null;
     clearFormDraft();
     closeOverlay('overlayConfirm');
@@ -3247,6 +3287,8 @@
     setDetailView('detPJview', r.pj);
     setDetailView('detCustomerView', r.customer);
     setDetailView('detBarangView', r.barang);
+    setDetailView('detWarungView', BMWarungPick.text(r.warung));
+    document.getElementById('detWarungRow').style.display = (r.warung && r.warung.length) ? '' : 'none';
     setDetailView('detKeluarView', r.barangKeluar);
     setDetailView('detStokView', r.stokBarang);
     setDetailView('detKetView', r.keterangan);
@@ -3272,6 +3314,9 @@
     document.getElementById('detPJedit').style.display = 'none';
     document.getElementById('detCustomerEdit').style.display = 'none';
     document.getElementById('detBarangEdit').style.display = 'none';
+    document.getElementById('detWarungView').style.display = '';
+    document.getElementById('detWarungEdit').style.display = 'none';
+    { const rw = records.find(x => x.id === editingRecordId); document.getElementById('detWarungRow').style.display = (rw && rw.warung && rw.warung.length) ? '' : 'none'; }
     document.getElementById('detKeluarEdit').style.display = 'none';
     document.getElementById('detStokEdit').style.display = 'none';
     document.getElementById('detKetEdit').style.display = 'none';
@@ -3300,6 +3345,10 @@
     document.getElementById('detPJedit').style.display = 'block';
     document.getElementById('detCustomerEdit').style.display = 'block';
     document.getElementById('detBarangEdit').style.display = 'block';
+    document.getElementById('detWarungView').style.display = 'none';
+    document.getElementById('detWarungEdit').style.display = 'block';
+    wpDet.set(r.warung || []);
+    document.getElementById('detWarungRow').style.display = '';
     document.getElementById('detKeluarEdit').style.display = 'block';
     document.getElementById('detStokEdit').style.display = 'block';
     document.getElementById('detKetEdit').style.display = 'block';
@@ -3351,6 +3400,8 @@
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
     r.pj = pj; r.customer = customer; r.barang = barang; r.barangKeluar = barangKeluar;
     r.stokBarang = stokBarang; r.keterangan = keterangan; r.harga = harga; r.bukti = bukti;
+    const warungBaru = wpDet.get();
+    if (warungBaru.length || Array.isArray(r.warung)) { r.warung = warungBaru; BMWarungPick.sync(r); }
     applyMetodeToRecord(r, detMetode);
     // Kalau tanda otomatis diubah manual, hormati pilihan manual (jangan ditimpa lagi)
     if (r.pickups) {
@@ -4783,6 +4834,7 @@
       const rec = records.find(r => r.id === deletingRecordId);
       if (rec) {
         records = records.filter(r => r !== rec);
+        if (Array.isArray(rec.warung) && rec.warung.length) BMWarungPick.unsync(rec.id);   // stok warung dikembalikan
         moveToTrash([rec]);
         showMigrationToast('Data dipindahkan ke Sampah. Bisa dipulihkan selama ' + TRASH_DAYS + ' hari (Pengaturan → Sampah).');
       }
@@ -4873,6 +4925,7 @@
     if (records.some(r => r.id === rec.id)) rec.id = uid(); // hindari id kembar
     if (rec.ambilDari) rec.ambilDari = rec.ambilDari.map(l => ({ ...l, synced: l.synced === 'reverted' ? false : l.synced }));
     records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
+    if (Array.isArray(rec.warung) && rec.warung.length) BMWarungPick.sync(rec);   // stok warung dipotong lagi
     scheduleAutosave();
     renderTrash();
     showMigrationToast('Data berhasil dipulihkan.');
