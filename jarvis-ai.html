@@ -45,21 +45,50 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 /* log + home */
 #bmj-log{flex:1;min-height:0;overflow-y:auto;padding:6px 16px 14px;display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch}
 #home{margin:auto 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:8px 0 4px;width:100%}
-.orb{width:84px;height:84px;border-radius:50%;position:relative;margin-bottom:8px;background:radial-gradient(circle at 32% 28%,#fff 0,rgba(255,255,255,.0) 28%),conic-gradient(from 210deg,var(--g1),var(--g2),var(--g3),var(--g1));box-shadow:0 0 38px rgba(124,92,255,.45),0 0 70px rgba(47,155,255,.25),inset 0 0 18px rgba(255,255,255,.35);animation:orb 5s ease-in-out infinite}
-.orb::after{content:"";position:absolute;inset:22%;border-radius:50%;background:var(--bg);box-shadow:inset 0 0 14px rgba(124,92,255,.7)}
-@keyframes orb{50%{transform:scale(1.06);box-shadow:0 0 52px rgba(124,92,255,.6),0 0 90px rgba(47,155,255,.35),inset 0 0 18px rgba(255,255,255,.35)}}
+.orb{--s:116px;--k:1;width:var(--s);height:var(--s);position:relative;margin-bottom:12px;color:var(--accent);filter:drop-shadow(0 0 12px rgba(var(--accent-rgb),.45))}
+.orb::before{content:"";position:absolute;inset:-22%;border-radius:50%;background:radial-gradient(circle,rgba(var(--accent-rgb),.24),rgba(var(--accent-rgb),0) 66%);animation:hudBreath calc(4s*var(--k)) ease-in-out infinite;pointer-events:none}
+.orb::after{content:"";position:absolute;inset:33%;border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(var(--accent-rgb),.95) 30%,rgba(var(--accent-rgb),.3) 60%,rgba(var(--accent-rgb),0) 72%);animation:hudCore calc(2.6s*var(--k)) ease-in-out infinite}
+.orb svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.orb circle{fill:none;stroke:currentColor}
+.orb .r{transform-box:fill-box;transform-origin:center;animation:hudSpin calc(26s*var(--k)) linear infinite}
+.orb .r2{animation-duration:calc(15s*var(--k));animation-direction:reverse}
+.orb .r3{animation-duration:calc(9s*var(--k))}
+.orb .r4{animation-duration:calc(5s*var(--k));animation-direction:reverse}
+.orb .tk{stroke-width:3;stroke-dasharray:1.2 6.8;opacity:.5}
+.orb .a2{stroke-width:2;stroke-dasharray:120 47.55;opacity:.8}
+.orb .a3{stroke-width:6;stroke-dasharray:150 57.35;stroke-linecap:round;opacity:.92}
+.orb .th{stroke-width:1;opacity:.32}
+.orb .a4{stroke-width:2.5;stroke-dasharray:40 29.1;opacity:.75}
+.orb.busy,.jv-busy .orb{--k:.32}
+.jv-listen .orb{--k:.6}.jv-listen .orb::after{animation-duration:.9s}
+@keyframes hudSpin{to{transform:rotate(360deg)}}
+@keyframes hudCore{50%{transform:scale(1.14);opacity:.82}}
+@keyframes hudBreath{50%{transform:scale(1.1);opacity:.65}}
+@media (prefers-reduced-motion:reduce){.orb .r,.orb::before,.orb::after{animation:none}}
+#boot .orb{--s:96px}
+.jv-name{color:var(--accent)}
+@supports (color:color-mix(in srgb,red,blue)) and ((-webkit-background-clip:text) or (background-clip:text)){
+ .jv-name{background:linear-gradient(100deg,var(--accent) 10%,color-mix(in srgb,var(--accent) 55%,#fff) 55%,var(--accent) 90%);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:jvSheen 6s ease-in-out infinite}
+ :root.theme-light .jv-name{background-image:linear-gradient(100deg,color-mix(in srgb,var(--accent) 72%,#000) 10%,var(--accent) 55%,color-mix(in srgb,var(--accent) 72%,#000) 90%)}
+}
+@keyframes jvSheen{50%{background-position:100% 0}}
+@media (prefers-reduced-motion:reduce){.jv-name{animation:none}}
+
+
 #home h1{margin:0;font-size:26px;font-weight:800}
 #home .sub{margin:0 0 10px;color:var(--text-2);font-size:14px;line-height:1.5;max-width:320px}
-.ban{width:100%;max-width:440px;text-align:left;border-radius:22px;padding:16px 16px 16px 18px;color:#fff;display:flex;align-items:center;gap:12px;background:linear-gradient(120deg,#6a4cff 0%,#2f8bff 55%,#20cfb0 100%);box-shadow:0 10px 30px rgba(70,90,255,.28);transition:transform .15s}
+.ban{width:100%;max-width:440px;text-align:left;border-radius:22px;padding:16px 16px 16px 18px;color:var(--on-accent);display:flex;align-items:center;gap:12px;position:relative;overflow:hidden;background:repeating-radial-gradient(circle at 100% 50%,rgba(255,255,255,.16) 0 1px,transparent 1px 13px),linear-gradient(120deg,var(--accent) 0%,var(--accent) 100%);box-shadow:0 10px 28px rgba(var(--accent-rgb),.32);transition:transform .15s}
+@supports (color:color-mix(in srgb,red,blue)){.ban{background:repeating-radial-gradient(circle at 100% 50%,rgba(255,255,255,.16) 0 1px,transparent 1px 13px),linear-gradient(120deg,var(--accent) 0%,color-mix(in srgb,var(--accent) 76%,#fff) 100%)}}
 .ban:active{transform:scale(.98)}
 .ban b{display:block;font-size:15.5px;margin-bottom:3px}.ban span{font-size:12.5px;opacity:.92;line-height:1.4}
-.ban .go{margin-left:auto;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;flex:none}
+.ban .go{margin-left:auto;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;flex:none}
 .sugs{display:flex;flex-direction:column;gap:9px;width:100%;max-width:440px;margin-top:14px}
 .sug{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:18px;background:var(--surface);border:1px solid var(--border);text-align:left;font-size:14px;font-weight:600;transition:transform .12s,background .2s}
 .sug:active{transform:scale(.98);background:var(--surface2)}
-.sug .ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(124,92,255,.16);color:#a590ff;flex:none}
+.sug .ic{width:34px;height:34px;border-radius:11px;display:flex;align-items:center;justify-content:center;background:rgba(var(--accent-rgb),.15);color:var(--accent);flex:none}
+@supports (color:color-mix(in srgb,red,blue)){:root.theme-light .sug .ic{color:color-mix(in srgb,var(--accent) 62%,#000)}}
 .sug .ic svg.i{width:18px;height:18px}
-.sug small{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;background:linear-gradient(120deg,#6a4cff,#20cfb0);color:#fff}
+.sug small{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:999px;background:var(--accent);color:var(--on-accent)}
 /* composer */
 .comp{flex:none;padding:6px 14px calc(10px + var(--safe-bottom))}
 .cbox{display:flex;align-items:flex-end;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:30px;padding:5px;box-shadow:0 6px 24px rgba(0,0,0,.18)}
@@ -75,7 +104,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 #drw{position:fixed;top:0;bottom:0;left:0;z-index:41;width:min(86vw,340px);background:var(--surface);transform:translateX(-104%);transition:transform .3s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;padding-top:var(--safe-top);box-shadow:8px 0 40px rgba(0,0,0,.35)}
 #drw.on{transform:none}
 .dh{display:flex;align-items:center;gap:12px;padding:16px 16px 10px}
-.av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--g1),var(--g3));color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+.av{width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
 .dh .nm{flex:1;min-width:0;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dh .nm small{display:block;font-weight:500;font-size:12px;color:var(--text-2);margin-top:1px}
 .dh .gear{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-2)}
@@ -199,7 +228,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .bmj-ans{background:transparent;padding:2px;border-radius:0}
 .bmj-ans h3{margin-top:12px}
 .bmj-s{background:transparent;color:var(--text-2);align-self:center}
-.bmj-caret{background:var(--g2)}
+.bmj-caret{background:var(--accent)}
 .bmj-steps{background:var(--surface);border-color:var(--border)}
 .bmj-acts button.pri{background:var(--text);color:var(--bg)}
 .bmj-m{white-space:pre-wrap}
@@ -207,11 +236,11 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 </style>
 </head>
 <body>
-<div id="boot"><div class="orb"></div><p id="bootTxt">Memuat Jarvis…</p><button class="btn" id="bootBtn" hidden></button></div>
+<div id="boot"><div class="orb busy" aria-hidden="true"><svg viewBox="-100 -100 200 200"><g class="r r1"><circle r="92" class="tk"/></g><g class="r r2"><circle r="80" class="a2"/></g><g class="r r3"><circle r="66" class="a3"/></g><circle r="52" class="th"/><g class="r r4"><circle r="44" class="a4"/></g></svg></div><p id="bootTxt">Memuat Jarvis…</p><button class="btn" id="bootBtn" hidden></button></div>
 <div id="app" hidden>
   <div class="top">
     <button class="hb gl" id="bMenu" aria-label="Menu"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h16"/></svg></button>
-    <button class="ttl" id="bModel" aria-haspopup="true" aria-expanded="false"><span id="ttlTxt">Jarvis</span><small id="ttlSub"></small><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <button class="ttl" id="bModel" aria-haspopup="true" aria-expanded="false"><span id="ttlTxt" class="jv-name">Jarvis</span><small id="ttlSub"></small><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="pill gl">
       <button id="bSpk" aria-label="Suara jawaban"><svg class="i" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg></button>
       <span class="sep"></span>
@@ -776,7 +805,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   var home = null;
   function buildHome(name) {
     home = mk('div', 'home');
-    var orb = mk('div', '', 'orb'), h = tx('h1', '', 'Halo! Saya Jarvis'), sub = tx('p', 'sub', 'Asisten data bengkel BM-TECH. Tanyakan rekap, cari data, atau perintahkan saya.');
+    var orb = mk('div', '', 'orb'), h = tx('h1', '', 'Halo! Saya '), sub = tx('p', 'sub', 'Asisten data bengkel BM-TECH. Tanyakan rekap, cari data, atau perintahkan saya.');
     var ban = mk('button', '', 'ban'); var bt = mk('div'); bt.append(tx('b', '', 'Rekap pekan ini'), tx('span', '', 'Tabel lengkap dari Buku Besar plus PDF siap unduh')); ban.append(bt, mk('span', '', 'go', I.arrow));
     ban.onclick = function () { submit('Rekap transaksi pekan ini'); };
     var sugs = mk('div', '', 'sugs');
@@ -785,6 +814,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       b.onclick = function () { if (/^Buat nota/.test(s[1])) { el.in.value = 'Buatkan nota atas nama '; autoGrow(); syncBtns(); el.in.focus(); } else if (/^(Tambah|Cari)/.test(s[1])) { el.in.value = /^Tambah/.test(s[1]) ? 'Tambah data ke Buku Besar: ' : 'Cari data: '; autoGrow(); el.in.focus(); } else submit(s[1]); };
       sugs.appendChild(b);
     });
+    orb.setAttribute('aria-hidden', 'true'); orb.innerHTML = document.querySelector('#boot .orb').innerHTML;   // cincin HUD (markup statis)
+    h.appendChild(tx('span', 'jv-name', 'Jarvis'));
     home.append(orb, h, sub, ban, sugs);
   }
   function showHome() { el.log.textContent = ''; el.log.appendChild(home); }
@@ -977,6 +1008,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   /* ================= input & kirim ================= */
   function autoGrow() { el.in.style.height = '42px'; el.in.style.height = Math.min(132, Math.max(42, el.in.scrollHeight)) + 'px'; }
   function syncBtns() {
+    try { document.documentElement.classList.toggle('jv-busy', !!busy); document.documentElement.classList.toggle('jv-listen', !!listening); } catch (e) {}
     var has = !!el.in.value.trim();
     el.send.hidden = !(has || busy); el.mic.hidden = has || busy;
     el.send.classList.toggle('stop', busy); el.send.innerHTML = busy ? I.stop : I.send; el.send.setAttribute('aria-label', busy ? 'Hentikan' : 'Kirim');
@@ -995,9 +1027,9 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     rec.onresult = function (e) { var s = ''; for (var i = 0; i < e.results.length; i++) { s += e.results[i][0].transcript; if (e.results[i].isFinal) finalText = s; } el.in.value = s; autoGrow(); };
     rec.onerror = function (e) { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') toast('Izin mikrofon ditolak. Aktifkan di pengaturan situs.'); };
     rec.onend = function () { listening = false; el.mic.classList.remove('rec'); rec = null; el.in.placeholder = 'Tanya saya kapan saja...'; var t = (finalText || el.in.value || '').trim(); if (t) submit(t); else syncBtns(); };
-    try { rec.start(); listening = true; el.mic.classList.add('rec'); el.in.placeholder = 'Mendengarkan…'; } catch (e) { listening = false; }
+    try { rec.start(); listening = true; document.documentElement.classList.add('jv-listen'); el.mic.classList.add('rec'); el.in.placeholder = 'Mendengarkan…'; } catch (e) { listening = false; }
   }
-  function stopListen() { if (rec) { try { rec.stop(); } catch (e) {} } listening = false; if (el.mic) el.mic.classList.remove('rec'); if (el.in) el.in.placeholder = 'Tanya saya kapan saja...'; }
+  function stopListen() { if (rec) { try { rec.stop(); } catch (e) {} } listening = false; document.documentElement.classList.remove('jv-listen'); if (el.mic) el.mic.classList.remove('rec'); if (el.in) el.in.placeholder = 'Tanya saya kapan saja...'; }
 
   var RESUME_RE = /^\s*(ya\s+)?(tolong\s+)?(lanjut(kan|in)?|terus(kan|in)?|ulang(i)?|coba\s+lagi|gas|oke?\s+lanjut|sambung(kan)?)\W*$/i, pend = {};
   async function submit(text) {
@@ -1122,7 +1154,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var note = tx('div', 'bmj-m bmj-s', ''), b = mk('button', '', 'pri', I.arrow + '<span></span>'), c = tx('button', '', 'Batal');
     b.querySelector('span').textContent = label + ': ' + clip(a.name || '', 28);
     var left = 3; note.textContent = 'Membuka ' + (a.name || 'halaman') + ' dalam ' + left + ' detik…';
-    function go() { if (done) return; done = true; clearInterval(iv); saveLast(); location.href = url; }
+    function go() { if (done) return; done = true; clearInterval(iv); saveLast(); goUrl(url); }
     var iv = setInterval(function () { left--; if (left <= 0) go(); else note.textContent = 'Membuka ' + (a.name || 'halaman') + ' dalam ' + left + ' detik…'; }, 1000);
     b.onclick = go; c.onclick = function () { done = true; clearInterval(iv); note.textContent = 'Dibatalkan.'; c.remove(); };
     box.append(b, c); el.log.appendChild(note); el.log.appendChild(box); toBottom();
@@ -1149,7 +1181,24 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   /* ================= awal ================= */
   function bootMsg(text, btnText, fn) { $('bootTxt').textContent = text; var b = $('bootBtn'); if (btnText) { b.hidden = false; b.textContent = btnText; b.onclick = fn; } else b.hidden = true; }
   function wt(p, ms) { return Promise.race([p, new Promise(function (_, no) { setTimeout(function () { no(new Error('timeout')); }, ms); })]); }
-  function exitPage() { location.href = '/my-profile-bm.html'; }
+  // Jarvis bisa dibuka sebagai lapisan di Profil (iframe) atau sebagai halaman biasa.
+  var EMBED = window.parent !== window;
+  // Keluar tanpa memuat ulang: lapisan -> minta Profil menutupnya; halaman biasa -> kembali lewat riwayat (cache).
+  function exitPage() {
+    if (EMBED) { try { stopListen(); stopSpeak(); } catch (e) {} try { parent.postMessage({ type: 'close-page' }, location.origin); return; } catch (e) {} }
+    try { var ref = document.referrer ? new URL(document.referrer) : null; if (ref && ref.origin === location.origin && history.length > 1) { history.back(); return; } } catch (e) {}
+    location.replace('/my-profile-bm.html');
+  }
+  // Pindah halaman dari dalam lapisan: biarkan Profil yang mengatur (Dashboard dibuka di lapisannya sendiri).
+  function goUrl(url) {
+    if (EMBED) { try { parent.postMessage({ type: 'bm-jarvis-goto', url: url }, location.origin); return; } catch (e) {} }
+    location.href = url;
+  }
+  // Lapisan disembunyikan Profil: hentikan mikrofon dan suara.
+  window.addEventListener('message', function (e) {
+    if (e.origin !== location.origin || e.source !== window.parent || !e.data) return;
+    if (e.data.type === 'bm-hidden') { try { stopListen(); stopSpeak(); } catch (x) {} }
+  });
   async function start() {
     if (!window.supabase) return bootMsg('Tidak bisa memuat layanan login. Periksa koneksi internet.', 'Coba lagi', function () { location.reload(); });
     var session = null, isAdmin = null;
@@ -1157,7 +1206,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       supabaseClient = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
       var r = await wt(supabaseClient.auth.getSession(), 8000); session = r.data && r.data.session;
     } catch (e) { return bootMsg('Koneksi lambat, belum bisa memeriksa sesi login.', 'Coba lagi', function () { location.reload(); }); }
-    if (!session) { location.replace('/admin-login.html'); return; }
+    if (!session) { (EMBED ? window.top : window).location.replace('/admin-login.html'); return; }
     try { var a = await wt(supabaseClient.rpc('is_admin'), 8000); if (a.error) throw a.error; isAdmin = a.data; } catch (e) { return bootMsg('Belum bisa memverifikasi akses admin. Periksa koneksi lalu coba lagi.', 'Coba lagi', function () { location.reload(); }); }
     if (isAdmin !== true) return bootMsg('Jarvis AI hanya untuk admin.', 'Kembali', exitPage);
     var u = session.user || {}, meta = u.user_metadata || {}, nm = meta.full_name || meta.name || (u.email || 'Admin').split('@')[0];

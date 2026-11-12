@@ -108,6 +108,10 @@
   #dashHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
   #recapHub { position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%; border: 0; background: var(--bg); transform: translateX(100%); visibility: hidden; pointer-events: none; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s; }
   #recapHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
+/* Jarvis: lapisan yang meluncur dari bawah, dimuat sekali (percakapan tetap ada saat dibuka lagi) */
+#jvHub { position: fixed; inset: 0; z-index: 70; width: 100%; height: 100%; border: 0; background: var(--bg); transform: translateY(100%); visibility: hidden; pointer-events: none; transition: transform .34s cubic-bezier(.32,.72,0,1), visibility 0s linear .34s; }
+#jvHub.on { transform: none; visibility: visible; pointer-events: auto; transition: transform .34s cubic-bezier(.32,.72,0,1), visibility 0s; }
+@media (prefers-reduced-motion: reduce) { #jvHub, #jvHub.on { transition: none; } }
   @media (prefers-reduced-motion: reduce) { #dashHub, #dashHub.on, #recapHub, #recapHub.on { transition: none; } }
 
   /* ---------- dock: navigasi liquid glass di paling bawah ---------- */
@@ -1057,7 +1061,8 @@ function bmMain(REAL){
     var f = ensureHub();
     f.classList.toggle('on', on);
     f.setAttribute('aria-hidden', on ? 'false' : 'true');
-    document.documentElement.style.overflow = on ? 'hidden' : '';
+    document.documentElement.style.overflow = (on || recapOn || jvOn) ? 'hidden' : '';
+    layerClass();
     if (on) { try { f.contentWindow.postMessage({ type: 'bm-visible' }, location.origin); } catch (e) {} try { f.contentWindow.focus(); } catch (e) {} }
     else { refresh(); window.scrollTo(0, 0); }
   }
@@ -1083,7 +1088,8 @@ function bmMain(REAL){
     var f = ensureRecap();
     f.classList.toggle('on', on);
     f.setAttribute('aria-hidden', on ? 'false' : 'true');
-    document.documentElement.style.overflow = on ? 'hidden' : '';
+    document.documentElement.style.overflow = (on || hubOn || jvOn) ? 'hidden' : '';
+    layerClass();
     if (on) { try { f.contentWindow.focus(); } catch (e) {} }
     else { window.scrollTo(0, 0); try { window.focus(); } catch (e) {} }
   }
@@ -1091,13 +1097,54 @@ function bmMain(REAL){
     if (!recapPushed) { try { history.pushState({ bmRecap: 1 }, ''); recapPushed = true; } catch (e) {} }
     showRecap(true);
   }
+  /* Jarvis: lapisan di atas Profil. Keluar dari Jarvis = lapisan turun, tanpa memuat ulang apa pun. */
+  var jv = null, jvOn = false, jvPushed = false;
+  function layerClass(){ document.documentElement.classList.toggle('bm-layer-on', !!(hubOn || recapOn || jvOn)); }
+  function ensureJv(){
+    if (jv) return jv;
+    jv = document.createElement('iframe');
+    jv.id = 'jvHub'; jv.name = 'bm-jarvis-hub'; jv.title = 'Jarvis';
+    jv.setAttribute('aria-hidden', 'true');
+    jv.setAttribute('allow', 'microphone; autoplay; clipboard-write');
+    jv.src = 'jarvis-ai.html';
+    document.body.appendChild(jv);
+    return jv;
+  }
+  function showJv(on){
+    if (on === jvOn) return;
+    jvOn = on;
+    var f = ensureJv();
+    f.classList.toggle('on', on);
+    f.setAttribute('aria-hidden', on ? 'false' : 'true');
+    document.documentElement.style.overflow = (on || hubOn || recapOn) ? 'hidden' : '';
+    layerClass();
+    if (on) { try { f.contentWindow.focus(); } catch (e) {} }
+    else { try { f.contentWindow.postMessage({ type: 'bm-hidden' }, location.origin); } catch (e) {} try { window.focus(); } catch (e) {} }
+  }
+  function goJv(){
+    if (!jvPushed) { try { history.pushState({ bmJv: 1 }, ''); jvPushed = true; } catch (e) {} }
+    showJv(true);
+  }
   window.addEventListener('popstate', function(){
+    jvPushed = !!(history.state && history.state.bmJv); if (jvOn && !jvPushed) showJv(false);
     hubPushed = !!(history.state && history.state.bmHub); if (hubOn && !hubPushed) showHub(false);
     recapPushed = !!(history.state && history.state.bmRecap); if (recapOn && !recapPushed) showRecap(false);
   });
   window.addEventListener('message', function(e){
     if (e.origin !== location.origin) return;
     if (hub && e.source === hub.contentWindow && e.data && e.data.type === 'bm-nav' && e.data.to === 'profile') showHub(false);
+    if (jv && e.source === jv.contentWindow && e.data && e.data.type === 'close-page') {
+      if (history.state && history.state.bmJv) history.back(); else showJv(false);
+    }
+    if (jv && e.source === jv.contentWindow && e.data && e.data.type === 'bm-jarvis-goto' && /^\/[a-z0-9\-]+\.html(\?[A-Za-z0-9_=&%.\-]*)?$/.test(String(e.data.url || ''))) {
+      var u = String(e.data.url);
+      if (u.indexOf('/dashboard-admin.html') === 0) {   // Dashboard dibuka di lapisannya, menggantikan Jarvis di riwayat
+        showJv(false); jvPushed = false;
+        var h = ensureHub(); try { if ((h.getAttribute('src') || '') !== u.slice(1)) h.src = u.slice(1); } catch (x) { h.src = u.slice(1); }
+        try { history.replaceState({ bmHub: 1 }, ''); hubPushed = true; } catch (x) {}
+        showHub(true);
+      } else location.href = u;
+    }
     if (recap && e.source === recap.contentWindow && e.data && e.data.type === 'close-page') {
       if (history.state && history.state.bmRecap) history.back(); else showRecap(false);
     }
@@ -1492,7 +1539,7 @@ function bmMain(REAL){
     var b = e.target.closest('.short'); if (!b) return;
     if (b.getAttribute('data-a') === 'dash') return goDash();
     if (b.getAttribute('data-a') === 'recap') return goRecap();
-    if (b.getAttribute('data-a') === 'jarvis') { location.href = '/jarvis-ai.html'; return; }
+    if (b.getAttribute('data-a') === 'jarvis') return goJv();
     var k = b.getAttribute('data-k') || null;
     if (!can(k)) return toast('Tidak ada izin');   // lapisan kedua: izin dicek lagi saat diketuk
     if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
@@ -2185,5 +2232,6 @@ function bmMain(REAL){
 })();
 
 </script>
+<script src="/bm-jarvis.js" defer></script>
 </body>
 </html>

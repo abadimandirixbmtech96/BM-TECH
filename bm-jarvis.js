@@ -12,8 +12,8 @@
  */
 (function () {
   'use strict';
-  var inHub = window.name === 'bm-dash-hub';                        // Dashboard yang tertanam di halaman Profil (aplikasi terpasang)
-  if (window.BMJarvis || (window.parent !== window && !inHub)) return;   // tidak di dalam iframe editor/panel lain
+  var inHub = window.name === 'bm-dash-hub' || window.name === 'bm-recap-hub';   // lapisan di halaman Profil                        // Dashboard yang tertanam di halaman Profil (aplikasi terpasang)
+  if (window.BMJarvis || (window.parent !== window && !inHub) || /\/jarvis-ai\.html$/.test(location.pathname)) return;   // tidak di dalam iframe editor/panel lain
   /* di dalam Profil, Dashboard dimuat tersembunyi di belakang layar: Jarvis (terutama mikrofon) hanya aktif saat Dashboard terlihat */
   function isActive() {
     if (!inHub) return document.visibilityState === 'visible';
@@ -37,8 +37,15 @@
 
   /* ---------- gaya ---------- */
   var css = '\
-#bmj-fab{position:fixed;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));touch-action:none;z-index:2000;width:52px;height:52px;border-radius:50%;border:1px solid rgba(var(--accent-rgb,240,165,41),.55);background:radial-gradient(circle at 30% 30%,rgba(var(--accent-rgb,240,165,41),.35),rgba(18,18,20,.92));color:var(--accent-yellow,#F0A529);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 22px rgba(0,0,0,.45),0 0 18px var(--accent-yellow-glow,rgba(240,165,41,.28));cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .15s}\
-#bmj-fab:active{transform:scale(.9)}#bmj-fab svg{width:26px;height:26px}\
+#bmj-fab{position:fixed;right:16px;bottom:calc(96px + env(safe-area-inset-bottom,0px));touch-action:none;z-index:2000;width:58px;height:58px;padding:0;border-radius:50%;border:1px solid rgba(var(--accent-rgb,240,165,41),.45);background:radial-gradient(circle,rgba(16,16,18,.97) 0 56%,rgba(26,26,30,.9) 100%);color:var(--accent-yellow,#F0A529);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(0,0,0,.38),0 0 20px rgba(var(--accent-rgb,240,165,41),.32);cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;transition:transform .22s cubic-bezier(.2,.8,.2,1),opacity .2s}\
+#bmj-fab:active{transform:scale(.9)}#bmj-fab svg{width:100%;height:100%;overflow:visible;pointer-events:none}#bmj-fab circle{fill:none;stroke:currentColor}\
+#bmj-fab .r{transform-box:fill-box;transform-origin:center;animation:bmjSpin 18s linear infinite}#bmj-fab .r2{animation-duration:8s;animation-direction:reverse}\
+#bmj-fab .tk{stroke-width:2.4;stroke-dasharray:1 5.3;opacity:.55}#bmj-fab .a2{stroke-width:3.2;stroke-dasharray:34 14.7;stroke-linecap:round}#bmj-fab .th{stroke-width:1;opacity:.35}\
+#bmj-fab .core{fill:currentColor;stroke:none;transform-box:fill-box;transform-origin:center;animation:bmjCore 2.6s ease-in-out infinite;filter:drop-shadow(0 0 4px currentColor)}\
+#bmj-fab.bmj-busy .r{animation-duration:2.4s}#bmj-fab.bmj-busy .r2{animation-duration:1.4s}\
+#bmj-fab.bmj-open,html.bm-layer-on #bmj-fab{opacity:0;transform:scale(.6);pointer-events:none}\
+@keyframes bmjSpin{to{transform:rotate(360deg)}}@keyframes bmjCore{50%{opacity:.6;transform:scale(.8)}}\
+@media (prefers-reduced-motion:reduce){#bmj-fab .r,#bmj-fab .core{animation:none}}\
 #bmj-fab.bmj-hot{animation:bmjPulse 1.2s infinite}\
 @keyframes bmjPulse{0%{box-shadow:0 0 0 0 rgba(var(--accent-rgb,240,165,41),.6)}100%{box-shadow:0 0 0 18px rgba(var(--accent-rgb,240,165,41),0)}}\
 #bmj-ov{position:fixed;inset:0;z-index:2001;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s}\
@@ -117,6 +124,7 @@
 .bmj-rt{display:flex;gap:14px;flex-wrap:wrap;padding:9px 12px;border-top:1px solid var(--glass-pill-border,rgba(255,255,255,.12));font-size:13px;font-weight:800}\
 body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,body.theme-light .bmj-ans{background:rgba(0,0,0,.07)}body.theme-light #bmj-in{color:#111}';
 
+  var ICON_HUD = '<svg viewBox="-50 -50 100 100" aria-hidden="true"><g class="r"><circle r="39" class="tk"/></g><g class="r r2"><circle r="31" class="a2"/></g><circle r="22" class="th"/><circle r="9" class="core"/></svg>';
   var ICON_BOT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.2"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21"/></svg>';
   var ICON_MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
   var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>';
@@ -132,7 +140,7 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
   /* ---------- kerangka ---------- */
   function build() {
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-    el.fab = mk('button', 'bmj-fab', '', ICON_BOT); el.fab.setAttribute('aria-label', 'Jarvis');
+    el.fab = mk('button', 'bmj-fab', '', ICON_HUD); el.fab.setAttribute('aria-label', 'Buka Jarvis'); el.fab.type = 'button';
     el.ov = mk('div', 'bmj-ov');
     el.sheet = mk('div', 'bmj-sheet');
     var h = mk('div', '', 'bmj-h');
@@ -152,22 +160,24 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
 
     /* tombol bisa digeser (tahan & seret); posisi diingat per perangkat */
     try { var pos = JSON.parse(ls('bm-jarvis-pos') || 'null'); if (pos) { el.fab.style.left = Math.min(pos.x, innerWidth - 56) + 'px'; el.fab.style.top = Math.min(pos.y, innerHeight - 56) + 'px'; el.fab.style.right = 'auto'; el.fab.style.bottom = 'auto'; } } catch (e) {}
-    var drag = null, moved = false;
-    el.fab.addEventListener('pointerdown', function (e) { var r = el.fab.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY }; moved = false; try { el.fab.setPointerCapture(e.pointerId); } catch (x) {} });
+    var drag = null, moved = false, justDragged = false;
+    el.fab.addEventListener('pointerdown', function (e) { if (e.button) return; var r = el.fab.getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY, id: e.pointerId }; moved = false; });
     el.fab.addEventListener('pointermove', function (e) {
       if (!drag) return;
-      if (!moved && Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 8) return;
-      moved = true;
-      var x = Math.max(4, Math.min(innerWidth - 56, e.clientX - drag.dx)), y = Math.max(4, Math.min(innerHeight - 56, e.clientY - drag.dy));
+      if (!moved && Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) < 10) return;
+      if (!moved) { moved = true; try { el.fab.setPointerCapture(drag.id); } catch (x) {} }
+      var x = Math.max(4, Math.min(innerWidth - 62, e.clientX - drag.dx)), y = Math.max(4, Math.min(innerHeight - 62, e.clientY - drag.dy));
       el.fab.style.left = x + 'px'; el.fab.style.top = y + 'px'; el.fab.style.right = 'auto'; el.fab.style.bottom = 'auto';
     });
     el.fab.addEventListener('pointerup', function () {
-      if (drag && moved) { var r = el.fab.getBoundingClientRect(); ls('bm-jarvis-pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); }
-      else if (drag) openSheet();
+      if (drag && moved) { var r = el.fab.getBoundingClientRect(); ls('bm-jarvis-pos', JSON.stringify({ x: Math.round(r.left), y: Math.round(r.top) })); justDragged = true; setTimeout(function () { justDragged = false; }, 350); }
       drag = null;
     });
     el.fab.addEventListener('pointercancel', function () { drag = null; });
-    el.ov.onclick = el.close.onclick = closeSheet;
+    el.fab.addEventListener('click', function (e) { e.preventDefault(); if (justDragged) return; if (sheetOpen) closeSheet(); else openSheet(); });
+    el.ov.onclick = function () { if (Date.now() - openedAt < 400) return; closeSheet(); };   // abaikan ketukan yang sama dengan ketukan pembuka
+    el.close.onclick = closeSheet;
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheetOpen) closeSheet(); });
     el.send.onclick = function () { if (busy) stopAll(); else submit(el.in.value); };
     el.in.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); if (!busy) submit(el.in.value); } };
     el.mic.onclick = function () { listening ? stopListen() : startListen(); };
@@ -195,9 +205,10 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
     el.spk.style.display = canSpeak ? '' : 'none';
     el.fab.classList.toggle('bmj-hot', wakeOn && !sheetOpen);
   }
-  function openSheet() { sheetOpen = true; el.ov.classList.add('on'); el.sheet.classList.add('on'); paintToggles(); setTimeout(function () { el.log.scrollTop = el.log.scrollHeight; }, 50); }
-  function closeSheet() { sheetOpen = false; el.ov.classList.remove('on'); el.sheet.classList.remove('on'); stopListen(); stopSpeak(); paintToggles(); }
-  function setSendMode(on) { if (!el.send) return; el.send.classList.toggle('stop', on); el.send.innerHTML = on ? ICON_STOP : ICON_SEND; el.send.setAttribute('aria-label', on ? 'Hentikan' : 'Kirim'); }
+  var openedAt = 0;
+  function openSheet() { sheetOpen = true; openedAt = Date.now(); el.fab.classList.add('bmj-open'); el.fab.setAttribute('aria-expanded', 'true'); el.ov.classList.add('on'); el.sheet.classList.add('on'); paintToggles(); setTimeout(function () { el.log.scrollTop = el.log.scrollHeight; }, 50); }
+  function closeSheet() { sheetOpen = false; el.fab.classList.remove('bmj-open'); el.fab.setAttribute('aria-expanded', 'false'); el.ov.classList.remove('on'); el.sheet.classList.remove('on'); stopListen(); stopSpeak(); paintToggles(); try { el.fab.focus({ preventScroll: true }); } catch (e) {} }
+  function setSendMode(on) { if (el.fab) el.fab.classList.toggle('bmj-busy', !!on); if (!el.send) return; el.send.classList.toggle('stop', on); el.send.innerHTML = on ? ICON_STOP : ICON_SEND; el.send.setAttribute('aria-label', on ? 'Hentikan' : 'Kirim'); }
   function stopAll() { userStop = true; if (curAC) { try { curAC.abort(); } catch (e) {} } if (curCtl) curCtl.skip = true; stopSpeak(); }
   function nearBottom() { return el.log.scrollHeight - el.log.scrollTop - el.log.clientHeight < 120; }
   function toBottom(instant) { if (instant) { var b = el.log.style.scrollBehavior; el.log.style.scrollBehavior = 'auto'; el.log.scrollTop = el.log.scrollHeight; el.log.style.scrollBehavior = b; } else el.log.scrollTo({ top: el.log.scrollHeight, behavior: 'smooth' }); }
@@ -507,8 +518,31 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
   }
 
   /* ---------- komunikasi dengan server ---------- */
+  var SB_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
+  function storedToken() {
+    try {
+      var s = JSON.parse(localStorage.getItem('bmtech-auth') || 'null'); if (s && s.currentSession) s = s.currentSession;
+      if (s && s.access_token && (!s.expires_at || s.expires_at * 1000 > Date.now() + 30000)) return s.access_token;
+    } catch (e) {}
+    return '';
+  }
   async function token() {
-    try { var r = await supabaseClient.auth.getSession(); return r && r.data && r.data.session ? r.data.session.access_token : ''; } catch (e) { return ''; }
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && supabaseClient.auth) {
+      try { var r = await supabaseClient.auth.getSession(); if (r && r.data && r.data.session) return r.data.session.access_token; } catch (e) {}
+    }
+    return storedToken();   // halaman tanpa klien Supabase: sesi disegarkan oleh halaman lain yang punya klien
+  }
+  // Tombol hanya untuk admin. Hasil dicek di server (is_admin) dan diingat 10 menit per akun di sesi ini.
+  function adminCheck(tk) {
+    var uid = '';
+    try { var p = tk.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); while (p.length % 4) p += '='; uid = JSON.parse(atob(p)).sub || ''; } catch (e) {}
+    var key = 'bm-jarvis-adm:' + uid, c = null;
+    try { c = JSON.parse(sessionStorage.getItem(key) || 'null'); } catch (e) {}
+    if (c && Date.now() - c.t < 600000) return Promise.resolve(c.v);
+    return fetch(SB_URL + '/rest/v1/rpc/is_admin', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function (r) { return r.ok ? r.json() : false; })
+      .then(function (v) { v = v === true; try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), v: v })); } catch (e) {} return v; })
+      .catch(function () { return c ? c.v : false; });
   }
   async function post(payload) {          // untuk persetujuan (JSON biasa)
     var tk = await token();
@@ -678,8 +712,18 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
       else if (n > 40) clearInterval(iv);
     }, 400);
   }
+  // Di luar dashboard (editor, kasir, profil, ...): pindah ke alamat yang dikirim server (daftar putih).
+  var ON_DASH = /\/dashboard-admin\.html$/.test(location.pathname);
+  function navTo(url) {
+    if (!/^\/[a-z0-9\-]+\.html(\?[A-Za-z0-9_=&%.\-]*)?$/.test(url || '')) return false;
+    setTimeout(function () { (inHub ? window.parent : window).location.href = url; }, 500);
+    return true;
+  }
   function runAction(a) {
     try {
+      if (!ON_DASH && (a.type === 'open_folder' || a.type === 'open_editor' || a.type === 'open_note')) {
+        closeSheet(); if (!navTo(a.url)) say('s', 'Perintah itu hanya bisa dijalankan dari Dashboard.'); return;
+      }
       if (a.type === 'open_folder') {
         closeSheet();
         if (typeof selectCategory === 'function' && typeof categoriesData !== 'undefined' && categoriesData.some(function (c) { return c.id === a.folder_id; })) selectCategory(a.folder_id);
@@ -695,7 +739,8 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
         else if (typeof openEditor === 'function') openEditor(a.note_id, a.folder_id ? { folder: a.folder_id } : {});
       } else if (a.type === 'goto') {
         closeSheet(); say('s', 'Membuka ' + (a.name || 'halaman') + '…');
-        if (/^\/[a-z0-9\-]+\.html(\?[A-Za-z0-9_=&%.\-]*)?$/.test(a.url || '') && a.url.indexOf('/dashboard-admin.html') !== 0) setTimeout(function () { (inHub ? window.parent : window).location.href = a.url; }, 700);
+        if (ON_DASH && String(a.url || '').indexOf('/dashboard-admin.html') === 0) return;   // sudah di Dashboard
+        navTo(a.url);
       } else if (a.type === 'setting') {
         applySetting(a);
       }
@@ -728,10 +773,16 @@ body.theme-light #bmj-sheet{background:#fff;color:#111}body.theme-light .bmj-a,b
 
   function init() {
     deepFolder();
-    if (typeof supabaseClient === 'undefined') return;
-    function tryBuild() { return token().then(function (tk) { if (tk && !el.fab) { build(); return true; } return false; }); }   // hanya muncul bila sudah login (server tetap cek admin)
+    var building = false;
+    function tryBuild() {   // hanya muncul untuk admin yang sudah login (server tetap cek admin di setiap permintaan)
+      if (el.fab || building) return Promise.resolve(false);
+      building = true;
+      return token().then(function (tk) { return tk ? adminCheck(tk) : false; })
+        .then(function (ok) { building = false; if (ok && !el.fab) { build(); return true; } return false; }, function () { building = false; return false; });
+    }
     tryBuild();
-    try { supabaseClient.auth.onAuthStateChange(function (ev, ses) { if (ses && !el.fab) tryBuild(); }); } catch (e) {}
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && supabaseClient.auth) { try { supabaseClient.auth.onAuthStateChange(function (ev, ses) { if (ses && !el.fab) tryBuild(); }); } catch (e) {} }
+    window.addEventListener('storage', function (e) { if (e.key === 'bmtech-auth' && !el.fab) tryBuild(); });
   }
   window.BMJarvis = { open: function () { openSheet(); }, ask: function (t) { openSheet(); submit(t); } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();

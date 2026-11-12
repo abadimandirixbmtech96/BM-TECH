@@ -4,7 +4,7 @@
 // disentuh sama sekali di sini — itu urusan logic offline-draft di
 // masing-masing halaman (autosave lokal, dsb).
 
-const CACHE_NAME = 'bmtech-shell-v34'; // dinaikkan: login di halaman kasir dan tautan Kasir di Dashboard Admin
+const CACHE_NAME = 'bmtech-shell-v36'; // dinaikkan: cincin HUD Jarvis, Jarvis sebagai lapisan di Profil, tombol pintas di semua halaman
 
 const APP_SHELL = [
   '/dashboard-shop.html',
