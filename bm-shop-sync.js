@@ -1,5 +1,5 @@
 /* BM-TECH Kasir <-> Supabase
- * Versi: shop-sync-v1-2026-11-11
+ * Versi: shop-sync-v2-2026-11-12
  *
  * Cara kerja:
  * - Data kasir dimuat dari database lewat RPC shop_ambil_semua (RLS tetap berlaku).
@@ -268,7 +268,83 @@
 
   /* ---------------- Status di layar ---------------- */
   var badgeEl = null;
-  function setMode(m) { mode = m; badge(); }
+  function setMode(m) {
+    var was = mode; mode = m; badge();
+    if (m === 'login' && was !== 'login' && was !== 'mulai') showLogin('Sesi berakhir. Masuk lagi agar data bisa disimpan.');
+  }
+
+  /* ---------------- Masuk langsung di halaman kasir ---------------- */
+  var loginEl = null;
+  function showLogin(msg) {
+    if (!client) { toast('Pustaka Supabase belum termuat. Periksa sinyal lalu buka ulang.'); return; }
+    if (!loginEl) {
+      var css = document.createElement('style');
+      css.textContent = '#bm-login{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;'
+        + 'background:rgba(0,0,0,.55);padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}'
+        + '#bm-login[hidden]{display:none}'
+        + '#bm-login form{width:100%;max-width:420px;background:var(--sf,#fff);color:var(--tx,#111);border:1px solid var(--bd,#ddd);'
+        + 'border-radius:20px;padding:20px;display:grid;gap:12px;font-family:inherit}'
+        + '#bm-login h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}'
+        + '#bm-login .s{margin:0;color:var(--mu,#666);font-size:13px;line-height:1.45}'
+        + '#bm-login label{display:grid;gap:6px;font-size:13px;color:var(--mu,#666);font-weight:600}'
+        + '#bm-login input{height:48px;border-radius:12px;border:1px solid var(--bd,#ddd);background:var(--bg,#f4f4f2);color:var(--tx,#111);'
+        + 'padding:0 14px;font-family:inherit;font-size:16px;min-width:0}'
+        + '#bm-login input:focus{outline:2px solid var(--ac,#F4A81E);outline-offset:1px}'
+        + '#bm-login .m{margin:0;min-height:1.3em;color:var(--er,#dc2626);font-size:13px;line-height:1.4}'
+        + '#bm-login button{font-family:inherit;cursor:pointer}'
+        + '#bm-login .ok{height:50px;border:0;border-radius:999px;background:var(--ac,#F4A81E);color:#111;font-weight:700;font-size:16px}'
+        + '#bm-login .ok:disabled{opacity:.6;cursor:default}'
+        + '#bm-login .no{height:44px;background:none;border:0;color:var(--mu,#666);font-weight:600;font-size:14px}';
+      document.head.appendChild(css);
+      loginEl = document.createElement('div');
+      loginEl.id = 'bm-login'; loginEl.hidden = true;
+      loginEl.setAttribute('role', 'dialog'); loginEl.setAttribute('aria-modal', 'true'); loginEl.setAttribute('aria-labelledby', 'bm-login-t');
+      loginEl.innerHTML = '<form novalidate><h2 id="bm-login-t">Masuk ke Kasir</h2>'
+        + '<p class="s">Pakai akun BM-TECH yang punya akses kasir. Data tersimpan di database bengkel.</p>'
+        + '<label>Email<input name="e" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false" required></label>'
+        + '<label>Kata sandi<input name="p" type="password" autocomplete="current-password" required></label>'
+        + '<p class="m" role="alert"></p>'
+        + '<button type="submit" class="ok">Masuk</button>'
+        + '<button type="button" class="no">Nanti saja</button></form>';
+      document.body.appendChild(loginEl);
+      var f = loginEl.querySelector('form');
+      f.addEventListener('submit', function (ev) { ev.preventDefault(); doLogin(f.e.value.trim(), f.p.value); });
+      loginEl.querySelector('.no').addEventListener('click', hideLogin);
+      loginEl.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') hideLogin(); });
+    }
+    loginEl.querySelector('.m').textContent = msg || '';
+    loginEl.hidden = false;
+    setTimeout(function () { var e = loginEl.querySelector('input[name=e]'); (e.value ? loginEl.querySelector('input[name=p]') : e).focus(); }, 50);
+  }
+  function hideLogin() { if (loginEl) loginEl.hidden = true; }
+  async function doLogin(email, pass) {
+    var f = loginEl.querySelector('form'), m = loginEl.querySelector('.m'), btn = loginEl.querySelector('.ok');
+    if (!email || !pass) { m.textContent = 'Isi email dan kata sandi.'; return; }
+    btn.disabled = true; btn.textContent = 'Memeriksa...'; m.textContent = '';
+    var gagal = function (t) { m.textContent = t; f.p.value = ''; btn.disabled = false; btn.textContent = 'Masuk'; f.p.focus(); };
+    try {
+      var r = await client.auth.signInWithPassword({ email: email, password: pass });
+      if (r.error || !r.data || !r.data.session) {
+        var e = r.error || {};
+        if (e.status === 0 || /fetch|network/i.test(e.message || '')) return gagal('Tidak ada sinyal. Coba lagi saat tersambung.');
+        return gagal('Email atau kata sandi salah, atau akun ini belum punya akses kasir.');
+      }
+      var b = await client.rpc('shop_boleh');
+      if (b.error) {
+        try { await client.auth.signOut(); } catch (x) {}
+        return gagal(classify(b) === 'net' ? 'Tidak ada sinyal. Coba lagi saat tersambung.' : 'Akses belum bisa diperiksa. Coba lagi.');
+      }
+      if (b.data !== true) {
+        try { await client.auth.signOut(); } catch (x) {}
+        return gagal('Email atau kata sandi salah, atau akun ini belum punya akses kasir.');
+      }
+      f.p.value = ''; btn.disabled = false; btn.textContent = 'Masuk';
+      hideLogin(); toast('Berhasil masuk');
+      await afterSession(r.data.session);
+    } catch (x) {
+      gagal('Tidak ada sinyal. Coba lagi saat tersambung.');
+    }
+  }
   function statusText() {
     var n = myOut().length;
     switch (mode) {
@@ -292,7 +368,7 @@
     }
   }
   function onBadge() {
-    if (mode === 'login') { location.href = 'admin-login.html'; return; }
+    if (mode === 'login') { showLogin(); return; }
     if (mode === 'akses') { toast('Minta admin menambahkan akun ini ke daftar kasir'); return; }
     toast(statusText()); syncNow();
   }
@@ -332,7 +408,7 @@
 
   /* ---------------- API untuk dashboard-shop.html ---------------- */
   window.BMShopSync = {
-    version: 'shop-sync-v1-2026-11-11',
+    version: 'shop-sync-v2-2026-11-12',
     cached: function () {
       cache = ls(K_CACHE); outbox = ls(K_OUT) || [];
       return cache && cache.data ? cache.data : null;
@@ -384,7 +460,11 @@
     });
     var r = await client.auth.getSession();
     var session = r && r.data && r.data.session;
-    if (!session) { setMode('login'); return; }
+    if (!session) { setMode('login'); showLogin(); return; }
+    await afterSession(session);
+  }
+
+  async function afterSession(session) {
     userId = session.user && session.user.id;
     if (cache && cache.uid && cache.uid !== userId) {
       cache = null; ls(K_CACHE, null);
