@@ -140,7 +140,12 @@
   function tx(tag, cls, text) { var e = mk(tag, '', cls); e.textContent = text; return e; }
 
   /* ---------- kerangka ---------- */
+  function ensureVoice() {
+    if (window.BMVoice) { BMVoice.init({ token: token }); return; }
+    var sc = document.createElement('script'); sc.src = '/bm-voice.js'; sc.onload = function () { if (window.BMVoice) BMVoice.init({ token: token }); }; document.head.appendChild(sc);
+  }
   function build() {
+    ensureVoice();   // suara natural Jarvis (Edge), dimuat sekali saat tombol dibuat
     var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
     el.fab = mk('button', 'bmj-fab', '', ICON_HUD); el.fab.setAttribute('aria-label', 'Buka Jarvis'); el.fab.type = 'button';
     el.ov = mk('div', 'bmj-ov');
@@ -513,16 +518,19 @@
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { if (wakeOn && !wakeRec && !busy && !listening) startWake(); } else if (wakeRec) { try { wakeRec.abort(); } catch (e) {} } });
 
   /* ---------- suara keluar: hanya ringkasan 1-2 kalimat, tabel tidak dibacakan ---------- */
-  function stopSpeak() { if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+  function stopSpeak() { if (window.BMVoice) try { BMVoice.stop(); } catch (e) {} if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
   function spokenOf(blocks, reps) {
     var p = blocks.filter(function (b) { return b.t === 'p'; })[0];
     var s = p ? String(p.text).replace(/\*\*/g, '') : '';
     if (!s) { var h = blocks[0]; s = h && h.text ? String(h.text).replace(/\*\*/g, '') : ''; }
     if ((reps && reps.length) || blocks.some(function (b) { return b.t === 'table'; })) s += ' Tabel lengkapnya saya tampilkan di layar.';
-    return s.slice(0, 320);
+    return s.slice(0, 600);
   }
   function speak(text, done) {
-    if (!canSpeak || !voiceOut || !text) { done && done(); return; }
+    if (!voiceOut || !text) { done && done(); return; }
+    /* Suara natural (Edge) lewat bm-voice.js; otomatis kembali ke suara HP bila gagal */
+    if (window.BMVoice) { try { BMVoice.speak(text, { done: done }); return; } catch (e) {} }
+    if (!canSpeak) { done && done(); return; }
     try {
       stopSpeak();
       var u = new SpeechSynthesisUtterance(text.replace(/\s+/g, ' ')); u.lang = speechLang(); u.rate = 1.03;
