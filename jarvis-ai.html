@@ -282,6 +282,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 
 <script src="/bm-nota.js"></script>
 <script src="/bm-visual.js"></script>
+<script src="/bm-voice.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
 <script src="/bm-swipe-back.js"></script>
@@ -431,16 +432,19 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     }
     if (caret.parentNode) caret.remove();
   }
-  function stopSpeak() { if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+  function stopSpeak() { if (window.BMVoice) try { BMVoice.stop(); } catch (e) {} if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
   function spokenOf(blocks, reps) {
     var p = blocks.filter(function (b) { return b.t === 'p'; })[0];
     var s = p ? String(p.text).replace(/\*\*/g, '') : '';
     if (!s) { var h = blocks[0]; s = h && h.text ? String(h.text).replace(/\*\*/g, '') : ''; }
     if ((reps && reps.length) || blocks.some(function (b) { return b.t === 'table'; })) s += ' Tabel lengkapnya saya tampilkan di layar.';
-    return s.slice(0, 320);
+    return s.slice(0, 600);
   }
   function speak(text, done) {
-    if (!canSpeak || !voiceOut || !text) { done && done(); return; }
+    if (!voiceOut || !text) { done && done(); return; }
+    /* Suara natural (Edge) lewat bm-voice.js; otomatis kembali ke suara HP bila gagal */
+    if (window.BMVoice) { try { BMVoice.speak(text, { done: done }); return; } catch (e) {} }
+    if (!canSpeak) { done && done(); return; }
     try {
       stopSpeak();
       var u = new SpeechSynthesisUtterance(text.replace(/\s+/g, ' ')); u.lang = speechLang(); u.rate = 1.03;
@@ -1074,11 +1078,17 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       QUICK.forEach(function (q) { b.appendChild(item(q[0], q[1], q[2], function () { closeSheet(); if (q[4]) { el.in.value = q[3]; autoGrow(); syncBtns(); el.in.focus(); } else submit(q[3]); })); });
     });
   }
+  function voiceSub() {
+    if (!window.BMVoice) return 'Suara HP';
+    var s = BMVoice.settings(), n = String(s.voice).split('-').pop().replace(/MultilingualNeural/, ' Multibahasa').replace(/Neural$/, '');
+    return s.engine === 'edge' ? 'Edge natural · ' + n + ' (' + String(s.voice).split('-').slice(0, 2).join('-') + ')' : 'Suara bawaan HP';
+  }
   function settingsSheet() {
     closeDrawer();
     openSheet('Pengaturan', function (b) {
       b.append(
         toggleRow('Suara jawaban', 'Jarvis membacakan ringkasan', voiceOut, function (v) { voiceOut = v; ls(LS_VOICE, v ? '1' : '0'); if (!v) stopSpeak(); paintSpk(); }),
+        item(I.gear, 'Pilihan suara', voiceSub(), function () { closeSheet(); setTimeout(function () { if (window.BMVoice) BMVoice.openSettings(); else toast('Modul suara belum termuat'); }, 250); }),
         toggleRow('Efek mengetik', 'Jawaban muncul seperti diketik', !typeOff, function (v) { typeOff = !v; REDUCED = typeOff; ls(LS_TYPE, v ? '1' : '0'); }),
         item(I.gear, 'Gaya nota', 'Sekarang: ' + (ls('bm-jarvis-nota-style') === 'bengkel' ? 'Bengkel (rapi, huruf besar)' : 'Tulisan tangan'), function () { closeSheet(); setTimeout(notaStyleSheet, 250); }),
         item(I.brain, 'Otak (skill)', 'Tambah harga, dokumen, aturan untuk Jarvis', function () { closeSheet(); setTimeout(brainSheet, 250); }),
@@ -1312,6 +1322,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var session = null, isAdmin = null;
     try {
       supabaseClient = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
+      if (window.BMVoice) BMVoice.init({ token: token });
       var r = await wt(supabaseClient.auth.getSession(), 8000); session = r.data && r.data.session;
     } catch (e) { return bootMsg('Koneksi lambat, belum bisa memeriksa sesi login.', 'Coba lagi', function () { location.reload(); }); }
     if (!session) { (EMBED ? window.top : window).location.replace('/admin-login.html'); return; }
