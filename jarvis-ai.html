@@ -849,9 +849,14 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     { id: 'gemini', name: 'Gemini', by: 'Google', models: [['gemini-3.8-flash', 'Gemini 3.8 Flash', 'Cepat dan seimbang'], ['gemini-3.6-flash', 'Gemini 3.6 Flash', 'Cepat, stabil'], ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash Lite', 'Ringan, hemat kuota'], ['gemini-3.1-flash-lite', 'Gemini 3.1 Flash Lite', 'Paling ringan']] },
     { id: 'claude', name: 'Claude', by: 'Anthropic', models: [['claude-sonnet-5-5', 'Claude Sonnet 5.5', 'Cerdas dan efisien'], ['claude-haiku-5-5', 'Claude Haiku 5.5', 'Cepat, hemat'], ['claude-opus-5-5', 'Claude Opus 5.5', 'Paling teliti']] },
     { id: 'openai', name: 'OpenAI', by: 'OpenAI', models: [['gpt-5.4-mini', 'GPT 5.4 Mini', 'Cepat, hemat'], ['gpt-5.5', 'GPT 5.5', 'Seimbang']] },
-    { id: 'meta', name: 'Meta AI', by: 'Meta', models: [['Llama-4-Maverick-17B-128E-Instruct-FP8', 'Llama 4 Maverick', 'Pintar, serba guna'], ['Llama-4-Scout-17B-16E-Instruct-FP8', 'Llama 4 Scout', 'Ringan'], ['Llama-3.3-70B-Instruct', 'Llama 3.3 70B', 'Stabil']] }
+    { id: 'meta', name: 'Meta AI', by: 'Meta', models: [['Llama-4-Maverick-17B-128E-Instruct-FP8', 'Llama 4 Maverick', 'Pintar, serba guna'], ['Llama-4-Scout-17B-16E-Instruct-FP8', 'Llama 4 Scout', 'Ringan'], ['Llama-3.3-70B-Instruct', 'Llama 3.3 70B', 'Stabil']] },
+    { id: 'zai', name: 'Z.ai (GLM)', by: 'Zhipu', free: 'Gratis permanen. Daftar di z.ai, buat API key.', models: [['glm-4.7-flash', 'GLM 4.7 Flash', 'Gratis, cepat'], ['glm-4.5-flash', 'GLM 4.5 Flash', 'Gratis, ringan']] },
+    { id: 'cloudflare', name: 'Cloudflare AI', by: 'Cloudflare', free: 'Gratis 10.000 neuron per hari. Isi dengan format ACCOUNT_ID:TOKEN (Account ID, titik dua, lalu API token Workers AI).', models: [['@cf/openai/gpt-oss-120b', 'GPT OSS 120B', 'Gratis, pintar'], ['@cf/aisingapore/gemma-sea-lion-v4-27b-it', 'SEA-LION 27B', 'Gratis, bahasa Asia Tenggara']] },
+    { id: 'groq', name: 'Groq', by: 'Groq', free: 'Gratis, sangat cepat, tetapi jatah 8.000 token per menit. Jarvis memakainya hanya untuk permintaan kecil.', models: [['openai/gpt-oss-120b', 'GPT OSS 120B', 'Gratis, cepat'], ['qwen/qwen3.8-27b', 'Qwen 3.8 27B', 'Gratis, cepat'], ['openai/gpt-oss-20b', 'GPT OSS 20B', 'Gratis, ringan']] },
+    { id: 'openrouter', name: 'OpenRouter', by: 'OpenRouter', free: 'Model berakhiran :free, 50 permintaan per hari tanpa kredit.', models: [['nvidia/nemotron-3-super-120b-a12b:free', 'Nemotron 3 Super (gratis)', 'Gratis'], ['google/gemma-4-31b-it:free', 'Gemma 4 31B (gratis)', 'Gratis']] },
+    { id: 'nvidia', name: 'NVIDIA NIM', by: 'NVIDIA', free: 'Gratis untuk uji coba (butuh akun NVIDIA Developer).', models: [['openai/gpt-oss-20b', 'GPT OSS 20B', 'Gratis'], ['nvidia/nemotron-3-super-120b-a12b', 'Nemotron 3 Super', 'Gratis']] }
   ];
-  var LS_PROVS = 'bm-jarvis-providers', LS_SEL = 'bm-jarvis-sel', MODEL_RE = /^[A-Za-z0-9][A-Za-z0-9._:\-\/]{1,79}$/;
+  var LS_PROVS = 'bm-jarvis-providers', LS_SEL = 'bm-jarvis-sel', MODEL_RE = /^[@A-Za-z0-9][@A-Za-z0-9._:\-\/]{1,79}$/;
   var provInfo = null, provAt = 0;
   function provOf(id) { return PROV.filter(function (p) { return p.id === id; })[0]; }
   function activeProvs() {
@@ -859,7 +864,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     return ['gemini'];
   }
   function curSel() {
-    var m = /^(gemini|claude|openai|meta)\|(.+)$/.exec(ls(LS_SEL) || '');
+    var m = /^(gemini|claude|openai|meta|zai|cloudflare|groq|openrouter|nvidia)\|(.+)$/.exec(ls(LS_SEL) || '');
     if (m && MODEL_RE.test(m[2]) && activeProvs().indexOf(m[1]) >= 0) return { p: m[1], m: m[2] };
     var old = ls(LS_MODEL) || ''; if (!ls(LS_SEL) && /^gemini-[a-z0-9.\-]{2,60}$/.test(old) && activeProvs().indexOf('gemini') >= 0) return { p: 'gemini', m: old };
     return null;
@@ -903,6 +908,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       sv.onclick = async function () {
         var k = inp.value.trim(); if (!k) return toast('Kunci masih kosong');
         if (!/^[\x21-\x7e]{10,300}$/.test(k)) return toast('Kunci tidak valid (ada spasi atau huruf aneh)');
+        if (p.id === 'cloudflare' && !/^[0-9a-f]{20,40}:\S{20,}$/i.test(k)) return toast('Format Cloudflare: ACCOUNT_ID:TOKEN');
         sv.disabled = true; sv.textContent = 'Mengecek…'; msg.textContent = '';
         try {
           var tk = await token(); var ks = {}; ks[p.id] = k;
@@ -918,6 +924,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       act.append(bk);
       if (keyOf(p.id)) { var dl = tx('button', 'dg', 'Hapus kunci'); dl.onclick = function () { try { localStorage.removeItem('bm-jarvis-key-' + p.id); localStorage.removeItem('bm-jarvis-models-' + p.id); } catch (e) {} var c = curSel(); if (c && c.p === p.id && !(provInfo || []).some(function (y) { return y.id === p.id && y.aktif; })) ls(LS_SEL, ''); paintModel(); toast('Kunci dihapus dari HP ini'); pageBack(); }; act.appendChild(dl); }
       act.appendChild(sv); b.appendChild(act);
+      if (p.free) b.appendChild(tx('div', 'note', p.free));
       b.appendChild(tx('div', 'note', 'Kunci hanya disimpan di HP ini, dipakai untuk permintaan Anda sendiri, dan tidak disimpan di server. Di HP lain perlu diisi lagi. Setelah dicek, daftar model dari ' + p.name + ' muncul di pilihan model dengan nama yang mudah dibaca.'));
     });
   }
