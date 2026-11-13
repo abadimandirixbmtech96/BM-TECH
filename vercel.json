@@ -43,6 +43,9 @@
   "functions": {
     "api/jarvis.js": {
       "maxDuration": 60
+    },
+    "api/tts.py": {
+      "maxDuration": 30
     }
   }
 }
