@@ -1994,10 +1994,10 @@
     .note-detail-overlay.view-card .note-detail-table-wrap { display: none; }
     .note-detail-overlay.view-card .note-detail-cards {
       display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0;
-      overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 8px;
+      overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 8px; width: 100%; min-width: 0;
     }
   }
-  .nd-card { background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: var(--radius-lg); padding: 12px 14px; flex-shrink: 0; }
+  .nd-card { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: var(--radius-lg); padding: 12px 14px; flex-shrink: 0; }
   .nd-card.row-hutang  { box-shadow: inset 4px 0 0 #D64B4B; }
   .nd-card.row-piutang { box-shadow: inset 4px 0 0 #3DAA6A; }
   .nd-card.jump-hl { animation: jumpHl 2.2s ease-out; }
@@ -2005,9 +2005,12 @@
   .nd-no { background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); border-radius: 8px; padding: 2px 8px; color: var(--text-primary); }
   .nd-pj { margin-left: auto; border-radius: 999px; padding: 3px 10px; background: rgba(245,166,35,.18); color: #F5A623; font-weight: 800; text-align: right; }
   .nd-title { margin: 8px 0 2px; font-size: 16px; font-weight: 800; color: var(--text-primary); overflow-wrap: anywhere; }
-  .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) 1fr; gap: 5px 10px; margin-top: 8px; font-size: 13px; }
+  .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) minmax(0, 1fr); gap: 5px 10px; margin-top: 8px; font-size: 13px; }
   .nd-grid dt { color: var(--text-secondary); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding-top: 1px; }
-  .nd-grid dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: normal; }
+  .nd-card .jump-chips { margin-top: 6px; }
+  .nd-card .jump-chip { white-space: normal; text-align: left; max-width: 100%; line-height: 1.35; overflow-wrap: anywhere; }
+  .nd-head > span { min-width: 0; }
+  .nd-grid dd { min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: normal; }
   .nd-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--card-border-dark); }
   .nd-harga { font-size: 17px; font-weight: 800; color: var(--text-primary); }
   .nd-harga small { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-right: 3px; }
@@ -7627,15 +7630,24 @@
 
   // Pilihan tampilan Kartu/Tabel (hanya muncul di HP; di layar lebar selalu Tabel)
   const noteViewToggle = document.getElementById('noteViewToggle');
-  function setNoteView(mode) {
+  const NOTE_VIEW_KEY = 'bmNoteView';
+  function getSavedNoteView() {
+    try { return localStorage.getItem(NOTE_VIEW_KEY) === 'table' ? 'table' : 'card'; } catch (e) { return 'card'; }
+  }
+  function setNoteView(mode, persist) {
     noteDetailOverlay.classList.toggle('view-card', mode === 'card');
-    noteViewToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.view === mode));
-    try { localStorage.setItem('bmNoteView', mode); } catch (e) {}
+    noteViewToggle.querySelectorAll('button').forEach(b => {
+      const on = b.dataset.view === mode;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (persist) { try { localStorage.setItem(NOTE_VIEW_KEY, mode); } catch (e) {} }
   }
   noteViewToggle.addEventListener('click', (e) => {
     const b = e.target.closest('button[data-view]');
-    if (b) setNoteView(b.dataset.view);
+    if (b) setNoteView(b.dataset.view, true);
   });
+  setNoteView(getSavedNoteView(), false);
 
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
@@ -7683,9 +7695,7 @@
       tableEl.innerHTML = theadHtml + tbodyHtml;
     }
 
-    let savedView = 'card';
-    try { savedView = localStorage.getItem('bmNoteView') || 'card'; } catch (e) {}
-    setNoteView(savedView === 'table' ? 'table' : 'card');
+    setNoteView(getSavedNoteView(), false);
     noteDetailOverlay.classList.add('open');
   }
 
