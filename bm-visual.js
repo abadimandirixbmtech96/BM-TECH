@@ -19,14 +19,14 @@
   }
 
   var css = '.bmv{flex:none;min-width:0;border:1px solid var(--bmv-bd,rgba(127,127,127,.25));border-radius:14px;overflow:hidden;background:var(--bmv-bg,rgba(127,127,127,.06));margin:2px 0}' +
-    '.bmv-h{display:flex;align-items:flex-start;gap:8px;padding:10px 12px 4px}.bmv-h b{flex:1;font-size:14px;line-height:1.3}.bmv-h small{display:block;font-weight:400;opacity:.65;font-size:12px;margin-top:2px}' +
+    '.bmv-h{display:flex;align-items:flex-start;gap:8px;padding:10px 12px 4px}.bmv-h b{flex:1;min-width:0;font-size:14px;line-height:1.3;overflow-wrap:anywhere}.bmv-h small{display:block;font-weight:400;opacity:.65;font-size:12px;margin-top:2px}' +
     '.bmv-dl{flex:none;border:1px solid var(--bmv-bd,rgba(127,127,127,.3));background:transparent;color:inherit;border-radius:999px;padding:5px 11px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}' +
-    '.bmv-c{padding:4px 6px 8px}.bmv-c svg{display:block;width:100%;height:auto;overflow:visible}' +
+    '.bmv-c{padding:4px 6px 8px;overflow:hidden}.bmv-c svg{display:block;width:100%;height:auto;overflow:visible}' +
     '.bmv-lg{display:flex;flex-wrap:wrap;gap:4px 12px;padding:0 12px 10px;font-size:12px}.bmv-lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}' +
-    '.bmv-tip{position:absolute;pointer-events:none;background:rgba(20,20,22,.92);color:#fff;font-size:12px;padding:5px 8px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-115%);z-index:3}' +
-    '.bmv-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:6px 12px 12px}' +
-    '.bmv-k div{border:1px solid var(--bmv-bd,rgba(127,127,127,.22));border-radius:12px;padding:9px 10px}.bmv-k span{display:block;font-size:12px;opacity:.7}' +
-    '.bmv-k b{display:block;font-size:17px;margin-top:2px;font-variant-numeric:tabular-nums;word-break:break-word}.bmv-k small{display:block;font-size:11.5px;opacity:.65;margin-top:2px}' +
+    '.bmv-tip{position:absolute;pointer-events:none;background:rgba(20,20,22,.92);color:#fff;font-size:12px;line-height:1.35;padding:5px 8px;border-radius:8px;white-space:nowrap;max-width:min(260px,90%);overflow:hidden;text-overflow:ellipsis;transform:translate(-50%,-115%);z-index:3}' +
+    '.bmv-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:8px;padding:6px 12px 12px}' +
+    '.bmv-k div{border:1px solid var(--bmv-bd,rgba(127,127,127,.22));border-radius:12px;padding:9px 10px}.bmv-k span{display:block;font-size:12px;opacity:.7;overflow-wrap:anywhere}' +
+    '.bmv-k b{display:block;font-size:clamp(15px,4.2vw,19px);margin-top:2px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;line-height:1.25}.bmv-k small{display:block;font-size:11.5px;opacity:.65;margin-top:2px}' +
     '.bmv-f{display:block;width:100%;border:0;background:#fff;border-top:1px solid var(--bmv-bd,rgba(127,127,127,.2))}';
   function addCss() { if (document.getElementById('bmv-css')) return; var s = document.createElement('style'); s.id = 'bmv-css'; s.textContent = css; document.head.appendChild(s); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -56,65 +56,147 @@
   }
   function isDark() { try { var c = getComputedStyle(document.body).backgroundColor.match(/\d+/g); if (c) return (+c[0] * 0.299 + +c[1] * 0.587 + +c[2] * 0.114) < 128; } catch (e) {} return false; }
 
-  /* ---------- grafik garis / batang ---------- */
+  /* ---------- grafik garis / batang ----------
+   * Digambar ulang sesuai lebar layar (HP atau desktop): ukuran huruf tetap terbaca, label tidak terpotong.
+   * Label panjang: dimiringkan, dilewati sebagian (deret waktu), atau grafik batang dibuat mendatar (nama panjang). */
+  var MC = null;
+  function measurer(fs) {
+    if (!MC) MC = document.createElement('canvas').getContext('2d');
+    var fam = 'system-ui, sans-serif'; try { fam = getComputedStyle(document.body).fontFamily || fam; } catch (e) {}
+    MC.font = fs + 'px ' + fam; return function (t) { return MC.measureText(String(t)).width; };
+  }
+  function fitText(t, maxW, mw) { t = String(t); if (mw(t) <= maxW) return t; while (t.length > 1 && mw(t + '…') > maxW) t = t.slice(0, -1); return t + '…'; }
   function chart(v) {
-    var PAL = palette(), labels = (v.label || []).map(String), seri = (v.seri || []).filter(function (s) { return s && Array.isArray(s.nilai); }), rp = v.satuan === 'rp';
-    var W = 640, H = 300, L = 62, R = 14, T = 14, B = 46, iw = W - L - R, ih = H - T - B, n = labels.length;
+    var PAL = palette(), labels = (v.label || []).map(String), seri = (v.seri || []).filter(function (s) { return s && Array.isArray(s.nilai); }), rp = v.satuan === 'rp', n = labels.length;
     var all = []; seri.forEach(function (s) { s.nilai.forEach(function (x) { if (isFinite(+x)) all.push(+x); }); });
-    var mx = nice(Math.max.apply(null, all.concat([0]))), mn = Math.min.apply(null, all.concat([0])); mn = mn < 0 ? -nice(-mn) : 0;
-    var y = function (val) { return T + ih - (val - mn) / (mx - mn || 1) * ih; };
-    var svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H, role: 'img', 'aria-label': v.judul || 'Grafik', 'font-family': 'inherit', 'font-size': '12' });
-    for (var g = 0; g <= 4; g++) {
-      var val = mn + (mx - mn) * g / 4, yy = y(val);
-      svg.appendChild(sv('line', { x1: L, x2: W - R, y1: yy, y2: yy, stroke: 'currentColor', 'stroke-opacity': g ? .12 : .35 }));
-      var tl = sv('text', { x: L - 8, y: yy + 4, 'text-anchor': 'end', fill: 'currentColor', 'fill-opacity': .65 }); tl.textContent = short(val, rp); svg.appendChild(tl);
-    }
-    var step = Math.max(1, Math.ceil(n / 8)), slot = iw / Math.max(n, 1);
-    labels.forEach(function (lb, i) {
-      if (i !== n - 1 && (i % step || n - 1 - i < step * 0.6)) return;   // label terakhir selalu tampil, label sebelumnya yang terlalu dekat dilewati
-      var t = sv('text', { x: L + slot * (i + .5), y: H - B + 18, 'text-anchor': 'middle', fill: 'currentColor', 'fill-opacity': .7 }); t.textContent = lb.length > 10 ? lb.slice(0, 9) + '…' : lb; svg.appendChild(t);
-    });
-    var hits = [];
-    if (v.jenis === 'batang') {
-      var bw = Math.max(3, Math.min(42, slot * .8 / Math.max(seri.length, 1)));
-      seri.forEach(function (s, si) {
-        s.nilai.forEach(function (x, i) {
-          x = +x || 0; var x0 = L + slot * (i + .5) - bw * seri.length / 2 + bw * si, y0 = y(Math.max(x, 0)), y1 = y(Math.min(x, 0));
-          var r = sv('rect', { x: x0 + .5, y: y0, width: bw - 1, height: Math.max(1, y1 - y0), rx: 3, fill: PAL[si % PAL.length] }); svg.appendChild(r);
-          hits.push({ x: x0 + bw / 2, y: y0, t: labels[i] + ' · ' + (s.nama ? s.nama + ': ' : '') + fmt(x, rp) });
-        });
-      });
-    } else {
-      seri.forEach(function (s, si) {
-        var pts = s.nilai.map(function (x, i) { return [L + slot * (i + .5), y(+x || 0), +x || 0, i]; });
-        if (seri.length === 1 && pts.length > 1) {
-          var area = 'M' + pts[0][0] + ',' + y(Math.max(mn, 0)) + ' ' + pts.map(function (p) { return 'L' + p[0] + ',' + p[1]; }).join(' ') + ' L' + pts[pts.length - 1][0] + ',' + y(Math.max(mn, 0)) + 'Z';
-          svg.appendChild(sv('path', { d: area, fill: PAL[0], 'fill-opacity': .12 }));
-        }
-        svg.appendChild(sv('path', { d: pts.map(function (p, k) { return (k ? 'L' : 'M') + p[0] + ',' + p[1]; }).join(' '), fill: 'none', stroke: PAL[si % PAL.length], 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-        pts.forEach(function (p) {
-          if (pts.length <= 40) svg.appendChild(sv('circle', { cx: p[0], cy: p[1], r: 3.2, fill: PAL[si % PAL.length] }));
-          hits.push({ x: p[0], y: p[1], t: labels[p[3]] + ' · ' + (s.nama ? s.nama + ': ' : '') + fmt(p[2], rp) });
-        });
-      });
-    }
-    var box = el('div', 'bmv'), body = el('div', 'bmv-c'); body.style.position = 'relative';
-    box.appendChild(head(v, function () { svgToPng(svg, W, H, isDark() ? '#151517' : '#ffffff', v.judul); }));
-    body.appendChild(svg); box.appendChild(body);
+    /* sumbu Y dengan angka bulat (0, 1 jt, 2 jt ...), bukan 1,3 jt / 3,8 jt */
+    var hiV = Math.max.apply(null, all.concat([0])), loV = Math.min.apply(null, all.concat([0]));
+    var tstep = nice(((hiV - loV) || 4) / 4) || 1, mx = Math.max(tstep, Math.ceil(hiV / tstep - 1e-9) * tstep), mn = loV < 0 ? -Math.ceil(-loV / tstep - 1e-9) * tstep : 0;
+    var box = el('div', 'bmv'), body = el('div', 'bmv-c'), cur = null, hits = [], geo = null;
+    body.style.position = 'relative';
+    box.appendChild(head(v, function () { if (cur) svgToPng(cur.svg, cur.W, cur.H, isDark() ? '#151517' : '#ffffff', v.judul); }));
+    box.appendChild(body);
     if (seri.length > 1 || (seri[0] && seri[0].nama)) {
       var lg = el('div', 'bmv-lg');
       seri.forEach(function (s, si) { var it = el('span'), sw = el('i'); sw.style.background = PAL[si % PAL.length]; it.append(sw, document.createTextNode(s.nama || ('Seri ' + (si + 1)))); lg.appendChild(it); });
       box.appendChild(lg);
     }
-    /* sentuh/arahkan: tampilkan nilai titik terdekat */
-    var tip = el('div', 'bmv-tip'); tip.hidden = true; body.appendChild(tip);
-    function near(ev) {
-      var r = svg.getBoundingClientRect(), sx = (ev.clientX - r.left) / r.width * W, best = null, bd = 1e9;
-      hits.forEach(function (h) { var d = Math.abs(h.x - sx); if (d < bd) { bd = d; best = h; } });
-      if (!best || bd > slot) { tip.hidden = true; return; }
-      tip.hidden = false; tip.textContent = best.t; tip.style.left = (best.x / W * r.width + 6) + 'px'; tip.style.top = (best.y / H * r.height + 4) + 'px';
+    var tip = el('div', 'bmv-tip'); tip.hidden = true;
+
+    function build(W) {
+      var small = W < 480, fs = small ? 11 : 12, mw = measurer(fs), H0 = small ? 230 : 290, R = 10, T = 16;
+      var ticks = []; for (var g = mn; g <= mx + tstep / 2; g += tstep) ticks.push(Math.round(g / tstep) * tstep);
+      var tickW = Math.max.apply(null, ticks.map(function (t) { return mw(short(t, rp)); }));
+      var maxLw = Math.max.apply(null, labels.map(mw).concat([0]));
+      var bar = v.jenis === 'batang';
+      var svg = sv('svg', { viewBox: '0 0 ' + W + ' ' + H0, width: W, height: H0, role: 'img', 'aria-label': v.judul || 'Grafik', 'font-family': 'inherit', 'font-size': String(fs) });
+      hits = [];
+      /* --- batang mendatar: nama kategori panjang --- */
+      var L0 = Math.ceil(tickW) + 10, slot0 = (W - L0 - R) / Math.max(n, 1);
+      if (bar && n <= 16 && maxLw > Math.max(64, slot0 * 1.6)) {
+        var rowH = Math.max(fs + 14, 24 * seri.length), lw = Math.min(maxLw, W * (small ? 0.42 : 0.32)) + 14, vw = Math.max.apply(null, all.map(function (x) { return mw(short(x, rp)); }).concat([20])) + 8;
+        var x0 = lw, iw2 = Math.max(60, W - lw - vw - R), H = T + n * rowH + 8;
+        svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('height', H);
+        var xs = function (val) { return x0 + (val - mn) / (mx - mn || 1) * iw2; };
+        svg.appendChild(sv('line', { x1: xs(Math.max(mn, 0)), x2: xs(Math.max(mn, 0)), y1: T - 4, y2: H - 6, stroke: 'currentColor', 'stroke-opacity': .3 }));
+        labels.forEach(function (lb, i) {
+          var yc = T + i * rowH + rowH / 2, t = sv('text', { x: lw - 8, y: yc + fs * 0.35, 'text-anchor': 'end', fill: 'currentColor', 'fill-opacity': .8 });
+          t.textContent = fitText(lb, lw - 9, mw); if (t.textContent !== lb) t.appendChild(sv('title', {})).textContent = lb; svg.appendChild(t);
+          var bh = Math.min(18, (rowH - 6) / seri.length);
+          seri.forEach(function (s, si) {
+            var val = +s.nilai[i] || 0, a = xs(Math.min(val, 0) < 0 ? val : Math.max(mn, 0)), b = xs(Math.max(val, 0)), y = yc - bh * seri.length / 2 + bh * si;
+            svg.appendChild(sv('rect', { x: Math.min(a, b), y: y + .5, width: Math.max(1, Math.abs(b - a)), height: bh - 1, rx: 3, fill: PAL[si % PAL.length] }));
+            var vt = sv('text', { x: Math.max(a, b) + 5, y: y + bh / 2 + fs * 0.35 - .5, fill: 'currentColor', 'fill-opacity': .75, 'font-size': String(fs - 1) }); vt.textContent = short(val, rp); svg.appendChild(vt);
+            hits.push({ x: Math.max(a, b), y: y, t: lb + ' · ' + (s.nama ? s.nama + ': ' : '') + fmt(val, rp), row: true });
+          });
+        });
+        geo = { W: W, H: H, rowH: rowH, T: T, horiz: true }; return { svg: svg, W: W, H: H };
+      }
+      /* --- grafik tegak --- */
+      var L = L0, iw = W - L - R, slot = iw / Math.max(n, 1), gap = 8, mode, step = 1, B, maxRot = 0;
+      if (maxLw + gap <= slot) mode = 'all';
+      else if (bar && slot * 0.707 >= fs + 2 && n <= 31) {          // miring 45 derajat: jarak antar label cukup, tidak saling tindih
+        mode = 'rot'; maxRot = Math.min(maxLw, H0 * 0.42);
+        L = Math.max(L0, Math.ceil(maxRot * 0.707 - (W - L0 - R) / Math.max(n, 1) / 2 + fs * 0.4 + 4)); iw = W - L - R; slot = iw / Math.max(n, 1);
+      }
+      else { mode = 'skip'; step = Math.ceil((maxLw + gap) / slot); }
+      B = mode === 'rot' ? Math.ceil(maxRot * 0.72 + fs + 10) : fs + 16;
+      var H = H0 + (mode === 'rot' ? Math.max(0, B - 30) : 0), ih = H - T - B;
+      svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('height', H);
+      var y = function (val) { return T + ih - (val - mn) / (mx - mn || 1) * ih; };
+      ticks.forEach(function (val, g) {
+        var yy = y(val);
+        svg.appendChild(sv('line', { x1: L, x2: W - R, y1: yy, y2: yy, stroke: 'currentColor', 'stroke-opacity': val ? .12 : .35 }));
+        var tl = sv('text', { x: L - 6, y: yy + fs * 0.35, 'text-anchor': 'end', fill: 'currentColor', 'fill-opacity': .65 }); tl.textContent = short(val, rp); svg.appendChild(tl);
+      });
+      labels.forEach(function (lb, i) {
+        var cx = L + slot * (i + .5), t;
+        if (mode === 'rot') {
+          t = sv('text', { x: cx, y: H - B + fs + 2, 'text-anchor': 'end', 'data-rot': '1', fill: 'currentColor', 'fill-opacity': .75, transform: 'rotate(-45 ' + cx + ' ' + (H - B + fs + 2) + ')' });
+          t.textContent = fitText(lb, maxRot, mw);
+        } else {
+          if (mode === 'skip' && i !== n - 1 && (i % step || n - 1 - i < step)) return;   // label terakhir selalu tampil
+          var half = mw(lb) / 2, ax = 'middle', xx = cx;
+          if (cx - half < 2) { ax = 'start'; xx = Math.max(2, cx - slot / 2); } else if (cx + half > W - 2) { ax = 'end'; xx = Math.min(W - 2, cx + slot / 2); }
+          t = sv('text', { x: xx, y: H - B + fs + 6, 'text-anchor': ax, fill: 'currentColor', 'fill-opacity': .75 }); t.textContent = lb;
+        }
+        if (t.textContent !== lb) t.appendChild(sv('title', {})).textContent = lb;
+        svg.appendChild(t);
+      });
+      if (bar) {
+        var bw = Math.max(3, Math.min(46, slot * .74 / Math.max(seri.length, 1))), showVal = seri.length === 1 && n <= 24;
+        var valW = Math.max.apply(null, all.map(function (x) { return measurer(fs - 1)(short(x, rp)); }).concat([0]));
+        seri.forEach(function (s, si) {
+          s.nilai.forEach(function (x, i) {
+            x = +x || 0; var x0 = L + slot * (i + .5) - bw * seri.length / 2 + bw * si, y0 = y(Math.max(x, 0)), y1 = y(Math.min(x, 0));
+            svg.appendChild(sv('rect', { x: x0 + .5, y: y0, width: bw - 1, height: Math.max(1, y1 - y0), rx: Math.min(4, bw / 3), fill: PAL[si % PAL.length] }));
+            if (showVal && valW <= slot - 2 && x) { var vt = sv('text', { x: x0 + bw / 2, y: y0 - 4, 'text-anchor': 'middle', fill: 'currentColor', 'fill-opacity': .7, 'font-size': String(fs - 1) }); vt.textContent = short(x, rp); svg.appendChild(vt); }
+            hits.push({ x: x0 + bw / 2, y: y0, t: labels[i] + ' · ' + (s.nama ? s.nama + ': ' : '') + fmt(x, rp) });
+          });
+        });
+      } else {
+        seri.forEach(function (s, si) {
+          var pts = s.nilai.map(function (x, i) { return [L + slot * (i + .5), y(+x || 0), +x || 0, i]; });
+          if (seri.length === 1 && pts.length > 1) {
+            var base = y(Math.max(mn, 0));
+            svg.appendChild(sv('path', { d: 'M' + pts[0][0] + ',' + base + ' ' + pts.map(function (p) { return 'L' + p[0] + ',' + p[1]; }).join(' ') + ' L' + pts[pts.length - 1][0] + ',' + base + 'Z', fill: PAL[0], 'fill-opacity': .12 }));
+          }
+          svg.appendChild(sv('path', { d: pts.map(function (p, k) { return (k ? 'L' : 'M') + p[0] + ',' + p[1]; }).join(' '), fill: 'none', stroke: PAL[si % PAL.length], 'stroke-width': small ? 2.2 : 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+          pts.forEach(function (p) {
+            if (slot >= 7) svg.appendChild(sv('circle', { cx: p[0], cy: p[1], r: small ? 2.8 : 3.2, fill: PAL[si % PAL.length] }));
+            hits.push({ x: p[0], y: p[1], t: labels[p[3]] + ' · ' + (s.nama ? s.nama + ': ' : '') + fmt(p[2], rp) });
+          });
+        });
+      }
+      geo = { W: W, H: H, slot: slot }; return { svg: svg, W: W, H: H };
     }
-    svg.addEventListener('pointermove', near); svg.addEventListener('pointerdown', near); svg.addEventListener('pointerleave', function () { tip.hidden = true; });
+    function draw() {
+      var w = Math.floor(body.clientWidth - 12);
+      if (!(w > 0)) w = Math.min(640, Math.max(260, (window.innerWidth || 360) - 48));
+      w = Math.max(240, Math.min(1100, w));
+      if (cur && Math.abs(cur.W - w) < 6) return;
+      var nx = build(w);
+      nx.svg.style.width = '100%'; nx.svg.style.height = 'auto';
+      if (cur) body.replaceChild(nx.svg, cur.svg); else body.insertBefore(nx.svg, body.firstChild);
+      cur = nx; tip.hidden = true;
+      nx.svg.addEventListener('pointermove', near); nx.svg.addEventListener('pointerdown', near); nx.svg.addEventListener('pointerleave', function () { tip.hidden = true; });
+    }
+    body.appendChild(tip);
+    /* sentuh/arahkan: nilai titik terdekat; kotak keterangan dijaga tetap di dalam grafik */
+    function near(ev) {
+      if (!cur) return;
+      var r = cur.svg.getBoundingClientRect(), k = r.width / cur.W, sx = (ev.clientX - r.left) / k, sy = (ev.clientY - r.top) / k, best = null, bd = 1e9;
+      hits.forEach(function (h) { var d = geo.horiz ? Math.abs(h.y + 8 - sy) : Math.abs(h.x - sx); if (d < bd) { bd = d; best = h; } });
+      if (!best || bd > (geo.horiz ? geo.rowH : geo.slot)) { tip.hidden = true; return; }
+      tip.hidden = false; tip.textContent = best.t;
+      var tw = tip.offsetWidth, bw = body.clientWidth, px = best.x * k + 6, py = best.y * k + 4;
+      px = Math.max(tw / 2 + 4, Math.min(bw - tw / 2 - 4, px));
+      tip.style.left = px + 'px'; tip.style.top = Math.max(tip.offsetHeight + 6, py) + 'px';
+    }
+    draw();
+    if (window.ResizeObserver) { var ro = new ResizeObserver(function () { if (box.isConnected) draw(); }); ro.observe(body); }
+    else window.addEventListener('resize', draw);
+    setTimeout(draw, 0);
     return box;
   }
 
@@ -131,7 +213,7 @@
     f.className = 'bmv-f'; f.setAttribute('sandbox', 'allow-scripts'); f.setAttribute('referrerpolicy', 'no-referrer'); f.title = v.judul || 'Gambar';
     var W = Math.max(120, Math.min(1200, +v.lebar || 640)), H = Math.max(80, Math.min(1200, +v.tinggi || 400));
     var csp = "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:\">";
-    var bridge = '<script>(function(){function png(){var c=document.querySelector("canvas");if(c){try{return c.toDataURL("image/png")}catch(e){}}var s=document.querySelector("svg");if(!s)return Promise.resolve("");' +
+    var bridge = '<script>(function(){var s0=document.querySelector("svg");if(s0&&!s0.getAttribute("viewBox")){var w0=parseFloat(s0.getAttribute("width"))||' + W + ',h0=parseFloat(s0.getAttribute("height"))||' + H + ';s0.setAttribute("viewBox","0 0 "+w0+" "+h0);s0.setAttribute("width","100%");s0.removeAttribute("height")}function png(){var c=document.querySelector("canvas");if(c){try{return c.toDataURL("image/png")}catch(e){}}var s=document.querySelector("svg");if(!s)return Promise.resolve("");' +
       'var w=s.viewBox&&s.viewBox.baseVal&&s.viewBox.baseVal.width||s.clientWidth||' + W + ',h=s.viewBox&&s.viewBox.baseVal&&s.viewBox.baseVal.height||s.clientHeight||' + H + ';' +
       'return new Promise(function(ok){var i=new Image();i.onload=function(){var k=2,c=document.createElement("canvas");c.width=w*k;c.height=h*k;var x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL("image/png"))};i.onerror=function(){ok("")};' +
       'var t=new XMLSerializer().serializeToString(s);if(t.indexOf("xmlns=")<0)t=t.replace("<svg","<svg xmlns=\\"http://www.w3.org/2000/svg\\"");i.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(t)})}' +
