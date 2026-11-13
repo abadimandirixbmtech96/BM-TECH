@@ -1834,7 +1834,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var vis = fin.visuals || []; vis.forEach(function (v) { if (window.BMVisual) R.wrap.appendChild(window.BMVisual.render(v)); });
       R.wrap.appendChild(buildActs(reps, blocks, text, ans));
       c.msgs.push({ r: 'u', text: shown, att: attView.length ? attView : undefined }, { r: 'a', text: reply, model: fin.model, reps: reps, notas: notas, vis: vis.filter(function (v) { return JSON.stringify(v).length < 60000; }) });
-      c.hist.push({ role: 'user', text: orig, lampiran: histLamp.length ? histLamp : undefined, dokumen: histDok.length ? histDok : undefined }, { role: 'model', text: reply.slice(0, 1000) + vis.map(function (v) { return '\n[' + (v.tipe === 'grafik' ? 'Grafik' : v.tipe === 'kartu' ? 'Kartu angka' : 'Gambar') + ' "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      c.hist.push({ role: 'user', text: orig, lampiran: histLamp.length ? histLamp : undefined, dokumen: histDok.length ? histDok : undefined }, { role: 'model', text: reply.slice(0, 1000) + vis.map(visNote).join('') + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (c.hist.length > 20) c.hist = c.hist.slice(-20);
       c.updated = Date.now(); save(); if (saveWarn) { saveWarn = false; toast('Memori HP penuh: obrolan lama dihapus otomatis'); }
       (fin.actions || []).forEach(showAction);
@@ -1859,6 +1859,16 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     } finally { clearInterval(tick); curAC = null; curCtl = null; setBusy(false); if ($('drw').classList.contains('on')) paintHist(); }
   }
 
+  /* catatan untuk model: visual yang sudah tampil; dokumen menyertakan isinya supaya bisa direvisi */
+  function visNote(v) {
+    if (v.tipe === 'dokumen') { var j = JSON.stringify(v.bagian || []); return '\n[DOKUMEN "' + v.judul + '" format ' + v.format + ' versi ' + (v.versi || 1) + ' nama_file ' + v.nama + ' sudah tampil sebagai kartu file. Isi bagian: ' + (j.length > 7000 ? j.slice(0, 7000) + ' ...(terpotong; ambil ulang datanya dengan alat bila perlu)' : j) + ']'; }
+    return '\n[' + (v.tipe === 'grafik' ? 'Grafik' : v.tipe === 'kartu' ? 'Kartu angka' : 'Gambar') + ' "' + v.judul + '" sudah ditampilkan sistem]';
+  }
+  window.addEventListener('bm-doc-revisi', function (e) {
+    var d = (e && e.detail) || {}, inp = $('in'); if (!inp) return;
+    inp.value = 'Revisi dokumen "' + String(d.judul || '').slice(0, 60) + '" (versi ' + (d.versi || 2) + '): '; inp.focus();
+    try { inp.dispatchEvent(new Event('input', { bubbles: true })); inp.setSelectionRange(inp.value.length, inp.value.length); } catch (x) {}
+  });
   async function diagnose() {
     if (home && home.parentNode) home.remove();
     var w = say('s', 'Mendiagnosa…'); setBusy(true);
