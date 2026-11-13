@@ -22,6 +22,13 @@
   function ls(k, v) { try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} return null; }
   function settings() { var s = {}; try { s = JSON.parse(ls(K_SET) || '{}') || {}; } catch (e) {} return Object.assign({}, DEF, s); }
   function save(s) { ls(K_SET, JSON.stringify({ engine: s.engine, voice: s.voice, rate: s.rate, pitch: s.pitch })); }
+  var IC = {
+    play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>',
+    stop: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor"/></svg>',
+    x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  function setBtn(b, icon, label) { b.innerHTML = IC[icon] + (label ? '<span>' + label + '</span>' : ''); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function localeOf(id) { var p = String(id || '').split('-'); return p.length >= 3 && p[1].length === 4 ? p.slice(0, 3).join('-') : p.slice(0, 2).join('-'); }
 
@@ -57,16 +64,16 @@
     }
     return t.replace(/\s+/g, ' ').trim();
   }
-  function chunks(text) {
+  function chunks(text, rest) {
     var parts = text.match(/[^.!?…]+[.!?…]+["')\]]*\s*|[^.!?…]+$/g) || [text], out = [], cur = '';
     parts.forEach(function (p) {
       p = p.trim(); if (!p) return;
       while (p.length > 260) { var cut = p.lastIndexOf(', ', 240); if (cut < 80) cut = p.lastIndexOf(' ', 240); if (cut < 40) cut = 240; out.push((cur ? cur + ' ' : '') + p.slice(0, cut + 1).trim()); cur = ''; p = p.slice(cut + 1).trim(); }
-      var lim = out.length ? 240 : 110;   // potongan pertama pendek supaya suara cepat mulai
+      var lim = (out.length || rest) ? 240 : 110;   // potongan pertama pendek supaya suara cepat mulai
       if (cur && (cur + ' ' + p).length > lim) { out.push(cur); cur = p; } else cur = cur ? cur + ' ' + p : p;
     });
     if (cur) out.push(cur);
-    return out.slice(0, 24);
+    return rest ? out : out.slice(0, 24);
   }
 
   /* ---------- suara HP ---------- */
@@ -101,19 +108,29 @@
     if (canHp) try { speechSynthesis.cancel(); } catch (e) {}
     state.playing = false;
   }
+  /* text: string, atau array bagian (paragraf). opts.onSeg(i) dipanggil saat bagian ke-i mulai dibaca. */
   function speak(text, opts) {
     opts = opts || {}; stop();
     var s = Object.assign(settings(), opts.override || {}), loc = localeOf(s.voice), indo = /^id/i.test(loc);
-    var done = opts.done || function () {}, run = state.run, list = chunks(clean(text, indo));
+    var done = opts.done || function () {}, run = state.run, list = [];
+    if (Array.isArray(text)) {
+      text.forEach(function (sg, si) { chunks(clean(String(sg || ''), indo), list.length > 0).forEach(function (c) { list.push({ t: c, seg: si }); }); });
+      list = list.slice(0, 160);
+    } else chunks(clean(String(text || ''), indo)).forEach(function (c) { list.push({ t: c, seg: 0 }); });
     if (!list.length) { done(); return; }
     var finish = function () { if (run === state.run) { state.playing = false; done(); } };
+    var lastSeg = -1, mark = function (i) { if (opts.onSeg && list[i].seg !== lastSeg) { lastSeg = list[i].seg; try { opts.onSeg(lastSeg); } catch (e) {} } };
     state.playing = true;
-    var hpFrom = function (i) { if (run !== state.run) return; var rest = list.slice(i).join(' '); hpSpeak(rest, loc, s.rate, finish); };
+    var hpFrom = function (i) {                                   // suara HP, per kalimat supaya penanda tetap jalan
+      if (run !== state.run) return;
+      if (i >= list.length) return finish();
+      mark(i); hpSpeak(list[i].t, loc, s.rate, function () { if (run === state.run) setTimeout(function () { hpFrom(i + 1); }, 0); });
+    };
     if (s.engine !== 'edge' || (Date.now() < health.downUntil && !opts.override)) return hpFrom(0);
     var jobs = [];
     function job(i) {
       if (i >= list.length) return null;
-      if (!jobs[i]) { var c = new AbortController(); state.ctrl.push(c); jobs[i] = fetchMp3(list[i], s, c).then(function (u) { state.urls.push(u); return u; }); jobs[i].catch(function () {}); }
+      if (!jobs[i]) { var c = new AbortController(); state.ctrl.push(c); jobs[i] = fetchMp3(list[i].t, s, c).then(function (u) { state.urls.push(u); return u; }); jobs[i].catch(function () {}); }
       return jobs[i];
     }
     if (!state.audio) state.audio = new Audio();
@@ -121,13 +138,13 @@
     (function play(i) {
       if (run !== state.run) return;
       if (i >= list.length) return finish();
-      job(i); job(i + 1);                                         // siapkan kalimat berikutnya sambil berjalan
+      job(i); job(i + 1); job(i + 2);                             // siapkan kalimat berikutnya sambil berjalan
       jobs[i].then(function (url) {
         if (run !== state.run) return;
         health.lastOk = Date.now();
         au.onended = function () { play(i + 1); };
         au.onerror = function () { health.lastErr = 'MP3 tidak bisa diputar'; health.lastAt = Date.now(); hpFrom(i); };
-        au.src = url;
+        au.src = url; mark(i);
         var p = au.play(); if (p && p.catch) p.catch(function (e) { health.lastErr = 'Pemutar diblokir browser: ' + (e && e.message || e); health.lastAt = Date.now(); hpFrom(i); });
       }, function (e) {
         if (run !== state.run) return;
@@ -183,6 +200,7 @@
     'font-family:var(--bm-font,system-ui,-apple-system,"Segoe UI",sans-serif);transform:translateY(24px);transition:transform .22s cubic-bezier(.2,.8,.2,1);color-scheme:dark}' +
     '.bmvo-ov.on .bmvo{transform:none}.bmvo.lt{--bg:#f5f5f7;--card:#fff;--tx:#151517;--mu:#6c6c74;--bd:rgba(0,0,0,.09);color-scheme:light}' +
     '.bmvo-hd{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}.bmvo-hd b{flex:1;font-size:18px;letter-spacing:.2px}' +
+    '.bmvo button svg{display:block;flex:none}.bmvo-x svg{width:18px;height:18px;margin:auto}.bmvo-play{display:inline-flex;align-items:center;gap:6px}.bmvo-play svg{width:15px;height:15px}.bmvo-pv svg{width:14px;height:14px;margin:auto}.bmvo-gh i svg{width:16px;height:16px;display:block}' +
     '.bmvo-x{width:38px;height:38px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:18px;cursor:pointer}' +
     '.bmvo-bd{overflow:auto;padding:0 16px calc(18px + env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:12px;overscroll-behavior:contain}' +
     '.bmvo-c{min-width:0;box-sizing:border-box;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:12px 14px}' +
@@ -223,7 +241,7 @@
     var old = document.querySelector('.bmvo-ov'); if (old) old.remove();
     var s = settings(), ov = el('div', 'bmvo-ov'), box = el('div', 'bmvo' + (isLight() ? ' lt' : ''));
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Suara Jarvis');
-    var hd = el('div', 'bmvo-hd'), x = el('button', 'bmvo-x', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Tutup');
+    var hd = el('div', 'bmvo-hd'), x = el('button', 'bmvo-x'); setBtn(x, 'x'); x.type = 'button'; x.setAttribute('aria-label', 'Tutup');
     hd.append(el('b', '', 'Suara Jarvis'), x);
     var bd = el('div', 'bmvo-bd');
     box.append(hd, bd); ov.appendChild(box); document.body.appendChild(ov);
@@ -253,16 +271,17 @@
     paintEng(); bd.appendChild(c1);
 
     /* 2. suara terpilih + coba */
-    var c2 = el('div', 'bmvo-c'), cur = el('div', 'bmvo-cur'), av = el('div', 'bmvo-av'), info = el('div'), nm = el('b'), meta = el('span'), play = el('button', 'bmvo-play', '▶ Coba');
+    var c2 = el('div', 'bmvo-c'), cur = el('div', 'bmvo-cur'), av = el('div', 'bmvo-av'), info = el('div'), nm = el('b'), meta = el('span'), play = el('button', 'bmvo-play'); setBtn(play, 'play', 'Coba');
     play.type = 'button'; info.append(nm, meta); cur.append(av, info, play); c2.append(el('p', 'bmvo-t', 'Suara dipakai'), cur);
     function curVoice() { return (all || []).filter(function (v) { return v.id === s.voice; })[0] || { id: s.voice, nama: s.voice.split('-').pop().replace(/MultilingualNeural|Neural/, ''), locale: localeOf(s.voice), gender: '' }; }
     function paintCur() { var v = curVoice(); av.textContent = (v.nama || '?').charAt(0).toUpperCase(); nm.textContent = v.nama; meta.textContent = [langName(v.locale), genderTxt(v.gender), gayaTxt(v.gaya)].filter(Boolean).join(' · '); }
     var previewBtn = null;
+    function idle(b) { if (b === play) setBtn(b, 'play', 'Coba'); else setBtn(b, 'play'); }
     function preview(v, btn) {
-      if (previewBtn === btn && state.playing) { stop(); btn.classList.remove('run'); btn.textContent = btn === play ? '▶ Coba' : '▶'; previewBtn = null; return; }
-      if (previewBtn) { previewBtn.classList.remove('run'); previewBtn.textContent = previewBtn === play ? '▶ Coba' : '▶'; }
-      previewBtn = btn; btn.classList.add('run'); btn.textContent = btn === play ? '■ Stop' : '■';
-      speak(sampleFor(v), { override: { engine: s.engine, voice: v.id, rate: s.rate, pitch: s.pitch }, onError: function () { paintEng(); }, done: function () { if (previewBtn === btn) { btn.classList.remove('run'); btn.textContent = btn === play ? '▶ Coba' : '▶'; previewBtn = null; } paintEng(); } });
+      if (previewBtn === btn && state.playing) { stop(); btn.classList.remove('run'); idle(btn); previewBtn = null; return; }
+      if (previewBtn) { previewBtn.classList.remove('run'); idle(previewBtn); }
+      previewBtn = btn; btn.classList.add('run'); if (btn === play) setBtn(btn, 'stop', 'Stop'); else setBtn(btn, 'stop');
+      speak(sampleFor(v), { override: { engine: s.engine, voice: v.id, rate: s.rate, pitch: s.pitch }, onError: function () { paintEng(); }, done: function () { if (previewBtn === btn) { btn.classList.remove('run'); idle(btn); previewBtn = null; } paintEng(); } });
     }
     play.onclick = function () { preview(curVoice(), play); };
     paintCur(); bd.appendChild(c2);
@@ -287,13 +306,13 @@
     c4.append(el('p', 'bmvo-t', 'Pilih suara'), q, chips, cnt, listEl); bd.appendChild(c4);
     var PRIO = { 'id-ID': 0, 'jv-ID': 1, 'su-ID': 2, 'ms-MY': 3, 'en-US': 4, 'en-GB': 5 };
     function row(v) {
-      var r = el('div', 'bmvo-v' + (v.id === s.voice ? ' on' : '')), rd = el('i', 'bmvo-rd'), d = el('div'), pv = el('button', 'bmvo-pv', '▶');
+      var r = el('div', 'bmvo-v' + (v.id === s.voice ? ' on' : '')), rd = el('i', 'bmvo-rd'), d = el('div'), pv = el('button', 'bmvo-pv'); setBtn(pv, 'play');
       pv.type = 'button'; pv.setAttribute('aria-label', 'Coba dengar ' + v.nama);
       d.append(el('b', '', v.nama), el('span', '', [genderTxt(v.gender), gayaTxt(v.gaya)].filter(Boolean).join(' · ') || v.id));
       r.append(rd, d, pv); r.setAttribute('role', 'radio'); r.setAttribute('aria-checked', v.id === s.voice ? 'true' : 'false'); r.tabIndex = 0;
-      r.onclick = function (e) { if (e.target === pv) return; s.voice = v.id; put(); paintCur(); listEl.querySelectorAll('.bmvo-v.on').forEach(function (z) { z.classList.remove('on'); z.setAttribute('aria-checked', 'false'); }); r.classList.add('on'); r.setAttribute('aria-checked', 'true'); };
+      r.onclick = function (e) { if (pv.contains(e.target)) return; s.voice = v.id; put(); paintCur(); listEl.querySelectorAll('.bmvo-v.on').forEach(function (z) { z.classList.remove('on'); z.setAttribute('aria-checked', 'false'); }); r.classList.add('on'); r.setAttribute('aria-checked', 'true'); };
       r.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.click(); } };
-      pv.onclick = function (e) { e.stopPropagation(); preview(v, pv); };
+      pv.onclick = function (e) { e.stopPropagation(); e.preventDefault(); preview(v, pv); };
       return r;
     }
     function paintList() {
@@ -315,7 +334,7 @@
       locs.forEach(function (loc) {
         var grp = el('div', 'bmvo-g'), h = el('button', 'bmvo-gh'), body = el('div'); h.type = 'button';
         var isOpen = open[loc] !== undefined ? open[loc] : (!!term || loc === localeOf(s.voice) || loc === 'id-ID');
-        h.append(el('span', '', langName(loc)), el('small', '', g[loc].length + ' suara'), el('i', '', '›'));
+        h.append(el('span', '', langName(loc)), el('small', '', g[loc].length + ' suara'), (function () { var ic = el('i'); ic.innerHTML = IC.chev; return ic; })());
         grp.append(h, body); if (isOpen) { grp.classList.add('op'); g[loc].forEach(function (v) { body.appendChild(row(v)); }); }
         h.onclick = function () { open[loc] = !grp.classList.contains('op'); paintList(); };
         listEl.appendChild(grp);
@@ -330,7 +349,6 @@
       });
     }
     paintList(); load(false);
-    setTimeout(function () { x.focus(); }, 50);
     return { close: close };
   }
 
