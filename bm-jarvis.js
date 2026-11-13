@@ -686,10 +686,10 @@
   var RESUME_RE = /^\s*(ya\s+)?(tolong\s+)?(lanjut(kan|in)?|terus(kan|in)?|ulang(i)?|coba\s+lagi|gas|oke?\s+lanjut|sambung(kan)?)\W*$/i, pend = {};
   function panelModel() {   // pilihan penyedia/model dibagi dengan halaman Jarvis AI lewat localStorage
     function g(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
-    var provs = ['gemini']; try { var a = JSON.parse(g('bm-jarvis-providers') || 'null'); if (Array.isArray(a) && a.length) provs = a.filter(function (x) { return /^(gemini|claude|openai|meta)$/.test(x); }); if (!provs.length) provs = ['gemini']; } catch (e) {}
-    var m = /^(gemini|claude|openai|meta)\|(.+)$/.exec(g('bm-jarvis-sel')), o = { providers: provs };
-    if (m && provs.indexOf(m[1]) >= 0 && /^[A-Za-z0-9][A-Za-z0-9._:\-\/]{1,79}$/.test(m[2])) { o.provider = m[1]; o.model = m[2]; }
-    var keys = {}; ['gemini', 'claude', 'openai', 'meta'].forEach(function (p) { var k = g('bm-jarvis-key-' + p); if (k) keys[p] = k; });   // kunci API pribadi di HP ini
+    var provs = ['gemini']; try { var a = JSON.parse(g('bm-jarvis-providers') || 'null'); if (Array.isArray(a) && a.length) provs = a.filter(function (x) { return /^(gemini|claude|openai|meta|zai|cloudflare|groq|openrouter|nvidia)$/.test(x); }); if (!provs.length) provs = ['gemini']; } catch (e) {}
+    var m = /^(gemini|claude|openai|meta|zai|cloudflare|groq|openrouter|nvidia)\|(.+)$/.exec(g('bm-jarvis-sel')), o = { providers: provs };
+    if (m && provs.indexOf(m[1]) >= 0 && /^[@A-Za-z0-9][@A-Za-z0-9._:\-\/]{1,79}$/.test(m[2])) { o.provider = m[1]; o.model = m[2]; }
+    var keys = {}; ['gemini', 'claude', 'openai', 'meta', 'zai', 'cloudflare', 'groq', 'openrouter', 'nvidia'].forEach(function (p) { var k = g('bm-jarvis-key-' + p); if (k) keys[p] = k; });   // kunci API pribadi di HP ini
     o.keys = keys;
     return o;
   }
