@@ -34,8 +34,17 @@ const PROVIDERS = {
   openai: { name: 'OpenAI', key: () => process.env.OPENAI_API_KEY, env: 'OPENAI_API_KEY', base: () => (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, ''), models: () => [process.env.OPENAI_MODEL, 'gpt-5.4-mini', 'gpt-5.5'].filter(Boolean) },
   meta: { name: 'Meta AI', key: () => process.env.META_API_KEY || process.env.LLAMA_API_KEY, env: 'META_API_KEY', base: () => (process.env.META_BASE_URL || 'https://api.llama.com/compat/v1').replace(/\/+$/, ''), models: () => [process.env.META_MODEL, 'Llama-4-Maverick-17B-128E-Instruct-FP8', 'Llama-4-Scout-17B-16E-Instruct-FP8', 'Llama-3.3-70B-Instruct'].filter(Boolean) }
 };
+/* Penyedia gratis tambahan (semua format OpenAI). batasToken = jatah token per menit di tier gratis: permintaan yang lebih besar dilewati, bukan dicoba lalu gagal. */
+const cfParts = (k) => { const i = String(k || '').indexOf(':'); return i > 0 ? { acct: k.slice(0, i), token: k.slice(i + 1) } : null; };
+Object.assign(PROVIDERS, {
+  zai: { name: 'Z.ai (GLM)', key: () => process.env.ZAI_API_KEY, env: 'ZAI_API_KEY', base: () => (process.env.ZAI_BASE_URL || 'https://api.z.ai/api/paas/v4').replace(/\/+$/, ''), models: () => [process.env.ZAI_MODEL, 'glm-4.7-flash', 'glm-4.5-flash'].filter(Boolean) },
+  cloudflare: { name: 'Cloudflare AI', key: () => process.env.CLOUDFLARE_API_KEY, env: 'CLOUDFLARE_API_KEY (format ACCOUNT_ID:TOKEN)', base: (k) => { const c = cfParts(k); return c ? 'https://api.cloudflare.com/client/v4/accounts/' + encodeURIComponent(c.acct) + '/ai/v1' : ''; }, auth: (k) => { const c = cfParts(k); return c ? c.token : k; }, models: () => [process.env.CLOUDFLARE_MODEL, '@cf/openai/gpt-oss-120b', '@cf/aisingapore/gemma-sea-lion-v4-27b-it'].filter(Boolean) },
+  groq: { name: 'Groq', key: () => process.env.GROQ_API_KEY, env: 'GROQ_API_KEY', base: () => 'https://api.groq.com/openai/v1', batasToken: 8000, models: () => [process.env.GROQ_MODEL, 'openai/gpt-oss-120b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-20b'].filter(Boolean) },
+  openrouter: { name: 'OpenRouter', key: () => process.env.OPENROUTER_API_KEY, env: 'OPENROUTER_API_KEY', base: () => 'https://openrouter.ai/api/v1', models: () => [process.env.OPENROUTER_MODEL, 'nvidia/nemotron-3-super-120b-a12b:free', 'google/gemma-4-31b-it:free'].filter(Boolean) },
+  nvidia: { name: 'NVIDIA NIM', key: () => process.env.NVIDIA_API_KEY, env: 'NVIDIA_API_KEY', base: () => 'https://integrate.api.nvidia.com/v1', models: () => [process.env.NVIDIA_MODEL, 'openai/gpt-oss-20b', 'nvidia/nemotron-3-super-120b-a12b'].filter(Boolean) }
+});
 const PROV_IDS = Object.keys(PROVIDERS);
-const MODEL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:\-\/]{1,79}$/;
+const MODEL_ID_RE = /^[@A-Za-z0-9][@A-Za-z0-9._:\-\/]{1,79}$/;
 function anyKey() { return PROV_IDS.some((id) => PROVIDERS[id].key()); }
 /* Kunci API boleh dikirim dari HP admin (disimpan di localStorage HP itu). Dipakai hanya untuk permintaan ini, tidak disimpan/dicatat.
    Bila kosong, kunci env Vercel dipakai sebagai cadangan. */
@@ -44,7 +53,7 @@ function keyFor(p, keys) { return (keys && keys[p]) || PROVIDERS[p].key() || '';
 const COOL = new Map();   // "provider|model" -> waktu boleh dicoba lagi (router menghindari model yang kena limit)
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v24-dokumen-2026-11-13';
+const VERSION = 'jarvis-v25-penyedia-gratis-2026-11-13';
 const MAX_TOOL_ROUNDS = 8;
 const ROUND_BUDGET_MS = 34000;   // lewat ini -> hentikan rapi & minta browser melanjutkan otomatis
 const MAX_RESULT_CHARS = 14000;
@@ -1382,9 +1391,10 @@ async function invoke(entry, contents, sys, tools, ctx) {
     }
     /* openai & meta: format chat completions */
     const body = { model, messages: toOpenAI(contents, sys, entry.p) };
-    if (!noTools) { body.tools = tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: lowerSchema(t.parameters) } })); body.tool_choice = (ctx.mode === 'ANY' && entry.p === 'openai') ? 'required' : 'auto'; }
+    if (!noTools) { body.tools = tools.map((t) => ({ type: 'function', function: { name: t.name, description: t.description, parameters: lowerSchema(t.parameters) } })); body.tool_choice = (ctx.mode === 'ANY' && (entry.p === 'openai' || entry.p === 'groq')) ? 'required' : 'auto'; }
     if (entry.p === 'openai') { body.max_completion_tokens = Math.max(maxTok, 6000); if (ctx.think && /^(gpt-5|o\d)/i.test(model)) body.reasoning_effort = 'medium'; } else body.max_tokens = maxTok;
-    r = await fetch(P.base() + '/chat/completions', { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body: JSON.stringify(body) });
+    const baseUrl = P.base(key); if (!baseUrl) return { ok: false, status: 401, msg: 'Format kunci ' + P.name + ' salah. Isi ACCOUNT_ID:TOKEN' };
+    r = await fetch(baseUrl + '/chat/completions', { method: 'POST', signal: ac.signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + (P.auth ? P.auth(key) : key) }, body: JSON.stringify(body) });
     j = await r.json().catch(() => null);
     const m = j && j.choices && j.choices[0] && j.choices[0].message;
     if (r.ok && m) {
@@ -1422,10 +1432,18 @@ async function listModels(pid, key) {
       const r = await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }, signal: ac.signal });
       const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.error && j.error.message) || ('HTTP ' + r.status));
       out = (j.data || []).map((m) => ({ id: m.id, name: m.display_name || prettyModel(m.id) }));
+    } else if (pid === 'cloudflare') {
+      const c = cfParts(key); if (!c) throw new Error('Format kunci: ACCOUNT_ID:TOKEN (Account ID, titik dua, lalu token)');
+      const r = await fetch('https://api.cloudflare.com/client/v4/accounts/' + encodeURIComponent(c.acct) + '/tokens/verify', { headers: { Authorization: 'Bearer ' + c.token }, signal: ac.signal });
+      const j = await r.json().catch(() => null); if (!r.ok || !(j && j.success)) throw new Error((j && j.errors && j.errors[0] && j.errors[0].message) || ('HTTP ' + r.status));
+      out = PROVIDERS.cloudflare.models().map((id) => ({ id, name: prettyModel(id.replace(/^@cf\//, '')) }));
     } else {
-      const r = await fetch(PROVIDERS[pid].base() + '/models', { headers: { Authorization: 'Bearer ' + key }, signal: ac.signal });
+      const r = await fetch(PROVIDERS[pid].base(key) + '/models', { headers: { Authorization: 'Bearer ' + (PROVIDERS[pid].auth ? PROVIDERS[pid].auth(key) : key) }, signal: ac.signal });
       const j = await r.json().catch(() => null); if (!r.ok) throw new Error((j && j.error && (j.error.message || j.error)) || ('HTTP ' + r.status));
       out = (j.data || []).map((m) => ({ id: m.id, name: prettyModel(m.id) }));
+      if (pid === 'groq') out = out.filter((m) => !/whisper|tts|guard|orpheus|playai|distil/i.test(m.id));
+      if (pid === 'openrouter') out = out.filter((m) => /:free$/.test(m.id));
+      if (pid === 'nvidia') out = out.filter((m) => /gpt-oss|nemotron|llama|qwen|deepseek|glm|mistral|gemma|kimi/i.test(m.id) && !/embed|rerank|guard|vision|vl\b|clip|parse|safety|reward/i.test(m.id));
       if (pid === 'openai') out = out.filter((m) => /^(gpt|o\d|chatgpt)/i.test(m.id) && !/audio|realtime|tts|transcribe|image|embedding|search|moderation|dall|instruct|codex/i.test(m.id));
     }
     return out.filter((m) => MODEL_ID_RE.test(m.id)).slice(0, 80).map((m) => ({ id: m.id, name: clip(m.name, 60), ket: modelKet(m.id) }));
@@ -1459,6 +1477,8 @@ async function callModel(contents, email, tools, ctx, extra) {
     if (Date.now() - ctx.t0 > 45000) { errs.push('waktu habis'); break; }
     if (mid && ctx.badProv === e.p) continue;
     if (ctx.skipProv && ctx.skipProv.has(e.p)) continue;
+    const bt = PROVIDERS[e.p].batasToken;
+    if (bt) { const est = Math.round((sys.length + JSON.stringify(tools || []).length + JSON.stringify(contents).length) / 3.2); if (est > bt * 0.85) { errs.push(PROVIDERS[e.p].name + ': permintaan ~' + est + ' token melebihi jatah gratis ' + bt + '/menit, dilewati'); continue; } }
     let o = await invoke(e, contents, sys, tools, ctx);
     if (!o.ok && (o.status === 0 || o.status === 500 || o.status === 503 || o.status === 529) && i === 0 && Date.now() - ctx.t0 < 30000) {
       if (ctx.onRetry) ctx.onRetry(PROVIDERS[e.p].name + ' lambat, mencoba lagi');
@@ -1684,6 +1704,19 @@ module.exports = async function handler(req, res) {
       const parts = (cand && cand.content && cand.content.parts) || [];
       const calls = parts.filter((p) => p.functionCall);
       const text = parts.filter((p) => p.text).map((p) => p.text).join('').trim();
+      if (!calls.length && !text && round > 0) {
+        /* model kecil kadang diam setelah membaca banyak data: minta sekali lagi menulis jawaban akhir (tanpa alat), model/penyedia lain boleh mengambil alih */
+        const nudge = { text: 'Jawabanmu kosong. Tulis jawaban akhir sekarang dalam bahasa Indonesia dari hasil alat di atas. Jangan memanggil alat lagi. Jika data belum cukup, katakan apa yang kurang.' };
+        const lastC = contents[contents.length - 1];
+        if (lastC && lastC.role === 'user') lastC.parts.push(nudge); else contents.push({ role: 'user', parts: [nudge] });
+        emit({ type: 'status', text: 'Jawaban kosong, menulis ulang…' });
+        try {
+          const g2 = await callModel(contents, user.email, [], Object.assign(gctx, { mode: 'AUTO', maxTokens: 3000 }), brainTxt);
+          const p2 = ((g2.candidates && g2.candidates[0] && g2.candidates[0].content && g2.candidates[0].content.parts) || []);
+          const t2 = p2.filter((p) => p.text).map((p) => p.text).join('').trim();
+          if (t2) { reply = t2; break; }
+        } catch (e2) { /* jatuh ke pesan standar di bawah */ }
+      }
       if (!calls.length) { reply = text || 'Maaf, saya tidak mendapat jawaban. Coba ulangi.'; break; }
 
       contents.push({ role: 'model', parts });
@@ -1720,7 +1753,7 @@ module.exports = async function handler(req, res) {
     }
     if (!reply) throw Object.assign(new Error('Batas langkah per permintaan tercapai, melanjutkan otomatis'), { auto: true });
     /* --- berpikir ulang: cocokkan jawaban dengan hasil alat sebelum dikirim --- */
-    if (contents.length > resumeBase && Date.now() - gctx.t0 < 30000 && reply.length > 20) {
+    if (contents.length > resumeBase && Date.now() - gctx.t0 < 30000 && reply.length > 20 && !/^Maaf, saya tidak mendapat jawaban/.test(reply)) {
       const sid = 'cek_' + Math.random().toString(36).slice(2, 6);
       emit({ type: 'step', id: sid, state: 'run', text: 'Memeriksa ulang jawaban' });
       try {
