@@ -1083,12 +1083,29 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var s = BMVoice.settings(), n = String(s.voice).split('-').pop().replace(/MultilingualNeural/, ' Multibahasa').replace(/Neural$/, '');
     return s.engine === 'edge' ? 'Edge natural · ' + n + ' (' + String(s.voice).split('-').slice(0, 2).join('-') + ')' : 'Suara bawaan HP';
   }
+  /* Muat ulang bm-voice.js bila belum ada (file belum diunggah, cache lama, atau sinyal putus). */
+  var voiceLoading = null;
+  function loadVoice(cb, quiet) {
+    if (window.BMVoice) return cb();
+    if (voiceLoading) return voiceLoading.push(cb);
+    voiceLoading = [cb]; if (!quiet) toast('Memuat modul suara...');
+    var sc = document.createElement('script');
+    sc.src = '/bm-voice.js?v=' + Date.now();
+    sc.onload = function () {
+      var q = voiceLoading; voiceLoading = null;
+      if (!window.BMVoice) return toast('File bm-voice.js rusak. Unggah ulang file itu lalu Redeploy.');
+      try { BMVoice.init({ token: token }); } catch (e) {}
+      paintSpk(); q.forEach(function (f) { try { f(); } catch (e) {} });
+    };
+    sc.onerror = function () { voiceLoading = null; toast('File bm-voice.js tidak ada di server. Unggah ke folder utama repo (sejajar jarvis-ai.html) lalu Redeploy.'); };
+    document.head.appendChild(sc);
+  }
   function settingsSheet() {
     closeDrawer();
     openSheet('Pengaturan', function (b) {
       b.append(
         toggleRow('Suara jawaban', 'Jarvis membacakan ringkasan', voiceOut, function (v) { voiceOut = v; ls(LS_VOICE, v ? '1' : '0'); if (!v) stopSpeak(); paintSpk(); }),
-        item(I.gear, 'Pilihan suara', voiceSub(), function () { closeSheet(); setTimeout(function () { if (window.BMVoice) BMVoice.openSettings(); else toast('Modul suara belum termuat'); }, 250); }),
+        item(I.gear, 'Pilihan suara', voiceSub(), function () { closeSheet(); setTimeout(function () { loadVoice(function () { BMVoice.openSettings(); }); }, 250); }),
         toggleRow('Efek mengetik', 'Jawaban muncul seperti diketik', !typeOff, function (v) { typeOff = !v; REDUCED = typeOff; ls(LS_TYPE, v ? '1' : '0'); }),
         item(I.gear, 'Gaya nota', 'Sekarang: ' + (ls('bm-jarvis-nota-style') === 'bengkel' ? 'Bengkel (rapi, huruf besar)' : 'Tulisan tangan'), function () { closeSheet(); setTimeout(notaStyleSheet, 250); }),
         item(I.brain, 'Otak (skill)', 'Tambah harga, dokumen, aturan untuk Jarvis', function () { closeSheet(); setTimeout(brainSheet, 250); }),
@@ -1322,7 +1339,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     var session = null, isAdmin = null;
     try {
       supabaseClient = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storage: window.localStorage, storageKey: 'bmtech-auth' } });
-      if (window.BMVoice) BMVoice.init({ token: token });
+      if (window.BMVoice) BMVoice.init({ token: token }); else loadVoice(function () {}, true);
       var r = await wt(supabaseClient.auth.getSession(), 8000); session = r.data && r.data.session;
     } catch (e) { return bootMsg('Koneksi lambat, belum bisa memeriksa sesi login.', 'Coba lagi', function () { location.reload(); }); }
     if (!session) { (EMBED ? window.top : window).location.replace('/admin-login.html'); return; }
