@@ -1202,8 +1202,10 @@
     inset: 0;
     background: #F6F1E7;
     z-index: 200;
-    transform: translateY(100%);
-    transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
+    transform: translate3d(0, 100%, 0);
+    transition: transform 0.48s cubic-bezier(.32, .72, 0, 1);
+    will-change: transform;
+    contain: layout paint;
   }
 
   .editor-modal.open { transform: translateY(0); }
@@ -2336,8 +2338,10 @@
     inset: 0;
     background: var(--bg-dark);
     z-index: 210;
-    transform: translateY(100%);
-    transition: transform 0.34s cubic-bezier(0.2, 0.9, 0.25, 1);
+    transform: translate3d(0, 100%, 0);
+    transition: transform 0.48s cubic-bezier(.32, .72, 0, 1);
+    will-change: transform;
+    contain: layout paint;
   }
   .page-modal.open { transform: translateY(0); }
   .page-modal.ready .editor-frame { opacity: 1; }
@@ -3407,7 +3411,9 @@
       console.error('Gagal cek status admin (jaringan?):', error.message);
       await ready;
       revealApp();
-      if (!earlyLoad) loadCategories();
+      // Offline / sinyal lemot: tetap tampilkan daftar dari data tersimpan (dulu kerangka abu-abu tertinggal selamanya)
+      await (earlyLoad || loadCategories());
+      if (!activeCategoryId) loadAllNotesInDashboard();
       return;
     }
 
@@ -3462,9 +3468,15 @@
         rec: deepLinkParams.get('rec')
       });
     } else {
+      // Buka lagi editor yang tadi terbuka HANYA bila halaman baru saja dimuat ulang (maks. 15 menit)
+      // dan Dashboard tampil sendiri. Dashboard yang dimuat diam-diam di belakang Profil tidak boleh
+      // membuka editor: dulu ini membuat aplikasi tiba-tiba menampilkan editor saat baru dibuka.
       const resumeState = readOpenEditorState();
-      if (resumeState) {
+      const inHub = window.name === 'bm-dash-hub';
+      if (resumeState && !inHub && resumeState.t && Date.now() - resumeState.t < 15 * 60 * 1000) {
         openEditor(resumeState.noteId, { folder: resumeState.folderId });
+      } else if (resumeState) {
+        clearOpenEditorState();
       }
     }
   })();
@@ -5807,17 +5819,22 @@
     const t = document.getElementById('drawerTitleRefresh');
     if (!t) return;
     // Segarkan data tanpa memuat ulang halaman
-    const go = () => {
+    const go = (silent) => {
       t.classList.add('bm-spin');
       Promise.resolve(loadCategories()).catch(() => {}).then(() => {
         try { refreshTrashCount(); } catch (e) {}
         try { refreshTasksIfVisible(); } catch (e) {}
         t.classList.remove('bm-spin');
-        showMiniToast('Data diperbarui');
+        if (silent !== true) showMiniToast('Data diperbarui');
       });
     };
-    t.addEventListener('click', go);
-    window.addEventListener('bm:refresh', (e) => { e.preventDefault(); go(); });
+    t.addEventListener('click', () => go());
+    window.addEventListener('bm:refresh', (e) => {
+      e.preventDefault();
+      const em = document.getElementById('editorModal');
+      if (em && em.classList.contains('open')) return;   // editor sedang dipakai: jangan ganggu
+      go(true);
+    });
     t.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
   })();
 
@@ -7334,7 +7351,7 @@
 
   function saveOpenEditorState(noteId, folderId) {
     try {
-      localStorage.setItem(OPEN_EDITOR_STORAGE_KEY, JSON.stringify({ noteId: noteId || null, folderId: folderId || null }));
+      localStorage.setItem(OPEN_EDITOR_STORAGE_KEY, JSON.stringify({ noteId: noteId || null, folderId: folderId || null, t: Date.now() }));
     } catch (e) { }
   }
   function clearOpenEditorState() {

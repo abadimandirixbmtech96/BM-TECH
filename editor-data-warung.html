@@ -968,11 +968,9 @@
         legacyBackup = draft.legacyBackup || null;
         renderHome();
         showSaveStatus('Tersimpan di HP (offline)', false, true);
-      } else {
-        existingNoteLoadFailed = true;
-        showSaveStatus('Offline — tidak bisa memuat data ini', true, true);
+        return;
       }
-      return;
+      // Belum ada draf di HP: lanjut membaca biasa. Saat offline, data diambil dari salinan penuh di HP (service worker).
     }
 
     const { data: note, error } = await supabaseClient

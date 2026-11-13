@@ -17,6 +17,8 @@
   'use strict';
   if (w.BMApp) return;
 
+  var sbInfo = null;   // alamat + kunci publik Supabase halaman ini (untuk unduh salinan penuh)
+
   /* ---------- 1. Sesi offline ---------- */
   function isNetErr(err) {
     if (!err) return false;
@@ -71,7 +73,10 @@
     var lib = w.supabase;
     if (!lib || typeof lib.createClient !== 'function' || lib.__bmPatched) return;
     var create = lib.createClient;
-    var wrapped = function (url, k, opts) { return patchClient(create.apply(this, arguments), opts); };
+    var wrapped = function (url, k, opts) {
+      if (!sbInfo && typeof url === 'string' && typeof k === 'string') sbInfo = { url: url.replace(/\/+$/, ''), key: k, storageKey: (opts && opts.auth && opts.auth.storageKey) || '' };
+      return patchClient(create.apply(this, arguments), opts);
+    };
     try { lib.createClient = wrapped; } catch (e) {}
     if (lib.createClient !== wrapped) {
       var copy = {};
@@ -102,11 +107,7 @@
     pill.setAttribute('data-no-i18n', '');
     pill.innerHTML = '<span class="bm-net-dot"></span><span class="bm-net-txt"></span><button type="button" class="bm-net-btn" hidden></button>';
     pill.querySelector('.bm-net-btn').addEventListener('click', function (e) { e.stopPropagation(); refresh(); });
-    pill.addEventListener('click', function () {
-      if (!pill.classList.contains('mini')) return;
-      pill.classList.remove('mini'); clearTimeout(pillTimer);
-      pillTimer = setTimeout(function () { pill.classList.add('mini'); }, 3500);
-    });
+    pill.addEventListener('click', hide);
     d.body.appendChild(pill);
     return pill;
   }
@@ -118,29 +119,35 @@
     var b = pill.querySelector('.bm-net-btn');
     b.hidden = !btn; if (btn) b.textContent = btn;
     pill.classList.add('on');
-    pill.classList.remove('mini');
-    if (autoHide) pillTimer = setTimeout(hide, autoHide);
-    else if (!btn) pillTimer = setTimeout(function () { pill.classList.add('mini'); }, 4000);   // menyusut jadi titik kecil
+    pillTimer = setTimeout(hide, autoHide || 2600);   // selalu hilang sendiri, tidak pernah menutupi layar terus-menerus
   }
   function hide() { if (pill) pill.classList.remove('on'); }
+  /* Tiap keadaan hanya diberitahukan SEKALI (bukan tiap permintaan data), lalu hilang sendiri. */
+  var lastKind = '', lastAuto = 0;
   function render() {
-    if (!navigator.onLine) {
-      show('off', 'Offline' + (state.at ? ' · data ' + hhmm(state.at) : ' · data tersimpan'));
-    } else if (state.fresh) {
-      show('fresh', 'Data terbaru siap', 'Muat');
-    } else if (state.stale) {
-      show('slow', 'Sinyal lemot · data ' + (state.at ? hhmm(state.at) : 'tersimpan'));
+    var kind = !navigator.onLine ? 'off' : state.fresh ? 'fresh' : state.stale ? 'slow' : '';
+    if (kind === lastKind) return;
+    lastKind = kind;
+    if (kind === 'off') show('off', 'Offline · memakai data tersimpan', null, 3000);
+    else if (kind === 'slow') show('slow', 'Sinyal lemot · memakai data tersimpan', null, 2600);
+    else if (kind === 'fresh') {
+      // Data baru sudah datang: halaman yang bisa menyegarkan diri langsung memakainya, tanpa perlu diketuk
+      state.fresh = false; state.stale = false; lastKind = '';
+      if (Date.now() - lastAuto < 45000) return;          // jangan menyegarkan berulang-ulang saat sinyal naik-turun
+      lastAuto = Date.now();
+      if (fire(w, true)) show('ok', 'Data diperbarui', null, 1800);
+      else show('fresh', 'Data terbaru siap', 'Muat', 6000);
     } else hide();
   }
-  function fire(win) {
+  function fire(win, silent) {
     var ev;
-    try { ev = new win.CustomEvent('bm:refresh', { cancelable: true }); } catch (e) { ev = win.document.createEvent('CustomEvent'); ev.initCustomEvent('bm:refresh', false, true, null); }
+    try { ev = new win.CustomEvent('bm:refresh', { cancelable: true, detail: { silent: !!silent } }); } catch (e) { ev = win.document.createEvent('CustomEvent'); ev.initCustomEvent('bm:refresh', false, true, { silent: !!silent }); }
     var handled = !win.dispatchEvent(ev);
-    for (var i = 0; i < win.frames.length; i++) { try { if (fire(win.frames[i])) handled = true; } catch (e) {} }
+    for (var i = 0; i < win.frames.length; i++) { try { if (fire(win.frames[i], silent)) handled = true; } catch (e) {} }
     return handled;
   }
   function refresh() {
-    state.fresh = false; state.stale = false; state.at = 0; hide();
+    state.fresh = false; state.stale = false; state.at = 0; lastKind = ''; hide();
     if (!fire(w)) location.reload();
   }
   var IS_TOP = (function () { try { return w.top === w || !w.top.BMApp; } catch (e) { return true; } })();
@@ -161,7 +168,7 @@
   w.addEventListener('online', function () {
     if (!IS_TOP) return;
     if (state.stale) { state.fresh = true; render(); }
-    else show('ok', 'Kembali online', null, 2200);
+    else { lastKind = ''; show('ok', 'Kembali online', null, 2000); }
   });
 
   /* ---------- 3. Rasa aplikasi ---------- */
@@ -183,7 +190,6 @@
     /* penanda status */
     '.bm-net{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:2147483000;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);padding:7px 8px 7px 12px;border-radius:999px;background:rgba(28,28,30,.86);color:#f5f5f7;font:600 12.5px/1.2 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;letter-spacing:.01em;box-shadow:0 8px 28px rgba(0,0,0,.28),inset 0 0 0 .5px rgba(255,255,255,.12);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);transform:translate(-50%,-140%);opacity:0;pointer-events:none;transition:transform .45s cubic-bezier(.32,.72,0,1),opacity .3s ease}',
     '.bm-net.on{transform:translate(-50%,0);opacity:1;pointer-events:auto}',
-    '.bm-net.mini{padding:6px;gap:0;cursor:pointer}.bm-net.mini .bm-net-txt{max-width:0;padding:0}',
     '.bm-net-txt{transition:max-width .4s cubic-bezier(.32,.72,0,1)}',
     '.bm-net-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#8e8e93}',
     '.bm-net[data-kind=off] .bm-net-dot{background:#ff453a}',
@@ -205,9 +211,17 @@
   injectCss();
 
   // Arah animasi: kembali (tombol back / history.back) = geser dari kiri
+  // Animasi perpindahan yang dibatalkan (pindah halaman cepat/redirect) bukan error: jangan sampai memunculkan alert
+  w.addEventListener('unhandledrejection', function (e) {
+    var r = e.reason, m = String((r && (r.message || r.name)) || r || '');
+    if (/transition was (aborted|skipped)|ViewTransition|view transition/i.test(m)) { e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); }
+  });
+  function quiet(vt) { try { ['ready', 'finished', 'updateCallbackDone'].forEach(function (k) { if (vt[k] && vt[k].catch) vt[k].catch(function () {}); }); } catch (e) {} }
   w.addEventListener('pagereveal', function (e) {
     try {
       if (!e.viewTransition) return;
+      quiet(e.viewTransition);
+      try { if (sessionStorage.getItem('bm-swipe-nav')) { sessionStorage.removeItem('bm-swipe-nav'); e.viewTransition.skipTransition(); return; } } catch (x) {}
       var act = w.navigation && w.navigation.activation;
       if (act && act.navigationType === 'traverse' && act.from && act.entry && act.entry.index < act.from.index) e.viewTransition.types.add('back');
     } catch (err) {}
@@ -215,6 +229,8 @@
   w.addEventListener('pageswap', function (e) {
     try {
       if (!e.viewTransition) return;
+      quiet(e.viewTransition);
+      if (w.__bmSwipeNav) { e.viewTransition.skipTransition(); return; }   // sudah dianimasikan oleh gestur geser
       var a = e.activation;
       if (a && a.navigationType === 'traverse' && a.from && a.entry && a.entry.index < a.from.index) e.viewTransition.types.add('back');
     } catch (err) {}
@@ -232,10 +248,51 @@
     if (d.readyState === 'complete') reg(); else w.addEventListener('load', reg);
   }
 
+  /* ---------- 5. Salinan penuh data di HP ----------
+     Admin yang login: semua tabel diunduh ke HP (paling sering tiap 10 menit, dan setiap kembali online),
+     supaya saat offline seluruh data tetap bisa dibuka, termasuk catatan yang belum pernah dibuka. */
+  var MIRROR_EVERY = 10 * 60 * 1000;
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function syncMirror(force) {
+    try {
+      if (!IS_TOP || !navigator.onLine || !sbInfo || !navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+      if (!lsGet('bm-admin-ok')) return;
+      var s = storedSession(sbInfo.storageKey || 'bmtech-auth');
+      if (!s || !s.expires_at || s.expires_at * 1000 < Date.now() + 60000) return;
+      var last = Number(lsGet('bm-mirror-req') || 0);
+      if (!force && Date.now() - last < MIRROR_EVERY) return;
+      lsSet('bm-mirror-req', String(Date.now()));
+      navigator.serviceWorker.controller.postMessage({ type: 'bm-sync', base: sbInfo.url, apikey: sbInfo.key, token: s.access_token });
+    } catch (e) {}
+  }
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function (e) {
+      var m = e.data || {};
+      if (m.type === 'bm-mirror' && m.ok) lsSet('bm-mirror-at', String(m.at || Date.now()));
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', function () { setTimeout(function () { syncMirror(false); }, 3000); });
+  }
+  w.addEventListener('load', function () { setTimeout(function () { syncMirror(false); }, 4000); });
+  w.addEventListener('online', function () { setTimeout(function () { syncMirror(true); }, 2500); });
+  setInterval(function () { if (!d.hidden) syncMirror(false); }, 60000);
+
+  /* Halaman login tanpa sesi = sudah keluar: buang salinan data & tampilan milik akun sebelumnya */
+  if (/\/(admin|karyawan|customer)-login\.html$/.test(location.pathname)) {
+    var clearIfLoggedOut = function () {
+      if (storedSession('bmtech-auth')) return;
+      try { localStorage.removeItem('bm-profile-snap-v1'); localStorage.removeItem('bm-mirror-req'); localStorage.removeItem('bm-mirror-at'); } catch (e) {}
+      try { if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'bm-clear-data' }); } catch (e) {}
+    };
+    if (d.readyState === 'complete') clearIfLoggedOut(); else w.addEventListener('load', clearIfLoggedOut);
+  }
+
   w.BMApp = {
     patchClient: patchClient,
     patchLib: patchLib,
     refresh: refresh,
+    syncNow: function () { syncMirror(true); },
+    lastSync: function () { return Number(lsGet('bm-mirror-at') || 0); },
     _onData: onData,
     offlineSession: false,
     clearOfflineData: function () {

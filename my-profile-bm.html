@@ -588,6 +588,14 @@
   @media (min-width: 1400px) {
     .grid2 { grid-template-columns: repeat(4, 1fr); }
   }
+
+  /* Rasa iOS: halaman Profil bergeser sedikit ke kiri & meredup saat lapisan (Dashboard/Rekap) masuk dari kanan */
+  #p-home, .head, .dock-in { transition: transform .5s cubic-bezier(.32,.72,0,1), opacity .5s cubic-bezier(.32,.72,0,1); }
+  html.bm-push-on #p-home, html.bm-push-on .head, html.bm-push-on .dock-in { transform: translate3d(calc(-24vw * (1 - var(--bm-pull, 0))), 0, 0); opacity: calc(.6 + .4 * var(--bm-pull, 0)); }
+  html.bm-dragging #p-home, html.bm-dragging .head, html.bm-dragging .dock-in { transition: none; }
+  #dashHub, #recapHub { box-shadow: -10px 0 30px rgba(0,0,0,.25); will-change: transform; }
+  #dashHub, #recapHub, #dashHub.on, #recapHub.on { transition-duration: .5s !important; }
+  @media (prefers-reduced-motion: reduce) { #p-home, .head, .dock-in { transition: none; } html.bm-push-on #p-home, html.bm-push-on .head, html.bm-push-on .dock-in { transform: none; opacity: 1; } }
 </style>
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
@@ -851,6 +859,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
+<script src="/bm-swipe-back.js"></script>
 <script src="/bm-session.js"></script>
 <script>
 function bmMain(REAL){
@@ -1122,7 +1131,7 @@ function bmMain(REAL){
   }
   /* Jarvis: lapisan di atas Profil. Keluar dari Jarvis = lapisan turun, tanpa memuat ulang apa pun. */
   var jv = null, jvOn = false, jvPushed = false;
-  function layerClass(){ document.documentElement.classList.toggle('bm-layer-on', !!(hubOn || recapOn || jvOn)); }
+  function layerClass(){ document.documentElement.classList.toggle('bm-layer-on', !!(hubOn || recapOn || jvOn)); document.documentElement.classList.toggle('bm-push-on', !!(hubOn || recapOn)); }
   function ensureJv(){
     if (jv) return jv;
     jv = document.createElement('iframe');
@@ -1155,7 +1164,11 @@ function bmMain(REAL){
   });
   window.addEventListener('message', function(e){
     if (e.origin !== location.origin) return;
-    if (hub && e.source === hub.contentWindow && e.data && e.data.type === 'bm-nav' && e.data.to === 'profile') showHub(false);
+    if (e.data && e.data.type === 'bm-nav' && e.data.to === 'profile') {
+      /* Tombol "Profile" / geser kembali dari Dashboard atau Rekap: tutup lewat riwayat supaya tombol back Android tidak 'nyangkut' */
+      if (hub && e.source === hub.contentWindow) { if (history.state && history.state.bmHub) history.back(); else showHub(false); }
+      if (recap && e.source === recap.contentWindow) { if (history.state && history.state.bmRecap) history.back(); else showRecap(false); }
+    }
     if (jv && e.source === jv.contentWindow && e.data && e.data.type === 'close-page') {
       if (history.state && history.state.bmJv) history.back(); else showJv(false);
     }
@@ -1181,21 +1194,39 @@ function bmMain(REAL){
     setTimeout(go2, 5000);
   })();
   function toLogin(){
+    try { localStorage.removeItem('bm-profile-snap-v1'); } catch (e) {}
     try { if (window.BMSession) BMSession.stop(); } catch (e) {}
     try { localStorage.removeItem('bm-admin-ok'); } catch (e) {}
     Promise.resolve().then(function(){ return REAL.c.auth.signOut(); }).catch(function(){}).then(function(){ location.replace('admin-login.html'); });
   }
   function withTimeout(p, ms){ return Promise.race([p, new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('koneksi terlalu lama, coba lagi')); }, ms); })]); }
+  /* Salinan tampilan Profil di HP: dibuka berikutnya langsung tampil tanpa "Memuat…", lalu diperbarui diam-diam */
+  var SNAP_KEY = 'bm-profile-snap-v1';
+  function saveSnap(){
+    try {
+      var o = {}; Object.keys(S).forEach(function(k){ if (k !== 'media' && k !== 'mediaDirty') o[k] = S[k]; });
+      localStorage.setItem(SNAP_KEY, JSON.stringify({ email: REAL.email, t: Date.now(), S: o }));
+    } catch (e) { try { localStorage.removeItem(SNAP_KEY); } catch (x) {} }
+  }
+  function loadSnap(){
+    try {
+      var j = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null');
+      if (!j || j.email !== REAL.email || !j.S || !j.S.known) return false;
+      Object.keys(j.S).forEach(function(k){ S[k] = j.S[k]; });
+      return true;
+    } catch (e) { return false; }
+  }
   function refresh(){
     return withTimeout(reload(), 15000).then(function(){
       if (!S.known) { bootShow('Akun ini tidak terdaftar sebagai admin.', true); return; }
       var self = acct(S.me);
       if (self && !self.active) { bootShow('Akun Anda dinonaktifkan. Hubungi Owner.', true); return; }
       loaded = true; $('boot').hidden = true; renderAll(); renderHist();
+      saveSnap();
     }).catch(function(e){
       var m = (e && e.message) || String(e);
       if (!loaded) bootShow('Tidak bisa memuat data profil: ' + T(m) + '. Pastikan Anda login sebagai admin dan terhubung ke internet.', true);
-      else toast('Gagal memuat data: ' + T(m));
+      else if (navigator.onLine && !/terlalu lama/.test(m)) toast('Gagal memuat data: ' + T(m));
     });
   }
   $('bootRetry').addEventListener('click', function(){ bootShow('Memuat…', false); refresh(); });
@@ -2127,7 +2158,14 @@ function bmMain(REAL){
     if (e.target.closest('#pfManage') && getRole() === 'owner' && profId) { var id = profId; $('ovProf').classList.remove('on'); goTab('akses'); openAdm(id); }
   });
 
-  bootShow('Memuat…', false); refresh();
+  var fromSnap = false;
+  try { fromSnap = loadSnap(); } catch (e) {}
+  if (fromSnap) {
+    try { loaded = true; $('boot').hidden = true; renderAll(); renderHist(); }
+    catch (e) { loaded = false; fromSnap = false; }
+  }
+  if (!fromSnap) bootShow('Memuat…', false);
+  refresh();
 }
 
 (async function(){

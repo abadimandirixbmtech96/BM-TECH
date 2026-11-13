@@ -8,12 +8,13 @@
 // 3. Penulisan data (insert/update/delete/RPC tulis) TIDAK pernah disentuh: selalu langsung ke server.
 // 4. Salinan data dihapus saat keluar akun (logout) atau login baru, supaya akun lain tidak melihatnya.
 
-const CACHE_NAME = 'bmtech-shell-v43'; // dinaikkan: offline-first + cache data terakhir
+const CACHE_NAME = 'bmtech-shell-v44'; // dinaikkan: salinan penuh data, gestur kembali, perbaikan penanda sinyal
 const DATA_CACHE = 'bmtech-data-v1';   // tidak ikut dihapus saat versi naik
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;              // lebih dari ini dengan salinan tersedia = pakai salinan dulu
 const NET_WAIT_SLOW_MS = 700;          // sesudah jaringan terbukti lemot: tunggu sebentar saja
-let slowUntil = 0;                     // selama jendela ini permintaan berikutnya tidak menunggu lama lagi
+let slowUntil = 0;
+let lastWrite = 0;                     // waktu penulisan data terakhir dari perangkat ini                     // selama jendela ini permintaan berikutnya tidak menunggu lama lagi
 
 const PAGES = [
   '/admin-login.html', '/my-profile-bm.html', '/dashboard-admin.html', '/dashboard-shop.html',
@@ -68,7 +69,171 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('message', (event) => {
   const d = event.data || {};
   if (d.type === 'bm-clear-data') event.waitUntil(caches.delete(DATA_CACHE));
+  if (d.type === 'bm-sync' && typeof d.base === 'string' && /^https:\/\/[a-z0-9]+\.supabase\.co$/.test(d.base)) {
+    event.waitUntil(syncMirror(d.base, String(d.apikey || ''), String(d.token || ''), event.source && event.source.id));
+  }
 });
+
+/* =====================================================================
+   SALINAN PENUH (mirror): saat online, semua tabel yang dipakai aplikasi diunduh ke HP.
+   Saat offline/lemot, permintaan baca apa pun (filter, urutan, satu baris, hitung) dijawab
+   dari salinan ini, jadi data yang belum pernah dibuka pun tetap tersedia.
+   ===================================================================== */
+const MIRROR = DATA_ORIGIN + '/mirror/';
+const PAGE = 1000;
+// [tabel, batas baris (0 = semua), urutan untuk tabel log]
+const MIRROR_TABLES = [
+  ['notes', 0], ['folders', 0], ['trash_items', 0], ['pending_items', 0], ['customers', 0], ['karyawan', 0],
+  ['admin_roles', 0], ['role_permissions', 0], ['announcements', 0], ['announcement_seen', 0], ['app_settings', 0],
+  ['jarvis_brain', 0], ['jarvis_memori', 0], ['shop_barang', 0], ['shop_v_stok', 0],
+  ['perm_history', 200, 'id.desc'], ['login_log', 300, 'last_seen.desc'], ['activity_log', 500, 'created_at.desc']
+];
+let mirrorBusy = false;
+
+function subOfToken(t) {
+  try { const p = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return p && p.sub ? String(p.sub) : ''; } catch (e) { return ''; }
+}
+
+async function fetchTable(base, headers, table, limit, order) {
+  const rows = [];
+  let ordered = order || 'id.asc', tried = false;
+  for (let from = 0; from < 200000; from += PAGE) {
+    const to = from + PAGE - 1;
+    const q = base + '/rest/v1/' + table + '?select=*' + (ordered ? '&order=' + ordered : '');
+    const r = await fetch(q, { headers: Object.assign({ Range: from + '-' + to, 'Range-Unit': 'items' }, headers), cache: 'no-store' });
+    if (r.status === 400 && ordered && !order && !tried) { ordered = ''; tried = true; from -= PAGE; continue; }   // tabel tanpa kolom id
+    if (!r.ok && r.status !== 206) throw new Error(table + ' ' + r.status);
+    const page = await r.json();
+    if (!Array.isArray(page)) throw new Error(table + ' bukan daftar');
+    rows.push.apply(rows, page);
+    if (page.length < PAGE || (limit && rows.length >= limit)) break;
+  }
+  return limit ? rows.slice(0, limit) : rows;
+}
+
+async function syncMirror(base, apikey, token, clientId) {
+  const sub = subOfToken(token);
+  if (!sub || !apikey || mirrorBusy) return;
+  mirrorBusy = true;
+  const headers = { apikey: apikey, Authorization: 'Bearer ' + token, Accept: 'application/json' };
+  let ok = 0, fail = 0;
+  try {
+    const c = await caches.open(DATA_CACHE);
+    for (const [table, limit, order] of MIRROR_TABLES) {
+      try {
+        const rows = await fetchTable(base, headers, table, limit, order);
+        await c.put(new Request(MIRROR + table), new Response(JSON.stringify(rows), {
+          headers: { 'content-type': 'application/json', 'x-bm-sub': sub, 'x-bm-at': String(Date.now()), 'x-bm-rows': String(rows.length) }
+        }));
+        ok++;
+      } catch (e) { fail++; }   // tabel tanpa izin (RLS) atau gagal: lewati, yang lain tetap jalan
+    }
+  } finally { mirrorBusy = false; }
+  const msg = { type: 'bm-mirror', ok: ok, fail: fail, at: Date.now() };
+  try { (await self.clients.matchAll({ type: 'window' })).forEach((cl) => cl.postMessage(msg)); } catch (e) {}
+}
+
+async function mirrorMeta(url, sub) {
+  const m = url.pathname.match(/^\/rest\/v1\/([a-z_0-9]+)$/);
+  if (!m) return null;
+  const r = await (await caches.open(DATA_CACHE)).match(new Request(MIRROR + m[1]));
+  if (!r) return null;
+  const owner = r.headers.get('x-bm-sub') || '';
+  if (sub && owner && sub !== owner) return null;
+  return { table: m[1], res: r, at: Number(r.headers.get('x-bm-at')) || 0 };
+}
+
+/* --- penjawab mini ala PostgREST untuk salinan penuh --- */
+function splitTop(str) {   // pisah koma di luar tanda kurung/kutip
+  const out = []; let depth = 0, q = false, cur = '';
+  for (const ch of str) {
+    if (ch === '"') q = !q;
+    if (!q && ch === '(') depth++;
+    if (!q && ch === ')') depth--;
+    if (!q && depth === 0 && ch === ',') { out.push(cur); cur = ''; } else cur += ch;
+  }
+  out.push(cur); return out;
+}
+function unq(v) { v = String(v).trim(); return v.length > 1 && v[0] === '"' && v[v.length - 1] === '"' ? v.slice(1, -1).replace(/\\"/g, '"') : v; }
+function cmpVal(a, b) {
+  if (a === null || a === undefined) return b === null || b === undefined ? 0 : -1;
+  if (b === null || b === undefined) return 1;
+  const na = typeof a === 'number' ? a : Number(a), nb = Number(b);
+  if (typeof a === 'number' && !isNaN(nb)) return na - nb;
+  if (typeof a === 'boolean') return String(a).localeCompare(String(b));
+  const da = Date.parse(a), db = Date.parse(b);
+  if (/^\d{4}-\d{2}-\d{2}/.test(String(a)) && /^\d{4}-\d{2}-\d{2}/.test(String(b)) && !isNaN(da) && !isNaN(db)) return da - db;
+  return String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0;
+}
+function likeRe(pat, ci) { return new RegExp('^' + pat.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/[*%]/g, '.*').replace(/_/g, '.') + '$', ci ? 'i' : ''); }
+function makeTest(col, expr) {
+  if (!/^[a-z_][a-z0-9_]*$/i.test(col)) return null;   // kolom JSON (->) dsb: tidak didukung
+  let neg = false;
+  if (expr.startsWith('not.')) { neg = true; expr = expr.slice(4); }
+  const dot = expr.indexOf('.');
+  if (dot < 0) return null;
+  const op = expr.slice(0, dot), raw = expr.slice(dot + 1);
+  let t;
+  if (op === 'eq') t = (v) => v !== null && v !== undefined && String(v) === unq(raw);
+  else if (op === 'neq') t = (v) => v === null || v === undefined || String(v) !== unq(raw);
+  else if (op === 'gt') t = (v) => v != null && cmpVal(v, unq(raw)) > 0;
+  else if (op === 'gte') t = (v) => v != null && cmpVal(v, unq(raw)) >= 0;
+  else if (op === 'lt') t = (v) => v != null && cmpVal(v, unq(raw)) < 0;
+  else if (op === 'lte') t = (v) => v != null && cmpVal(v, unq(raw)) <= 0;
+  else if (op === 'like' || op === 'ilike') { const re = likeRe(unq(raw), op === 'ilike'); t = (v) => v != null && re.test(String(v)); }
+  else if (op === 'is') { const w = raw.toLowerCase(); t = (v) => w === 'null' ? v === null || v === undefined : String(v) === w; }
+  else if (op === 'in') {
+    if (raw[0] !== '(' || raw[raw.length - 1] !== ')') return null;
+    const set = new Set(splitTop(raw.slice(1, -1)).map(unq));
+    t = (v) => v !== null && v !== undefined && set.has(String(v));
+  } else return null;
+  return neg ? (r) => !t(r[col]) : (r) => t(r[col]);
+}
+async function answerFromMirror(req, url, meta) {
+  let rows = await meta.res.clone().json();
+  if (!Array.isArray(rows)) return null;
+  let cols = null, order = [], limit = null, offset = 0;
+  const tests = [];
+  for (const [k, v] of url.searchParams) {
+    if (k === 'select') {
+      if (/[()!:]/.test(v)) return null;                      // relasi/alias: tidak didukung
+      const list = v.split(',').map((x) => x.trim()).filter(Boolean);
+      cols = list.includes('*') ? null : list;
+    } else if (k === 'order') {
+      for (const part of v.split(',')) {
+        const seg = part.split('.');
+        if (!/^[a-z_][a-z0-9_]*$/i.test(seg[0])) return null;
+        order.push({ c: seg[0], desc: seg.includes('desc'), nf: seg.includes('nullsfirst') ? true : seg.includes('nullslast') ? false : null });
+      }
+    } else if (k === 'limit') limit = parseInt(v, 10);
+    else if (k === 'offset') offset = parseInt(v, 10) || 0;
+    else if (k === 'or' || k === 'and' || k === 'columns' || k === 'on_conflict') return null;
+    else { const t = makeTest(k, v); if (!t) return null; tests.push(t); }
+  }
+  rows = rows.filter((r) => tests.every((t) => t(r)));
+  if (order.length) rows.sort((a, b) => {
+    for (const o of order) {
+      const x = a[o.c], y = b[o.c];
+      const xn = x === null || x === undefined, yn = y === null || y === undefined;
+      if (xn || yn) { if (xn && yn) continue; const nf = o.nf === null ? o.desc : o.nf; return (xn ? -1 : 1) * (nf ? 1 : -1); }
+      const d = cmpVal(x, y); if (d) return o.desc ? -d : d;
+    }
+    return 0;
+  });
+  const total = rows.length;
+  const range = req.headers.get('range');
+  if (range && /^\d+-\d+$/.test(range)) { const [a, b] = range.split('-').map(Number); offset = a; limit = b - a + 1; }
+  rows = rows.slice(offset, limit != null && !isNaN(limit) ? offset + limit : undefined);
+  if (cols) rows = rows.map((r) => { const o = {}; cols.forEach((c) => { o[c] = r[c] === undefined ? null : r[c]; }); return o; });
+  const h = { 'content-type': 'application/json; charset=utf-8', 'x-bm-at': String(meta.at), 'x-bm-mirror': '1' };
+  const wantCount = /count=/.test(req.headers.get('prefer') || '');
+  h['content-range'] = (rows.length ? offset + '-' + (offset + rows.length - 1) : '*') + '/' + (wantCount ? total : '*');
+  if (/vnd\.pgrst\.object/.test(req.headers.get('accept') || '')) {
+    if (rows.length !== 1) return new Response(JSON.stringify({ code: 'PGRST116', details: 'The result contains ' + rows.length + ' rows', hint: null, message: 'JSON object requested, multiple (or no) rows returned' }), { status: 406, headers: h });
+    return new Response(req.method === 'HEAD' ? null : JSON.stringify(rows[0]), { status: 200, headers: h });
+  }
+  return new Response(req.method === 'HEAD' ? null : JSON.stringify(rows), { status: 200, headers: h });
+}
 
 /* ---------- utilitas ---------- */
 const stripKey = (url) => new Request(url.origin + url.pathname);
@@ -156,7 +321,10 @@ function handleData(event, url) {
       return res;
     });
 
-    if (!cached) return net;
+    const meta = (req.method === 'GET' || req.method === 'HEAD') ? await mirrorMeta(url, sub).catch(() => null) : null;
+    if (!cached && !meta) return net;
+    // Salinan yang baru saja diperbarui (<15 dtk): langsung dipakai. Mencegah muat-ulang beruntun saat sinyal lemot.
+    if (cached && Date.now() < slowUntil && Date.now() - at < 15000 && lastWrite < at) { event.waitUntil(net.catch(() => {})); return cached; }
 
     const wait = Date.now() < slowUntil ? NET_WAIT_SLOW_MS : NET_WAIT_MS;
     const timer = new Promise((resolve) => setTimeout(() => resolve('slow'), wait));
@@ -170,6 +338,12 @@ function handleData(event, url) {
       // Jaringan masih jalan di belakang; kalau berhasil, halaman diberi tahu ada data lebih baru
       event.waitUntil(net.then((r) => { if (r.ok) notify(event.clientId, { type: 'bm-data', fresh: true }); }).catch(() => {}));
     }
+    // Pilih salinan paling baru: jawaban persis yang pernah tersimpan, atau salinan penuh tabel
+    if (meta && (!cached || meta.at > at)) {
+      const m = await answerFromMirror(req, url, meta).catch(() => null);
+      if (m) { notify(event.clientId, { type: 'bm-data', stale: true, at: meta.at, reason: res === 'slow' ? 'slow' : 'offline' }); return m; }
+    }
+    if (!cached) { if (res instanceof Response) return res; return net; }
     notify(event.clientId, { type: 'bm-data', stale: true, at: at, reason: res === 'slow' ? 'slow' : 'offline' });
     return cached;
   })());
@@ -190,9 +364,11 @@ self.addEventListener('fetch', (event) => {
     }
     if (url.pathname.startsWith('/rest/v1/rpc/')) {
       if (req.method === 'POST' && READ_RPC.has(url.pathname.slice(13))) handleData(event, url);
+      else lastWrite = Date.now();
       return;
     }
-    if (req.method === 'GET' && url.pathname.startsWith('/rest/v1/')) { handleData(event, url); return; }
+    if (url.pathname.startsWith('/rest/v1/') && req.method !== 'GET' && req.method !== 'HEAD') { lastWrite = Date.now(); return; }
+    if ((req.method === 'GET' || req.method === 'HEAD') && url.pathname.startsWith('/rest/v1/')) { handleData(event, url); return; }
     if (req.method === 'GET' && url.pathname.startsWith('/storage/v1/object/public/')) {
       event.respondWith(caches.match(req).then((c) => c || fetch(req).then((r) => { if (r.ok) { const cl = r.clone(); caches.open(DATA_CACHE).then((x) => x.put(req, cl)); } return r; })));
       return;
