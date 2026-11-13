@@ -128,6 +128,10 @@
 .bmj-acts button.bmj-play.bmj-on{background:transparent;color:var(--accent-yellow,#F0A529)}.bmj-acts button.bmj-play.bmj-on svg{width:15px;height:15px}.bmj-acts button.bmj-done{color:#2fb36b}\
 #bmj-send{transition:transform .12s,background .2s,color .2s}#bmj-send:active{transform:scale(.9)}#bmj-send.bmj-stop{background:var(--accent-yellow,#F0A529);color:var(--on-accent,#1C1B19);border-color:transparent}\
 @media (prefers-reduced-motion:reduce){.bmj-m,.bmj-r,.bmj-p,.bmj-chips,.bmj-fade,.bmj-st{animation:none!important}#bmj-log{scroll-behavior:auto}}\
+.bmj-ans .bmj-rd{background:rgba(128,128,128,.2)!important;box-shadow:none!important}.bmj-ans>.bmj-tw.bmj-rd{box-shadow:0 0 0 1px rgba(128,128,128,.5)!important}\
+#bmj-log ::selection{background:rgba(128,128,128,.35);color:inherit}\
+.bmj-acts button.bmj-play.bmj-on,.bmj-acts button.bmj-play.bmj-on:hover{background:transparent!important;color:var(--bmj-mu)!important;border-color:transparent!important}.bmj-acts button.bmj-done{color:var(--bmj-mu)!important}\
+#bmj-send.bmj-stop{background:var(--bmj-pill)!important;color:var(--bmj-mu)!important;border-color:transparent!important}\
 /* kartu rekap (sama dengan tabel aplikasi) */\
 .bmj-rep{border:1px solid var(--bmj-bd);border-radius:14px;overflow:hidden;background:var(--bmj-pill)}\
 .bmj-rh{padding:10px 12px 8px}.bmj-rh b{display:block;font-size:14px}.bmj-rh span{font-size:12px;color:var(--bmj-mu)}\
@@ -709,7 +713,7 @@
       if (idle >= 8) R.ht.textContent = 'Masih bekerja… (' + Math.round((Date.now() - R.t0) / 1000) + ' dtk)';
     }, 1500);
     try {
-      var pm = panelModel(), acc = { actions: [], proposals: [], notas: [], reports: [], visuals: [] }, tries = 0, fin;
+      var pm = panelModel(), acc = { actions: [], proposals: [], notas: [], reports: [], visuals: [] }, tries = 0, fails = 0, fin;
       for (;;) {
         try {
           fin = await stream({ message: send, history: history.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) {
@@ -724,6 +728,12 @@
           if (x.auto && !userStop && tries < 5) {       // waktu server habis / batas langkah: lanjut sendiri
             tries++; onStep(R, { id: 'au' + tries, state: 'run', text: 'Melanjutkan otomatis' }); onStep(R, { id: 'au' + tries, state: 'ok', text: 'Bagian ' + (tries + 1) });
             await new Promise(function (rs) { setTimeout(rs, 500); }); if (userStop) throw e2; continue;
+          }
+          if (!userStop && fails < 3 && !/kunci|api key|401|403|login|sesi|unauthor|tidak punya akses|terlalu panjang|diblokir/i.test(String(e2.message || ''))) {   // gangguan sementara penyedia: coba lagi sendiri
+            fails++; var wt = [2500, 5000, 9000][fails - 1];
+            onStep(R, { id: 'rt' + fails, state: 'run', text: 'Penyedia sibuk, mencoba lagi otomatis (' + fails + '/3)' });
+            await new Promise(function (rs) { setTimeout(rs, wt); }); onStep(R, { id: 'rt' + fails, state: 'ok', text: 'Percobaan ' + (fails + 1) });
+            if (userStop) throw e2; continue;
           }
           e2.extra = Object.assign({}, x, { partial: acc, resume: resume, resume_model: rmodel }); throw e2;
         }
