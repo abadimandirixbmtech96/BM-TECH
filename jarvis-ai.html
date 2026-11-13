@@ -263,6 +263,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
 .att .aw{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.38)}
 .att .aw i{width:22px;height:22px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:bmjSpin .7s linear infinite}
 .att.bad{border-color:var(--danger)}.att.bad .an small{color:var(--danger)}
+.att .apct{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:11px;font-weight:800;color:#fff;background:rgba(0,0,0,.55);padding:2px 0}
 .att .vb{position:absolute;left:6px;bottom:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;display:flex;align-items:center;justify-content:center}.att .vb svg{width:11px;height:11px}
 #bPlus.on{background:var(--surface2);color:var(--text)}#bPlus svg.i{transition:transform .2s}#bPlus.on svg.i{transform:rotate(45deg)}
 .fpop{position:absolute;left:14px;bottom:calc(100% + 8px);min-width:230px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.4);transform-origin:bottom left;animation:jvPop .16s ease both}
@@ -1428,7 +1429,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       if (a.k === 'video') c.appendChild(mk('span', '', 'vb', I.play));
     } else {
       c.appendChild(mk('span', '', 'ai', a.k === 'office' && /\.xlsx$/i.test(a.n || '') ? I.sheet : (KIND_IC[a.k] || I.file)));
-      var t = mk('span', '', 'an'); t.append(tx('b', '', a.n || 'file'), tx('small', '', a.state === 'gagal' ? (a.err || 'Gagal') : a.state === 'naik' ? 'Mengunggah…' : a.state === 'proses' ? 'Membaca…' : (a.k === 'office' || a.k === 'teks' ? 'Dokumen · ' : '') + sizeTxt(a.s || 0)));
+      var t = mk('span', '', 'an'); t.append(tx('b', '', a.n || 'file'), tx('small', '', a.state === 'gagal' ? (a.err || 'Gagal') : a.sub ? a.sub : a.state === 'naik' ? 'Mengunggah ' + (a.prog || 0) + '%' : a.state === 'proses' ? 'Membaca…' : (a.k === 'office' || a.k === 'teks' ? 'Dokumen · ' : '') + sizeTxt(a.s || 0)));
       c.appendChild(t);
     }
     if (!sent && (a.state === 'naik' || a.state === 'proses')) c.appendChild(mk('span', '', 'aw', '<i></i>'));
@@ -1438,7 +1439,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   function paintTray() {
     var t = $('tray'); t.textContent = '';
     atts.forEach(function (a) {
-      var c = attChip({ k: a.kind, n: a.name, s: a.size, th: a.thumb, state: a.state, err: a.err });
+      var c = attChip({ k: a.kind, n: a.name, s: a.size, th: a.thumb, state: a.state, err: a.err, prog: a.prog, sub: a.sub });
+      if (a.state === 'naik' && a.thumb) { var pg = mk('span', '', 'apct'); pg.textContent = a.sub ? '…' : (a.prog || 0) + '%'; c.appendChild(pg); }
       var x = mk('button', '', 'ax', I.x); x.type = 'button'; x.setAttribute('aria-label', 'Hapus lampiran ' + a.name);
       x.onclick = function () { removeAtt(a.id); }; c.appendChild(x);
       if (a.state === 'gagal') c.onclick = function (e) { if (e.target.closest('.ax')) return; toast(a.err || 'Gagal'); };
@@ -1449,7 +1451,6 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   function removeAtt(id) {
     var a = atts.filter(function (x) { return x.id === id; })[0]; if (!a) return;
     atts = atts.filter(function (x) { return x.id !== id; }); a.dead = true; paintTray();
-    if (a.path) supabaseClient.storage.from('jarvis-lampiran').remove([a.path]).catch(function () {});
   }
   function closeFiles() { var p = $('apop'); if (p && !p.hidden) { p.hidden = true; p.textContent = ''; } var b = $('bPlus'); if (b) { b.classList.remove('on'); b.setAttribute('aria-expanded', 'false'); } }
   function openFiles() {
@@ -1492,24 +1493,46 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         if (a.kind === 'gambar') { var im = await prepImage(a.file); blob = im.blob; a.mime = im.mime || a.mime; a.thumb = im.thumb; a.size = blob.size; }
         else if (a.kind === 'video') a.thumb = await videoThumb(a.file);
         if (a.dead) return;
-        a.state = 'naik'; paintTray();
-        await uploadAtt(a, blob);
+        var inlineLain = atts.reduce(function (k, x) { return k + (x !== a && x.data ? x.data.length * 0.75 : 0); }, 0);
+        if ((a.kind === 'gambar' || a.kind === 'pdf') && blob.size <= INLINE_MAX && inlineLain + blob.size <= INLINE_TOTAL) a.data = await b64(blob);   // kecil: ikut langsung di pesan
+        else { a.state = 'naik'; a.prog = 0; paintTray(); await titipGemini(a, blob); }                                                       // besar/video: titip ke Gemini
+        if (a.dead) return;
         a.state = 'siap';
       }
     } catch (e) { a.state = 'gagal'; a.err = String((e && e.message) || e).slice(0, 120); }
     if (!a.dead) paintTray();
   }
-  async function uploadAtt(a, blob) {
-    if (!meUid) throw new Error('Sesi login belum siap');
-    var path = meUid + '/' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '-' + safeName(a.name);
-    if (a.mime === 'image/jpeg' && !/\.jpe?g$/i.test(path)) path = path.replace(/(\.[A-Za-z0-9]{1,8})?$/, '.jpg');
-    var r = await supabaseClient.storage.from('jarvis-lampiran').upload(path, blob, { contentType: a.mime, upsert: false, cacheControl: '3600' });
-    if (r.error) {
-      var m = String(r.error.message || r.error);
-      throw new Error(/bucket not found|not found/i.test(m) ? 'Penyimpanan lampiran belum disiapkan (migrasi v23)' : /row-level|policy|unauthor/i.test(m) ? 'Ditolak penyimpanan (akses)' : /exceeded|too large|payload/i.test(m) ? 'File terlalu besar' : m.slice(0, 90));
+  /* Tidak ada file yang disimpan di Supabase/Vercel. Kecil: base64 di pesan. Besar/video/suara: dititip ke Gemini File API
+     lewat /api/lampiran per potongan 4 MB (Gemini menghapusnya sendiri setelah 48 jam). */
+  var INLINE_MAX = 2.5 * 1048576, INLINE_TOTAL = 3 * 1048576, attMem = {};
+  function b64(blob) { return new Promise(function (ok, no) { var r = new FileReader(); r.onload = function () { ok(String(r.result).split(',')[1] || ''); }; r.onerror = function () { no(new Error('file tidak terbaca')); }; r.readAsDataURL(blob); }); }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  async function lampApi(aksi, body, extraHead) {
+    var tk = await token(), h = Object.assign({ Authorization: 'Bearer ' + tk }, extraHead || { 'Content-Type': 'application/json' });
+    var r = await fetch('/api/lampiran?aksi=' + aksi, { method: 'POST', headers: h, body: body instanceof Blob ? body : JSON.stringify(Object.assign({ keys: clientKeys() }, body)) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) throw new Error(j.error || (r.status === 404 ? 'Fitur unggah belum terpasang (Redeploy)' : 'Unggah gagal (' + r.status + ')'));
+    return j;
+  }
+  async function titipGemini(a, blob) {
+    var st = await lampApi('mulai', { mime: a.mime, nama: a.name, ukuran: blob.size }), CH = st.potong || 4194304, off = 0, file = null;
+    while (off < blob.size) {
+      if (a.dead) return;
+      var end = Math.min(blob.size, off + CH), akhir = end >= blob.size, j = null;
+      for (var t = 0; t < 3 && !j; t++) {
+        try { j = await lampApi('kirim', blob.slice(off, end), { 'Content-Type': 'application/octet-stream', 'x-upload-url': st.url, 'x-offset': String(off), 'x-akhir': akhir ? '1' : '0' }); }
+        catch (e) { if (t === 2) throw e; await wait(1200); }
+      }
+      off = end; a.prog = Math.round(off / blob.size * 100); paintTray();
+      if (akhir) file = j.file;
     }
-    a.path = path;
-    if (a.dead) supabaseClient.storage.from('jarvis-lampiran').remove([path]).catch(function () {});
+    for (var i = 0; i < 45 && file && file.state === 'PROCESSING'; i++) {   // video diproses dulu oleh Gemini
+      a.sub = 'Diproses Gemini…'; paintTray(); await wait(2000); if (a.dead) return;
+      try { var c = await lampApi('cek', { name: file.name }); file.state = c.state; } catch (e) {}
+    }
+    if (!file || file.state === 'FAILED') throw new Error('Gemini gagal memproses file');
+    if (file.state === 'PROCESSING') throw new Error('Video terlalu lama diproses, coba file lebih pendek');
+    a.uri = file.uri; a.mime = file.mime || a.mime; a.sub = '';
   }
   function prepImage(file) {   // perkecil ke 1600 px (JPEG) supaya cepat dan diterima semua model; buat gambar kecil 160 px
     return new Promise(function (ok) {
@@ -1592,6 +1615,21 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       return '--- Sheet ' + (names[numOf(k) - 1] || numOf(k)) + ' ---\n' + rows.join('\n');
     }).join('\n\n');
   }
+  /* riwayat: foto kecil dari sesi ini ikut lagi (dari memori HP, bukan server) selama muat; titipan Gemini cukup alamatnya */
+  function histOut(h, lampNow) {
+    var left = 4.2e6 - lampNow.reduce(function (k, x) { return k + (x.data ? x.data.length : 0); }, 0);
+    var out = h.map(function (e) { return e.lampiran ? Object.assign({}, e, { lampiran: e.lampiran.slice() }) : e; });
+    for (var i = out.length - 1; i >= 0; i--) {
+      var e = out[i]; if (!e.lampiran) continue;
+      e.lampiran = e.lampiran.map(function (x) {
+        if (x.uri) return x;
+        var m = x.mid && attMem[x.mid]; if (!m || m.data.length > left) return null;
+        left -= m.data.length; return { mime: m.mime, nama: m.nama, data: m.data };
+      }).filter(Boolean);
+      if (!e.lampiran.length) delete e.lampiran;
+    }
+    return out;
+  }
   function attsBusy() { return atts.some(function (a) { return a.state === 'proses' || a.state === 'naik'; }); }
   function voiceSub() {
     if (!window.BMVoice) return 'Suara HP';
@@ -1638,7 +1676,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
         group('Data di HP ini', [
           nav(I.dl, 'Unduh cadangan riwayat', 'File JSON dari HP ini', function () { exportAll(); }),
           item(I.del, 'Hapus semua riwayat', store.chats.length + ' obrolan', function () { if (!store.chats.length) return toast('Riwayat kosong'); delChats(store.chats.map(function (c) { return c.id; })).then(function () { if (pgStack.length) pageRefresh(); }); }, true)
-        ], 'Riwayat obrolan hanya tersimpan di browser HP ini, tidak ikut pindah ke perangkat lain. Lampiran disimpan di server (folder pribadi akun Anda).')
+        ], 'Riwayat obrolan hanya tersimpan di browser HP ini, tidak ikut pindah ke perangkat lain. Lampiran tidak disimpan di database: foto kecil dikirim langsung, video dan file besar dititip sementara ke Gemini dan terhapus sendiri setelah 48 jam.')
       );
     });
   }
@@ -1744,7 +1782,12 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       if (atts.some(function (a) { return a.state === 'gagal'; })) { paintTray(); return toast('Ada lampiran yang gagal. Hapus dulu atau pilih ulang'); }
       kirim = atts.slice();
     }
-    var lamp = kirim.filter(function (a) { return a.path; }).map(function (a) { return { path: a.path, mime: a.mime, nama: a.name.slice(0, 80) }; });
+    var lamp = kirim.filter(function (a) { return a.data || a.uri; }).map(function (a) {
+      var o = { mime: a.mime, nama: a.name.slice(0, 80) };
+      if (a.data) { o.data = a.data; o.mid = a.id; attMem[a.id] = { mime: a.mime, nama: o.nama, data: a.data }; } else o.uri = a.uri;
+      return o;
+    });
+    var histLamp = lamp.map(function (x) { return x.data ? { mime: x.mime, nama: x.nama, mid: x.mid } : x; });
     var dok = kirim.filter(function (a) { return a.text; }).map(function (a) { return { nama: a.name.slice(0, 80), teks: a.text }; });
     var attView = kirim.map(function (a) { return { k: a.kind, n: a.name.slice(0, 80), s: a.size, th: a.thumb || '' }; });
     if (!text) text = kirim.length === 1 ? 'Tolong jelaskan isi lampiran ini.' : 'Tolong jelaskan isi lampiran-lampiran ini.';
@@ -1763,7 +1806,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var pm = payloadModel(), acc = { actions: [], proposals: [], notas: [], reports: [], visuals: [] }, tries = 0, fin;
       for (;;) {
         try {
-          fin = await stream({ message: send, lampiran: lamp.length ? lamp : undefined, dokumen: dok.length ? dok : undefined, history: c.hist.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
+          fin = await stream({ message: send, lampiran: lamp.length ? lamp : undefined, dokumen: dok.length ? dok : undefined, history: histOut(c.hist.slice(-10), lamp), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
           break;
         } catch (e2) {
           var x = e2.extra || {};
@@ -1791,7 +1834,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var vis = fin.visuals || []; vis.forEach(function (v) { if (window.BMVisual) R.wrap.appendChild(window.BMVisual.render(v)); });
       R.wrap.appendChild(buildActs(reps, blocks, text, ans));
       c.msgs.push({ r: 'u', text: shown, att: attView.length ? attView : undefined }, { r: 'a', text: reply, model: fin.model, reps: reps, notas: notas, vis: vis.filter(function (v) { return JSON.stringify(v).length < 60000; }) });
-      c.hist.push({ role: 'user', text: orig, lampiran: lamp.length ? lamp : undefined, dokumen: histDok.length ? histDok : undefined }, { role: 'model', text: reply.slice(0, 1000) + vis.map(function (v) { return '\n[' + (v.tipe === 'grafik' ? 'Grafik' : v.tipe === 'kartu' ? 'Kartu angka' : 'Gambar') + ' "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      c.hist.push({ role: 'user', text: orig, lampiran: histLamp.length ? histLamp : undefined, dokumen: histDok.length ? histDok : undefined }, { role: 'model', text: reply.slice(0, 1000) + vis.map(function (v) { return '\n[' + (v.tipe === 'grafik' ? 'Grafik' : v.tipe === 'kartu' ? 'Kartu angka' : 'Gambar') + ' "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + notas.map(function (n) { return '\n[Gambar nota ' + n.pelanggan + ' sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (c.hist.length > 20) c.hist = c.hist.slice(-20);
       c.updated = Date.now(); save(); if (saveWarn) { saveWarn = false; toast('Memori HP penuh: obrolan lama dihapus otomatis'); }
       (fin.actions || []).forEach(showAction);
@@ -1802,7 +1845,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var stopped = userStop, msg, ex = e.extra || {}; userStop = false; msg = stopped ? 'Dihentikan.' : (e.message || 'Jarvis gagal.');
       if (!stopped) {
         pend[cid] = { text: orig, err: String(msg).slice(0, 120), resume: ex.resume, model: ex.resume_model, lamp: lamp, dok: dok };
-        c.hist.push({ role: 'user', text: orig, lampiran: lamp.length ? lamp : undefined, dokumen: histDok.length ? histDok : undefined }, { role: 'model', text: '[Permintaan di atas GAGAL di tengah jalan: ' + String(msg).slice(0, 120) + '. Jika admin menjawab "lanjut", kerjakan permintaan itu sampai selesai, jangan tanya ulang.]' });
+        c.hist.push({ role: 'user', text: orig, lampiran: histLamp.length ? histLamp : undefined, dokumen: histDok.length ? histDok : undefined }, { role: 'model', text: '[Permintaan di atas GAGAL di tengah jalan: ' + String(msg).slice(0, 120) + '. Jika admin menjawab "lanjut", kerjakan permintaan itu sampai selesai, jangan tanya ulang.]' });
         if (c.hist.length > 20) c.hist = c.hist.slice(-20);
         msg += '\nKetik "lanjut" untuk meneruskan.';
       }
