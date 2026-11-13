@@ -74,12 +74,20 @@
 @keyframes bmjIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}\
 .bmj-ic{flex:0 0 16px;width:16px;height:16px;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}\
 .bmj-ic.bmj-run{border:2px solid rgba(var(--accent-rgb,240,165,41),.25);border-top-color:var(--accent-yellow,#F0A529);border-radius:50%;animation:bmjSpin .7s linear infinite}\
-.bmj-ic.bmj-ok{color:#2fb36b}.bmj-ic.bmj-err{color:#e5484d}\
+.bmj-ic.bmj-ok{color:#2fb36b}.bmj-ic.bmj-err{color:#e5484d}.bmj-ic svg{width:15px;height:15px}\
+.bmj-sh .bmj-c{display:flex}.bmj-sh .bmj-c svg{width:18px;height:18px}.bmj-ib svg{width:18px;height:18px}\
+.bmj-cf{display:inline-flex;align-items:center;gap:3px;margin-left:4px;color:#2fb36b;font-weight:700;white-space:nowrap}.bmj-cf svg{width:13px;height:13px}\
+.bmj-okm{display:flex;align-items:flex-start;gap:6px}.bmj-okm svg{flex:none;width:16px;height:16px;color:#2fb36b;margin-top:2px}\
+.bmj-ans>p,.bmj-ans>h3{margin-left:-8px;margin-right:-4px;padding:1px 4px 1px 8px;border-radius:6px;transition:background .25s,box-shadow .25s}\
+.bmj-ans li{padding:1px 4px 1px 6px;border-radius:6px;transition:background .25s,box-shadow .25s}\
+.bmj-ans .bmj-rd{background:rgba(var(--accent-rgb,240,165,41),.16);box-shadow:inset 3px 0 0 var(--accent-yellow,#F0A529)}.bmj-ans>.bmj-tw.bmj-rd{box-shadow:0 0 0 2px var(--accent-yellow,#F0A529)}\
+.bmj-acts button.bmj-play{width:36px;height:36px;padding:0;justify-content:center}.bmj-acts button.bmj-play svg{width:14px;height:14px}\
+.bmj-acts button.bmj-play.bmj-on{background:var(--accent-yellow,#F0A529);color:var(--on-accent,#1C1B19);border-color:transparent}\
 @keyframes bmjSpin{to{transform:rotate(360deg)}}\
 .bmj-ans{background:var(--bmj-pill);border-radius:16px;border-bottom-left-radius:5px;padding:11px 13px;font-size:14px;line-height:1.55;word-break:break-word}\
 .bmj-ans>*:first-child{margin-top:0}.bmj-ans>*:last-child{margin-bottom:0}\
 .bmj-ans h3{font-size:15px;margin:10px 0 6px;font-weight:800}\
-.bmj-ans p{margin:6px 0}.bmj-ans ul,.bmj-ans ol{margin:6px 0;padding-left:20px}.bmj-ans li{margin:2px 0}\
+.bmj-ans p{margin:6px 0}.bmj-ans ul,.bmj-ans ol{margin:6px 0;padding-left:16px}.bmj-ans li{margin:2px 0}\
 .bmj-tw{margin:9px -4px;border:1px solid var(--bmj-bd);border-radius:11px;overflow:auto;max-height:340px;-webkit-overflow-scrolling:touch}\
 .bmj-tw table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap}\
 .bmj-tw th{position:sticky;top:0;background:rgba(var(--accent-rgb,240,165,41),.92);color:var(--on-accent,#1C1B19);text-align:left;font-weight:800;padding:7px 10px}\
@@ -133,6 +141,10 @@
   var ICON_SPK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
   var ICON_PDF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>';
   var ICON_STOP = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"/></svg>';
+  var ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>';
+  var ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+  var ICON_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+  var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
   var ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>';
 
   var el = {};
@@ -154,7 +166,7 @@
     var t = mk('b', '', '', 'JARV<i>I</i>S');
     el.spk = mk('button', '', 'bmj-ib', ICON_SPK); el.spk.title = 'Suara jawaban';
     el.wake = mk('button', '', 'bmj-ib', 'HAI'); el.wake.title = 'Mode "Hai Jarvis" (mendengarkan terus)';
-    el.close = mk('button', '', 'bmj-ib', '✕'); el.close.title = 'Tutup';
+    el.close = mk('button', '', 'bmj-ib', ICON_X); el.close.title = 'Tutup';
     h.append(t, el.spk, el.wake, el.close);
     el.log = mk('div', 'bmj-log'); el.log.setAttribute('aria-live', 'polite');
     var f = mk('div', '', 'bmj-f');
@@ -226,6 +238,7 @@
   function nearBottom() { return el.log.scrollHeight - el.log.scrollTop - el.log.clientHeight < 120; }
   function toBottom(instant) { if (instant) { var b = el.log.style.scrollBehavior; el.log.style.scrollBehavior = 'auto'; el.log.scrollTop = el.log.scrollHeight; el.log.style.scrollBehavior = b; } else el.log.scrollTo({ top: el.log.scrollHeight, behavior: 'smooth' }); }
 
+  function sayOk(text) { var d = mk('div', '', 'bmj-m bmj-s bmj-okm', ICON_CHECK); d.appendChild(document.createTextNode(text)); el.log.appendChild(d); toBottom(); return d; }
   function say(kind, text) {
     var d = mk('div', '', 'bmj-m ' + (kind === 'u' ? 'bmj-u' : kind === 'a' ? 'bmj-a' : 'bmj-s'));
     d.textContent = text; el.log.appendChild(d); toBottom(); return d;
@@ -431,7 +444,7 @@
   function newReply() {
     var wrap = mk('div', '', 'bmj-r');
     var steps = mk('div', '', 'bmj-steps bmj-live');
-    var head = mk('div', '', 'bmj-sh'), spin = mk('span', '', 'bmj-ic bmj-run'), ht = tx('span', 'bmj-t', 'Memulai…'), ch = tx('span', 'bmj-c', '▼');
+    var head = mk('div', '', 'bmj-sh'), spin = mk('span', '', 'bmj-ic bmj-run'), ht = tx('span', 'bmj-t', 'Memulai…'), ch = mk('span', '', 'bmj-c', ICON_CHEV);
     head.append(spin, ht, ch);
     var slw = mk('div', '', 'bmj-sl'), list = mk('div', '', 'bmj-si'); slw.appendChild(list);
     steps.append(head, slw); wrap.appendChild(steps);
@@ -448,20 +461,23 @@
       x.append(t, sub); r.append(ic, x); R.list.appendChild(r); row = R.rows[ev.id] = { ic: ic, t: t, sub: sub }; R.count++;
     }
     if (ev.state === 'run') { row.t.textContent = ev.text; setStatus(R, ev.text + '…'); }
-    else { row.ic.className = 'bmj-ic bmj-' + ev.state; row.ic.textContent = ev.state === 'ok' ? '✓' : '✗'; row.sub.textContent = ev.text; setStatus(R, ev.text); }
+    else { row.ic.className = 'bmj-ic bmj-' + ev.state; row.ic.innerHTML = ev.state === 'ok' ? ICON_CHECK : ICON_X; row.sub.textContent = ev.text; setStatus(R, ev.text); }
     toBottom();
   }
   /* bukti model: siapa yang benar-benar menjawab (dilaporkan server penyedia) */
   function modelLine(mi) {
     var d = document.createElement('div'); d.className = 'bmj-mdl' + (mi && mi.cocok === false ? ' bmj-mdl-w' : '');
     if (!mi || !mi.dipakai) { d.textContent = 'Model tidak diketahui'; return d; }
-    var u = mi.dipakai, nm = u.penyedia + ' · ' + u.id + (u.dilaporkan && u.dilaporkan !== u.id ? ' (server: ' + u.dilaporkan + ')' : u.dilaporkan ? ' ✓ dikonfirmasi server' : '');
+    var u = mi.dipakai, nm = u.penyedia + ' · ' + u.id + (u.dilaporkan && u.dilaporkan !== u.id ? ' (server: ' + u.dilaporkan + ')' : '');
     if (mi.cocok === false && mi.diminta && mi.diminta.id) d.textContent = 'Model pilihan ' + mi.diminta.penyedia + ' · ' + mi.diminta.id + ' tidak menjawab' + (mi.gagal && mi.gagal.length ? ' (' + mi.gagal[0] + ')' : '') + '. Dijawab cadangan: ' + nm;
-    else d.textContent = 'Dijawab oleh ' + nm;
+    else {
+      d.textContent = 'Dijawab oleh ' + nm;
+      if (u.dilaporkan && u.dilaporkan === u.id) { var ok = mk('span', '', 'bmj-cf', ICON_CHECK); ok.appendChild(document.createTextNode('dikonfirmasi server')); d.appendChild(ok); }
+    }
     return d;
   }
   function finishSteps(R, ok) {
-    R.steps.classList.remove('bmj-live'); R.spin.className = 'bmj-ic ' + (ok ? 'bmj-ok' : 'bmj-err'); R.spin.textContent = ok ? '✓' : '✗';
+    R.steps.classList.remove('bmj-live'); R.spin.className = 'bmj-ic ' + (ok ? 'bmj-ok' : 'bmj-err'); R.spin.innerHTML = ok ? ICON_CHECK : ICON_X;
     var sec = Math.max(1, Math.round((Date.now() - R.t0) / 1000));
     if (!R.count) { R.steps.style.display = 'none'; return; }
     R.ht.textContent = (ok ? 'Selesai' : 'Terhenti') + ' · ' + R.count + ' langkah · ' + sec + ' dtk';
@@ -518,7 +534,67 @@
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { if (wakeOn && !wakeRec && !busy && !listening) startWake(); } else if (wakeRec) { try { wakeRec.abort(); } catch (e) {} } });
 
   /* ---------- suara keluar: hanya ringkasan 1-2 kalimat, tabel tidak dibacakan ---------- */
-  function stopSpeak() { if (window.BMVoice) try { BMVoice.stop(); } catch (e) {} if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} }
+  function stopSpeak() { if (window.BMVoice) try { BMVoice.stop(); } catch (e) {} if (canSpeak) try { speechSynthesis.cancel(); } catch (e) {} endRead(); }
+  /* ---------- baca semua jawaban + penanda bagian yang sedang dibaca ---------- */
+  var reading = null, hpRun = 0;
+  function segsOf(ans, reps) {
+    var out = [];
+    [].slice.call(ans.children).forEach(function (k) {
+      if (k.classList.contains('bmj-tw')) { var n = k.querySelectorAll('tbody tr').length; out.push({ el: k, text: 'Tabel ' + n + ' baris. Rinciannya ada di layar.' }); return; }
+      if (k.tagName === 'UL' || k.tagName === 'OL') { [].slice.call(k.children).forEach(function (li) { if (li.textContent.trim()) out.push({ el: li, text: li.textContent }); }); return; }
+      if (k.textContent.trim()) out.push({ el: k, text: k.textContent });
+    });
+    if (reps && reps.length && out.length) out[out.length - 1].text += ' Laporan lengkapnya ada di layar.';
+    return out;
+  }
+  function armRead(ans, reps) {
+    ans._segs = segsOf(ans, reps);
+    ans.addEventListener('click', function (e) {
+      if (ans._typing) return;
+      if (!voiceOut || (window.getSelection && String(window.getSelection()).length)) return;
+      var segs = ans._segs || [], t = e.target;
+      for (var i = 0; i < segs.length; i++) if (segs[i].el === t || segs[i].el.contains(t)) { readFrom(ans, i); return; }
+    });
+  }
+  function markSeg(ans, i) {
+    var old = ans.querySelector('.bmj-rd'); if (old) old.classList.remove('bmj-rd');
+    var sg = ans._segs && ans._segs[i]; if (!sg) return;
+    sg.el.classList.add('bmj-rd');
+    if (!ans._typing && el.log) { var r = sg.el.getBoundingClientRect(), lr = el.log.getBoundingClientRect(); if (r.bottom > lr.bottom - 8 || r.top < lr.top) sg.el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  }
+  function endRead(natural) {
+    if (!reading) return;
+    var a = reading.ans, cb = natural && reading.done; reading = null; hpRun++;
+    var o = a.querySelector('.bmj-rd'); if (o) o.classList.remove('bmj-rd');
+    paintPlays(); if (cb) try { cb(); } catch (e) {}
+  }
+  function paintPlays() {
+    document.querySelectorAll('.bmj-play').forEach(function (b) {
+      var on = !!(reading && reading.ans === b._ans);
+      if (b._on === on) return; b._on = on;
+      b.innerHTML = on ? ICON_STOP : ICON_PLAY; b.title = on ? 'Berhenti' : 'Dengarkan';
+      b.classList.toggle('bmj-on', on); b.setAttribute('aria-label', on ? 'Hentikan suara' : 'Dengarkan jawaban');
+    });
+  }
+  function readFrom(ans, from, after) {
+    stopSpeak();
+    var segs = (ans._segs || []).slice(from || 0); if (!segs.length) { after && after(); return; }
+    reading = { ans: ans, done: after }; paintPlays();
+    var me = reading, done = function () { if (reading === me) endRead(true); };
+    var onSeg = function (k) { if (reading === me) markSeg(ans, (from || 0) + k); };
+    if (window.BMVoice) { try { BMVoice.speak(segs.map(function (x) { return x.text; }), { onSeg: onSeg, done: done }); return; } catch (e) {} }
+    if (!canSpeak) { done(); return; }
+    var run = hpRun;
+    (function next(k) {
+      if (run !== hpRun || reading !== me) return;
+      if (k >= segs.length) return done();
+      onSeg(k);
+      try {
+        var u = new SpeechSynthesisUtterance(segs[k].text.replace(/\s+/g, ' ')); u.lang = speechLang(); u.rate = 1.03;
+        u.onend = u.onerror = function () { next(k + 1); }; speechSynthesis.speak(u);
+      } catch (e) { done(); }
+    })(0);
+  }
   function spokenOf(blocks, reps) {
     var p = blocks.filter(function (b) { return b.t === 'p'; })[0];
     var s = p ? String(p.text).replace(/\*\*/g, '') : '';
@@ -652,9 +728,10 @@
       if (fin.model) R.wrap.appendChild(modelLine(fin.model));
       var ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, blocks); R.wrap.appendChild(ans);
       var ctl = curCtl = { skip: false }; ans.onclick = function () { ctl.skip = true; };      // ketuk jawaban = lewati animasi
-      speak(spokenOf(blocks, reps), resumeWake);                                              // suara jalan bersamaan dengan efek mengetik
+      armRead(ans, reps); ans._typing = true;
+      if (voiceOut) readFrom(ans, 0, resumeWake); else resumeWake();                         // baca semua, bersamaan dengan efek mengetik
       toBottom(true);
-      await typeInto(ans, ctl);
+      try { await typeInto(ans, ctl); } finally { ans._typing = false; }
       reps.forEach(function (r) { R.wrap.appendChild(renderReport(r)); });
       (fin.visuals || []).forEach(function (v) { ensureVisual().then(function () { R.wrap.appendChild(window.BMVisual.render(v)); toBottom(); }, function () { say('s', 'Modul grafik gagal dimuat.'); }); });
       (fin.notas || []).forEach(function (n) { ensureNota().then(function () { R.wrap.appendChild(window.BMNota.render(n)); toBottom(); }, function () { say('s', 'Modul nota gagal dimuat.'); }); });
@@ -668,7 +745,7 @@
           var name = targets.length > 1 && rp ? 'PDF: ' + rp.title.slice(0, 22) : 'Unduh PDF'; lab.textContent = name;
           bp.onclick = async function () {
             bp.disabled = true; lab.textContent = 'Membuat PDF…';
-            try { if (rp) await makeReportPdf(rp, blocks); else await makePdf(blocks, text); lab.textContent = 'PDF tersimpan ✓'; }
+            try { if (rp) await makeReportPdf(rp, blocks); else await makePdf(blocks, text); lab.textContent = 'PDF tersimpan'; }
             catch (e) { lab.textContent = name; say('s', 'Gagal membuat PDF: ' + (e.message || e)); }
             setTimeout(function () { bp.disabled = false; lab.textContent = name; }, 2500);
           };
@@ -676,8 +753,14 @@
         });
       }
       var bc = mk('button', '', '', ICON_COPY + '<span>Salin</span>');
-      bc.onclick = function () { var t = reps.length ? reps.map(reportPlain).join('\n\n') : plainOf(blocks); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { bc.querySelector('span').textContent = 'Tersalin ✓'; }, function () { bc.querySelector('span').textContent = 'Gagal'; }); setTimeout(function () { bc.querySelector('span').textContent = 'Salin'; }, 1800); };
-      acts.appendChild(bc); R.wrap.appendChild(acts);
+      bc.onclick = function () { var t = reps.length ? reps.map(reportPlain).join('\n\n') : plainOf(blocks); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { bc.querySelector('span').textContent = 'Tersalin'; }, function () { bc.querySelector('span').textContent = 'Gagal'; }); setTimeout(function () { bc.querySelector('span').textContent = 'Salin'; }, 1800); };
+      acts.appendChild(bc);
+      if (canSpeak || window.BMVoice) {
+        var bv = mk('button', '', 'bmj-play', ICON_PLAY); bv._ans = ans; bv.type = 'button'; bv.title = 'Dengarkan'; bv.setAttribute('aria-label', 'Dengarkan jawaban');
+        bv.onclick = function () { if (reading && reading.ans === ans) stopSpeak(); else readFrom(ans, 0); };
+        acts.appendChild(bv);
+      }
+      R.wrap.appendChild(acts);
       history.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + (fin.visuals || []).map(function (v) { return '\n[Visual "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (history.length > 20) history = history.slice(-20);
       (fin.actions || []).forEach(runAction);
@@ -709,7 +792,7 @@
       var txt = await r.text(), j = null; try { j = JSON.parse(txt); } catch (e) {}
       if (!j) { w.textContent = 'Server membalas HTTP ' + r.status + ' tapi bukan JSON. Kemungkinan /api/jarvis belum ter-deploy (cek file ada di folder api/ lalu Redeploy).'; return; }
       if (j.error) { w.textContent = 'HTTP ' + r.status + ': ' + j.error; return; }
-      w.textContent = 'Server Jarvis aktif (' + (j.versi || 'VERSI LAMA — belum ter-deploy') + ').\n' + (j.data ? (j.data.error ? 'Baca data GAGAL: ' + j.data.error : 'Data terbaca: ' + j.data.note_terbaca + ' note, ' + j.data.baris_terbaca + ' baris (baris berisi "Arifin": ' + j.data.baris_berisi_arifin + ')') + '\n' : 'Pembaca data: tidak ada (kode lama)\n') + j.hasil.map(function (h) { return (h.ok ? '✓ ' : '✗ ') + h.model + ' (' + h.ms + ' ms)' + (h.error ? '\n   ' + h.error : ''); }).join('\n');
+      w.textContent = 'Server Jarvis aktif (' + (j.versi || 'VERSI LAMA — belum ter-deploy') + ').\n' + (j.data ? (j.data.error ? 'Baca data GAGAL: ' + j.data.error : 'Data terbaca: ' + j.data.note_terbaca + ' note, ' + j.data.baris_terbaca + ' baris (baris berisi "Arifin": ' + j.data.baris_berisi_arifin + ')') + '\n' : 'Pembaca data: tidak ada (kode lama)\n') + j.hasil.map(function (h) { return (h.ok ? 'OK    ' : 'GAGAL ') + h.model + ' (' + h.ms + ' ms)' + (h.error ? '\n   ' + h.error : ''); }).join('\n');
     } catch (e) { w.textContent = 'Gagal menghubungi /api/jarvis: ' + e.message + '. Server belum bisa dijangkau — pastikan file api/jarvis.js sudah ter-deploy.'; }
     finally { busy = false; }
   }
@@ -795,7 +878,7 @@
       ok.disabled = no.disabled = true; ok.textContent = 'Menyimpan…';
       try {
         var j = await post({ approve: p.token });
-        box.remove(); say('s', '✓ ' + (j.message || 'Tersimpan.'));
+        box.remove(); sayOk(j.message || 'Tersimpan.');
         try { if (typeof reloadActiveNotes === 'function') reloadActiveNotes(); } catch (e) {}
         speak(j.message || 'Tersimpan.');
       } catch (e) { ok.disabled = no.disabled = false; ok.textContent = 'Setuju & simpan'; say('s', 'Gagal: ' + e.message); }
