@@ -27,6 +27,19 @@
     '.bmv-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:8px;padding:6px 12px 12px}' +
     '.bmv-k div{border:1px solid var(--bmv-bd,rgba(127,127,127,.22));border-radius:12px;padding:9px 10px}.bmv-k span{display:block;font-size:12px;opacity:.7;overflow-wrap:anywhere}' +
     '.bmv-k b{display:block;font-size:clamp(15px,4.2vw,19px);margin-top:2px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;line-height:1.25}.bmv-k small{display:block;font-size:11.5px;opacity:.65;margin-top:2px}' +
+
+    '.bmd{max-width:560px}.bmd-top{display:flex;align-items:center;gap:11px;padding:11px 12px 8px}.bmd-ic{flex:none;width:40px;height:44px;border-radius:9px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-size:10px;font-weight:800;letter-spacing:.3px;color:#fff;background:#64748b}' +
+    '.bmd-ic[data-k=pdf]{background:#e5484d}.bmd-ic[data-k=xlsx]{background:#22a06b}.bmd-ic[data-k=docx]{background:#3b82f6}.bmd-ic[data-k=csv]{background:#14b8a6}.bmd-ic[data-k=html]{background:#f97316}.bmd-ic[data-k=md]{background:#8b5cf6}' +
+    '.bmd-t{min-width:0;flex:1}.bmd-t b{display:block;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}.bmd-t small{display:block;font-size:12px;opacity:.65;margin-top:1px;overflow-wrap:anywhere}' +
+    '.bmd-pv{position:relative;margin:0 12px;border:1px solid var(--bmv-bd,rgba(127,127,127,.22));border-radius:10px;background:#fff;color:#1c1b19;overflow:hidden;max-height:190px;transition:max-height .25s}' +
+    '.bmd.open .bmd-pv{max-height:min(70vh,640px);overflow:auto}.bmd-pv:after{content:"";position:absolute;left:0;right:0;bottom:0;height:46px;background:linear-gradient(transparent,#fff);pointer-events:none}.bmd.open .bmd-pv:after{display:none}' +
+    '.bmd-pg{padding:14px 15px;font:13px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.bmd-pg h1{font-size:17px;margin:0 0 8px}.bmd-pg h2{font-size:14.5px;margin:12px 0 5px}.bmd-pg h3{font-size:13px;margin:10px 0 4px}.bmd-pg p{margin:0 0 7px;overflow-wrap:anywhere}' +
+    '.bmd-pg ul,.bmd-pg ol{margin:0 0 7px;padding-left:20px}.bmd-pg li{overflow-wrap:anywhere}.bmd-pg hr{border:0;border-top:1px solid #ddd;margin:8px 0}.bmd-tw{overflow-x:auto;margin:0 0 8px}.bmd-pg table{border-collapse:collapse;font-size:11.5px;min-width:100%}' +
+    '.bmd-pg th{background:var(--accent-yellow,#F0A529);color:#1c1b19;text-align:left;font-weight:700}.bmd-pg th,.bmd-pg td{border:1px solid #ddd;padding:4px 7px;vertical-align:top}.bmd-pg td.n{text-align:right;white-space:nowrap}.bmd-pg tbody tr:nth-child(even){background:#f7f5f0}' +
+    '.bmd-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 12px 12px}.bmd-b{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bmv-bd,rgba(127,127,127,.32));background:transparent;color:inherit;border-radius:999px;padding:7px 13px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}' +
+    '.bmd-b.p{background:var(--accent-yellow,#F0A529);border-color:transparent;color:var(--on-accent,#1c1b19)}.bmd-b:disabled{opacity:.55;cursor:default}.bmd-b svg{width:16px;height:16px;flex:none}' +
+    '.bmd-sel{border:1px solid var(--bmv-bd,rgba(127,127,127,.32));background:transparent;color:inherit;border-radius:999px;padding:7px 10px;font:inherit;font-size:13px;font-weight:700;max-width:130px}.bmd-sel option{color:#1c1b19}' +
+    '.bmd-er{flex:1 0 100%;font-size:12px;color:#e5484d;overflow-wrap:anywhere}' +
     '.bmv-f{display:block;width:100%;border:0;background:#fff;border-top:1px solid var(--bmv-bd,rgba(127,127,127,.2))}';
   function addCss() { if (document.getElementById('bmv-css')) return; var s = document.createElement('style'); s.id = 'bmv-css'; s.textContent = css; document.head.appendChild(s); }
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -240,6 +253,65 @@
     return box;
   }
 
+
+  /* ---------- dokumen: kartu file + pratinjau; file dibuat di HP lewat bm-dokumen.js (tidak disimpan di server) ---------- */
+  var DOKICON = { download: 'M12 4v10m0 0l-4-4m4 4l4-4M5 19h14', share: 'M12 15V4m0 0L8 8m4-4l4 4M6 12v7h12v-7', pen: 'M4 20h4L19 9l-4-4L4 16v4zM13 7l4 4', open: 'M6 9l6 6 6-6', close: 'M6 15l6-6 6 6' };
+  function ico(k) { var s = sv('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }); s.appendChild(sv('path', { d: DOKICON[k] })); return s; }
+  var dokLoad = null;
+  function ensureDok() {
+    if (window.BMDok) return Promise.resolve();
+    if (!dokLoad) dokLoad = new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = '/bm-dokumen.js'; sc.onload = ok; sc.onerror = function () { dokLoad = null; no(new Error('Modul dokumen belum termuat. Unggah bm-dokumen.js lalu buka ulang aplikasi.')); }; document.head.appendChild(sc); });
+    return dokLoad;
+  }
+  function plainT(s) { return String(s == null ? '' : s).replace(/\*\*/g, ''); }
+  function richT(parent, text) {   // **tebal** tanpa innerHTML
+    String(text == null ? '' : text).split('**').forEach(function (p, i) { if (!p) return; parent.appendChild(i % 2 ? el('b', '', p) : document.createTextNode(p)); });
+  }
+  function numLike(x) { return /^(Rp\s?)?-?[\d.,]+%?$/.test(String(x)); }
+  function docPreview(v) {
+    var pg = el('div', 'bmd-pg'), first = (v.bagian || [])[0];
+    pg.appendChild(el('h1', '', v.judul));
+    (v.bagian || []).forEach(function (b) {
+      if (b === first && b.t === 'h' && plainT(b.teks) === plainT(v.judul)) return;
+      if (b.t === 'h' || b.t === 'h2') { var h = el(b.t === 'h' ? 'h2' : 'h3'); richT(h, b.teks); pg.appendChild(h); }
+      else if (b.t === 'p') String(b.teks).split(/\n+/).forEach(function (l) { var p = el('p'); richT(p, l); pg.appendChild(p); });
+      else if (b.t === 'ul' || b.t === 'ol') { var ul = el(b.t); b.items.forEach(function (x) { var li = el('li'); richT(li, x); ul.appendChild(li); }); pg.appendChild(ul); }
+      else if (b.t === 'hr') pg.appendChild(el('hr'));
+      else if (b.t === 'tb') {
+        if (b.nama) pg.appendChild(el('h3', '', b.nama));
+        var w = el('div', 'bmd-tw'), tb = el('table'), th = el('thead'), tr = el('tr');
+        b.kolom.forEach(function (c) { tr.appendChild(el('th', '', plainT(c))); }); th.appendChild(tr); tb.appendChild(th);
+        var bd = el('tbody'); b.baris.forEach(function (r) { var row = el('tr'); b.kolom.forEach(function (_, i) { var x = r[i]; row.appendChild(el('td', numLike(x) ? 'n' : '', typeof x === 'number' ? x.toLocaleString('id-ID') : plainT(x))); }); bd.appendChild(row); });
+        tb.appendChild(bd); w.appendChild(tb); pg.appendChild(w);
+      }
+    });
+    return pg;
+  }
+  function dokumen(v) {
+    var card = el('div', 'bmv bmd'), fm = (v.format || 'pdf'), fk = fm;
+    var tbs = (v.bagian || []).filter(function (b) { return b.t === 'tb'; }), nb = tbs.reduce(function (n, b) { return n + b.baris.length; }, 0);
+    var top = el('div', 'bmd-top'), ic = el('div', 'bmd-ic', fk.toUpperCase().slice(0, 4)); ic.dataset.k = fk;
+    var t = el('div', 'bmd-t'), nm = el('b', '', v.judul), sub = el('small', '', '');
+    function subTxt() { sub.textContent = fk.toUpperCase() + (tbs.length ? ' \u00b7 ' + tbs.length + ' tabel, ' + nb + ' baris' : ' \u00b7 ' + (v.bagian || []).length + ' bagian') + (v.versi > 1 ? ' · versi ' + v.versi : ''); ic.dataset.k = fk; ic.textContent = fk.toUpperCase().slice(0, 4); }
+    subTxt(); t.append(nm, sub); top.append(ic, t); card.appendChild(top);
+    var pv = el('div', 'bmd-pv'); pv.appendChild(docPreview(v)); card.appendChild(pv);
+    var bar = el('div', 'bmd-bar'), err = el('div', 'bmd-er'); err.style.display = 'none';
+    function showErr(e) { err.textContent = (e && e.message) || String(e || 'Gagal membuat file'); err.style.display = ''; }
+    function run(btn, label, fn) {
+      btn.onclick = function () { err.style.display = 'none'; var old = btn.lastChild.textContent; btn.disabled = true; btn.lastChild.textContent = 'Menyiapkan…';
+        ensureDok().then(fn).then(function () { btn.lastChild.textContent = 'Selesai'; setTimeout(function () { btn.lastChild.textContent = old; btn.disabled = false; }, 1400); }, function (e) { btn.lastChild.textContent = old; btn.disabled = false; if (!(e && e.name === 'AbortError')) showErr(e); }); };
+    }
+    function btn(cls, icon, text) { var b = el('button', 'bmd-b ' + cls); b.type = 'button'; b.appendChild(ico(icon)); b.appendChild(el('span', '', text)); return b; }
+    var dl = btn('p', 'download', 'Unduh'); run(dl, '', function () { return window.BMDok.download(v, fk); });
+    var sel = el('select', 'bmd-sel'); sel.setAttribute('aria-label', 'Format file');
+    [['pdf', 'PDF'], ['xlsx', 'Excel'], ['docx', 'Word'], ['csv', 'CSV'], ['html', 'HTML'], ['md', 'Markdown'], ['txt', 'Teks']].forEach(function (f) { var o = el('option', '', f[1]); o.value = f[0]; if (f[0] === fk) o.selected = true; sel.appendChild(o); });
+    sel.onchange = function () { fk = sel.value; subTxt(); };
+    var sh = btn('', 'share', 'Bagikan'); run(sh, '', function () { return window.BMDok.share(v, fk); });
+    var op = btn('', 'open', 'Buka'); op.onclick = function () { var o = card.classList.toggle('open'); op.replaceChildren(ico(o ? 'close' : 'open'), el('span', '', o ? 'Tutup' : 'Buka')); };
+    var rv = btn('', 'pen', 'Revisi'); rv.onclick = function () { try { window.dispatchEvent(new CustomEvent('bm-doc-revisi', { detail: { judul: v.judul, versi: (v.versi || 1) + 1 } })); } catch (e) {} };
+    bar.append(dl, sel, sh, op, rv, err); card.appendChild(bar);
+    return card;
+  }
   window.BMVisual = {
     render: function (v) {
       addCss();
@@ -247,6 +319,7 @@
       if (v.tipe === 'grafik') return chart(v);
       if (v.tipe === 'kartu') return cards(v);
       if (v.tipe === 'gambar') return drawing(v);
+      if (v.tipe === 'dokumen') return dokumen(v);
       return el('div');
     }
   };
