@@ -44,7 +44,7 @@ function keyFor(p, keys) { return (keys && keys[p]) || PROVIDERS[p].key() || '';
 const COOL = new Map();   // "provider|model" -> waktu boleh dicoba lagi (router menghindari model yang kena limit)
 const MAX_MSG_CHARS = 1500;
 const MAX_HISTORY = 12;
-const VERSION = 'jarvis-v23-lampiran-2026-11-13';
+const VERSION = 'jarvis-v24-dokumen-2026-11-13';
 const MAX_TOOL_ROUNDS = 8;
 const ROUND_BUDGET_MS = 34000;   // lewat ini -> hentikan rapi & minta browser melanjutkan otomatis
 const MAX_RESULT_CHARS = 14000;
@@ -802,6 +802,45 @@ function t_buat_gambar(q, a) {
   const lebar = Math.max(120, Math.min(1200, Number(a.lebar) || 640)), tinggi = Math.max(80, Math.min(1200, Number(a.tinggi) || 400));
   return { visual: { tipe: 'gambar', mode, judul: clip(a.judul || 'Gambar', 80), svg: mode === 'svg' ? svg : undefined, kode: mode === 'canvas' ? kode : undefined, lebar, tinggi }, ringkasan: 'Gambar ' + mode + ' ' + lebar + 'x' + tinggi };
 }
+
+/* ---------- dokumen: PDF, Excel, Word, CSV, teks, HTML, Markdown dibuat di HP admin dari spesifikasi ini (tidak disimpan di server) ---------- */
+const DOK_FORMAT = ['pdf', 'xlsx', 'docx', 'csv', 'txt', 'html', 'md'];
+const DOK_TIPE = { judul: 'h', heading: 'h', sub: 'h2', subjudul: 'h2', teks: 'p', paragraf: 'p', butir: 'ul', daftar: 'ul', nomor: 'ol', tabel: 'tb', garis: 'hr' };
+const DOK_BUDGET = 45000;
+function t_buat_dokumen(q, a) {
+  const format = DOK_FORMAT.includes(lower(a.format)) ? lower(a.format) : 'pdf';
+  const judul = clip(String(a.judul || '').trim(), 100);
+  if (!judul) return { error: 'judul dokumen wajib' };
+  const src = Array.isArray(a.bagian) ? a.bagian.slice(0, 120) : [];
+  if (!src.length) return { error: 'bagian kosong: [{tipe:"teks",teks:"..."},{tipe:"tabel",kolom:[...],baris:[[...]]}]' };
+  let used = judul.length;
+  const cell = (x) => { if (typeof x === 'number' && isFinite(x)) { used += 8; return x; } const t = clip(String(x == null ? '' : x), 300); used += t.length + 2; return t; };
+  const bagian = [];
+  for (const b of src) {
+    if (!b || typeof b !== 'object') continue;
+    const t = DOK_TIPE[lower(b.tipe)] || (b.kolom ? 'tb' : b.items || b.butir ? 'ul' : 'p');
+    if (t === 'hr') { bagian.push({ t }); continue; }
+    if (t === 'h' || t === 'h2' || t === 'p') {
+      const teks = clip(String(b.teks == null ? '' : b.teks), 4000); if (!teks.trim()) continue; used += teks.length; bagian.push({ t, teks }); continue;
+    }
+    if (t === 'ul' || t === 'ol') {
+      const items = (Array.isArray(b.items) ? b.items : Array.isArray(b.butir) ? b.butir : []).slice(0, 80).map((x) => clip(String(x == null ? '' : x), 600)).filter((x) => x.trim());
+      if (!items.length) continue; used += items.reduce((n, x) => n + x.length, 0); bagian.push({ t, items }); continue;
+    }
+    const kolom = (Array.isArray(b.kolom) ? b.kolom : []).slice(0, 14).map((x) => clip(String(x == null ? '' : x), 60));
+    if (!kolom.length) return { error: 'tabel butuh kolom: ["A","B",...]' };
+    const baris = (Array.isArray(b.baris) ? b.baris : []).slice(0, 500).map((r) => kolom.map((_, k) => cell(Array.isArray(r) ? r[k] : (r && typeof r === 'object' ? r[kolom[k]] : ''))));
+    bagian.push({ t: 'tb', nama: clip(String(b.nama || b.judul || ''), 31), kolom, baris });
+    if (used > DOK_BUDGET) break;
+  }
+  if (!bagian.length) return { error: 'tidak ada bagian yang valid' };
+  if (used > DOK_BUDGET) return { error: 'Dokumen terlalu panjang untuk satu kali buat (maks sekitar 45.000 huruf). Pecah menjadi beberapa dokumen atau ringkas.' };
+  const nama = (String(a.nama_file || judul).replace(/\.[a-z0-9]{2,4}$/i, '').replace(/[^\w\- ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 60)) || 'dokumen';
+  const versi = Math.max(1, Math.min(99, parseInt(a.versi, 10) || 1));
+  const v = { tipe: 'dokumen', format, judul, nama, versi, bagian };
+  const nTb = bagian.filter((x) => x.t === 'tb').length, nBaris = bagian.reduce((n, x) => n + (x.baris ? x.baris.length : 0), 0);
+  return { visual: v, ringkasan: 'Dokumen ' + format.toUpperCase() + ' "' + judul + '" v' + versi + ': ' + bagian.length + ' bagian, ' + nTb + ' tabel, ' + nBaris + ' baris' };
+}
 /* Omzet bersih gabungan = uang masuk Buku Besar (harga = barang + jasa) + omzet kasir warung (nota J-, dikurangi retur).
    Salinan hutang B- di kasir tidak dihitung (sudah ada di Buku Besar/Hutang Piutang). */
 function periodeDari(a) {
@@ -1016,6 +1055,7 @@ const TOOLS = {
   buat_grafik: { fn: t_buat_grafik, decl: { name: 'buat_grafik', description: 'Tampilkan GRAFIK garis/batang di layar (bisa diunduh PNG). Angka WAJIB dari hasil alat lain di percakapan ini, jangan mengarang. Untuk omzet pakai omzet_gabungan (sudah ada grafiknya).', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, sub: { type: 'STRING' }, jenis: { type: 'STRING', description: 'garis atau batang' }, satuan: { type: 'STRING', description: 'rp atau kosong' }, label: { type: 'ARRAY', items: { type: 'STRING' } }, seri: { type: 'ARRAY', items: { type: 'OBJECT', properties: { nama: { type: 'STRING' }, nilai: { type: 'ARRAY', items: { type: 'NUMBER' } } }, required: ['nilai'] } } }, required: ['label', 'seri'] } } },
   kartu_angka: { fn: t_kartu_angka, decl: { name: 'kartu_angka', description: 'Tampilkan KARTU RINGKASAN angka (2-8 kartu: label, nilai, keterangan), mis. total hari ini. Angka wajib dari hasil alat.', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, kartu: { type: 'ARRAY', items: { type: 'OBJECT', properties: { label: { type: 'STRING' }, nilai: { type: 'STRING' }, ket: { type: 'STRING' } }, required: ['label', 'nilai'] } } }, required: ['kartu'] } } },
   buat_gambar: { fn: t_buat_gambar, decl: { name: 'buat_gambar', description: 'Gambar dari KODE: diagram, sketsa, denah, ilustrasi sederhana, logo sederhana. mode "svg" (isi svg lengkap diawali <svg viewBox=...>) atau "canvas" (isi kode JavaScript yang menggambar ke variabel ctx, canvas, W, H). Dijalankan terisolasi tanpa internet; bisa diunduh PNG.', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, mode: { type: 'STRING', description: 'svg atau canvas' }, svg: { type: 'STRING' }, kode: { type: 'STRING' }, lebar: { type: 'NUMBER' }, tinggi: { type: 'NUMBER' } }, required: ['mode'] } } },
+  buat_dokumen: { fn: t_buat_dokumen, decl: { name: 'buat_dokumen', description: 'BUAT DOKUMEN yang bisa diunduh/dibagikan admin: PDF (laporan, surat, penawaran), XLSX/Excel (tabel yang bisa diedit), DOCX/Word (surat, dokumen), CSV, TXT, HTML, MD. File dibuat di HP dan tampil sebagai kartu file dengan pratinjau; admin bisa memilih format lain dari kartu yang sama. Isi WAJIB dari hasil alat/data di percakapan atau yang disebut pengguna; jangan mengarang angka. Untuk REVISI ("tambahkan kolom", "ganti judul"): ambil isi dokumen sebelumnya dari riwayat ([DOKUMEN ...]), ubah, lalu panggil alat ini lagi dengan versi naik (2, 3, ...). Uang tulis "Rp190.000" atau angka murni; untuk Excel angka murni/Rp otomatis jadi angka yang bisa dijumlah. Satu tabel = satu sheet Excel (isi nama).', parameters: { type: 'OBJECT', properties: { judul: { type: 'STRING' }, format: { type: 'STRING', description: 'pdf, xlsx, docx, csv, txt, html, md (default pdf)' }, nama_file: { type: 'STRING', description: 'tanpa ekstensi, mis. Rekap-Yono-Pekan-1' }, versi: { type: 'INTEGER', description: '1 untuk dokumen baru, naik untuk revisi' }, bagian: { type: 'ARRAY', description: 'isi berurutan', items: { type: 'OBJECT', properties: { tipe: { type: 'STRING', description: 'judul, sub, teks, butir, nomor, tabel, garis' }, teks: { type: 'STRING', description: 'untuk judul/sub/teks' }, items: { type: 'ARRAY', items: { type: 'STRING' }, description: 'untuk butir/nomor' }, nama: { type: 'STRING', description: 'nama sheet/tabel' }, kolom: { type: 'ARRAY', items: { type: 'STRING' } }, baris: { type: 'ARRAY', items: { type: 'ARRAY', items: { type: 'STRING' } } } }, required: ['tipe'] } } }, required: ['judul', 'bagian'] } } },
   ingat_sendiri: { fn: t_ingat_sendiri, decl: { name: 'ingat_sendiri', description: 'Simpan ke MEMORI PRIBADI Jarvis (langsung tersimpan, tanpa persetujuan): fakta tetap tentang bengkel/data (mis. "ukuran OS piston paling tinggi 200") atau preferensi admin (mis. "admin ingin jawaban singkat"). Jangan untuk hal sesaat atau data rahasia. Memori yang mirip otomatis diperbarui, tidak dobel.', parameters: { type: 'OBJECT', properties: { jenis: { type: 'STRING', description: 'fakta atau preferensi' }, isi: { type: 'STRING', description: 'satu kalimat jelas yang berdiri sendiri' }, alasan: { type: 'STRING' } }, required: ['jenis', 'isi'] } } },
   refleksi: { fn: t_refleksi, decl: { name: 'refleksi', description: 'INTROSPEKSI: catat pelajaran dari kesalahanmu sendiri agar tidak terulang (dibaca di setiap percakapan berikutnya). Panggil saat admin mengoreksi/protes atau kamu sadar jawabanmu salah atau bertentangan. aturan_baru = aturan konkret yang akan kamu ikuti, mis. "Sebelum bilang harga tidak ada, cari di kasir_barang DAN cari_otak".', parameters: { type: 'OBJECT', properties: { kesalahan: { type: 'STRING' }, penyebab: { type: 'STRING' }, aturan_baru: { type: 'STRING' } }, required: ['kesalahan', 'aturan_baru'] } } },
   baca_memori: { fn: t_baca_memori, decl: { name: 'baca_memori', description: 'Baca memori pribadi Jarvis (fakta, preferensi, pelajaran) lengkap dengan id. Pakai saat admin bertanya "apa yang kamu ingat".', parameters: { type: 'OBJECT', properties: { kata: { type: 'STRING' } } } } },
@@ -1105,6 +1145,7 @@ function stepLabel(name, a) {
     case 'buat_grafik': return 'Menggambar grafik';
     case 'kartu_angka': return 'Menyusun kartu ringkasan';
     case 'buat_gambar': return 'Menggambar dari kode';
+    case 'buat_dokumen': return 'Menyusun dokumen ' + clip(String(a.format || 'pdf').toUpperCase(), 6) + (a.judul ? ': ' + clip(a.judul, 36) : '');
     case 'refleksi': return 'Introspeksi: mencatat pelajaran';
     case 'baca_memori': return 'Membuka memori' + (a.kata ? ': ' + clip(a.kata, 30) : '');
     case 'lupakan_memori': return 'Melupakan memori ' + clip(a.id || a.kata, 30);
@@ -1139,7 +1180,7 @@ function stepDone(name, r) {
     case 'cari_otak': return (r.jumlah_cocok != null ? r.jumlah_cocok + ' cocok' : (r.judul ? 'Dokumen dibaca' : 'Selesai')) + ' di Otak' + (r.katalog_kasir ? ' · ' + r.katalog_kasir.jumlah_cocok + ' di katalog kasir' : '');
     case 'cek_data': return (r.jumlah_ditemukan || 0) + ' temuan · ' + (r.diperiksa ? r.diperiksa.jumlah_baris : 0) + ' baris diperiksa';
     case 'omzet_gabungan': return r && r.error ? 'Gagal' : 'Omzet ' + rp((r.ringkasan || r).omzet_bersih) + ' (bengkel ' + rp((r.ringkasan || r).omzet_bengkel) + ', warung ' + rp((r.ringkasan || r).omzet_warung) + ')';
-    case 'buat_grafik': case 'kartu_angka': case 'buat_gambar': return r && r.error ? 'Gagal: ' + clip(r.error, 60) : 'Tampil di layar';
+    case 'buat_grafik': case 'kartu_angka': case 'buat_gambar': case 'buat_dokumen': return r && r.error ? 'Gagal: ' + clip(r.error, 60) : 'Tampil di layar';
     case 'ingat_sendiri': case 'refleksi': return r && r.error ? 'Gagal disimpan' : (r && r.diperbarui ? 'Memori diperbarui' : 'Tersimpan di memori');
     case 'baca_memori': return (r.jumlah || 0) + ' memori';
     case 'lupakan_memori': return r && r.ok ? r.dilupakan.length + ' memori dilupakan' : 'Tidak ada yang dilupakan';
@@ -1168,6 +1209,7 @@ function systemPrompt(email, extra) {
     'KASIR: data aplikasi kasir/Dashboard Warung (katalog barang jadi, stok, nota J-/M-, pembayaran) ada di database tersendiri. Harga BARANG (piston, laher/bearing, stang seher, dll): panggil kasir_barang. Harga JASA (lemer, las, bubut, setel) ada di Otak (cari_otak). Pertanyaan gabungan (mis. lemer + piston dari bengkel): panggil KEDUANYA lalu jumlahkan; harga barang ambil dari katalog kasir. cari_otak juga melampirkan katalog_kasir bila ada barang yang cocok. Jika harga katalog dan Otak berbeda, sebut keduanya dan katakan yang dipakai kasir adalah katalog. Jika tidak ada di keduanya, katakan belum ada (JANGAN menebak). Stok/barang perlu dibeli: kasir_barang. Omzet/laba/terlaris kasir: kasir_penjualan. Hutang pelanggan versi kasir: kasir_hutang (nota B- adalah salinan dari Buku Hutang Piutang). Selisih kasir vs Hutang Piutang: kasir_cocok. sisa_tagihan membaca Buku Kasbon & Hutang Piutang (pencatatan), kasir_hutang membaca kasir: sebut sumbernya, jangan dijumlahkan. KASBON karyawan tidak ada di kasir. Membuka aplikasi kasir: open_page kasir.',
     'KASIR TULIS: mengisi stok ("stok blade os 50 jadi 5", "barang masuk laher 6202 10 pcs") = kasir_isi_stok (cara jadi/tambah); ubah harga jual = kasir_ubah_harga; barang yang belum ada = kasir_barang_baru. Banyak barang dari satu pesan atau daftar = SATU panggilan berisi semua baris. Ketiganya hanya USULAN; katakan admin perlu menekan Setuju. Jika alat mengembalikan pilihan (nama cocok lebih dari satu) atau catatan barang yang tidak masuk, tanyakan/sebutkan, jangan menebak.',
     'VISUAL: kamu bisa menampilkan grafik (buat_grafik), kartu angka (kartu_angka), dan gambar dari kode SVG/canvas (buat_gambar). Omzet/pendapatan/pemasukan = omzet_gabungan (grafik otomatis). Bila admin minta "grafik", "kurva", "diagram", atau "gambar", WAJIB pakai alat visual itu, jangan hanya teks. Angka grafik harus dari hasil alat.',
+    'DOKUMEN: permintaan "buatkan PDF/Excel/Word/dokumen/surat/laporan/file ..." = panggil buat_dokumen (kartu file tampil otomatis; admin bisa mengunduh, membagikan, atau memilih format lain). Kumpulkan datanya dulu dengan alat (rekap, search_data, kasir_*, omzet_gabungan) lalu isi bagian; JANGAN mengarang angka, nama, atau harga. Tanpa format disebut: laporan/surat = pdf, tabel/rekap angka yang mau diolah = xlsx. Revisi dokumen sebelumnya = ubah isi dari riwayat [DOKUMEN ...] lalu panggil buat_dokumen lagi dengan versi naik; jangan mulai dari nol bila tidak diminta. Setelah dibuat, tulis 1-2 kalimat saja dan tawarkan revisi.',
     'DATA KOSONG: "yang belum diisi dibawa/ditinggal", "kolom kosong", "data belum lengkap" = cek_data dengan jenis yang sesuai; tampilkan tanggal & baris, tawarkan membuka editornya.',
     'CARA BERPIKIR: sebelum menjawab (1) pahami maksud admin, (2) rencanakan alat yang dibutuhkan, (3) baca hasil alat dengan teliti sebelum menyimpulkan, (4) cek konsistensi dengan jawabanmu sebelumnya di percakapan ini; bila bertentangan, katakan mana yang benar dan buktinya. Jangan menyatakan sesuatu "tidak ada" sebelum mencari di semua sumber yang relevan (harga barang: kasir_barang DAN cari_otak). Jawaban akhir harus sesuai data alat, bukan tebakan.',
     'MEMORI DIRI: kamu punya memori pribadi (bagian MEMORI JARVIS di bawah) yang kamu tulis sendiri. Bila admin menyebut fakta tetap tentang bengkel/data atau cara ia ingin dilayani, simpan dengan ingat_sendiri (langsung tersimpan). Jangan menyimpan hal sesaat, tebakanmu sendiri, atau data rahasia. Bila admin bilang memori itu salah, perbaiki dengan ingat_sendiri atau lupakan_memori.',
@@ -1555,7 +1597,7 @@ module.exports = async function handler(req, res) {
     const hist = Array.isArray(body.history) ? body.history.slice(-MAX_HISTORY) : [];
     /* lampiran: pesan sekarang + riwayat. Media dibatasi MAX_MEDIA terbaru; dokumen dibatasi 60.000 huruf (sekarang) / 12.000 (riwayat) */
     const turns = [];
-    hist.forEach((h) => { if (h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string' && h.text) turns.push({ role: h.role, text: clip(h.text, MAX_MSG_CHARS), lamp: h.role === 'user' ? cleanLampiran(h.lampiran) : [], dok: h.role === 'user' ? cleanDokumen(h.dokumen, 12000) : [] }); });
+    hist.forEach((h) => { if (h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string' && h.text) turns.push({ role: h.role, text: clip(h.text, h.role === 'model' && /\[DOKUMEN /.test(h.text) ? 9000 : MAX_MSG_CHARS), lamp: h.role === 'user' ? cleanLampiran(h.lampiran) : [], dok: h.role === 'user' ? cleanDokumen(h.dokumen, 12000) : [] }); });
     turns.push({ role: 'user', text: msg, lamp: cleanLampiran(body.lampiran), dok: cleanDokumen(body.dokumen, 60000), now: true });
     let mediaLeft = MAX_MEDIA;
     for (let i = turns.length - 1; i >= 0; i--) { const t = turns[i]; t.kirim = t.lamp.slice(0, Math.max(0, mediaLeft)); t.lewat = t.lamp.slice(t.kirim.length); mediaLeft -= t.kirim.length; }
@@ -1654,7 +1696,7 @@ module.exports = async function handler(req, res) {
             if (result && result.report) { reports.push(result.report); const summ = result.ringkasan; result = { ringkasan: summ, report: undefined }; result.__rep = true; }
             if (result && result.nota) { notas.push(result.nota); result = { ok: true, catatan: 'Gambar nota sudah ditampilkan ke admin lengkap dengan tombol unduh.', ringkasan: result.ringkasan }; }
             if (result && result.ui) { actions.push(result.ui); result = { ok: true, catatan: 'Perintah tampilan dikirim ke layar admin.' }; }
-            if (result && result.visual) { visuals.push(result.visual); const summ = result.ringkasan || result; delete summ.visual; result = { ok: true, catatan: 'Visual sudah tampil di layar admin (bisa diunduh PNG). Jangan tulis ulang semua angkanya; cukup beri kesimpulan singkat.', ringkasan: summ }; }
+            if (result && result.visual) { visuals.push(result.visual); const summ = result.ringkasan || result; delete summ.visual; result = { ok: true, catatan: (visuals[visuals.length - 1].tipe === 'dokumen' ? 'Dokumen sudah tampil sebagai kartu file dengan pratinjau dan tombol unduh/bagikan; admin bisa memilih format lain di kartu itu. Jangan tulis ulang isinya; cukup 1-2 kalimat: apa isinya dan tawarkan revisi.':'Visual sudah tampil di layar admin (bisa diunduh PNG). Jangan tulis ulang semua angkanya; cukup beri kesimpulan singkat.'), ringkasan: summ }; }
             if (result && result.proposal) {
               const pr = result.proposal;
               const id = sign({ uid: user.id, exp: Date.now() + PROPOSAL_TTL_MS, proposal: pr });
