@@ -46,6 +46,9 @@
     },
     "api/tts.py": {
       "maxDuration": 30
+    },
+    "api/lampiran.js": {
+      "maxDuration": 60
     }
   }
 }
