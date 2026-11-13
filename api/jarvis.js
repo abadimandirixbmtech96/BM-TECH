@@ -1201,17 +1201,18 @@ function cleanResume(arr) {
   for (let i = 1; i < out.length; i++) if (out[i].role === out[i - 1].role) return [];
   return out;
 }
-/* ---------- LAMPIRAN: gambar, PDF, video, suara (Supabase Storage, bucket privat per akun) dan teks dokumen ---------- */
-const LAMP_BUCKET = 'jarvis-lampiran';
+/* ---------- LAMPIRAN: gambar, PDF, video, suara (TIDAK disimpan di server) dan teks dokumen ----------
+ * Foto/PDF kecil dikirim langsung di pesan (base64, { data }). Video, suara, dan file besar dititip HP ke Gemini File API
+ * lewat /api/lampiran ({ uri }, dihapus Gemini sendiri setelah 48 jam). Supabase dan Vercel tidak menyimpan file apa pun. */
 const LAMP_MIME = /^(image\/(png|jpeg|webp|gif|heic|heif)|video\/(mp4|webm|quicktime|3gpp|x-matroska|mpeg|x-msvideo)|audio\/(mpeg|mp3|mp4|aac|ogg|wav|x-wav|webm|flac|x-m4a|m4a|amr|3gpp)|application\/pdf)$/;
-const INLINE_MAX = 7 * 1024 * 1024;   // di atas ini: Gemini File API (video panjang dsb.)
+const GEM_FILE = /^https:\/\/generativelanguage\.googleapis\.com\/v1beta\/files\/[a-z0-9-]{1,80}$/;
 const MAX_MEDIA = 4;                  // jumlah file media yang ikut dikirim ke model (terbaru dulu)
-const GFILES = new Map();             // path -> { uri, mime, exp } (file Gemini berlaku 48 jam)
 function jenisOf(m) { return /^image\//.test(m) ? 'gambar' : /^video\//.test(m) ? 'video' : /^audio\//.test(m) ? 'suara' : 'PDF'; }
-function cleanLampiran(list, uid) {
-  return (Array.isArray(list) ? list : []).slice(0, 6).filter((x) => x && typeof x.path === 'string' && typeof x.mime === 'string' && uid && x.path.startsWith(uid + '/')
-    && /^[0-9a-f-]{36}\/[A-Za-z0-9._\-]{1,160}$/.test(x.path) && !x.path.includes('..') && LAMP_MIME.test(x.mime))
-    .map((x) => ({ path: x.path, mime: x.mime, nama: clip(String(x.nama || 'lampiran'), 80) }));
+function cleanLampiran(list) {
+  return (Array.isArray(list) ? list : []).slice(0, 6).filter((x) => x && typeof x.mime === 'string' && LAMP_MIME.test(x.mime)
+    && ((typeof x.data === 'string' && x.data.length > 10 && x.data.length < 6e6 && /^[A-Za-z0-9+/=]+$/.test(x.data.slice(0, 200)))
+      || (typeof x.uri === 'string' && GEM_FILE.test(x.uri))))
+    .map((x) => ({ mime: x.mime, nama: clip(String(x.nama || 'lampiran'), 80), data: x.data || '', uri: x.data ? '' : x.uri }));
 }
 function cleanDokumen(list, budget) {
   const out = []; let left = budget;
@@ -1222,47 +1223,18 @@ function cleanDokumen(list, budget) {
   });
   return out;
 }
-async function ambilLampiran(token, path) {
-  const r = await fetch(SUPABASE_URL + '/storage/v1/object/authenticated/' + LAMP_BUCKET + '/' + path.split('/').map(encodeURIComponent).join('/'), { headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + token } });
-  if (!r.ok) throw new Error(r.status === 404 || r.status === 400 ? 'file sudah tidak ada di penyimpanan' : 'penyimpanan menolak (' + r.status + ')');
-  return Buffer.from(await r.arrayBuffer());
-}
-async function geminiFile(key, buf, mime, nama) {
-  const st = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files', { method: 'POST', headers: { 'x-goog-api-key': key, 'X-Goog-Upload-Protocol': 'resumable', 'X-Goog-Upload-Command': 'start', 'X-Goog-Upload-Header-Content-Length': String(buf.length), 'X-Goog-Upload-Header-Content-Type': mime, 'Content-Type': 'application/json' }, body: JSON.stringify({ file: { display_name: nama.slice(0, 60) } }) });
-  const url = st.headers.get('x-goog-upload-url'); if (!st.ok || !url) throw new Error('unggah ke Gemini ditolak (' + st.status + ')');
-  const up = await fetch(url, { method: 'POST', headers: { 'Content-Length': String(buf.length), 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, body: buf });
-  const j = await up.json().catch(() => null); let f = j && j.file;
-  if (!f || !f.uri) throw new Error('unggah ke Gemini gagal (' + up.status + ')');
-  for (let i = 0; i < 20 && f.state === 'PROCESSING'; i++) {           // video perlu diproses dulu oleh Gemini
-    await new Promise((r) => setTimeout(r, 1500));
-    const g = await fetch('https://generativelanguage.googleapis.com/v1beta/' + f.name, { headers: { 'x-goog-api-key': key } }); const gj = await g.json().catch(() => null); if (gj && gj.name) f = gj;
-  }
-  if (f.state === 'FAILED') throw new Error('Gemini gagal memproses file ini');
-  if (f.state === 'PROCESSING') throw new Error('video masih diproses Gemini, ketik "lanjut" sebentar lagi');
-  return { uri: f.uri, mime: f.mimeType || mime };
-}
-async function partsLampiran(list, ctx) {   // -> parts Gemini: label teks lalu inlineData / fileData
+function partsLampiran(list) {   // -> parts Gemini: label teks lalu inlineData / fileData
   const parts = [];
-  for (const a of list) {
+  list.forEach((a) => {
     parts.push({ text: '[Lampiran ' + jenisOf(a.mime) + ': ' + a.nama + ']' });
-    try {
-      const c = GFILES.get(a.path);
-      if (c && c.exp > Date.now() && keyFor('gemini', ctx.keys)) { parts.push({ fileData: { mimeType: c.mime, fileUri: c.uri } }); continue; }
-      const buf = await ambilLampiran(ctx.token, a.path);
-      if (buf.length <= INLINE_MAX) { parts.push({ inlineData: { mimeType: a.mime, data: buf.toString('base64') } }); continue; }
-      const gk = keyFor('gemini', ctx.keys);
-      if (!gk) { parts.push({ text: '[' + a.nama + ' berukuran ' + (buf.length / 1048576).toFixed(1) + ' MB: file sebesar ini hanya bisa dibaca model Gemini. Kunci Gemini belum diisi.]' }); continue; }
-      const f = await geminiFile(gk, buf, a.mime, a.nama);
-      GFILES.set(a.path, { uri: f.uri, mime: f.mime, exp: Date.now() + 46 * 3600e3 }); if (GFILES.size > 200) GFILES.delete(GFILES.keys().next().value);
-      parts.push({ fileData: { mimeType: f.mime, fileUri: f.uri } });
-    } catch (e) { parts.push({ text: '[Lampiran ' + a.nama + ' gagal dibaca: ' + clip(e.message, 140) + ']' }); }
-  }
+    parts.push(a.data ? { inlineData: { mimeType: a.mime, data: a.data } } : { fileData: { mimeType: a.mime, fileUri: a.uri } });
+  });
   return parts;
 }
 function partsDokumen(list) { return list.map((d) => ({ text: '[Isi dokumen ' + d.nama + (d.dipotong ? ' (dipotong)' : '') + ']\n' + d.teks })); }
 /* media untuk penyedia selain Gemini */
 const IMG_OK = /^image\/(png|jpeg|webp|gif)$/;
-function noteMedia(p, why) { const m = (p.inlineData || p.fileData).mimeType; return '[Lampiran ' + jenisOf(m) + ' tidak bisa dibaca model ini' + (why ? ': ' + why : '') + '. Pilih model Gemini untuk file ini.]'; }
+function noteMedia(p) { const m = (p.inlineData || p.fileData).mimeType; return '[Lampiran ' + jenisOf(m) + (p.fileData ? ' (dititip ke Gemini)' : '') + ' tidak bisa dibaca model ini. Pilih model Gemini untuk file ini.]'; }
 function claudeBlocks(parts) {
   const b = [];
   (parts || []).forEach((p) => {
@@ -1583,13 +1555,13 @@ module.exports = async function handler(req, res) {
     const hist = Array.isArray(body.history) ? body.history.slice(-MAX_HISTORY) : [];
     /* lampiran: pesan sekarang + riwayat. Media dibatasi MAX_MEDIA terbaru; dokumen dibatasi 60.000 huruf (sekarang) / 12.000 (riwayat) */
     const turns = [];
-    hist.forEach((h) => { if (h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string' && h.text) turns.push({ role: h.role, text: clip(h.text, MAX_MSG_CHARS), lamp: h.role === 'user' ? cleanLampiran(h.lampiran, user.id) : [], dok: h.role === 'user' ? cleanDokumen(h.dokumen, 12000) : [] }); });
-    turns.push({ role: 'user', text: msg, lamp: cleanLampiran(body.lampiran, user.id), dok: cleanDokumen(body.dokumen, 60000), now: true });
+    hist.forEach((h) => { if (h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string' && h.text) turns.push({ role: h.role, text: clip(h.text, MAX_MSG_CHARS), lamp: h.role === 'user' ? cleanLampiran(h.lampiran) : [], dok: h.role === 'user' ? cleanDokumen(h.dokumen, 12000) : [] }); });
+    turns.push({ role: 'user', text: msg, lamp: cleanLampiran(body.lampiran), dok: cleanDokumen(body.dokumen, 60000), now: true });
     let mediaLeft = MAX_MEDIA;
     for (let i = turns.length - 1; i >= 0; i--) { const t = turns[i]; t.kirim = t.lamp.slice(0, Math.max(0, mediaLeft)); t.lewat = t.lamp.slice(t.kirim.length); mediaLeft -= t.kirim.length; }
     const adaLampiran = turns.some((t) => t.kirim.length || t.dok.length) ;
     const lampSekarang = turns[turns.length - 1].lamp.length + turns[turns.length - 1].dok.length > 0;
-    const butuhGemini = turns.some((t) => t.kirim.some((a) => /^(video|audio)\//.test(a.mime)));
+    const butuhGemini = turns.some((t) => t.kirim.some((a) => a.uri || /^(video|audio)\//.test(a.mime)));   // file titipan Gemini hanya bisa dibaca Gemini
     const contents = [];
     turns.forEach((t) => {
       const parts = [{ text: t.text }].concat(partsDokumen(t.dok));
@@ -1618,13 +1590,10 @@ module.exports = async function handler(req, res) {
     const visuals = [];      // grafik, kartu angka, gambar dari kode
     let reply = '';
     const resumeModel = (typeof body.resume_model === 'string' && contents.length > resumeBase) ? body.resume_model : '';
-    if (adaLampiran) {   // unduh lampiran dari penyimpanan dan tempel ke pesan masing-masing (bisa beberapa detik untuk video)
-      emit({ type: 'status', text: 'Membaca lampiran…' });
-      const sid = 'lamp_' + Math.random().toString(36).slice(2, 6), n = turns.reduce((k, t) => k + t.kirim.length + (t.now ? t.dok.length : 0), 0);
-      emit({ type: 'step', id: sid, state: 'run', text: 'Membaca ' + n + ' lampiran' });
-      let gagal = 0;
-      for (const t of turns) { if (!t.kirim.length) continue; const mp = await partsLampiran(t.kirim, { token, keys }); gagal += mp.filter((p) => p.text && / gagal dibaca: /.test(p.text)).length; mp.forEach((p) => t.parts.push(p)); }
-      emit({ type: 'step', id: sid, state: gagal ? 'err' : 'ok', text: gagal ? gagal + ' lampiran gagal dibaca' : 'Lampiran terbaca' });
+    if (adaLampiran) {   // tempel lampiran ke pesan masing-masing
+      const n = turns.reduce((k, t) => k + (t.now ? t.kirim.length + t.dok.length : 0), 0);
+      if (n) emit({ type: 'step', id: 'lamp_' + Math.random().toString(36).slice(2, 6), state: 'ok', text: 'Membaca ' + n + ' lampiran' });
+      turns.forEach((t) => { if (t.kirim.length) partsLampiran(t.kirim).forEach((p) => t.parts.push(p)); });
     }
     const chatOnly = isChat(msg) && !resumeParts.length && !lampSekarang;
     const brainRows = chatOnly ? [] : await loadBrain(q);
