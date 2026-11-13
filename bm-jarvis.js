@@ -768,7 +768,7 @@
         bv._ans = ans; acts.appendChild(bv);
       }
       R.wrap.appendChild(acts);
-      history.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + (fin.visuals || []).map(function (v) { return '\n[Visual "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
+      history.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + (fin.visuals || []).map(visNote).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
       if (history.length > 20) history = history.slice(-20);
       (fin.actions || []).forEach(runAction);
       (fin.proposals || []).forEach(showProposal);
@@ -804,6 +804,15 @@
     finally { busy = false; }
   }
 
+  function visNote(v) {
+    if (v.tipe === 'dokumen') { var j = JSON.stringify(v.bagian || []); return '\n[DOKUMEN "' + v.judul + '" format ' + v.format + ' versi ' + (v.versi || 1) + ' nama_file ' + v.nama + ' sudah tampil sebagai kartu file. Isi bagian: ' + (j.length > 7000 ? j.slice(0, 7000) + ' ...(terpotong; ambil ulang datanya dengan alat bila perlu)' : j) + ']'; }
+    return '\n[Visual "' + v.judul + '" sudah ditampilkan sistem]';
+  }
+  window.addEventListener('bm-doc-revisi', function (e) {
+    var d = (e && e.detail) || {}; if (!el || !el.in) return;
+    el.in.value = 'Revisi dokumen "' + String(d.judul || '').slice(0, 60) + '" (versi ' + (d.versi || 2) + '): '; el.in.focus();
+    try { el.in.setSelectionRange(el.in.value.length, el.in.value.length); } catch (x) {}
+  });
   function ensureVisual() {
     if (window.BMVisual) return Promise.resolve();
     return new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = '/bm-visual.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
