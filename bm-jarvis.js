@@ -122,6 +122,10 @@
 .bmj-tw{transition:opacity .3s ease}\
 .bmj-sh{transition:background .2s}.bmj-sh:active{background:rgba(127,127,127,.12)}\
 .bmj-acts button{transition:transform .12s,opacity .2s}.bmj-acts button:active{transform:scale(.95)}\
+.bmj-acts{gap:2px;margin-left:-6px}\
+.bmj-acts button,.bmj-acts button.bmj-pri{width:38px;height:38px;padding:0;border:0;border-radius:10px;background:transparent;color:var(--text-secondary,#8a8a90);justify-content:center}\
+.bmj-acts button svg{width:19px;height:19px}.bmj-acts button:active,.bmj-acts button:hover{background:var(--bmj-pill);color:inherit}\
+.bmj-acts button.bmj-play.bmj-on{background:transparent;color:var(--accent-yellow,#F0A529)}.bmj-acts button.bmj-play.bmj-on svg{width:15px;height:15px}.bmj-acts button.bmj-done{color:#2fb36b}\
 #bmj-send{transition:transform .12s,background .2s,color .2s}#bmj-send:active{transform:scale(.9)}#bmj-send.bmj-stop{background:var(--accent-yellow,#F0A529);color:var(--on-accent,#1C1B19);border-color:transparent}\
 @media (prefers-reduced-motion:reduce){.bmj-m,.bmj-r,.bmj-p,.bmj-chips,.bmj-fade,.bmj-st{animation:none!important}#bmj-log{scroll-behavior:auto}}\
 /* kartu rekap (sama dengan tabel aplikasi) */\
@@ -145,6 +149,8 @@
   var ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
   var ICON_CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
   var ICON_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
+  var ICON_PLAY_O = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M7.5 5.2v13.6a.8.8 0 0 0 1.2.7l11-6.8a.8.8 0 0 0 0-1.4l-11-6.8a.8.8 0 0 0-1.2.7z"/></svg>';
+  var ICON_SHARE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7.5 7.5 12 3l4.5 4.5M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
   var ICON_COPY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/></svg>';
 
   var el = {};
@@ -572,7 +578,7 @@
     document.querySelectorAll('.bmj-play').forEach(function (b) {
       var on = !!(reading && reading.ans === b._ans);
       if (b._on === on) return; b._on = on;
-      b.innerHTML = on ? ICON_STOP : ICON_PLAY; b.title = on ? 'Berhenti' : 'Dengarkan';
+      b.innerHTML = on ? ICON_STOP : ICON_PLAY_O; b.title = on ? 'Berhenti' : 'Dengarkan';
       b.classList.toggle('bmj-on', on); b.setAttribute('aria-label', on ? 'Hentikan suara' : 'Dengarkan jawaban');
     });
   }
@@ -738,27 +744,28 @@
       var hasTable = blocks.some(function (b) { return b.t === 'table'; });
       var report = reps.length || hasTable || /rangkum|ringkas|rekap|laporan|pdf|summary/i.test(text) || blocks.length >= 4;
       var acts = mk('div', '', 'bmj-acts bmj-fade');
+      var actBtn = function (icon, label, fn, cls) { var b = mk('button', '', cls || '', icon); b.type = 'button'; b.title = label; b.setAttribute('aria-label', label); b.onclick = fn; return b; };
+      var flash = function (b, ok) { var keep = b.innerHTML; b.innerHTML = ok ? ICON_CHECK : ICON_X; b.classList.add('bmj-done'); setTimeout(function () { b.innerHTML = keep; b.classList.remove('bmj-done'); }, 1500); };
+      var plain = function () { return reps.length ? reps.map(reportPlain).join('\n\n') : plainOf(blocks); };
+      var bc = actBtn(ICON_COPY, 'Salin', function () { (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(plain()) : Promise.reject()).then(function () { flash(bc, true); }, function () { flash(bc, false); }); });
+      acts.appendChild(bc);
+      if (navigator.share) acts.appendChild(actBtn(ICON_SHARE, 'Bagikan', function () { navigator.share({ title: 'Jarvis BM-TECH', text: plain().slice(0, 6000) }).catch(function () {}); }));
       if (report) {
         var targets = reps.length ? reps : [null];
         targets.forEach(function (rp) {
-          var bp = mk('button', '', 'bmj-pri', ICON_PDF + '<span></span>'), lab = bp.querySelector('span');
-          var name = targets.length > 1 && rp ? 'PDF: ' + rp.title.slice(0, 22) : 'Unduh PDF'; lab.textContent = name;
-          bp.onclick = async function () {
-            bp.disabled = true; lab.textContent = 'Membuat PDF…';
-            try { if (rp) await makeReportPdf(rp, blocks); else await makePdf(blocks, text); lab.textContent = 'PDF tersimpan'; }
-            catch (e) { lab.textContent = name; say('s', 'Gagal membuat PDF: ' + (e.message || e)); }
-            setTimeout(function () { bp.disabled = false; lab.textContent = name; }, 2500);
-          };
+          var name = targets.length > 1 && rp ? 'Unduh PDF: ' + rp.title.slice(0, 30) : 'Unduh PDF';
+          var bp = actBtn(ICON_PDF, name, async function () {
+            if (bp.disabled) return; bp.disabled = true;
+            try { if (rp) await makeReportPdf(rp, blocks); else await makePdf(blocks, text); flash(bp, true); }
+            catch (e) { flash(bp, false); say('s', 'Gagal membuat PDF: ' + (e.message || e)); }
+            setTimeout(function () { bp.disabled = false; }, 1500);
+          });
           acts.appendChild(bp);
         });
       }
-      var bc = mk('button', '', '', ICON_COPY + '<span>Salin</span>');
-      bc.onclick = function () { var t = reps.length ? reps.map(reportPlain).join('\n\n') : plainOf(blocks); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { bc.querySelector('span').textContent = 'Tersalin'; }, function () { bc.querySelector('span').textContent = 'Gagal'; }); setTimeout(function () { bc.querySelector('span').textContent = 'Salin'; }, 1800); };
-      acts.appendChild(bc);
       if (canSpeak || window.BMVoice) {
-        var bv = mk('button', '', 'bmj-play', ICON_PLAY); bv._ans = ans; bv.type = 'button'; bv.title = 'Dengarkan'; bv.setAttribute('aria-label', 'Dengarkan jawaban');
-        bv.onclick = function () { if (reading && reading.ans === ans) stopSpeak(); else readFrom(ans, 0); };
-        acts.appendChild(bv);
+        var bv = actBtn(ICON_PLAY_O, 'Dengarkan', function () { if (reading && reading.ans === ans) stopSpeak(); else readFrom(ans, 0); }, 'bmj-play');
+        bv._ans = ans; acts.appendChild(bv);
       }
       R.wrap.appendChild(acts);
       history.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + (fin.visuals || []).map(function (v) { return '\n[Visual "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
