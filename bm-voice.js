@@ -195,6 +195,9 @@
   var css = '' +
     '.bmvo-ov{position:fixed;inset:0;z-index:2147483600;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .2s}' +
     '.bmvo-ov.on{opacity:1}' +
+    '.bmvo-ov.pg{background:transparent;align-items:stretch;transition:none;opacity:1}.bmvo-ov.pg .bmvo{max-width:none;max-height:none;height:100%;border-radius:0;box-shadow:none;transform:translateX(100%);transition:transform .28s cubic-bezier(.2,.8,.2,1)}.bmvo-ov.pg.on .bmvo{transform:none}' +
+    '.bmvo-ov.pg .bmvo-hd{padding:calc(10px + env(safe-area-inset-top)) 14px 10px;max-width:760px;width:100%;margin:0 auto}.bmvo-ov.pg .bmvo-bd{max-width:760px;width:100%;margin:0 auto}' +
+    '.bmvo-bk{width:42px;height:42px;border-radius:50%;border:1px solid var(--bd);background:var(--card);color:var(--tx);cursor:pointer;display:flex;align-items:center;justify-content:center}.bmvo-bk svg{width:20px;height:20px}' +
     '.bmvo *{box-sizing:border-box}.bmvo{--bg:#141416;--card:#1d1d20;--tx:#f2f2f3;--mu:#9a9aa2;--bd:rgba(255,255,255,.1);--ac:var(--accent,var(--accent-yellow,#F0A529));' +
     'width:100%;max-width:560px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--tx);border-radius:22px 22px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.35);' +
     'font-family:var(--bm-font,system-ui,-apple-system,"Segoe UI",sans-serif);transform:translateY(24px);transition:transform .22s cubic-bezier(.2,.8,.2,1);color-scheme:dark}' +
@@ -211,7 +214,7 @@
     '.bmvo-seg button.on{background:var(--ac);color:#1a1205}.bmvo-seg button.on small{color:rgba(26,18,5,.75)}' +
     '.bmvo-st{font-size:12.5px;color:var(--mu);margin-top:8px;line-height:1.4}.bmvo-st.w{color:#e8590c}' +
     '.bmvo-cur{display:flex;align-items:center;gap:12px}.bmvo-av{width:44px;height:44px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:800;font-size:17px;background:rgba(127,127,127,.15);color:var(--ac)}' +
-    '.bmvo-cur>div:not(.bmvo-av){flex:1;min-width:0}.bmvo-cur b{display:block;font-size:16px}.bmvo-cur span{display:block;font-size:12.5px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.bmvo-cur>div:not(.bmvo-av){flex:1;min-width:0}.bmvo-cur b{display:block;font-size:16px}.bmvo-cur>div span{display:block;font-size:12.5px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bmvo-play span{color:inherit;font:inherit}' +
     '.bmvo-play{flex:none;height:38px;padding:0 14px;border-radius:999px;border:0;background:var(--ac);color:#1a1205;font:inherit;font-weight:700;font-size:14px;cursor:pointer}' +
     '.bmvo-rg{display:grid;gap:12px}.bmvo-rg label{display:grid;gap:6px;font-size:14px}.bmvo-rg label span{display:flex;justify-content:space-between}.bmvo-rg label em{font-style:normal;color:var(--mu);font-size:13px}' +
     '.bmvo-rg input[type=range]{width:100%;accent-color:var(--ac);height:28px}' +
@@ -236,21 +239,25 @@
     return !!(document.body && document.body.classList.contains('theme-light')) || document.documentElement.getAttribute('data-theme') === 'light';
   }
 
-  function openSettings() {
-    addCss();
+  var openCtl = null;
+  /* opt.page: tampil sebagai halaman penuh dengan tombol kembali (dipakai dari halaman Pengaturan) */
+  function openSettings(opt) {
+    opt = opt || {}; addCss();
     var old = document.querySelector('.bmvo-ov'); if (old) old.remove();
-    var s = settings(), ov = el('div', 'bmvo-ov'), box = el('div', 'bmvo' + (isLight() ? ' lt' : ''));
+    var s = settings(), ov = el('div', 'bmvo-ov' + (opt.page ? ' pg' : '')), box = el('div', 'bmvo' + (isLight() ? ' lt' : ''));
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Suara Jarvis');
-    var hd = el('div', 'bmvo-hd'), x = el('button', 'bmvo-x'); setBtn(x, 'x'); x.type = 'button'; x.setAttribute('aria-label', 'Tutup');
-    hd.append(el('b', '', 'Suara Jarvis'), x);
+    var hd = el('div', 'bmvo-hd'), x = el('button', opt.page ? 'bmvo-bk' : 'bmvo-x'); x.type = 'button';
+    if (opt.page) { x.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'; x.setAttribute('aria-label', 'Kembali'); hd.append(x, el('b', '', 'Pilihan suara')); }
+    else { setBtn(x, 'x'); x.setAttribute('aria-label', 'Tutup'); hd.append(el('b', '', 'Suara Jarvis'), x); }
     var bd = el('div', 'bmvo-bd');
     box.append(hd, bd); ov.appendChild(box); document.body.appendChild(ov);
     requestAnimationFrame(function () { ov.classList.add('on'); });
     var all = null;
-    function close() { stop(); ov.classList.remove('on'); setTimeout(function () { ov.remove(); }, 200); document.removeEventListener('keydown', onKey); }
+    function close() { if (openCtl && openCtl.ov === ov) openCtl = null; stop(); ov.classList.remove('on'); setTimeout(function () { ov.remove(); }, opt.page ? 300 : 200); document.removeEventListener('keydown', onKey); if (opt.onClose) try { opt.onClose(); } catch (e) {} }
+    openCtl = { ov: ov, close: close };
     function onKey(e) { if (e.key === 'Escape') close(); }
-    document.addEventListener('keydown', onKey);
-    x.onclick = close; ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+    if (!opt.page || !window.__bmCanBack) document.addEventListener('keydown', onKey);   // mode halaman: Esc/kembali ditangani halaman induk
+    x.onclick = opt.page && window.__bmCanBack ? function () { history.back(); } : close; ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
     function put() { save(s); }
 
     /* 1. mesin */
@@ -355,6 +362,7 @@
   window.BMVoice = {
     init: function (o) { if (o && typeof o.token === 'function') CFG.token = function () { return Promise.resolve(o.token()).catch(function () { return ''; }); }; },
     speak: speak, stop: stop, openSettings: openSettings,
+    isOpen: function () { return !!openCtl; }, closeSettings: function () { if (openCtl) openCtl.close(); },
     speaking: function () { return state.playing; },
     settings: settings, health: function () { return Object.assign({}, health); },
     _clean: clean, _chunks: chunks, _terbilang: terbilang
