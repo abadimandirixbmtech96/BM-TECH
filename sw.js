@@ -8,7 +8,7 @@
 // 3. Penulisan data (insert/update/delete/RPC tulis) TIDAK pernah disentuh: selalu langsung ke server.
 // 4. Salinan data dihapus saat keluar akun (logout) atau login baru, supaya akun lain tidak melihatnya.
 
-const CACHE_NAME = 'bmtech-shell-v45'; // dinaikkan: rekap stok warung, isi stok cepat, Jarvis satu percakapan
+const CACHE_NAME = 'bmtech-shell-v54'; // dinaikkan: rekap stok warung, isi stok cepat, satu percakapan Jarvis (digabung dengan dokumen/lampiran dari main)
 const DATA_CACHE = 'bmtech-data-v1';   // tidak ikut dihapus saat versi naik
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;              // lebih dari ini dengan salinan tersedia = pakai salinan dulu
@@ -26,7 +26,7 @@ const PAGES = [
 ];
 const ASSETS = [
   '/bm-app.js', '/bm-theme.js', '/bm-lang.js', '/bm-swipe-back.js', '/bm-session.js', '/bm-jarvis.js',
-  '/bm-visual.js', '/bm-warung-pick.js', '/bm-shop-sync.js', '/bm-nota.js',
+  '/bm-visual.js', '/bm-dokumen.js', '/bm-voice.js', '/bm-warung-pick.js', '/bm-shop-sync.js', '/bm-nota.js',
   '/manifest.json', '/manifest-admin.json', '/manifest-customer.json', '/manifest-calculator.json',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png',
   '/icons/apple-touch-icon-152.png', '/icons/apple-touch-icon-167.png',

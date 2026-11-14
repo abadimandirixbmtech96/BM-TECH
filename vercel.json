@@ -43,6 +43,12 @@
   "functions": {
     "api/jarvis.js": {
       "maxDuration": 60
+    },
+    "api/tts.py": {
+      "maxDuration": 30
+    },
+    "api/lampiran.js": {
+      "maxDuration": 60
     }
   }
 }

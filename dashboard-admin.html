@@ -1982,6 +1982,41 @@
   .note-detail-table tbody tr.jump-hl td { animation: jumpHl 2.2s ease-out; }
 
 
+  /* ===== Tampilan Kartu (HP): semua kolom terlihat tanpa geser kiri-kanan ===== */
+  .note-detail-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-shrink: 0; }
+  .note-detail-bar .note-detail-badge { margin-bottom: 0; }
+  .view-toggle { display: none; padding: 3px; gap: 2px; border-radius: 999px; background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); }
+  .view-toggle button { font: inherit; font-size: 12px; font-weight: 700; padding: 5px 14px; border: 0; border-radius: 999px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+  .view-toggle button.active { background: var(--text-primary); color: var(--bg-dark); }
+  .note-detail-cards { display: none; }
+  @media (max-width: 640px) {
+    .view-toggle { display: inline-flex; }
+    .note-detail-overlay.view-card .note-detail-table-wrap { display: none; }
+    .note-detail-overlay.view-card .note-detail-cards {
+      display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0;
+      overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 8px; width: 100%; min-width: 0;
+    }
+  }
+  .nd-card { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: var(--radius-lg); padding: 12px 14px; flex-shrink: 0; }
+  .nd-card.row-hutang  { box-shadow: inset 4px 0 0 #D64B4B; }
+  .nd-card.row-piutang { box-shadow: inset 4px 0 0 #3DAA6A; }
+  .nd-card.jump-hl { animation: jumpHl 2.2s ease-out; }
+  .nd-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
+  .nd-no { background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); border-radius: 8px; padding: 2px 8px; color: var(--text-primary); }
+  .nd-pj { margin-left: auto; border-radius: 999px; padding: 3px 10px; background: rgba(245,166,35,.18); color: #F5A623; font-weight: 800; text-align: right; }
+  .nd-title { margin: 8px 0 2px; font-size: 16px; font-weight: 800; color: var(--text-primary); overflow-wrap: anywhere; }
+  .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) minmax(0, 1fr); gap: 5px 10px; margin-top: 8px; font-size: 13px; }
+  .nd-grid dt { color: var(--text-secondary); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding-top: 1px; }
+  .nd-card .jump-chips { margin-top: 6px; }
+  .nd-card .jump-chip { white-space: normal; text-align: left; max-width: 100%; line-height: 1.35; overflow-wrap: anywhere; }
+  .nd-head > span { min-width: 0; }
+  .nd-grid dd { min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: normal; }
+  .nd-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--card-border-dark); }
+  .nd-harga { font-size: 17px; font-weight: 800; color: var(--text-primary); }
+  .nd-harga small { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-right: 3px; }
+  .nd-metode { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+  .nd-foot .note-detail-bukti-group { margin-left: auto; }
+
   .note-detail-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
 
   .btn-share-note { position: relative; }
@@ -3224,8 +3259,15 @@
       </button>
     </div>
   </div>
-  <span class="note-detail-badge">Mode Lihat Saja</span>
+  <div class="note-detail-bar">
+    <span class="note-detail-badge">Mode Lihat Saja</span>
+    <div class="view-toggle" id="noteViewToggle" role="group" aria-label="Tampilan data">
+      <button type="button" data-view="card" class="active">Kartu</button>
+      <button type="button" data-view="table">Tabel</button>
+    </div>
+  </div>
   <div class="hp-summary" id="noteDetailSummary"></div>
+  <div class="note-detail-cards" id="noteDetailCards"></div>
   <div class="note-detail-table-wrap">
     <table class="note-detail-table" id="noteDetailTable"></table>
   </div>
@@ -7511,7 +7553,9 @@
     const note = await resolveJumpNote(noteId, recId);
     if (!note) { showLiquidAlert('Data Tidak Ditemukan', 'Note tujuan sudah dihapus atau belum termuat.'); return; }
     openNoteDetail(note.id);
-    const tr = Array.from(document.querySelectorAll('#noteDetailTable tbody tr[data-rid]')).find(t => t.dataset.rid === recId);
+    let tr = Array.from(document.querySelectorAll('#noteDetailTable tbody tr[data-rid]')).find(t => t.dataset.rid === recId);
+    const cardEl = Array.from(document.querySelectorAll('#noteDetailCards .nd-card[data-rid]')).find(t => t.dataset.rid === recId);
+    if (cardEl && (!tr || tr.offsetParent === null) && cardEl.offsetParent !== null) tr = cardEl;
     if (!tr) { showLiquidAlert('Baris Tidak Ditemukan', 'Baris tujuan tidak ada di note ini (mungkin sudah dihapus).'); return; }
     setTimeout(() => {
       tr.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -7544,6 +7588,67 @@
     box.className = 'hp-summary show';
   }
 
+  // Satu baris -> satu kartu (dipakai di HP supaya semua kolom terbaca tanpa geser)
+  function buildNoteCard(cols, row) {
+    const rc = row.cells || {};
+    const has = id => cols.some(c => c.id === id);
+    const jenisCls = rc.jenis === 'Hutang' ? 'hutang' : rc.jenis === 'Piutang' ? 'piutang' : '';
+    const ridAttr = rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : '';
+    const v = id => { const x = rc[id]; return (x === undefined || x === null) ? '' : String(x).trim(); };
+    const used = new Set();
+    let head = '', title = '';
+    if (has('no')) {
+      used.add('no'); used.add('tanggal'); used.add('jam'); used.add('pj');
+      const when = [v('tanggal'), v('jam')].filter(Boolean).join(' · ');
+      head = `<div class="nd-head"><span class="nd-no">${escapeHtml(v('no') || '–')}</span><span>${escapeHtml(when)}</span>` +
+             (v('pj') ? `<span class="nd-pj">${escapeHtml(v('pj'))}</span>` : '') + '</div>';
+    }
+    if (has('customer')) { used.add('customer'); title = v('customer'); }
+    else if (cols.length) { used.add(cols[0].id); title = v(cols[0].id); }
+    let foot = '';
+    const footBits = [];
+    if (has('harga')) { used.add('harga'); const h = v('harga'); footBits.push(`<span class="nd-harga"><small>Rp</small>${escapeHtml(h && h !== '0' ? h : '–')}</span>`); }
+    if (has('metode')) { used.add('metode'); if (v('metode')) footBits.push(`<span class="nd-metode">${escapeHtml(v('metode'))}</span>`); }
+    if (has('bukti')) {
+      used.add('bukti');
+      const list = Array.isArray(rc._buktiAll) ? rc._buktiAll : (v('bukti') ? [v('bukti')] : []);
+      if (list.length) footBits.push('<div class="note-detail-bukti-group">' + list.map((u, i) =>
+        `<img src="${escapeHtml(buktiSrc(u))}" class="note-detail-img" data-bukti-group="${escapeHtml(list.join('|'))}" data-bukti-idx="${i}" alt="Bukti ${i + 1}">`).join('') + '</div>');
+    }
+    if (footBits.length) foot = `<div class="nd-foot">${footBits.join('')}</div>`;
+    const rows = cols.filter(c => !used.has(c.id) && v(c.id) !== '').map(c => {
+      const extra = c.id === 'barang' ? jumpChipsHtml(rc) : '';
+      if (c.type === 'image') {
+        return `<dt>${escapeHtml(c.label || '')}</dt><dd><img src="${escapeHtml(buktiSrc(v(c.id)))}" class="note-detail-img" alt="Gambar"></dd>`;
+      }
+      return `<dt>${escapeHtml(c.label || '')}</dt><dd>${escapeHtml(v(c.id))}${extra}</dd>`;
+    }).join('');
+    return `<article class="nd-card${jenisCls ? ' row-' + jenisCls : ''}"${ridAttr}>${head}` +
+      (title ? `<div class="nd-title">${escapeHtml(title)}</div>` : '') +
+      (rows ? `<dl class="nd-grid">${rows}</dl>` : '') + foot + '</article>';
+  }
+
+  // Pilihan tampilan Kartu/Tabel (hanya muncul di HP; di layar lebar selalu Tabel)
+  const noteViewToggle = document.getElementById('noteViewToggle');
+  const NOTE_VIEW_KEY = 'bmNoteView';
+  function getSavedNoteView() {
+    try { return localStorage.getItem(NOTE_VIEW_KEY) === 'table' ? 'table' : 'card'; } catch (e) { return 'card'; }
+  }
+  function setNoteView(mode, persist) {
+    noteDetailOverlay.classList.toggle('view-card', mode === 'card');
+    noteViewToggle.querySelectorAll('button').forEach(b => {
+      const on = b.dataset.view === mode;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (persist) { try { localStorage.setItem(NOTE_VIEW_KEY, mode); } catch (e) {} }
+  }
+  noteViewToggle.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-view]');
+    if (b) setNoteView(b.dataset.view, true);
+  });
+  setNoteView(getSavedNoteView(), false);
+
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
     if (!note) return;
@@ -7555,9 +7660,12 @@
     const content = getDisplayTable(note);
     renderHutangSummary(note);
 
+    const cardsEl = document.getElementById('noteDetailCards');
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
+      cardsEl.innerHTML = '<div class="note-detail-empty">Belum ada data di tabel ini</div>';
     } else {
+      cardsEl.innerHTML = content.rows.map(row => buildNoteCard(content.columns, row)).join('');
       const cols = content.columns;
       const theadHtml = '<thead><tr>' + cols.map(c => `<th>${escapeHtml(c.label || '')}</th>`).join('') + '</tr></thead>';
       const tbodyHtml = '<tbody>' + content.rows.map(row => {
@@ -7587,6 +7695,7 @@
       tableEl.innerHTML = theadHtml + tbodyHtml;
     }
 
+    setNoteView(getSavedNoteView(), false);
     noteDetailOverlay.classList.add('open');
   }
 
@@ -7794,7 +7903,7 @@
     });
   })();
 
-  document.getElementById('noteDetailTable').addEventListener('click', (e) => {
+  function onNoteImgClick(e) {
     const img = e.target.closest('.note-detail-img');
     if (!img) return;
     if (img.dataset.buktiGroup) {
@@ -7802,7 +7911,9 @@
     } else {
       openLightbox(img.src);
     }
-  });
+  }
+  document.getElementById('noteDetailTable').addEventListener('click', onNoteImgClick);
+  document.getElementById('noteDetailCards').addEventListener('click', onNoteImgClick);
 
   const shareSheetOverlay = document.getElementById('shareSheetOverlay');
   const shareSheet = document.getElementById('shareSheet');
