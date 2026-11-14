@@ -222,7 +222,11 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 .acts{display:flex;gap:8px;margin-top:10px}.acts .bt{flex:1;padding:0 var(--s2);height:42px;font-size:14px}
 .demo{margin-left:6px;vertical-align:2px}
 html.bold-mode body *{font-weight:700!important}
-/* tablet & desktop: lebar mengikuti layar */@media(min-width:760px){header,main,.tbi,.pin{max-width:720px}.grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}@media(min-width:1100px){header,main,.tbi,.pin{max-width:960px}}</style></head><body>
+/* tablet & desktop: lebar mengikuti layar */@media(min-width:760px){header,main,.tbi,.pin{max-width:720px}.grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}@media(min-width:1100px){header,main,.tbi,.pin{max-width:960px}}.sqc input.v{display:inline-block;width:58px;height:44px;padding:0;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--tx);text-align:center;font:700 18px/1 inherit;font-family:inherit;-moz-appearance:textfield;appearance:textfield}
+.sqc input.v:focus{border-color:var(--ac);background:var(--sf);outline:0}.sqc input.v.ch{color:var(--ac)}
+.rsn{display:grid;grid-template-columns:1fr 1fr;gap:10px}.pcs{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 12px}.pcs .chip{flex:none}
+.r.er small,.er{color:var(--er)}.skp-ok{color:var(--ac)}
+</style></head><body>
 <div id="app">
 <header><div><div class="app">Buku Warung BM TECH<i class="tag mu demo">Demo</i></div><h1 id="ttl"></h1></div><button class="ib cog" data-a="st" aria-label="Pengaturan" id="gear"></button></header>
 <main id="v"></main>
@@ -505,12 +509,13 @@ const chips=(arr,cur,act,extra)=>'<div class="chips">'+arr.map(a=>'<button type=
 const mrow=(title,desc,icon,act,attrs,cls)=>'<div class="r mr'+(cls?' '+cls:'')+'" data-a="'+act+'" '+(attrs||'')+'><span class="bx">'+ic(icon)+'</span><div><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></div>'+ic('chev')+'</div>';
 
 /* ================= Tab: Beranda ================= */
-function vHome(){const st=cc().stock,t=today(),low=D.items.filter(x=>!x.arch&&(st[x.id]||0)<=0).sort((a,b)=>(st[a.id]||0)-(st[b.id]||0));
+function vHome(){const st=cc().stock,t=today(),RD=rsData(),low=RD.rows.filter(r=>r.st==='out').map(r=>r.x).sort((a,b)=>(st[a.id]||0)-(st[b.id]||0));
  const nt=D.notas.filter(n=>n.t==='out'&&!n.void&&n.d===t),sold=nt.reduce((s,n)=>s+n.lines.reduce((a,l)=>a+(+l.q||0),0),0);
  const ds=debtors().filter(x=>x.a.debt>0.5).sort((a,b)=>b.a.debt-a.a.debt).slice(0,3);
  const rc=D.notas.filter(n=>!n.void).sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:y.ts-x.ts).slice(0,5);
  return '<p class="date">'+HARI[new Date().getDay()]+', '+fmtLong(t)+'</p>'
  +'<div class="grid"><div class="c"><small>Nota hari ini</small><b>'+nt.length+'</b></div><div class="c"><small>Barang terjual</small><b>'+num(sold)+'</b></div></div>'
+ +grp(mrow('Rekap stok',RD.cnt.filled+' barang terisi · '+num(RD.unit)+' unit'+(RD.cnt.new?' · '+RD.cnt.new+' belum dicatat':''),'box','rsopen',''))
  +'<h4>Stok habis'+(low.length?' ('+low.length+')':'')+'</h4>'
  +(low.length?grp(low.slice(0,5).map(x=>'<div class="r" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(x.name)+'</b><small>'+KL[kindOf(x)]+'</small></div><b class="lw">'+num(st[x.id]||0)+' '+esc(x.unit)+'</b></div>').join('')):'<p class="em">Tidak ada stok yang habis.</p>')
  +'<h4>Hutang terbesar</h4>'+(ds.length?grp(ds.map(x=>'<div class="r" data-a="pty" data-id="'+x.p.id+'"><div><b>'+esc(x.p.name)+'</b><small>'+x.a.rows.filter(r=>r.out>0.5).length+' nota belum lunas</small></div><b class="lw">'+rp(x.a.debt)+'</b></div>').join('')):'<p class="em">Tidak ada hutang.</p>')
@@ -524,8 +529,8 @@ function pgroups(a){const m=new Map();a.forEach(x=>{const b=bareB(x),k=nk(b);if(
  m.forEach(g=>g.a.sort((p,q)=>OSX.indexOf(normOS((p.a||{}).os||''))-OSX.indexOf(normOS((q.a||{}).os||''))));
  return[...m.values()].sort((p,q)=>p.b.localeCompare(q.b,undefined,{numeric:true}))}
 function gcard(key,title,sub,body,open){return '<div class="gc'+(open?' open':'')+'"><button type="button" class="gh" data-a="gtog" data-g="'+esc(key)+'"><span><b>'+esc(title)+'</b><small>'+sub+'</small></span><i></i></button><div class="gb">'+body+'</div></div>'}
-function itemsHtml(){const s=q.toLowerCase(),st=cc().stock;
- const a=D.items.filter(x=>(SF==='arch'||!x.arch)&&(SF!=='low'||(st[x.id]||0)<=0)&&(IK==='all'||kindOf(x)===IK)&&(x.name+' '+x.cat+' '+KS[kindOf(x)]+' '+(x.pc||'')+' '+(x.codes||[]).join(' ')).toLowerCase().includes(s)).sort((a,b)=>KORD.indexOf(kindOf(a))-KORD.indexOf(kindOf(b))||a.name.localeCompare(b.name,undefined,{numeric:true}));
+function itemsHtml(){const s=q.toLowerCase(),st=cc().stock,rsd=recSet();
+ const a=D.items.filter(x=>(SF==='arch'||!x.arch)&&(SF!=='low'||(rsd.has(x.id)&&(st[x.id]||0)<=0))&&(IK==='all'||kindOf(x)===IK)&&(x.name+' '+x.cat+' '+KS[kindOf(x)]+' '+(x.pc||'')+' '+(x.codes||[]).join(' ')).toLowerCase().includes(s)).sort((a,b)=>KORD.indexOf(kindOf(a))-KORD.indexOf(kindOf(b))||a.name.localeCompare(b.name,undefined,{numeric:true}));
  if(!a.length)return '<p class="em">'+(D.items.length?'Tidak ada barang yang cocok.':'Belum ada barang. Tambah manual atau impor dari file.')+'</p>';
  const row=(x,lab)=>{const t=st[x.id]||0,k=kindOf(x);return '<div class="r'+nw(x.id)+'" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(lab||x.name)+(x.arch?'<i class="tag mu">Nonaktif</i>':'')+(x.sell>0?'':'<i class="tag">Harga kosong</i>')+'</b>'+(lab?'':'<small>'+esc(k==='umum'&&x.cat?x.cat:KL[k])+'</small>')+'</div><div class="rt"><b>'+rp(x.sell)+'</b><small class="'+(t<=0?'lw':'')+'">Stok '+num(t)+' '+esc(x.unit)+'</small></div></div>'};
  const pis=a.filter(x=>kindOf(x)==='piston'),oth=a.filter(x=>kindOf(x)!=='piston'),open=!!s;
@@ -573,7 +578,8 @@ function vDebt(){const ds=debtors(),th=ds.reduce((s,x)=>s+x.a.debt,0),tc=ds.redu
 
 /* ================= Tab: Laporan (hub) ================= */
 function vReports(){return '<p class="date">Pilih laporan yang ingin dilihat.</p>'+grp(
- mrow('Penjualan','Omzet, jumlah nota, rata-rata per nota','chart','rep','data-v="sales"')
+ mrow('Rekap stok','Stok terisi, habis, menipis, nilai stok. Bisa dibagikan','box','rsopen','')
+ +mrow('Penjualan','Omzet, jumlah nota, rata-rata per nota','chart','rep','data-v="sales"')
  +mrow('Barang terlaris','Urutan barang yang paling banyak terjual','sale','rep','data-v="top"')
  +mrow('Pembelian stok','Total belanja dari pemasok','inbox','rep','data-v="buy"'))}
 
@@ -984,20 +990,21 @@ function imSave(){const c=clone(D),at=Date.now();let nn=0,nu=0,ns=0;const kind=I
  const n=PGS.length;back(n);render(false);SK={kind,q:'',f:'all',v:{}};setTimeout(()=>{openPage(pgStock,[],{live:false});toast(msg)},reduce()?0:60)}
 function skRow(x,lab){const st=cc().stock,v=SK.v[x.id]||{},cur=st[x.id]||0,val=v.q!==undefined&&v.q!==''?v.q:String(cur),ch=String(cur)!==String(val);
  return '<div class="sk2" data-skr="'+x.id+'"><div class="skn"><b>'+esc(lab||x.name)+'</b><small>'+(x.sell>0?rp(x.sell):'')+(x.sell>0?' · ':'')+'ada '+num(cur)+' '+esc(x.unit)+'</small></div>'
- +'<div class="sqc"><button type="button" data-a="skm" data-id="'+x.id+'" data-d="-1" aria-label="Kurangi">−</button><span class="v'+(ch?' ch':'')+'" data-skv="'+x.id+'">'+esc(val)+'</span><button type="button" data-a="skm" data-id="'+x.id+'" data-d="1" aria-label="Tambah">+</button><button type="button" class="q" data-a="skm" data-id="'+x.id+'" data-d="5">+5</button><button type="button" class="q" data-a="skm" data-id="'+x.id+'" data-d="10">+10</button></div>'
+ +'<div class="sqc"><button type="button" data-a="skm" data-id="'+x.id+'" data-d="-1" aria-label="Kurangi">−</button><input class="v'+(ch?' ch':'')+'" data-skv="'+x.id+'" data-sk="'+x.id+'" data-fmt="qty" inputmode="decimal" autocomplete="off" aria-label="Jumlah '+esc(x.name)+'" value="'+esc(val)+'"><button type="button" data-a="skm" data-id="'+x.id+'" data-d="1" aria-label="Tambah">+</button><button type="button" class="q" data-a="skm" data-id="'+x.id+'" data-d="5">+5</button><button type="button" class="q" data-a="skm" data-id="'+x.id+'" data-d="10">+10</button></div>'
  +(x.sell>0?'':'<div class="sp"><span>Harga kosong</span><input class="in" data-sp="'+x.id+'" data-fmt="money" inputmode="numeric" autocomplete="off" placeholder="Isi harga jual" value="'+esc(v.p===undefined?'':v.p)+'"></div>')+'</div>'}
-function skList(){const st=cc().stock,s=SK.q.toLowerCase(),a=D.items.filter(x=>!x.arch&&kindOf(x)===SK.kind&&x.name.toLowerCase().includes(s)&&(SK.f==='all'||(SK.f==='zero'&&(st[x.id]||0)<=0)||(SK.f==='np'&&!(x.sell>0)))).sort((p,q)=>p.name.localeCompare(q.name,undefined,{numeric:true}));
- if(!a.length)return '<p class="em">'+(D.items.some(x=>!x.arch&&kindOf(x)===SK.kind)?'Tidak ada barang yang cocok.':'Belum ada barang jenis ini. Impor atau tambah manual dulu.')+'</p>';
- if(SK.kind==='piston'){const open=!!s||SK.f!=='all';return pgroups(a).map(g=>{const key='s|'+g.k,ed=g.a.filter(x=>SK.v[x.id]&&SK.v[x.id].q!==undefined&&SK.v[x.id].q!=='').length;
-  return gcard(key,g.b,g.a.length+' ukuran'+(ed?' · '+ed+' diubah':''),g.a.map(x=>skRow(x,osTxt(x))).join(''),open||GO[key])}).join('')}
- return grp(a.map(x=>skRow(x)).join(''))}
-function pgStkKind(){return pgh('Isi stok','<p class="date">Pilih jenis barang yang stoknya mau diisi.</p>'+grp(KORD.map(k=>{const n=D.items.filter(x=>!x.arch&&kindOf(x)===k).length;return mrow(KL[k],n+' barang','box','stkk','data-k="'+k+'"')}).join('')))}
-function pgStock(){return pgh('Isi stok '+KS[SK.kind].toLowerCase(),'<input id="skq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(SK.q)+'">'+chips([['all','Semua'],['zero','Stok kosong'],['np','Harga kosong']],SK.f,'skf')+'<p class="hint" style="margin:8px 0">Atur jumlah yang ada di rak dengan tombol \u2212, +, +5, +10, atau ketuk ikon scan di atas lalu scan kotak satu per satu (+1 tiap kotak). Yang tidak disentuh tidak diubah.</p><div id="skl">'+skList()+'</div>',{act:'<button class="ib" data-a="sks" aria-label="Scan kotak untuk isi stok">'+ic('scan')+'</button>',foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
-function skSync(id,n,cur){const e=document.querySelector('[data-skv="'+id+'"]');if(e){e.textContent=String(n);e.classList.toggle('ch',n!==cur)}const n2=document.getElementById('skn');if(n2)n2.textContent=skCnt()+' barang'}
+function skList(){const st=cc().stock,s=SK.q.toLowerCase(),rs=recSet(),all=SK.kind==='all',a=D.items.filter(x=>!x.arch&&(all||kindOf(x)===SK.kind)&&x.name.toLowerCase().includes(s)&&(SK.f==='all'||(SK.f==='zero'&&(st[x.id]||0)<=0)||(SK.f==='np'&&!(x.sell>0))||(SK.f==='new'&&!rs.has(x.id)))).sort((p,q)=>p.name.localeCompare(q.name,undefined,{numeric:true}));
+ if(!a.length)return '<p class="em">'+(D.items.some(x=>!x.arch&&(all||kindOf(x)===SK.kind))?'Tidak ada barang yang cocok.':'Belum ada barang jenis ini. Impor atau tambah manual dulu.')+'</p>';
+ const open=!!s||SK.f!=='all',block=(k,arr)=>k==='piston'?pgroups(arr).map(g=>{const key='s|'+g.k,ed=g.a.filter(x=>SK.v[x.id]&&SK.v[x.id].q!==undefined&&SK.v[x.id].q!=='').length;
+  return gcard(key,g.b,g.a.length+' ukuran'+(ed?' · '+ed+' diubah':''),g.a.map(x=>skRow(x,osTxt(x))).join(''),open||GO[key])}).join(''):grp(arr.map(x=>skRow(x)).join(''));
+ if(all)return KORD.map(k=>{const g=a.filter(x=>kindOf(x)===k);return g.length?'<h4>'+esc(KL[k])+' · '+g.length+'</h4>'+block(k,g):''}).join('');
+ return block(SK.kind,a)}
+function pgStkKind(){return pgh('Isi stok','<p class="date">Pilih cara mengisi stok.</p>'+grp(mrow('Semua barang','Satu daftar, ketik jumlahnya langsung','box','stkk','data-k="all"')+mrow('Tempel daftar','Salin dari WhatsApp atau catatan, dicocokkan otomatis','up','stkp',''))+'<h4>Per jenis</h4>'+grp(KORD.map(k=>{const n=D.items.filter(x=>!x.arch&&kindOf(x)===k).length;return mrow(KL[k],n+' barang','box','stkk','data-k="'+k+'"')}).join('')))}
+function pgStock(){return pgh('Isi stok '+(SK.kind==='all'?'semua barang':KS[SK.kind].toLowerCase()),'<input id="skq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(SK.q)+'">'+chips([['all','Semua'],['new','Belum diisi'],['zero','Stok kosong'],['np','Harga kosong']],SK.f,'skf')+'<p class="hint" style="margin:8px 0">Ketik jumlah yang ada di rak langsung di kotak angka (Enter pindah ke barang berikutnya), atau pakai tombol \u2212, +, +5, +10. Bisa juga scan kotak (+1 tiap kotak) atau tempel daftar dari WhatsApp. Yang tidak disentuh tidak diubah.</p><div id="skl">'+skList()+'</div>',{act:'<button class="ib" data-a="stkp" aria-label="Tempel daftar">'+ic('up')+'</button><button class="ib" data-a="sks" aria-label="Scan kotak untuk isi stok">'+ic('scan')+'</button>',foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
+function skSync(id,n,cur){const e=document.querySelector('[data-skv="'+id+'"]');if(e){if(e.tagName==='INPUT')e.value=String(n);else e.textContent=String(n);e.classList.toggle('ch',n!==cur)}const n2=document.getElementById('skn');if(n2)n2.textContent=skCnt()+' barang'}
 /* Isi stok dengan scan: tiap kotak yang terbaca menambah 1. Belum tersimpan sampai tombol Simpan di halaman Isi stok. */
 function skBump(x,quiet){if(x.arch){scPanel('<div class="rs"><b>'+esc(x.name)+'</b><span class="no">Barang nonaktif. Aktifkan dulu di halaman barang.</span></div>');if(!quiet)ping(false);return}
  const id=x.id,cur=cc().stock[id]||0,v=SK.v[id]=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=r4(base+1);v.q=String(n);skSync(id,n,cur);if(!quiet)ping(true);
- const other=kindOf(x)!==SK.kind?'<small style="display:block;color:var(--mu)">Jenis '+esc(KS[kindOf(x)])+', tetap ikut tersimpan.</small>':'';
+ const other=SK.kind!=='all'&&kindOf(x)!==SK.kind?'<small style="display:block;color:var(--mu)">Jenis '+esc(KS[kindOf(x)])+', tetap ikut tersimpan.</small>':'';
  scPanel('<div class="rs"><div class="rsh"><b>'+esc(x.name)+'</b><small>+1 · '+skCnt()+' barang diisi, belum disimpan</small></div>'
  +'<div class="kv"><span>Stok di catatan</span><b>'+num(cur)+' '+esc(x.unit)+'</b></div><div class="kv"><span>Setelah scan</span><b>'+num(n)+' '+esc(x.unit)+' (+'+num(r4(n-cur))+')</b></div>'+other
  +'<div class="two" style="margin-top:12px"><button class="bt sec" data-a="skun" data-id="'+id+'">Batalkan 1</button><button class="bt" data-a="back">Selesai</button></div></div>')}
@@ -1009,6 +1016,92 @@ function skSave(){const c=clone(D),at=Date.now();let n=0,ns=0,np=0;
   if(ch)n++}
  if(!n)return toast('Belum ada angka yang berubah');
  if(!commit(c))return;SK.v={};done(n+' barang disimpan'+(np?' ('+np+' harga)':''))}
+
+/* ================= Rekap stok otomatis ================= */
+let RS={f:'filled',k:'all',q:''};
+const recSet=()=>{const z=new Set();D.adj.forEach(a=>z.add(a.i));D.notas.forEach(n=>n.lines.forEach(l=>{if(l.i)z.add(l.i)}));return z};
+function rsData(){const c=cc(),st=c.stock,av=c.avg,rec=recSet(),cnt={filled:0,out:0,low:0,new:0,all:0};let unit=0,val=0,sv=0;
+ const rows=D.items.filter(x=>!x.arch).map(x=>{const s=st[x.id]||0,known=rec.has(x.id),mn=+x.min||0,cost=av[x.id]>0?av[x.id]:(+x.buy||0),
+  r={x,s,known,cost,val:s>0?s*cost:0,sv:s>0?s*(+x.sell||0):0,st:!known?'new':s<=0?'out':(mn>0&&s<=mn?'low':'ok')};
+  cnt.all++;if(s>0){cnt.filled++;unit+=s;val+=r.val;sv+=r.sv}if(r.st==='out')cnt.out++;else if(r.st==='low')cnt.low++;else if(r.st==='new')cnt.new++;return r});
+ return{rows,cnt,unit:r4(unit),val,sv}}
+const rsPass=(r,f)=>f==='all'||(f==='filled'&&r.s>0)||r.st===f;
+function rsFiltered(d){const s=RS.q.trim().toLowerCase();
+ return d.rows.filter(r=>rsPass(r,RS.f)&&(RS.k==='all'||kindOf(r.x)===RS.k)&&(!s||(r.x.name+' '+(r.x.cat||'')+' '+KS[kindOf(r.x)]+' '+(r.x.pc||'')+' '+(r.x.codes||[]).join(' ')).toLowerCase().includes(s)))
+  .sort((a,b)=>KORD.indexOf(kindOf(a.x))-KORD.indexOf(kindOf(b.x))||a.x.name.localeCompare(b.x.name,undefined,{numeric:true}))}
+const rsTag=r=>r.st==='low'?'<i class="tag">Menipis</i>':r.st==='out'?'<i class="tag">Habis</i>':r.st==='new'?'<i class="tag mu">Belum dicatat</i>':'';
+function rsList(){const d=rsData(),a=rsFiltered(d);
+ if(!a.length)return '<p class="em">'+(d.rows.length?'Tidak ada barang untuk filter ini.':'Belum ada barang.')+'</p>';
+ const rm=new Map(a.map(r=>[r.x.id,r]));
+ const row=(r,lab)=>{const x=r.x,k=kindOf(x);return '<div class="r" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(lab||x.name)+rsTag(r)+'</b>'+(lab?'':'<small>'+esc(k==='umum'&&x.cat?x.cat:KL[k])+'</small>')+'</div><div class="rt"><b class="'+(r.st==='out'?'lw':'')+'">'+(r.known?num(r.s)+' '+esc(x.unit):'-')+'</b>'+(r.val>0?'<small>'+rp(r.val)+'</small>':'')+'</div></div>'};
+ let h='';
+ KORD.forEach(k=>{const g=a.filter(r=>kindOf(r.x)===k);if(!g.length)return;const un=g.reduce((n,r)=>n+(r.s>0?r.s:0),0);
+  h+='<h4>'+esc(KL[k])+' · '+g.length+' barang · '+num(un)+' '+esc(KU[k]||'pcs')+'</h4>';
+  if(k==='piston')h+=pgroups(g.map(r=>r.x)).map(gr=>{const key='r|'+gr.k,t=gr.a.reduce((n,x)=>n+Math.max(0,rm.get(x.id).s),0);return gcard(key,gr.b,gr.a.length+' ukuran · stok '+num(t),gr.a.map(x=>row(rm.get(x.id),osTxt(x))).join(''),!!RS.q||GO[key])}).join('');
+  else h+=grp(g.map(r=>row(r)).join(''))});
+ return h}
+function pgRecapStock(){const d=rsData(),c=d.cnt,now=new Date();
+ const ks=KORD.map(k=>{const g=d.rows.filter(r=>kindOf(r.x)===k);if(!g.length)return '';const f=g.filter(r=>r.s>0);return mrow(KL[k],f.length+' terisi dari '+g.length+' · '+num(f.reduce((n,r)=>n+r.s,0))+' '+(KU[k]||'pcs'),'box','rsk','data-v="'+k+'"')}).join('');
+ return pgh('Rekap stok','<p class="date">Per '+fmtLong(today())+', '+pad(now.getHours())+'.'+pad(now.getMinutes())+' · dihitung otomatis dari semua catatan</p>'
+  +'<div class="grid"><div class="c"><small>Barang terisi</small><b>'+c.filled+' / '+c.all+'</b></div><div class="c"><small>Total unit</small><b>'+num(d.unit)+'</b></div><div class="c"><small>Nilai stok (modal)</small><b data-cnt="'+d.val+'">'+rp(d.val)+'</b></div><div class="c"><small>Nilai jual stok</small><b data-cnt="'+d.sv+'">'+rp(d.sv)+'</b></div></div>'
+  +(c.new?'<p class="hint">'+c.new+' barang belum pernah diisi stoknya. Itu bukan berarti habis. <button type="button" class="tx" data-a="rsfill">Isi sekarang</button></p>':'')
+  +'<p class="hint"><button type="button" class="tx" data-a="rsask">Tanya Jarvis tentang stok ini</button></p>'
+  +(ks?'<h4>Per jenis</h4>'+grp(ks):'')
+  +'<h4>Daftar barang</h4><input id="rsq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(RS.q)+'">'
+  +chips([['filled','Terisi '+c.filled],['out','Habis '+c.out],['low','Menipis '+c.low],['new','Belum dicatat '+c.new],['all','Semua '+c.all]],RS.f,'rsf')
+  +chips([['all','Semua jenis']].concat(KORD.map(k=>[k,KS[k]])),RS.k,'rsk')
+  +'<div id="rsl" style="margin-top:12px">'+rsList()+'</div>',
+  {foot:'<div class="two"><button class="bt sec" data-a="rsshare">Bagikan</button><button class="bt" data-a="rscsv">Unduh CSV</button></div>'})}
+function rsText(){const d=rsData(),a=rsFiltered(d),now=new Date(),L=['*REKAP STOK BM TECH*','Per '+fmtLong(today())+' '+pad(now.getHours())+'.'+pad(now.getMinutes()),'Barang terisi: '+d.cnt.filled+' dari '+d.cnt.all+' · total '+num(d.unit)+' unit','Nilai stok (modal): '+rp(d.val),''];
+ KORD.forEach(k=>{const g=a.filter(r=>kindOf(r.x)===k);if(!g.length)return;L.push('*'+KL[k].toUpperCase()+'* ('+g.length+')');g.forEach(r=>L.push('• '+r.x.name+': '+(r.known?num(r.s)+' '+r.x.unit:'belum dicatat')));L.push('')});
+ return L.join('\n').trim()}
+async function rsShare(){const t=rsText();
+ try{if(navigator.share){await navigator.share({title:'Rekap stok BM TECH',text:t});return}}catch(e){if(e&&e.name==='AbortError')return}
+ try{await navigator.clipboard.writeText(t);toast('Rekap disalin. Tempel di WhatsApp')}catch(e){try{window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank')}catch(x){toast('Tidak bisa membagikan')}}}
+function rsCsv(){const d=rsData(),a=rsFiltered(d),SN={ok:'Aman',low:'Menipis',out:'Habis',new:'Belum dicatat'};
+ const q=v=>'"'+(typeof v==='string'?v.replace(/^[=+\-@]/,"'$&"):String(v)).replace(/"/g,'""')+'"';
+ const L=[['Nama','Jenis','Satuan','Stok','Stok minimum','Harga jual','Modal rata-rata','Nilai modal','Status'].map(q).join(',')].concat(a.map(r=>[r.x.name,KL[kindOf(r.x)],r.x.unit,r.known?r4(r.s):'',r.x.min||0,r.x.sell||0,Math.round(r.cost),Math.round(r.val),SN[r.st]].map(q).join(',')));
+ const blob=new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'}),el=document.createElement('a');el.href=URL.createObjectURL(blob);el.download='rekap-stok-'+today()+'.csv';document.body.appendChild(el);el.click();
+ setTimeout(()=>{URL.revokeObjectURL(el.href);el.remove()},1500);toast('Rekap stok diunduh ('+a.length+' barang)')}
+
+/* ================= Isi stok: tempel daftar dari WhatsApp/catatan ================= */
+let SKP={txt:'',rows:null,mode:'set'};
+const sknorm=z=>String(z||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\bstandar[d]?\b/g,'std').replace(/([a-z])(\d)/g,'$1 $2').replace(/(\d)([a-z])/g,'$1 $2').replace(/[^a-z0-9]+/g,' ').trim();
+function skpParse(txt){const out=[];
+ String(txt||'').split(/\r?\n/).forEach(raw=>{let t=raw.replace(/[•●‣*–-]+\s+/g,' ').trim();if(!t)return;
+  t=t.replace(/\b(pcs|pc|buah|biji|unit|set|paket|pak|box|kotak|botol|lusin)\b\.?/gi,' ').replace(/[x×=:;,\t]+\s*(?=\d+(?:[.,]\d+)?\s*$)/i,' ').trim();
+  const m=t.match(/^(.*?)\s*(\d+(?:[.,]\d+)?)\s*$/);
+  if(!m||!m[1].trim()){out.push({raw,err:'Jumlah belum ada'});return}
+  const nm=m[1].trim();
+  if(/(^|\s)os$/i.test(nm)){out.push({raw,err:'Jumlah belum ada (angka terbaca sebagai ukuran OS)'});return}
+  out.push({raw,name:nm,q:+m[2].replace(',','.')})});
+ return out}
+function skpIndex(){return D.items.filter(x=>!x.arch).map(x=>({x,set:new Set(sknorm(x.name+' '+(x.cat||'')+' '+(KS[kindOf(x)]||'')+' '+(x.pc||'')+' '+(x.codes||[]).join(' ')).split(' ')),nt:sknorm(x.name).split(' ')}))}
+function skpMatch(r,idx){const qt=sknorm(r.name).split(' ').filter(Boolean);if(!qt.length)return Object.assign(r,{err:'Nama kosong'});
+ const c=[];idx.forEach(e=>{if(qt.every(w=>e.set.has(w)))c.push({x:e.x,ex:e.nt.filter(t=>!qt.includes(t)).length})});
+ if(!c.length)return Object.assign(r,{err:'Tidak ditemukan di katalog'});
+ const mn=Math.min.apply(null,c.map(z=>z.ex)),best=c.filter(z=>z.ex===mn);
+ if(best.length===1)return Object.assign(r,{item:best[0].x.id});
+ return Object.assign(r,{amb:best.slice(0,9).map(z=>z.x.id),err:null})}
+function pgStkPaste(){const R=SKP.rows;
+ if(!R)return pgh('Tempel daftar stok','<p class="date">Salin daftar dari WhatsApp atau catatan, satu barang per baris, lalu tempel di sini. Contoh:</p><p class="hint mono" style="white-space:pre-line">Blade OS 50 5\nMio STD 3\nLaher 6204 10</p><textarea id="skpt" class="in ta" placeholder="Nama barang lalu jumlah, satu per baris" aria-label="Tempel daftar stok" autocomplete="off">'+esc(SKP.txt)+'</textarea>'
+  +chips([['set','Jumlah di rak (stok jadi)'],['add','Barang masuk (ditambah)']],SKP.mode,'skpm')
+  +'<p class="hint" style="margin:8px 0">Belum ada yang tersimpan. Hasilnya diperiksa dulu di langkah berikut.</p>',{foot:'<div class="ft"><div></div><button class="bt" data-a="skpgo0">Cocokkan</button></div>'});
+ const ok=R.filter(r=>r.item).length,amb=R.filter(r=>r.amb&&!r.item).length,bad=R.filter(r=>r.err).length;
+ const body=R.map((r,i)=>{
+  if(r.item){const x=itm(r.item),cur=cc().stock[r.item]||0,to=SKP.mode==='add'?r4(cur+r.q):r.q;return '<div class="r"><div><b>'+esc(x.name)+'</b><small>ada '+num(cur)+' → '+num(to)+' '+esc(x.unit)+(SKP.mode==='add'?' (+'+num(r.q)+')':'')+'</small></div><div class="rt"><b class="skp-ok">'+num(r.q)+'</b></div></div>'}
+  if(r.amb)return '<div class="r er"><div><b>'+esc(r.raw)+'</b><small>Ada beberapa yang cocok. Pilih barangnya:</small></div></div><div class="pcs">'+r.amb.map(id=>'<button type="button" class="chip" data-a="skpc" data-i="'+i+'" data-v="'+id+'">'+esc(itm(id).name)+'</button>').join('')+'</div>';
+  return '<div class="r er"><div><b>'+esc(r.raw)+'</b><small>'+esc(r.err||'Tidak dikenali')+'. Baris ini dilewati.</small></div></div>'}).join('');
+ return pgh('Periksa hasil',
+  '<p class="date">'+ok+' cocok'+(amb?' · '+amb+' perlu dipilih':'')+(bad?' · '+bad+' dilewati':'')+'</p>'+grp(body)+'<button type="button" class="tx" data-a="skpredo" style="margin-top:10px">Ubah daftar</button>',
+  {foot:'<div class="ft"><div><small>Siap diisi</small><b>'+ok+' barang</b></div><button class="bt" data-a="skpgo">Terapkan</button></div>'})}
+function skpApply(){const R=SKP.rows||[],agg={};
+ R.forEach(r=>{if(!r.item)return;const a=agg[r.item]||(agg[r.item]=SKP.mode==='add'?0:null);agg[r.item]=SKP.mode==='add'?r4(a+r.q):r.q});
+ const ids=Object.keys(agg);if(!ids.length)return toast('Belum ada barang yang cocok');
+ const st=cc().stock,keep=SK.v;let n=0;
+ ids.forEach(id=>{const cur=st[id]||0,to=SKP.mode==='add'?r4(cur+agg[id]):agg[id],v=keep[id]=keep[id]||{};if(to===cur)delete v.q;else{v.q=String(to);n++}});
+ const left=PGS.length;back(left);render(false);SK={kind:'all',q:'',f:'all',v:keep};
+ setTimeout(()=>{openPage(pgStock,[],{live:false});toast(n+' barang terisi dari daftar. Periksa, lalu tekan Simpan')},reduce()?0:60)}
 
 /* ================= Scanner barcode ================= */
 let AC=null,SC=null,LQ='',LKK='all',HW={b:'',t:0};
@@ -1222,6 +1315,18 @@ const A={
   SC.item=null;SC.lastSeen=Date.now();toast(x.name+' +'+num(qn));scPanel('<div class="rs"><b>Ditambahkan ke nota</b><small style="display:block;color:var(--mu)">'+esc(x.name)+', total '+num(tot)+' '+esc(x.unit)+'. Scan barang berikutnya.</small></div>')},
  scpick(b){const x=D.items.find(z=>z.id===b.dataset.id);if(x&&SC){SC.item=x;const code=SC.ocr?SC.ocr.pc:SC.cur;if(code&&!pcOwner(code,x.id))learnCode(x,code);if(SC.ctx==='stock')skBump(x);else scShow(x)}},
  sks(){openScan('stock')},
+ rsopen(){RS={f:'filled',k:'all',q:''};openPage(pgRecapStock,[],{live:true})},
+ rsf(b){RS.f=b.dataset.v;paint(PGS[PGS.length-1])},
+ rsk(b){RS.k=b.dataset.v;paint(PGS[PGS.length-1])},
+ rsshare(){rsShare()},rscsv(){rsCsv()},
+ rsask(){if(window.BMJarvis&&BMJarvis.ask)BMJarvis.ask('Rekap stok barang yang sudah terisi, sebut juga yang habis dan menipis');else toast('Jarvis belum siap. Coba sebentar lagi')},
+ rsfill(){SK={kind:'all',q:'',f:'new',v:{}};openPage(pgStock,[],{live:false})},
+ stkp(){SKP={txt:'',rows:null,mode:'set'};openPage(pgStkPaste,[])},
+ skpm(b){const t=document.getElementById('skpt');if(t)SKP.txt=t.value;SKP.mode=b.dataset.v;paint(PGS[PGS.length-1])},
+ skpgo0(){const t=document.getElementById('skpt');SKP.txt=t?t.value:SKP.txt;const idx=skpIndex(),rows=skpParse(SKP.txt).map(r=>r.err?r:skpMatch(r,idx));if(!rows.length)return bad('#skpt','Tempel daftarnya dulu');if(rows.length>400)return bad('#skpt','Maksimal 400 baris sekali tempel');SKP.rows=rows;paint(PGS[PGS.length-1])},
+ skpredo(){SKP.rows=null;paint(PGS[PGS.length-1])},
+ skpc(b){const r=SKP.rows&&SKP.rows[+b.dataset.i];if(r){r.item=b.dataset.v;paint(PGS[PGS.length-1])}},
+ skpgo(){skpApply()},
  skun(b){const id=b.dataset.id,x=itm(id);if(!x)return;const cur=cc().stock[id]||0,v=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=Math.max(0,r4(base-1));if(n===cur)delete v.q;else{v.q=String(n);SK.v[id]=v}
   skSync(id,n,cur);scPanel('<div class="rs"><b>Dibatalkan</b><small style="display:block;color:var(--mu)">'+esc(x.name)+': '+num(cur)+' menjadi '+num(n)+'. Scan kotak berikutnya.</small></div>')},
  sclink(){LQ='';LKK='all';openPage(pgLink,[])},
@@ -1366,12 +1471,18 @@ document.addEventListener('keydown',e=>{const t=e.target,tag=t&&t.tagName;if(tag
 document.addEventListener('focusin',e=>{if(e.target.dataset&&e.target.dataset.sug)showSug(e.target)});
 document.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.sug)setTimeout(()=>{if(SUGT===e.target&&document.activeElement!==e.target)hideSug()},150)});
 document.addEventListener('scroll',()=>{if(SUGT)hideSug()},true);
+document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.sk!==undefined&&t.select)setTimeout(()=>{try{t.select()}catch(x){}},0)});
+document.addEventListener('keydown',e=>{const t=e.target;if(e.key!=='Enter'||!t||!t.dataset||t.dataset.sk===undefined)return;e.preventDefault();
+ const all=[...(topPg()||document).querySelectorAll('input[data-sk]')],i=all.indexOf(t),n=all[i+1];
+ if(n){n.scrollIntoView({block:'center'});n.focus()}else t.blur()});
 document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;if(t.classList)t.classList.remove('err');
  const fm=t.dataset.fmt;if(fm==='money')fmtMoney(t);else if(fm==='qty')fmtQty(t);
  if(t.dataset.sug)showSug(t);
  if(t.id==='imt'){IM.txt=t.value;return}
+ if(t.id==='rsq'){RS.q=t.value;const l=document.getElementById('rsl');if(l)l.innerHTML=rsList();return}
+ if(t.id==='skpt'){SKP.txt=t.value;return}
  if(t.id==='skq'){SK.q=t.value;const l=document.getElementById('skl');if(l)l.innerHTML=skList();return}
- if(t.dataset.sk!==undefined||t.dataset.sp!==undefined){const id=t.dataset.sk!==undefined?t.dataset.sk:t.dataset.sp,v=SK.v[id]||(SK.v[id]={});if(t.dataset.sk!==undefined)v.q=t.value;else v.p=t.value;setT('skn',skCnt()+' barang');return}
+ if(t.dataset.sk!==undefined||t.dataset.sp!==undefined){const id=t.dataset.sk!==undefined?t.dataset.sk:t.dataset.sp,v=SK.v[id]||(SK.v[id]={});if(t.dataset.sk!==undefined){v.q=t.value;t.classList.toggle('ch',t.value!==''&&String(pq(t.value))!==String(cc().stock[id]||0))}else v.p=t.value;setT('skn',skCnt()+' barang');return}
  if(t.id==='q'){q=t.value;const l=document.getElementById('lst');if(l)l.innerHTML=itemsHtml()}
  else if(t.id.indexOf('nq-')===0){const k=t.id.slice(3);HF[k].q=t.value;HF[k].lim=30;const l=document.getElementById('nl-'+k);if(l)l.innerHTML=listNHtml(k)}
  else if(t.id==='hq'){hq=t.value;const l=document.getElementById('dl');if(l)l.innerHTML=partyListHtml()}

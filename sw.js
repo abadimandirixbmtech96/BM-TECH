@@ -8,7 +8,7 @@
 // 3. Penulisan data (insert/update/delete/RPC tulis) TIDAK pernah disentuh: selalu langsung ke server.
 // 4. Salinan data dihapus saat keluar akun (logout) atau login baru, supaya akun lain tidak melihatnya.
 
-const CACHE_NAME = 'bmtech-shell-v44'; // dinaikkan: salinan penuh data, gestur kembali, perbaikan penanda sinyal
+const CACHE_NAME = 'bmtech-shell-v45'; // dinaikkan: rekap stok warung, isi stok cepat, Jarvis satu percakapan
 const DATA_CACHE = 'bmtech-data-v1';   // tidak ikut dihapus saat versi naik
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;              // lebih dari ini dengan salinan tersedia = pakai salinan dulu

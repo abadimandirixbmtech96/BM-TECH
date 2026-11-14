@@ -25,6 +25,61 @@
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   var canSpeak = 'speechSynthesis' in window;
   var history = [];
+
+  /* ---------- percakapan bersama: SATU riwayat untuk Dashboard Admin, Dashboard Warung, editor, dan halaman Jarvis ----------
+     Disimpan di HP ini (localStorage) dengan format yang sama seperti halaman Jarvis AI, jadi obrolan yang dimulai di
+     Warung bisa dilanjutkan di Dashboard Admin atau di halaman Jarvis, dan sebaliknya. */
+  var CHATS_KEY = 'bm-jarvis-chats-v1', CUR_KEY = 'bm-jarvis-cur', GONE_KEY = 'bm-jarvis-gone';
+  var chatId = '', chatUpd = 0;
+  function readStore() { try { var j = JSON.parse(localStorage.getItem(CHATS_KEY) || 'null'); if (j && Array.isArray(j.chats)) { j.chats = j.chats.filter(function (c) { return c && c.id && Array.isArray(c.msgs); }); return j; } } catch (e) {} return { v: 1, chats: [] }; }
+  function writeStore(st) {
+    st.chats.sort(function (a, b) { return b.updated - a.updated; }); if (st.chats.length > 150) st.chats.length = 150;
+    for (var i = 0; i < 40; i++) { try { localStorage.setItem(CHATS_KEY, JSON.stringify(st)); return true; } catch (e) { if (st.chats.length <= 1) return false; st.chats.pop(); } }
+    return false;
+  }
+  function curRef() { try { var c = JSON.parse(localStorage.getItem(CUR_KEY) || 'null'); if (c && c.id && Date.now() - c.t < 6 * 3600e3) return c.id; } catch (e) {} return ''; }
+  function setCur(id) { try { localStorage.setItem(CUR_KEY, JSON.stringify({ id: id, t: Date.now() })); } catch (e) {} }
+  function findChat(st, id) { for (var i = 0; i < st.chats.length; i++) if (st.chats[i].id === id) return st.chats[i]; return null; }
+  function sharedHist() { var id = curRef(); if (id) { var c = findChat(readStore(), id); if (c && Array.isArray(c.hist)) return c.hist; } return history; }
+  function appendShared(msgs, hadd) {
+    try {
+      var st = readStore(), id = curRef(), c = id ? findChat(st, id) : null, now = Date.now();
+      if (!c) { c = { id: 'c' + now.toString(36) + Math.random().toString(36).slice(2, 6), title: String(msgs[0].text).replace(/\s+/g, ' ').slice(0, 48), created: now, updated: now, msgs: [], hist: [] }; st.chats.unshift(c); }
+      msgs.forEach(function (m) { c.msgs.push(m); });
+      (c.hist = c.hist || []); hadd.forEach(function (h) { c.hist.push(h); }); if (c.hist.length > 20) c.hist = c.hist.slice(-20);
+      c.updated = now; chatId = c.id; chatUpd = now; history = c.hist.slice();
+      writeStore(st); setCur(c.id);
+    } catch (e) {}
+  }
+  function renderShared(force) {
+    if (busy || !el.log) return false;
+    var id = curRef(); if (!id) return false;
+    var c = findChat(readStore(), id); if (!c || !c.msgs.length) return false;
+    if (!force && c.id === chatId && c.updated <= chatUpd) return false;
+    el.log.textContent = '';
+    var last = c.msgs.slice(-12);
+    if (c.msgs.length > last.length) say('s', (c.msgs.length - last.length) + ' pesan lebih lama ada di halaman Jarvis AI.');
+    else say('s', 'Percakapan dilanjutkan. Sama di Dashboard Admin dan Warung.');
+    last.forEach(function (m) {
+      if (m.r === 'u') say('u', m.text);
+      else if (m.r === 'a') {
+        var w = mk('div', '', 'bmj-r'), ans = mk('div', '', 'bmj-ans'); renderBlocks(ans, parseBlocks(String(m.text || ''))); w.appendChild(ans);
+        (m.reps || []).forEach(function (r) { try { w.appendChild(renderReport(r)); } catch (e) {} });
+        el.log.appendChild(w);
+      } else say('s', m.text);
+    });
+    chatId = c.id; chatUpd = c.updated; history = (c.hist || []).slice();
+    toBottom(true); return true;
+  }
+  function newShared() {
+    if (busy) return;
+    try { localStorage.removeItem(CUR_KEY); } catch (e) {}
+    chatId = ''; chatUpd = 0; history = []; el.log.textContent = ''; welcome();
+  }
+  function pageName() {
+    var p = location.pathname;
+    return /dashboard-shop/.test(p) ? 'warung' : /dashboard-admin/.test(p) ? 'dashboard' : /^\/editor-/.test(p) ? 'editor' : /my-profile/.test(p) ? 'profil' : /salary/.test(p) ? 'gaji' : /analisa/.test(p) ? 'analisa' : 'lain';
+  }
   var curAC = null, curCtl = null, userStop = false;
   var busy = false, listening = false, wakeOn = false, voiceOut = true, rec = null, wakeRec = null, sheetOpen = false;
 
@@ -150,7 +205,8 @@
     el.spk = mk('button', '', 'bmj-ib', ICON_SPK); el.spk.title = 'Suara jawaban';
     el.wake = mk('button', '', 'bmj-ib', 'HAI'); el.wake.title = 'Mode "Hai Jarvis" (mendengarkan terus)';
     el.close = mk('button', '', 'bmj-ib', '✕'); el.close.title = 'Tutup';
-    h.append(t, el.spk, el.wake, el.close);
+    el.nw = mk('button', '', 'bmj-ib', '+'); el.nw.title = 'Percakapan baru'; el.nw.setAttribute('aria-label', 'Percakapan baru');
+    h.append(t, el.nw, el.spk, el.wake, el.close);
     el.log = mk('div', 'bmj-log'); el.log.setAttribute('aria-live', 'polite');
     var f = mk('div', '', 'bmj-f');
     el.in = mk('input', 'bmj-in'); el.in.type = 'text'; el.in.placeholder = 'Ketik atau bicara…'; el.in.autocomplete = 'off'; el.in.maxLength = 1500; el.in.enterKeyHint = 'send';
@@ -183,6 +239,7 @@
     el.send.onclick = function () { if (busy) stopAll(); else submit(el.in.value); };
     el.in.onkeydown = function (e) { if (e.key === 'Enter') { e.preventDefault(); if (!busy) submit(el.in.value); } };
     el.mic.onclick = function () { listening ? stopListen() : startListen(); };
+    el.nw.onclick = function () { newShared(); };
     el.spk.onclick = function () { voiceOut = !voiceOut; ls(LS_VOICE, voiceOut ? '1' : '0'); if (!voiceOut) stopSpeak(); paintToggles(); };
     el.wake.onclick = function () {
       if (!SR) { say('s', 'Browser ini tidak mendukung pengenalan suara. Pakai Chrome/Edge/Safari terbaru.'); return; }
@@ -191,14 +248,14 @@
     };
     if (!SR) el.mic.style.opacity = '.45';
     paintToggles();
-    welcome();
+    if (!renderShared(true)) welcome();
     if (wakeOn) startWake();
   }
   function welcome() {
-    say('s', 'Halo, saya Jarvis. Saya membaca seluruh catatan bengkel dan setiap perubahan data meminta persetujuanmu dulu.');
+    say('s', 'Halo, saya Jarvis. Saya membaca seluruh data bengkel dan warung (Buku Besar, stok, nota, hutang), dan setiap perubahan data meminta persetujuanmu dulu.');
     var box = mk('div', '', 'bmj-chips');
     function fill(list) { box.textContent = ''; list.slice(0, 4).forEach(function (q) { var b = mk('button'); b.textContent = q; b.onclick = function () { box.remove(); submit(q); }; box.appendChild(b); }); }
-    var LOKAL = ['Rangkum transaksi minggu ini', 'Grafik omzet bulan ini', 'Siapa yang masih berhutang?', 'Barang warung yang perlu dibeli', 'Customer yang barangnya masih ditinggal', 'Catatan bulan ini yang harganya kosong', 'Bandingkan omzet bengkel dan warung bulan ini', 'Total harga Buku Besar bulan ini'];
+    var LOKAL = pageName() === 'warung' ? ['Rekap stok barang yang sudah terisi', 'Stok yang habis atau menipis', 'Barang warung yang perlu dibeli', 'Nilai stok warung sekarang', 'Omzet warung bulan ini', 'Siapa yang masih berhutang di kasir?'] : ['Rangkum transaksi minggu ini', 'Rekap stok barang yang sudah terisi', 'Grafik omzet bulan ini', 'Siapa yang masih berhutang?', 'Barang warung yang perlu dibeli', 'Customer yang barangnya masih ditinggal', 'Catatan bulan ini yang harganya kosong', 'Bandingkan omzet bengkel dan warung bulan ini', 'Total harga Buku Besar bulan ini'];
     fill(LOKAL.map(function (x) { return [Math.random(), x]; }).sort(function (a, b) { return a[0] - b[0]; }).map(function (x) { return x[1]; }));   // saran berganti setiap kali dibuka
     el.log.appendChild(box);
     token().then(function (tk) { if (!tk) return null; return fetch(API + '?saran=1', { headers: { Authorization: 'Bearer ' + tk } }).then(function (r) { return r.json(); }); })
@@ -214,7 +271,7 @@
   function isLight() { try { var t = localStorage.getItem('bm-theme'); if (t === 'light') return true; if (t === 'dark') return false; } catch (e) {} return !!(document.body && document.body.classList.contains('theme-light')); }
   function paintTheme() { if (el.sheet) el.sheet.classList.toggle('bmj-lt', isLight()); }
   window.addEventListener('storage', function (e) { if (!e.key || e.key === 'bm-theme') paintTheme(); });
-  function openSheet() { paintTheme(); sheetOpen = true; openedAt = Date.now(); el.fab.classList.add('bmj-open'); el.fab.setAttribute('aria-expanded', 'true'); el.ov.classList.add('bmj-on'); el.sheet.classList.add('bmj-on'); paintToggles(); setTimeout(function () { el.log.scrollTop = el.log.scrollHeight; }, 50); }
+  function openSheet() { try { renderShared(false); } catch (e) {} paintTheme(); sheetOpen = true; openedAt = Date.now(); el.fab.classList.add('bmj-open'); el.fab.setAttribute('aria-expanded', 'true'); el.ov.classList.add('bmj-on'); el.sheet.classList.add('bmj-on'); paintToggles(); setTimeout(function () { el.log.scrollTop = el.log.scrollHeight; }, 50); }
   function closeSheet() { sheetOpen = false; el.fab.classList.remove('bmj-open'); el.fab.setAttribute('aria-expanded', 'false'); el.ov.classList.remove('bmj-on'); el.sheet.classList.remove('bmj-on'); stopListen(); stopSpeak(); paintToggles(); try { el.fab.focus({ preventScroll: true }); } catch (e) {} }
   function setSendMode(on) { if (el.fab) el.fab.classList.toggle('bmj-busy', !!on); if (!el.send) return; el.send.classList.toggle('bmj-stop', on); el.send.innerHTML = on ? ICON_STOP : ICON_SEND; el.send.setAttribute('aria-label', on ? 'Hentikan' : 'Kirim'); }
   function stopAll() { userStop = true; if (curAC) { try { curAC.abort(); } catch (e) {} } if (curCtl) curCtl.skip = true; stopSpeak(); }
@@ -622,7 +679,7 @@
       var pm = panelModel(), acc = { actions: [], proposals: [], notas: [], reports: [], visuals: [] }, tries = 0, fin;
       for (;;) {
         try {
-          fin = await stream({ message: send, history: history.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) {
+          fin = await stream({ message: send, history: sharedHist().slice(-10), page: pageName(), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) {
             if (ev.type === 'status') setStatus(R, ev.text);
             else if (ev.type === 'step') onStep(R, ev);
           });
@@ -670,8 +727,10 @@
       var bc = mk('button', '', '', ICON_COPY + '<span>Salin</span>');
       bc.onclick = function () { var t = reps.length ? reps.map(reportPlain).join('\n\n') : plainOf(blocks); (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { bc.querySelector('span').textContent = 'Tersalin ✓'; }, function () { bc.querySelector('span').textContent = 'Gagal'; }); setTimeout(function () { bc.querySelector('span').textContent = 'Salin'; }, 1800); };
       acts.appendChild(bc); R.wrap.appendChild(acts);
-      history.push({ role: 'user', text: orig }, { role: 'model', text: reply.slice(0, 1000) + (fin.visuals || []).map(function (v) { return '\n[Visual "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') });
-      if (history.length > 20) history = history.slice(-20);
+      var hRep = { role: 'model', text: reply.slice(0, 1000) + (fin.visuals || []).map(function (v) { return '\n[Visual "' + v.judul + '" sudah ditampilkan sistem]'; }).join('') + reps.map(function (r) { return '\n[Tabel "' + r.title + '" (' + r.total_baris + ' baris) sudah ditampilkan sistem]'; }).join('') };
+      var repsKeep = []; try { if (JSON.stringify(reps).length < 60000) repsKeep = reps; } catch (e) {}
+      history.push({ role: 'user', text: orig }, hRep); if (history.length > 20) history = history.slice(-20);
+      appendShared([{ r: 'u', text: text }, { r: 'a', text: reply, model: fin.model, reps: repsKeep, notas: [], vis: [] }], [{ role: 'user', text: orig }, hRep]);
       (fin.actions || []).forEach(runAction);
       (fin.proposals || []).forEach(showProposal);
       toBottom();
@@ -681,8 +740,9 @@
       var em = stopped ? 'Dihentikan.' : (e.message || 'Jarvis gagal.');
       if (!stopped) {
         pend.x = { text: orig, err: String(em).slice(0, 120), resume: ex.resume, model: ex.resume_model };
-        history.push({ role: 'user', text: orig }, { role: 'model', text: '[Permintaan di atas GAGAL di tengah jalan: ' + String(em).slice(0, 120) + '. Jika admin menjawab "lanjut", kerjakan permintaan itu sampai selesai, jangan tanya ulang.]' });
-        if (history.length > 20) history = history.slice(-20);
+        var hFail = { role: 'model', text: '[Permintaan di atas GAGAL di tengah jalan: ' + String(em).slice(0, 120) + '. Jika admin menjawab "lanjut", kerjakan permintaan itu sampai selesai, jangan tanya ulang.]' };
+        history.push({ role: 'user', text: orig }, hFail); if (history.length > 20) history = history.slice(-20);
+        appendShared([{ r: 'u', text: text }, { r: 's', text: String(em).slice(0, 200) }], [{ role: 'user', text: orig }, hFail]);
         em += '\nKetik "lanjut" untuk meneruskan.';
       }
       R.wrap.appendChild(tx('div', 'bmj-m bmj-s', em)); resumeWake();
@@ -817,6 +877,7 @@
     window.addEventListener('storage', function (e) { if (e.key === 'bmtech-auth' && !el.fab) tryBuild(); });
   }
   var refreshHook = null;
-  window.BMJarvis = { open: function () { if (el.sheet) openSheet(); }, ask: function (t) { if (el.sheet) { openSheet(); submit(t); } }, refresh: function () { if (refreshHook && !el.fab) refreshHook(); } };
+  window.addEventListener('storage', function (e) { if (e.key === CHATS_KEY || e.key === CUR_KEY) { try { if (el.sheet && sheetOpen) renderShared(false); } catch (x) {} } });
+  window.BMJarvis = { fresh: function () { if (el.sheet) newShared(); }, open: function () { if (el.sheet) openSheet(); }, ask: function (t) { if (el.sheet) { openSheet(); submit(t); } }, refresh: function () { if (refreshHook && !el.fab) refreshHook(); } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

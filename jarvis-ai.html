@@ -644,7 +644,26 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     try { var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (j && Array.isArray(j.chats)) { j.chats = j.chats.filter(function (c) { return c && c.id && Array.isArray(c.msgs); }); return j; } } catch (e) {}
     return { v: 1, chats: [] };
   }
+  /* Riwayat dipakai bersama tombol Jarvis di Dashboard Admin & Warung: gabungkan perubahan terbaru dari sana sebelum menulis,
+     jangan menimpa. Obrolan yang dihapus di sini dicatat agar tidak muncul lagi. */
+  var GONE_KEY = 'bm-jarvis-gone';
+  function goneSet() { try { var a = JSON.parse(localStorage.getItem(GONE_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } }
+  function markGone(ids) { try { var a = goneSet().concat(ids); localStorage.setItem(GONE_KEY, JSON.stringify(a.slice(-300))); } catch (e) {} }
+  function mergeLatest() {
+    try {
+      var j = JSON.parse(localStorage.getItem(KEY) || 'null'); if (!j || !Array.isArray(j.chats)) return;
+      var gone = goneSet(), mine = {}; store.chats.forEach(function (c) { mine[c.id] = c; });
+      j.chats.forEach(function (c) {
+        if (!c || !c.id || !Array.isArray(c.msgs) || gone.indexOf(c.id) >= 0) return;
+        var m = mine[c.id];
+        if (!m) store.chats.push(c);
+        else if (m !== chat && (c.updated || 0) > (m.updated || 0)) store.chats[store.chats.indexOf(m)] = c;
+      });
+    } catch (e) {}
+  }
   function save() {
+    mergeLatest();
+    if (chat) { try { localStorage.setItem('bm-jarvis-cur', JSON.stringify({ id: chat.id, t: Date.now() })); } catch (e) {} }
     store.chats.sort(function (a, b) { return b.updated - a.updated; });
     if (store.chats.length > 150) store.chats.length = 150;
     for (var tries = 0; tries < 60; tries++) {
@@ -663,6 +682,20 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     if (!chat) { chat = { id: newId(), title: String(first).replace(/\s+/g, ' ').slice(0, 48), created: Date.now(), updated: Date.now(), msgs: [], hist: [] }; store.chats.unshift(chat); }
     return chat;
   }
+  window.addEventListener('storage', function (e) {
+    if (e.key !== KEY || busy) return;
+    try {
+      var j = JSON.parse(e.newValue || 'null'); if (!j || !Array.isArray(j.chats)) return;
+      var gone = goneSet(), changed = false;
+      j.chats.forEach(function (c) {
+        if (!c || !c.id || !Array.isArray(c.msgs) || gone.indexOf(c.id) >= 0) return;
+        var m = store.chats.filter(function (x) { return x.id === c.id; })[0];
+        if (!m) { store.chats.push(c); changed = true; }
+        else if ((c.updated || 0) > (m.updated || 0)) { var i = store.chats.indexOf(m); store.chats[i] = c; if (m === chat) { chat = c; try { restore(c); } catch (x) {} } changed = true; }
+      });
+      if (changed) { store.chats.sort(function (a, b) { return b.updated - a.updated; }); try { paintHist(); } catch (x) {} }
+    } catch (x) {}
+  });
   function groupKey(ts) { var d = new Date(ts), n = new Date(); return (d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth()) ? 'Bulan Ini' : d.getFullYear() + '/' + (d.getMonth() + 1); }
 
   /* ================= penyedia AI & model (router) ================= */
@@ -1018,6 +1051,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
     if (busy && chat && ids.indexOf(chat.id) >= 0) return toast('Tunggu jawaban selesai atau tekan Berhenti');
     var ok = await dlg({ title: ids.length > 1 ? 'Hapus ' + ids.length + ' obrolan?' : 'Hapus obrolan?', text: 'Riwayat dihapus dari HP ini dan tidak bisa dikembalikan.', ok: 'Hapus', danger: true });
     if (ok == null) return;
+    markGone(ids);
     store.chats = store.chats.filter(function (c) { return ids.indexOf(c.id) < 0; });
     var wasCur = chat && ids.indexOf(chat.id) >= 0;
     save(); if (wasCur) { chat = null; showHome(); }
@@ -1154,7 +1188,7 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       var pm = payloadModel(), acc = { actions: [], proposals: [], notas: [], reports: [], visuals: [] }, tries = 0, fin;
       for (;;) {
         try {
-          fin = await stream({ message: send, history: c.hist.slice(-10), providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
+          fin = await stream({ message: send, history: c.hist.slice(-10), page: 'jarvis', providers: pm.providers, provider: pm.provider, model: pm.model, keys: pm.keys, resume: resume || undefined, resume_model: rmodel || undefined }, function (ev) { if (ev.type === 'status') setStatus(R, ev.text); else if (ev.type === 'step') onStep(R, ev); });
           break;
         } catch (e2) {
           var x = e2.extra || {};
