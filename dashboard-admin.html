@@ -3390,6 +3390,7 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
+<script src="/bm-dialog.js"></script>
 <script src="/bm-session.js"></script>
 <script src="/bm-jarvis.js" defer></script>
 <script>
@@ -7497,13 +7498,28 @@
     loadAllNotesData(true).then(() => { if (tt.classList.contains('active')) renderTasks(); });
   }
 
+  let editorFlushWaiter = null;
   function closeEditorModal() {
     if (!editorModal.classList.contains('open')) return;
     returnFocusToDashboard();
     clearOpenEditorState();
     editorModal.classList.remove('open');
     clearTimeout(editorReadyTimer);
-    setTimeout(() => { if (!editorModal.classList.contains('open')) navigateFrame(editorFrame, 'about:blank'); }, 500);
+    // Panel ditutup di layar, tapi halaman editor JANGAN langsung dibuang: minta ia menyelesaikan penyimpanan dulu.
+    // (Kalau dibuang saat masih menyimpan, browser memunculkan pop-up "Leave site?" dan perubahan bisa hilang.)
+    const frameToBlank = editorFrame;
+    let blanked = false;
+    const blankNow = () => {
+      if (blanked) return; blanked = true;
+      editorFlushWaiter = null;
+      if (!editorModal.classList.contains('open')) navigateFrame(frameToBlank, 'about:blank');
+    };
+    if (frameIsBlank(editorFrame)) { setTimeout(blankNow, 500); }
+    else {
+      editorFlushWaiter = () => setTimeout(blankNow, 300);
+      try { editorFrame.contentWindow.postMessage('flush-save', window.location.origin); } catch (e) { setTimeout(blankNow, 500); }
+      setTimeout(blankNow, 20000);   // batas aman kalau editor tidak menjawab
+    }
     loadCategories();
     refreshSearchAfterEditor();
     refreshTasksIfVisible();
@@ -7514,6 +7530,7 @@
   window.addEventListener('message', (e) => {
     // Hanya pesan dari iframe editor kita sendiri yang dipercaya (jendela lain tidak boleh menutup editor / menyimpan state)
     if (e.source !== editorFrame.contentWindow || e.origin !== window.location.origin) return;
+    if (e.data && e.data.type === 'flush-done' && editorFlushWaiter) editorFlushWaiter();
     if (e.data === 'close-editor') {
       if (history.state && history.state.editorModal) history.back(); // memicu popstate -> closeEditorModal
       else closeEditorModal();

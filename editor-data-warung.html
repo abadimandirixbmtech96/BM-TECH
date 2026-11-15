@@ -452,6 +452,7 @@
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
+<script src="/bm-dialog.js"></script>
 <script src="/bm-merge.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
@@ -752,6 +753,19 @@
   </div>
 
   <!-- ============ MODAL: KONFIRMASI ============ -->
+  <!-- ============ MODAL: PERUBAHAN BELUM TERKIRIM ============ -->
+  <div class="overlay center" id="overlayLeave">
+    <div class="modal-card">
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+      <h3>Belum Terkirim</h3>
+      <p class="desc" id="leaveText"></p>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btnLeaveAnyway">Tetap keluar</button>
+        <button class="btn-primary" id="btnLeaveStay">Tetap di sini</button>
+      </div>
+    </div>
+  </div>
+
   <div class="overlay center" id="overlayConfirm">
     <div class="modal-card">
       <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
@@ -938,7 +952,7 @@
   function saveLocalDraft(){
     try {
       localStorage.setItem(getLocalDraftKey(), JSON.stringify({
-        title: noteTitle, records, trash, legacyBackup, savedAt: Date.now()
+        title: noteTitle, records, trash, legacyBackup, base: baseSnap, savedAt: Date.now()
       }));
     } catch (e) {}
   }
@@ -1024,6 +1038,16 @@
       const raw = localStorage.getItem(getLocalDraftKey());
       if (raw) {
         const draft = JSON.parse(raw);
+        if (draft.base && draft.base.content) {
+          // Draft punya titik awal -> gabungkan perubahan yang belum terkirim dengan isi server (edit data lama pun tidak hilang)
+          const mergedDraft = BMMerge.merge(draft.base,
+            { title: draft.title || '', content: { records: draft.records || [], trash: Array.isArray(draft.trash) ? draft.trash : [], legacy: draft.legacyBackup || null } },
+            { title: noteTitle, content: { records, trash, legacy: legacyBackup } });
+          if (!BMMerge.same(mergedDraft.content.records, records) || !BMMerge.same(mergedDraft.content.trash, trash)) {
+            records = mergedDraft.content.records; trash = mergedDraft.content.trash; addedFromDraft++;
+          }
+          if (mergedDraft.title && mergedDraft.title !== noteTitle) { noteTitle = mergedDraft.title; addedFromDraft++; }
+        }
         const knownIds = new Set([...records, ...trash].map(r => r.id));
         const knownSigs = new Set([...records, ...trash].map(recordSignature));
         (draft.records || []).forEach(r => {
@@ -1221,8 +1245,39 @@
     clearTimeout(autosaveTimer);
     if (hasUnsyncedChanges) showSaveStatus('Tersimpan di HP (offline)', false, true);
   });
+  // ===== Keluar dengan aman: simpan dulu, jangan sampai ada perubahan yang tertinggal =====
+  let skipLeavePrompt = false;
+  const sleepMs = ms => new Promise(r => setTimeout(r, ms));
+  async function flushBeforeLeave(maxMs){
+    const t0 = Date.now(); maxMs = maxMs || 8000;
+    while (Date.now() - t0 < maxMs) {
+      clearTimeout(autosaveTimer);
+      if (autosaveInFlight) { await sleepMs(120); continue; }
+      if (!hasUnsyncedChanges) return true;
+      if (!navigator.onLine) return false;
+      await runAutosave();
+      if (hasUnsyncedChanges) await sleepMs(400);
+    }
+    return !hasUnsyncedChanges && !autosaveInFlight;
+  }
   window.addEventListener('beforeunload', (e) => {
-    if (hasUnsyncedChanges) { e.preventDefault(); e.returnValue = ''; }
+    if (hasUnsyncedChanges && !skipLeavePrompt) { e.preventDefault(); e.returnValue = ''; }
+  });
+  // Layar dimatikan / pindah aplikasi / tab ditutup: kirim sisa perubahan sekarang juga
+  function flushSoon(){
+    if (document.visibilityState === 'hidden' && hasUnsyncedChanges && !autosaveInFlight && navigator.onLine && !existingNoteLoadFailed) {
+      clearTimeout(autosaveTimer); runAutosave();
+    }
+  }
+  document.addEventListener('visibilitychange', flushSoon);
+  window.addEventListener('pagehide', flushSoon);
+  // Dashboard meminta editor menyelesaikan penyimpanan sebelum panel ditutup (mis. tombol kembali di HP)
+  window.addEventListener('message', async (e) => {
+    if (e.source !== window.parent || e.data !== 'flush-save') return;
+    skipLeavePrompt = true;   // data sudah diamankan di HP; jangan munculkan pop-up bawaan browser berbahasa Inggris
+    let ok = false;
+    try { ok = await flushBeforeLeave(15000); } catch (err) {}
+    try { window.parent.postMessage({ type: 'flush-done', ok }, '*'); } catch (err) {}
   });
 
   let saveStatusTimer = null;
@@ -1262,7 +1317,7 @@
     if (name === 'home') renderHome();
   }
 
-  document.getElementById('btnHomeBack').addEventListener('click', () => {
+  function doLeave(){
     // Editor ini biasanya berjalan sebagai iframe di dalam dashboard-admin.html
     // (lihat pola window.parent.postMessage('note-autosaved', ...) di atas).
     // 'close-editor' adalah nama pesan yang sudah didengarkan oleh
@@ -1279,7 +1334,26 @@
     } else {
       window.location.href = 'dashboard-admin.html';
     }
-  });
+  }
+
+  // Tombol kembali: selesaikan penyimpanan dulu; kalau gagal, tanya dengan pop-up (bukan pop-up bawaan browser)
+  let leaveBusy = false;
+  async function requestLeave(){
+    if (leaveBusy) return;
+    if (!hasUnsyncedChanges && !autosaveInFlight) { doLeave(); return; }
+    leaveBusy = true;
+    showSaveStatus('Menyimpan perubahan...', false, true);
+    const ok = await flushBeforeLeave(10000);
+    leaveBusy = false;
+    if (ok) { showSaveStatus('Tersimpan', false); doLeave(); return; }
+    document.getElementById('leaveText').textContent = navigator.onLine
+      ? 'Perubahan terakhir belum berhasil dikirim ke server, mungkin sinyal sedang lemah. Tunggu sebentar lalu coba lagi, atau keluar sekarang: salinannya aman di HP ini dan akan dikirim otomatis saat data ini dibuka lagi.'
+      : 'Kamu sedang offline, jadi perubahan terakhir belum terkirim ke server. Salinannya aman di HP ini dan akan dikirim otomatis saat kamu online dan membuka data ini lagi.';
+    openOverlay('overlayLeave');
+  }
+  document.getElementById('btnLeaveStay').addEventListener('click', () => closeOverlay('overlayLeave'));
+  document.getElementById('btnLeaveAnyway').addEventListener('click', () => { skipLeavePrompt = true; closeOverlay('overlayLeave'); doLeave(); });
+  document.getElementById('btnHomeBack').addEventListener('click', requestLeave);
 
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
@@ -1859,10 +1933,10 @@
     document.getElementById('btnDedupe').textContent = dup ? `Bersihkan Data Duplikat (${dup})` : 'Bersihkan Data Duplikat';
     applyThemeUI();
   }
-  document.getElementById('btnDedupe').addEventListener('click', () => {
+  document.getElementById('btnDedupe').addEventListener('click', async () => {
     const { kept, removed } = dedupeRecords(records);
     if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
-    if (!confirm(`Ditemukan ${removed} data duplikat (isi & waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`)) return;
+    if (!(await bmConfirm(`Ditemukan ${removed} data duplikat (isi dan waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`, { title: 'Bersihkan Data Duplikat', ok: 'Ya, bersihkan', cancel: 'Batal' }))) return;
     const keptSet = new Set(kept);
     moveToTrash(records.filter(r => !keptSet.has(r))); // duplikat juga masuk Sampah, bukan hilang
     records = kept;
