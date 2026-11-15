@@ -1997,21 +1997,39 @@
       overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding-bottom: 8px; width: 100%; min-width: 0;
     }
   }
+  .day-picker[hidden], .note-detail-badge[hidden] { display: none !important; }
+  .day-picker { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 2px; margin: -2px; }
+  .day-picker::-webkit-scrollbar { display: none; }
+  .day-chip { flex: 0 0 auto; min-width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 5px 10px; border-radius: 14px; border: 1px solid var(--glass-pill-border); background: var(--glass-pill-bg); color: var(--text-secondary); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s, background .15s; }
+  .day-chip:active { transform: scale(.94); }
+  .day-chip b { font-size: 15px; font-weight: 800; color: var(--text-primary); line-height: 1.15; }
+  .day-chip small { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; line-height: 1.1; }
+  .day-chip.all { min-width: 52px; }
+  .day-chip.all b { font-size: 13px; letter-spacing: .05em; }
+  .day-chip.empty { opacity: .5; }
+  .day-chip.today small::after { content: ' \2022'; color: var(--accent-yellow); }
+  .day-chip.active { background: var(--accent-yellow); border-color: var(--accent-yellow); opacity: 1; }
+  .day-chip.active b, .day-chip.active small { color: #1C1B19; }
+  .nd-card { cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s ease; }
+  .nd-card:active { transform: scale(.985); }
+  .nd-card:focus-visible { outline: 2px solid var(--accent-yellow); outline-offset: 2px; }
   .nd-card { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: var(--radius-lg); padding: 12px 14px; flex-shrink: 0; }
   .nd-card.row-hutang  { box-shadow: inset 4px 0 0 #D64B4B; }
   .nd-card.row-piutang { box-shadow: inset 4px 0 0 #3DAA6A; }
   .nd-card.jump-hl { animation: jumpHl 2.2s ease-out; }
-  .nd-head { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
+  .nd-head { padding-bottom: 8px; border-bottom: 1px solid var(--nd-line, rgba(128,128,128,.28)); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
   .nd-no { background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); border-radius: 8px; padding: 2px 8px; color: var(--text-primary); }
   .nd-pj { margin-left: auto; border-radius: 999px; padding: 3px 10px; background: rgba(245,166,35,.18); color: #F5A623; font-weight: 800; text-align: right; }
-  .nd-title { margin: 8px 0 2px; font-size: 16px; font-weight: 800; color: var(--text-primary); overflow-wrap: anywhere; }
-  .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) minmax(0, 1fr); gap: 5px 10px; margin-top: 8px; font-size: 13px; }
+  .nd-title { margin: 8px 0 6px; font-size: 16px; font-weight: 800; color: var(--text-primary); overflow-wrap: anywhere; }
+  .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) minmax(0, 1fr); gap: 0; margin-top: 2px; font-size: 13px; }
+  .nd-grid > dt, .nd-grid > dd { padding: 6px 0; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); }
+  .nd-grid > dt:first-child, .nd-grid > dt:first-child + dd { border-top: 0; }
   .nd-grid dt { color: var(--text-secondary); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding-top: 1px; }
   .nd-card .jump-chips { margin-top: 6px; }
   .nd-card .jump-chip { white-space: normal; text-align: left; max-width: 100%; line-height: 1.35; overflow-wrap: anywhere; }
   .nd-head > span { min-width: 0; }
-  .nd-grid dd { min-width: 0; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: normal; }
-  .nd-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--card-border-dark); }
+  .nd-grid dd { min-width: 0; padding-left: 10px; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: normal; }
+  .nd-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); }
   .nd-harga { font-size: 17px; font-weight: 800; color: var(--text-primary); }
   .nd-harga small { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-right: 3px; }
   .nd-metode { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
@@ -3260,7 +3278,8 @@
     </div>
   </div>
   <div class="note-detail-bar">
-    <span class="note-detail-badge">Mode Lihat Saja</span>
+    <span class="note-detail-badge" id="noteDetailBadge">Mode Lihat Saja</span>
+    <div class="day-picker" id="noteDayPicker" role="group" aria-label="Pilih hari" hidden></div>
     <div class="view-toggle" id="noteViewToggle" role="group" aria-label="Tampilan data">
       <button type="button" data-view="card" class="active">Kartu</button>
       <button type="button" data-view="table">Tabel</button>
@@ -7589,7 +7608,7 @@
   }
 
   // Satu baris -> satu kartu (dipakai di HP supaya semua kolom terbaca tanpa geser)
-  function buildNoteCard(cols, row) {
+  function buildNoteCard(cols, row, idx) {
     const rc = row.cells || {};
     const has = id => cols.some(c => c.id === id);
     const jenisCls = rc.jenis === 'Hutang' ? 'hutang' : rc.jenis === 'Piutang' ? 'piutang' : '';
@@ -7623,7 +7642,7 @@
       }
       return `<dt>${escapeHtml(c.label || '')}</dt><dd>${escapeHtml(v(c.id))}${extra}</dd>`;
     }).join('');
-    return `<article class="nd-card${jenisCls ? ' row-' + jenisCls : ''}"${ridAttr}>${head}` +
+    return `<article class="nd-card${jenisCls ? ' row-' + jenisCls : ''}"${ridAttr} data-ridx="${idx}" tabindex="0" title="Ketuk untuk membuka di editor">${head}` +
       (title ? `<div class="nd-title">${escapeHtml(title)}</div>` : '') +
       (rows ? `<dl class="nd-grid">${rows}</dl>` : '') + foot + '</article>';
   }
@@ -7649,23 +7668,30 @@
   });
   setNoteView(getSavedNoteView(), false);
 
-  function openNoteDetail(noteId) {
-    const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
-    if (!note) return;
-    currentDetailNote = note;
+  // ---- Isi detail note: dipakai ulang saat pilihan hari berubah ----
+  let detailFullContent = null, detailShownRows = [], detailDay = 'all';
+  const DAY_ABBR = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+  const pad2d = n => String(n).padStart(2, '0');
+  const dayKeyOf = d => `${pad2d(d.getDate())}-${pad2d(d.getMonth() + 1)}-${d.getFullYear()}`;
+  const normDayCell = v => String(v == null ? '' : v).trim().replace(/[\/.]/g, '-');
 
-    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+  function currentDetailContent() {
+    const full = detailFullContent;
+    if (!full || !Array.isArray(full.rows) || detailDay === 'all') return full;
+    return { ...full, rows: full.rows.filter(r => normDayCell(r.cells && r.cells.tanggal) === detailDay) };
+  }
 
+  function paintNoteBody() {
     const tableEl = document.getElementById('noteDetailTable');
-    const content = getDisplayTable(note);
-    renderHutangSummary(note);
-
     const cardsEl = document.getElementById('noteDetailCards');
+    const content = currentDetailContent();
+    detailShownRows = (content && Array.isArray(content.rows)) ? content.rows : [];
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
-      tableEl.innerHTML = '<tr><td class="note-detail-empty">Belum ada data di tabel ini</td></tr>';
-      cardsEl.innerHTML = '<div class="note-detail-empty">Belum ada data di tabel ini</div>';
+      const msg = (detailFullContent && detailFullContent.rows && detailFullContent.rows.length) ? 'Tidak ada data di tanggal ini' : 'Belum ada data di tabel ini';
+      tableEl.innerHTML = '<tr><td class="note-detail-empty">' + msg + '</td></tr>';
+      cardsEl.innerHTML = '<div class="note-detail-empty">' + msg + '</div>';
     } else {
-      cardsEl.innerHTML = content.rows.map(row => buildNoteCard(content.columns, row)).join('');
+      cardsEl.innerHTML = content.rows.map((row, i) => buildNoteCard(content.columns, row, i)).join('');
       const cols = content.columns;
       const theadHtml = '<thead><tr>' + cols.map(c => `<th>${escapeHtml(c.label || '')}</th>`).join('') + '</tr></thead>';
       const tbodyHtml = '<tbody>' + content.rows.map(row => {
@@ -7694,6 +7720,97 @@
       }).join('') + '</tbody>';
       tableEl.innerHTML = theadHtml + tbodyHtml;
     }
+  }
+
+  // Rekap karyawan/customer (gabungan satu pekan): pilih ALL atau satu hari lewat deretan tanggal yang bisa digeser
+  function buildDayPicker(note, content) {
+    const box = document.getElementById('noteDayPicker');
+    const badge = document.getElementById('noteDetailBadge');
+    if (!note || !note._merged || !note._weekAnchor) {
+      box.hidden = true; box.innerHTML = ''; badge.hidden = false;
+      return;
+    }
+    badge.hidden = true; box.hidden = false;
+    const rows = (content && content.rows) || [];
+    const counts = {};
+    rows.forEach(r => { const k = normDayCell(r.cells && r.cells.tanggal); if (k) counts[k] = (counts[k] || 0) + 1; });
+    const a = new Date(note._weekAnchor);
+    const todayKey = dayKeyOf(new Date());
+    let html = `<button type="button" class="day-chip all active" data-day="all" aria-pressed="true"><b>ALL</b><small>${rows.length}</small></button>`;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(a.getFullYear(), a.getMonth(), a.getDate() + i);
+      const k = dayKeyOf(d);
+      html += `<button type="button" class="day-chip${counts[k] ? '' : ' empty'}${k === todayKey ? ' today' : ''}" data-day="${k}" aria-pressed="false" aria-label="${DAY_ABBR[d.getDay()]} ${d.getDate()} ${MONTH_SHORT_ID[d.getMonth()]}${counts[k] ? ', ' + counts[k] + ' data' : ', kosong'}"><b>${d.getDate()}</b><small>${DAY_ABBR[d.getDay()]}</small></button>`;
+    }
+    box.innerHTML = html;
+    box.scrollLeft = 0;
+  }
+  document.getElementById('noteDayPicker').addEventListener('click', (e) => {
+    const b = e.target.closest('.day-chip');
+    if (!b) return;
+    detailDay = b.dataset.day;
+    document.querySelectorAll('#noteDayPicker .day-chip').forEach(c => {
+      const on = c === b;
+      c.classList.toggle('active', on);
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    try { b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); } catch (err) {}
+    paintNoteBody();
+    const cardsEl = document.getElementById('noteDetailCards');
+    cardsEl.scrollTop = 0;
+    const wrap = document.querySelector('.note-detail-table-wrap');
+    if (wrap) wrap.scrollTop = 0;
+  });
+
+  // Ketuk kartu = buka editor langsung di data itu
+  async function openCardInEditor(row) {
+    const note = currentDetailNote;
+    if (!note || !row || !row.cells) return;
+    const rc = row.cells;
+    if (note._merged) {
+      if (!rc._nid || !rc._rid) { showMiniToast('Data ini tidak punya note asal, jadi tidak bisa dibuka di editor'); return; }
+      let src = pjNotesSource.find(n => n.id === rc._nid) || notesData.find(n => n.id === rc._nid);
+      let folderId = src ? src.folder_id : null;
+      if (!folderId) {
+        try {
+          const { data } = await supabaseClient.from('notes').select('folder_id').eq('id', rc._nid).maybeSingle();
+          folderId = data ? data.folder_id : null;
+        } catch (err) { folderId = null; }
+      }
+      noteDetailOverlay.classList.remove('open');
+      openEditor(rc._nid, { folder: folderId || undefined, rec: rc._rid });
+      return;
+    }
+    noteDetailOverlay.classList.remove('open');
+    openEditor(note.id, { folder: note.folder_id, rec: rc._rid || undefined });
+  }
+  (function () {
+    const cardsEl = document.getElementById('noteDetailCards');
+    cardsEl.addEventListener('click', (e) => {
+      if (e.target.closest('.note-detail-img, .jump-chip, button, a')) return;
+      const card = e.target.closest('.nd-card');
+      if (card) openCardInEditor(detailShownRows[Number(card.dataset.ridx)]);
+    });
+    cardsEl.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('nd-card')) {
+        e.preventDefault();
+        openCardInEditor(detailShownRows[Number(e.target.dataset.ridx)]);
+      }
+    });
+  })();
+
+  function openNoteDetail(noteId) {
+    const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
+    if (!note) return;
+    currentDetailNote = note;
+
+    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+
+    detailFullContent = getDisplayTable(note);
+    detailDay = 'all';
+    renderHutangSummary(note);
+    buildDayPicker(note, detailFullContent);
+    paintNoteBody();
 
     setNoteView(getSavedNoteView(), false);
     noteDetailOverlay.classList.add('open');
