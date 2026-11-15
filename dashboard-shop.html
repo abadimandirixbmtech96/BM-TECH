@@ -203,6 +203,16 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 .in.ta{height:150px;padding:12px var(--s3);text-align:left;resize:none;line-height:1.45;font-family:inherit}
 #ims{color:var(--mu);font-size:var(--f1);margin:10px 0 0}.err-t{color:var(--er);font-size:var(--f2);margin:10px 0 0}#ims[hidden],.err-t[hidden]{display:none}
+.imc{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}.imc span{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 12px;border:1px solid var(--bd);border-radius:999px;background:var(--sf);font-size:var(--f1);color:var(--mu)}.imc b{color:var(--tx);font-variant-numeric:tabular-nums}.imc .w b{color:var(--er)}
+.imk{margin:14px 0 6px;font-size:var(--f2);color:var(--mu);font-weight:600}.imk span{font-variant-numeric:tabular-nums}
+.imh{display:flex;align-items:center;gap:8px;margin-top:18px}.imh span{font-weight:600;color:var(--mu);font-size:var(--f1);font-variant-numeric:tabular-nums}.imhn,.imn{margin:2px 0 8px}
+.cr{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 14px;border-top:1px solid var(--bd)}.cr:first-child{border-top:0}.cr.off .cb{opacity:.55}
+.cr .cb{flex:1 1 calc(100% - 60px);min-width:0}.cr .cb b{display:block;overflow-wrap:anywhere}.cr .cb small{display:block;margin-top:2px;color:var(--mu)}.cr .cb .lw{color:var(--er)}
+.cr .in{height:44px;min-width:0;flex:1 1 130px}.imnd{margin:6px 0 0;color:var(--mu);font-size:var(--f1)}.imnd summary{min-height:32px;display:flex;align-items:center;cursor:pointer}.cr .fa{display:flex;gap:8px;flex:1 1 100%}.cr .fa .bt{height:44px;flex:1;padding:0 10px;font-size:14px}
+.ckb{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;flex:none;margin:-8px -8px -8px 0}
+.rt b{font-variant-numeric:tabular-nums}.r.rv>.rt{text-align:right}
+.imf{display:flex;flex-direction:column;gap:8px}.imf small{color:var(--mu);font-size:var(--f1);min-height:1em}.imf .two2{display:grid;grid-template-columns:auto 1fr;gap:10px}.imf .bt{height:48px}.imf .bt:disabled{opacity:.45}
+.imd{text-align:center;padding:28px 0 18px}.imdi{width:56px;height:56px;margin:0 auto 12px;display:grid;place-items:center;border-radius:50%;background:var(--sf);border:1px solid var(--bd);color:var(--mu)}.imdi svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2}.imd h3{margin:0 0 4px;font-size:20px}.imd p{margin:0;color:var(--mu)}
 .r.rv{cursor:pointer}.r.rv.off{opacity:.55}.r.rv .lw{color:var(--er)}
 .ck{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--bd);position:relative;transition:background .2s,border-color .2s}
 .ck.on{background:var(--ac);border-color:var(--ac)}.ck.on::after{content:'';position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid var(--on);border-width:0 2px 2px 0;transform:rotate(45deg)}
@@ -265,7 +275,7 @@ const byDT=(a,b)=>a.d<b.d?-1:a.d>b.d?1:(a.ts-b.ts);
 const reduce=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches;
 const clone=o=>JSON.parse(JSON.stringify(o));
 const setT=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};
-const P={home:'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',box:'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',sale:'M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h4',debt:'M4 5h14a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2zM4 5v12M9 10h6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',chev:'M9 6l6 6-6 6',back:'M15 6l-6 6 6 6',x:'M6 6l12 12M18 6L6 18',plus:'M12 5v14M5 12h14',cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',down:'M6 9l6 6 6-6',inbox:'M12 3v12m-5-5l5 5 5-5M4 21h16',cog:'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
+const P={ok:'M5 12l5 5 9-10',home:'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',box:'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',sale:'M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h4',debt:'M4 5h14a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2zM4 5v12M9 10h6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',chev:'M9 6l6 6-6 6',back:'M15 6l-6 6 6 6',x:'M6 6l12 12M18 6L6 18',plus:'M12 5v14M5 12h14',cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',down:'M6 9l6 6 6-6',inbox:'M12 3v12m-5-5l5 5 5-5M4 21h16',cog:'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
  stock:'M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4',scan:'M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16',search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5',minus:'M5 12h14',edit:'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',dots:'M5 12a1 1 0 1 0 .01 0M12 12a1 1 0 1 0 .01 0M19 12a1 1 0 1 0 .01 0',trash:'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',up:'M12 21V9m-5 5l5-5 5 5M4 3h16',buy:'M3 4h2l2.4 11h10.2L20 7H6.2M9 20a1 1 0 1 0 0 .01M17 20a1 1 0 1 0 0 .01'};
 const ic=(n,c)=>'<svg class="ic'+(c?' '+c:'')+'" viewBox="0 0 24 24" aria-hidden="true"><path d="'+P[n]+'"/></svg>';
 const KI={piston:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 9h24v23a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4zM12 15h24M12 20h24M12 25h24"/><circle cx="24" cy="31" r="2.6"/></svg>',
@@ -781,8 +791,8 @@ function csvStok(){const st=cc().stock,r=[['Jenis','Barang','Kode pabrik','Satua
 
 /* ================= Impor data barang ================= */
 const OSL5=['STD','25','50','75','100','125','150','175','200'];
-let IM={kind:'piston',recs:[],sizes:['STD','25','50','75','100','125','150','175','200'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
-const HSYN={name:/^(nama|nama barang|nama piston|nama motor|nama laher|nama stang|nama item|nama model|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk)$/,
+let IM={kind:'piston',note:[],edited:false,res:null,recs:[],sizes:['STD','25','50','75','100','125','150','175','200'],busy:'',err:'',lim:60,txt:''},SK={kind:'piston',q:'',f:'all',v:{}};
+const HSYN={name:/^(nama|nama barang|nama piston|nama motor|nama laher|nama stang|nama item|nama model|barang|item|produk|model|tipe|type|motor|jenis motor|deskripsi|keterangan|description|uraian|nama produk|nama [a-z ]{2,28})$/,
  os:/^(os|oversize|over size|ukuran|ukuran os|uk|size|os piston)$/,
  seri:/^(seri|series|no seri|nomor seri|seri laher|kode laher|tipe laher|seri bearing)$/,
  sell:/^(harga|harga jual|jual|price|hj|harga satuan|harga pcs|harga eceran|harga paket)$/,
@@ -806,7 +816,7 @@ function imTok(kind,text){let s=imStrip(String(text||'').replace(/\t+/g,' ')),o=
  sub(/(?:\bstok\b|\bstock\b|\bqty\b|\bsisa\b|\bjml\b|\bjumlah\b)\s*[:=]?\s*(\d+(?:[.,]\d+)?)(?:\s*(pcs|pc|biji|buah|bh|set|paket|pak|unit|botol|liter|meter|kg|dus|box|lusin))?/i,(a,n,u)=>{o.q=imQ(n);if(u)o.unit=u.toLowerCase()});
  if(o.q===null)sub(/(?<![A-Za-z0-9])[x×](\d{1,4})(?![\d.,A-Za-z])/i,(a,n)=>{o.q=+n});
  if(o.q===null)sub(/(?<![\d.,])(\d+)\s*(pcs|pc|biji|buah|bh|set|paket|pak|unit|botol|liter|meter|kg|dus|box|lusin)\b/i,(a,n,u)=>{o.q=+n;o.unit=u.toLowerCase()});
- if(kind==='bearing'){m=/(?<![\d])(\d{3,5})(?:\s?(ZZ|2RS|RS|DDU|NR|2Z|Z))?(?![\d])/i.exec(s);if(m){o.seri=(m[1]+(m[2]?' '+m[2].toUpperCase():''));s=s.replace(m[0],' ')}}
+ if(kind==='bearing'){m=/(?<![\d\/])(\d{2,3}\/\d{2,3})(?![\d\/])(?:\s?(ZZ|2RS|RS|DDU|NR|2Z|Z|ASB|C3|C4|2NR))?/i.exec(s)||/(?<![\d])(\d{3,5})(?:\s?(ZZ|2RS|RS|DDU|NR|2Z|Z|ASB|C3|C4|2NR))?(?![\d])/i.exec(s);if(m){o.seri=(m[1]+(m[2]?' '+m[2].toUpperCase():''));s=s.replace(m[0],' ')}}
  m=/(?:rp\.?\s*)?(\d{1,3}(?:[.,]\d{3})+|\d{4,}|\d+(?:[.,]\d+)?\s?(?:k|rb|ribu|jt|juta)\b)/i.exec(s);
  if(m){const p=imPrice(m[0]);if(p>=1000){o.sell=p;const ms=/^\s+(\d{1,4})\s*$/.exec(s.slice(m.index+m[0].length));if(ms&&o.q===null){o.q=+ms[1];s=s.slice(0,m.index+m[0].length)}s=s.replace(m[0],' ')}}
  if(kind==='piston'){
@@ -850,15 +860,23 @@ function imVal(r){const k=r.kind;let f,err='',unit=KU[k];
  if(k==='piston'){const b=r.name.replace(/^(paket\s+piston|pkt\s+piston|piston)\s+/i,'').trim();f=fK(k,{base:b,os:r.os});
   if(!f.base)err='Nama tidak terbaca';else if(!f.os)err='OS belum ada, pilih ukuran OS di halaman sebelumnya';else if(r.os.charAt(0)==='?')err='OS "'+r.os.slice(1)+'" tidak dikenal (STD, 25 sampai 200)'}
  else if(k==='bearing'){const seri=r.seri.toUpperCase().replace(/\s+/g,' ');let br=(r.brand||r.name).replace(/\b(laher|bearing|bantalan)\b/ig,' ').replace(/\s+/g,' ').trim();
-  f=fK(k,{base:br,seri});if(!/^\d{3,5}(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
+  f=fK(k,{base:br,seri});if(!/^(?:\d{3,5}|\d{2,3}\/\d{2,3})(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
  else if(k==='stang'){let b=r.name;if(b&&!/^stang/i.test(b))b='Stang seher '+b;f=fK(k,{base:b,jenis:r.jenis,versi:r.versi});if(!f.base)err='Nama tidak terbaca'}
  else{f=fK(k,{base:r.name});unit=r.unit||KU[k]||'pcs';if(!f.base)err='Nama tidak terbaca'}
  const o={kind:k,ok:!err,err,f,unit,sell:r.sell||0,q:r.q,pc:r.pc,cat:r.cat,assumed:!!r.assumed,dup:0,skip:false};
  if(!err){o.name=compose(k,f);o.key=keyOf(k,f);o.ex=D.items.find(x=>kindOf(x)===k&&keyOf(k,itemF(x))===o.key)||null;o.cur=o.ex?(cc().stock[o.ex.id]||0):0}else{o.name=r.name||r.seri||'(kosong)';o.skip=true}
  return o}
+const imDef=o=>{if(o.ok&&!o.ex&&!(o.sell>0))o.skip=true;return o};
+const isCek=r=>!r.ok||(!r.ex&&!(r.sell>0));
 function imFinish(kind,recs){const seen={},out=[];
- recs.forEach(r=>{const o=imVal(r);if(o.ok&&seen[o.key]){const p=seen[o.key];p.dup++;if(o.sell>0)p.sell=o.sell;if(o.q!==null)p.q=o.q;if(o.pc&&!p.pc)p.pc=o.pc;return}
-  if(o.ok)seen[o.key]=o;out.push(o)});return out}
+ recs.forEach(r=>{const o=imVal(r);o.raw=r;if(o.ok&&seen[o.key]){const p=seen[o.key];p.dup++;if(o.sell>0)p.sell=o.sell;if(o.q!==null)p.q=o.q;if(o.pc&&!p.pc)p.pc=o.pc;return}
+  if(o.ok)seen[o.key]=o;out.push(o)});out.forEach(imDef);return out}
+function imDetect(rows,fn){const h=((rows[0]||[]).join(' ')+' '+(fn||'')).toLowerCase().replace(/[_.\-]+/g,' ');
+ if(/nama jasa|nama biaya|jenis motor|jenis mesin|diameter|\bjasa\b|lemer|setingan|botolan/.test(h)&&!/nama (piston|bearing|stang)/.test(h))return'jasa';
+ if(/nama stang|stang seher/.test(h))return'stang';
+ if(/nama bearing|\bbearing\b|\blaher\b/.test(h))return'bearing';
+ if(/nama piston|\bpiston\b/.test(h))return'piston';
+ return''}
 /* ---- pembaca file ---- */
 function imCsv(t,pasted){t=t.replace(/^\uFEFF/,'');const lines=t.split(/\r?\n/).filter(l=>l.trim());if(!lines.length)return[];
  const sm=lines.slice(0,12),need=Math.max(1,Math.ceil(sm.length*0.6));let d=null;
@@ -924,8 +942,12 @@ async function imRead(file){const ext=(file.name.split('.').pop()||'').toLowerCa
  const t=await file.text();if(t&&!/[\x00-\x08\x0e-\x1f]/.test(t.slice(0,2000)))return[imCsv(t)];
  throw new Error('Format ".'+ext+'" belum didukung. Pakai CSV, Excel (.xlsx), PDF, foto, atau tempel teks.')}
 const imSet=m=>{IM.busy=m;const e=document.getElementById('ims');if(e){e.textContent=m;e.hidden=!m}};
-async function imRun(job){IM.err='';imSet('Membaca data...');try{const blocks=await job();let recs=[];blocks.forEach(b=>{recs=recs.concat(imRows(IM.kind,b))});
-  if(!recs.length)throw new Error('Tidak ada barang yang bisa dibaca. Coba tempel teksnya, satu barang per baris.');
+async function imRun(job){IM.err='';IM.note=[];IM.edited=false;imSet('Membaca data...');try{const blocks=await job();let recs=[];blocks.forEach(b=>{if(Array.isArray(b)){recs=recs.concat(imRows(IM.kind==='auto'?'umum':IM.kind,b));return}
+   const k=imDetect(b.rows,b.n);
+   if(!k)IM.note.push('"'+b.n+'" dilewati: jenisnya tidak dikenali dari judul kolom. Impor lewat menu jenis barang yang sesuai.');
+   else if(k==='jasa')IM.note.push('"'+b.n+'" adalah data jasa, bukan barang. Impor lewat Jarvis, menu Otak, "Impor banyak file CSV".');
+   else{const n0=recs.length;recs=recs.concat(imRows(k,b.rows));IM.note.push('"'+b.n+'": '+(recs.length-n0)+' baris dibaca sebagai '+KS[k].toLowerCase()+'.')}});
+  if(!recs.length)throw new Error((IM.note.length?IM.note.join(' ')+' ':'')+'Tidak ada barang yang bisa dibaca. Coba tempel teksnya, satu barang per baris.');
   if(recs.length>1500)throw new Error('Terlalu banyak baris ('+recs.length+'). Pecah file, maksimal 1500 barang sekali impor.');
   IM.recs=imFinish(IM.kind,recs);IM.lim=60;imSet('');openPage(pgImpRev,[],{live:true})}
  catch(e){IM.err=String(e&&e.message||e||'Gagal membaca');imSet('');const el=document.getElementById('ime');if(el){el.textContent=IM.err;el.hidden=false}ping(false)}}
@@ -934,7 +956,7 @@ const IMX={piston:'Satu barang per baris, misalnya "Blade OS 25 150.000" atau ko
  bearing:'Satu seri per baris, misalnya "6204", "6001 ZZ 25.000", atau kolom Seri, Harga, Stok. Nama disusun otomatis (Laher 6204).',
  stang:'Satu barang per baris, misalnya "Vario 011-KVB-0705" atau kolom Nama, Jenis, Versi, Harga, Stok.',
  umum:'Satu barang per baris, misalnya "Oli Yamalube 1 liter 55.000 stok 10" atau kolom Nama, Satuan, Harga, Stok.'};
-function pgImpKind(){return pgh('Impor data barang','<p class="date">Pilih jenis barang yang mau diisi dari file.</p>'+grp(KORD.map(k=>mrow(KL[k],'Impor daftar '+KS[k].toLowerCase(),k==='piston'||k==='stang'?'box':'inbox','impk','data-k="'+k+'"')).join(''))
+function pgImpKind(){return pgh('Impor data barang','<p class="date">Pilih beberapa file sekaligus, atau pilih jenis barang yang mau diisi.</p>'+grp(mrow('Banyak file sekaligus','Jenis dikenali otomatis dari judul kolom','up','impk','data-k="auto"'))+'<h4>Per jenis</h4>'+grp(KORD.map(k=>mrow(KL[k],'Impor daftar '+KS[k].toLowerCase(),k==='piston'||k==='stang'?'box':'inbox','impk','data-k="'+k+'"')).join(''))
  +grp(mrow('Jenis kustom baru','Misalnya baut, blok, gasket. Punya tombol impor sendiri','plus','kadd','data-next="imp"')+mrow('Kelola jenis barang','Ubah nama, kosongkan, atau hapus jenis','cog','kman','')))}
 /* ---- jenis barang kustom ---- */
 let KNX='',KED='';
@@ -951,6 +973,8 @@ function pgKindEd(k){if(!KL[k])return pgh('Jenis barang','<p class="em">Jenis in
   +(cu?mrow('Hapus jenis ini',all.length?'Kosongkan dulu barangnya':'Perlu verifikasi puzzle','trash','kdel','data-k="'+k+'"','dn'):''))
  +(all.length?'':'<p class="em">Belum ada barang jenis ini.</p>'))}
 function pgImpSrc(){const k=IM.kind;
+ if(k==='auto')return pgh('Impor banyak file','<p class="hint" style="margin:8px 0 12px">Pilih semua file CSV, Excel, PDF, atau foto sekaligus. Piston, laher, dan stang seher dikenali dari judul kolom, lalu Anda tinjau dulu sebelum disimpan. File jasa (lemer, setingan, botolan) diimpor lewat Jarvis, menu Otak, "Impor banyak file CSV".</p>'
+  +'<button class="bt full" data-a="imfile">'+ic('up')+'Pilih file (boleh banyak)</button><p class="no-r" id="ims" hidden></p><p class="err-t" id="ime"'+(IM.err?'':' hidden')+'>'+esc(IM.err)+'</p><input id="imf" type="file" multiple hidden>');
  return pgh('Impor '+KS[k].toLowerCase(),'<p class="hint" style="margin:8px 0 12px">'+esc(IMX[k]||'Satu barang per baris: nama '+KS[k].toLowerCase()+', harga, stok. Misalnya "'+KS[k]+' 8 x 20 2.000 stok 50", atau kolom Nama, Satuan, Harga, Stok.')+'</p>'
  +(k==='piston'?'<h4 style="margin-top:6px">Ukuran OS untuk baris tanpa OS</h4>'+'<div class="chips flat" style="flex-wrap:wrap;overflow:visible">'+OSL5.map(v=>'<button type="button" class="chip'+(IM.sizes.includes(v)?' on':'')+'" data-a="imos" data-v="'+v+'">'+(v==='STD'?'STD':'OS '+v)+'</button>').join('')+'</div>':'')
  +'<button class="bt full" data-a="imfile" style="margin-top:14px">'+ic('up')+'Pilih file</button>'
@@ -959,35 +983,65 @@ function pgImpSrc(){const k=IM.kind;
  +'<button class="bt sec full" data-a="imtext">Baca teks</button>'
  +'<p class="no-r" id="ims" hidden></p><p class="err-t" id="ime"'+(IM.err?'':' hidden')+'>'+esc(IM.err)+'</p>'
  +'<input id="imf" type="file" multiple hidden>')}
-function imCounts(){const o={nw:0,ex:0,bad:0,sk:0,sel:0};IM.recs.forEach(r=>{if(!r.ok)o.bad++;else if(r.skip)o.sk++;else{o.sel++;if(r.ex)o.ex++;else o.nw++}});return o}
-function imRow(r,i,lab){const st=cc().stock;let sub,right;
- if(!r.ok)return '<div class="r rv off"><div><b>'+esc(r.name)+'</b><small class="lw">'+esc(r.err)+'</small></div><div class="rt"><small>Dilewati</small></div></div>';
- sub=(r.ex?'<i class="tag mu">Sudah ada</i>':'<i class="tag mu">Baru</i>')+(r.assumed?'<i class="tag mu">OS dibuat otomatis</i>':'')+(r.dup?'<i class="tag mu">Dobel digabung</i>':'');
+function imCounts(){const o={nw:0,ex:0,cek:0,lw:0,sel:0,hold:0};IM.recs.forEach(r=>{const ck=isCek(r);if(ck)o.cek++;if(r.ok&&!r.skip){o.sel++;if(r.ex)o.ex++;else o.nw++}else if(r.ok&&!ck)o.lw++;if(ck&&(!r.ok||r.skip))o.hold++});return o}
+const FIXPH={bearing:'Seri, mis. 6204',piston:'Nama atau OS',stang:'Nama stang seher',umum:'Nama barang'};
+function imRow(r,i,lab){
+ if(isCek(r)){const nm=r.ok?r.name:(r.raw&&(r.raw.name||r.raw.seri))||r.name;
+  const tags=r.ok?'<i class="tag mu">Baru</i> <span class="lw">Harga kosong</span>':'<span class="lw">'+esc(r.err)+'</span>';
+  const pv=r.fixP!==undefined?r.fixP:(r.ok?r.sell:(r.raw&&r.raw.sell)||0);
+  return '<div class="cr'+(r.ok&&r.skip?' off':'')+'"><div class="cb"><b>'+esc(lab||nm)+'</b><small>'+tags+'</small></div>'
+   +(r.ok?'<button type="button" class="ckb" data-a="imtog" data-i="'+i+'" aria-label="Sertakan atau lewati"><span class="ck'+(r.skip?'':' on')+'"></span></button>':'')
+   +(r.ok?'':'<input class="in" data-imn="'+i+'" placeholder="'+esc(FIXPH[r.kind]||'Nama')+'" autocomplete="off" autocapitalize="characters" aria-label="Perbaiki '+esc(nm)+'" value="'+esc(r.fixN||'')+'">')
+   +'<input class="in" data-imp="'+i+'" data-fmt="money" inputmode="numeric" autocomplete="off" placeholder="Harga jual" aria-label="Harga '+esc(nm)+'" value="'+(pv>0?esc(String(pv).replace(/\B(?=(\d{3})+(?!\d))/g,'.')):'')+'">'
+   +(r.ok?'':'<div class="fa"><button type="button" class="bt sec" data-a="imfix" data-i="'+i+'">Cek lagi</button>'+(r.kind!=='umum'?'<button type="button" class="bt sec" data-a="imumum" data-i="'+i+'">Jadikan barang lain</button>':'')+'</div>')
+   +'</div>'}
  const pr=r.sell>0?rp(r.sell):(r.ex&&r.ex.sell>0?rp(r.ex.sell):'Harga kosong');
+ const sub=(r.ex?'<i class="tag mu">Sudah ada</i>':'<i class="tag mu">Baru</i>')+(r.assumed?'<i class="tag mu">OS otomatis</i>':'')+(r.dup?'<i class="tag mu">Dobel digabung</i>':'');
  const sq=r.q===null?'':(r.ex?(r.q!==r.cur?'Stok '+num(r.cur)+' → '+num(r.q):'Stok '+num(r.q)):'Stok '+num(r.q));
  const note=r.ex&&r.sell>0&&r.ex.sell>0&&r.sell!==r.ex.sell?' <small class="lw" style="display:inline">harga tidak diubah</small>':'';
  return '<div class="r rv'+(r.skip?' off':'')+'" data-a="imtog" data-i="'+i+'"><div><b>'+esc(lab||r.name)+'</b><small>'+sub+note+'</small></div><div class="rt"><b>'+esc(pr)+'</b>'+(sq?'<small>'+esc(sq)+'</small>':'')+'</div><span class="ck'+(r.skip?'':' on')+'"></span></div>'}
-function imList(){
- if(IM.kind==='piston'&&IM.recs.length>8){const m=new Map(),bad=[];IM.recs.forEach((r,i)=>{if(!r.ok){bad.push([r,i]);return}const b=String((r.f&&r.f.base)||r.name).replace(/^(paket piston|piston)\s+/i,'').trim(),k=nk(b);if(!m.has(k))m.set(k,{k,b,a:[]});m.get(k).a.push([r,i])});
+function imOkOne(ok){
+ if(ok.length>8&&ok.every(z=>z[0].kind==='piston')){const m=new Map();ok.forEach(z=>{const r=z[0],b=String((r.f&&r.f.base)||r.name).replace(/^(paket piston|piston)\s+/i,'').trim(),k=nk(b);if(!m.has(k))m.set(k,{k,b,a:[]});m.get(k).a.push(z)});
   const gs=[...m.values()].sort((p,q)=>p.b.localeCompare(q.b,undefined,{numeric:true}));
   gs.forEach(g=>g.a.sort((p,q)=>OSX.indexOf(normOS(p[0].f.os))-OSX.indexOf(normOS(q[0].f.os))));
-  let o=gs.map(g=>{const np=g.a.filter(z=>!(z[0].sell>0)&&!(z[0].ex&&z[0].ex.sell>0)).length,key='r|'+g.k;
-   return gcard(key,g.b,g.a.length+' ukuran'+(np?' · <span class="er">'+np+' harga kosong</span>':''),g.a.map(z=>imRow(z[0],z[1],osTxt({a:{os:z[0].f.os},name:z[0].name}))).join(''),GO[key])}).join('');
-  if(bad.length)o+=gcard('r|bad','Dilewati',bad.length+' baris tidak terbaca',bad.map(z=>imRow(z[0],z[1])).join(''),GO['r|bad']);
-  return o}
- const a=IM.recs.slice(0,IM.lim).map((r,i)=>imRow(r,i)).join('');return grp(a)+(IM.recs.length>IM.lim?'<button class="bt sec full" data-a="immore">Tampilkan '+Math.min(60,IM.recs.length-IM.lim)+' lagi ('+(IM.recs.length-IM.lim)+' tersisa)</button>':'')}
+  return gs.map(g=>{const np=g.a.filter(z=>!(z[0].sell>0)&&!(z[0].ex&&z[0].ex.sell>0)).length,key='r|'+g.k;
+   return gcard(key,g.b,g.a.length+' ukuran'+(np?' · <span class="er">'+np+' harga kosong</span>':''),g.a.map(z=>imRow(z[0],z[1],osTxt({a:{os:z[0].f.os},name:z[0].name}))).join(''),GO[key])}).join('')}
+ const a=ok.slice(0,IM.lim).map(z=>imRow(z[0],z[1])).join('');return grp(a)+(ok.length>IM.lim?'<button class="bt sec full" data-a="immore">Tampilkan '+Math.min(60,ok.length-IM.lim)+' lagi ('+(ok.length-IM.lim)+' tersisa)</button>':'')}
+function imOkList(ok){const ks=[];ok.forEach(z=>{if(!ks.includes(z[0].kind))ks.push(z[0].kind)});
+ if(ks.length<2)return imOkOne(ok);
+ return ks.map(k=>{const l=ok.filter(z=>z[0].kind===k);return '<h5 class="imk">'+esc(KL[k]||k)+' <span>'+l.length+'</span></h5>'+imOkOne(l)}).join('')}
+function imList(){const cek=[],ok=[];IM.recs.forEach((r,i)=>{(isCek(r)?cek:ok).push([r,i])});let o='';
+ if(cek.length)o+='<h4 class="imh">Perlu dicek <span>'+cek.length+'</span></h4><p class="hint imhn">Baris ini belum ikut disimpan. Isi harga atau perbaiki lalu sertakan.</p>'+grp(cek.map(z=>imRow(z[0],z[1])).join(''));
+ if(ok.length)o+='<h4 class="imh">Siap disimpan <span>'+ok.length+'</span></h4>'+imOkList(ok);
+ return o}
+function imChips(c){return '<span><b>'+c.sel+'</b> siap</span><span class="'+(c.cek?'w':'')+'"><b>'+c.cek+'</b> perlu dicek</span><span><b>'+c.lw+'</b> dilewati</span>'}
+const imSum=c=>c.nw+' baru'+(c.ex?', '+c.ex+' sudah ada':'')+'. Ketuk baris untuk melewati atau menyertakan.';
+const imWarn=c=>c.hold?c.hold+' baris belum dicek tidak ikut disimpan':'';
 function pgImpRev(){const c=imCounts();
- return pgh('Tinjau impor','<p class="date" id="imc">'+imSum(c)+'</p><div id="iml">'+imList()+'</div>',{foot:'<div class="ft"><div><small>Akan disimpan</small><b id="imn">'+c.sel+' barang</b></div><button class="bt" data-a="imsave" id="imb"'+(c.sel?'':' disabled')+'>Simpan</button></div>'})}
-const imSum=c=>c.nw+' baru'+(c.ex?', '+c.ex+' sudah ada':'')+(c.bad?', '+c.bad+' dilewati':'')+'. Ketuk baris untuk melewati atau menyertakan.';
-function imUpd(){const c=imCounts();setT('imc',imSum(c));setT('imn',c.sel+' barang');const b=document.getElementById('imb');if(b)b.disabled=!c.sel}
+ return pgh('Tinjau impor','<div class="imc" id="imc">'+imChips(c)+'</div><p class="hint" id="imd">'+esc(imSum(c))+'</p>'+(IM.note.length?'<details class="imnd"><summary>'+IM.note.length+' catatan file</summary><p class="hint imn">'+IM.note.map(esc).join('<br>')+'</p></details>':'')+'<div id="iml">'+imList()+'</div>',
+  {foot:'<div class="imf"><small id="imw">'+esc(imWarn(c))+'</small><div class="two2"><button class="bt sec" data-a="imcancel">Batal</button><button class="bt" data-a="imsave" id="imb"'+(c.sel?'':' disabled')+'>Simpan '+c.sel+' barang</button></div></div>'})}
+function imUpd(){const c=imCounts();const e=document.getElementById('imc');if(e)e.innerHTML=imChips(c);setT('imd',imSum(c));setT('imw',imWarn(c));const b=document.getElementById('imb');if(b){b.disabled=!c.sel;b.textContent='Simpan '+c.sel+' barang'}}
+function imRedraw(){const l=document.getElementById('iml');if(l)l.innerHTML=imList();imUpd()}
+function imRefix(i,kindTo){const r=IM.recs[i];if(!r||!r.raw)return;const raw=Object.assign({},r.raw),val=String(r.fixN||'').trim(),pr=r.fixP!==undefined?r.fixP:(raw.sell||0);
+ if(kindTo){raw.kind=kindTo;raw.name=val||raw.name||raw.seri||'';raw.seri='';raw.os=''}
+ else if(r.kind==='bearing'){if(!val)return toast('Isi seri bearing dulu, misalnya 6204');raw.seri=val;raw.name=''}
+ else if(r.kind==='piston'&&/OS/.test(r.err||'')){if(!val)return toast('Isi ukuran OS dulu');raw.os=val}
+ else{if(!val&&!raw.name)return toast('Isi namanya dulu');if(val)raw.name=val}
+ raw.sell=pr;const n=imVal(raw);n.raw=raw;imDef(n);if(!n.ok){n.fixN=val;n.fixP=pr;toast(n.err)}else if(!n.ex&&!(n.sell>0))toast('Barang terbaca, isi harganya lalu sertakan');IM.recs[i]=n;IM.edited=true;imRedraw()}
+function imDlSkipped(){const rows=(IM.res&&IM.res.sk)||[];const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const t='﻿nama;harga;alasan\r\n'+rows.map(r=>[r.n,r.p,r.w].map(q).join(';')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download='baris-dilewati.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+function pgImpDone(){const r=IM.res||{nn:0,nu:0,sk:[]};
+ return pgh('Impor selesai','<div class="imd"><div class="imdi">'+ic('ok')+'</div><h3>'+(r.nn+r.nu)+' barang tersimpan</h3><p>'+r.nn+' baru · '+r.nu+' diperbarui'+(r.sk.length?' · '+r.sk.length+' dilewati':'')+'</p></div>'
+  +grp(mrow('Isi stok sekarang','Ketik jumlah atau scan per kotak','stock','imstk','')+(r.sk.length?mrow('Unduh baris yang dilewati','CSV, bisa diperbaiki lalu diimpor lagi','inbox','imdl',''):'')),{foot:'<button class="bt full" data-a="back">Selesai</button>'})}
 function imSave(){const c=clone(D),at=Date.now();let nn=0,nu=0,ns=0;const kind=IM.kind;
  IM.recs.forEach(r=>{if(!r.ok||r.skip)return;const k=r.kind;let x=c.items.find(z=>kindOf(z)===k&&keyOf(k,itemF(z))===r.key),cur=0;
   if(x){cur=cc().stock[x.id]||0;if(!(x.sell>0)&&r.sell>0)x.sell=r.sell;if(x.arch){x.arch=false}nu++}
   else{x={id:uid(),kind:k,base:r.f.base,a:attrsOf(r.f),name:r.name,cat:r.cat||'',unit:r.unit,buy:0,sell:r.sell||0,min:0,arch:false,codes:[],pc:''};c.items.push(x);nn++}
   if(r.pc&&!x.pc&&!(k==='piston'&&c.items.some(z=>z.id!==x.id&&kindOf(z)==='piston'&&z.pc&&cn(z.pc)===cn(r.pc))))x.pc=r.pc;
   if(r.q!==null&&r.q!==cur){c.adj.push({id:uid(),i:x.id,name:x.name,unit:x.unit,delta:r4(r.q-cur),c:null,reason:'Impor data',d:today(),ts:at+(++ns),note:''})}});
- if(!commit(c))return;const msg=nn+' barang baru'+(nu?', '+nu+' diperbarui':'')+'. Isi stoknya di sini.';
- const n=PGS.length;back(n);render(false);SK={kind,q:'',f:'all',v:{}};setTimeout(()=>{openPage(pgStock,[],{live:false});toast(msg)},reduce()?0:60)}
+ if(!commit(c))return;const sk=IM.recs.filter(r=>!r.ok||r.skip).map(r=>({n:r.ok?r.name:((r.raw&&(r.raw.name||r.raw.seri))||r.name),p:r.ok?(r.sell||''):((r.raw&&r.raw.sell)||''),w:r.ok?(isCek(r)?'Harga kosong, tidak disertakan':'Dilewati'):r.err}));
+ IM.res={nn,nu,sk,kind:kind==='auto'?'all':kind};const n=PGS.length;back(n);render(false);SK={kind:IM.res.kind,q:'',f:'all',v:{}};setTimeout(()=>openPage(pgImpDone,[],{live:false}),reduce()?0:60)}
 function skRow(x,lab){const st=cc().stock,v=SK.v[x.id]||{},cur=st[x.id]||0,val=v.q!==undefined&&v.q!==''?v.q:String(cur),ch=String(cur)!==String(val);
  return '<div class="sk2" data-skr="'+x.id+'"><div class="skn"><b>'+esc(lab||x.name)+'</b><small>'+(x.sell>0?rp(x.sell):'')+(x.sell>0?' · ':'')+'ada '+num(cur)+' '+esc(x.unit)+'</small></div>'
  +'<div class="sqc"><button type="button" data-a="skm" data-id="'+x.id+'" data-d="-1" aria-label="Kurangi">−</button><input class="v'+(ch?' ch':'')+'" data-skv="'+x.id+'" data-sk="'+x.id+'" data-fmt="qty" inputmode="decimal" autocomplete="off" aria-label="Jumlah '+esc(x.name)+'" value="'+esc(val)+'"><button type="button" data-a="skm" data-id="'+x.id+'" data-d="1" aria-label="Tambah">+</button><button type="button" class="q" data-a="skm" data-id="'+x.id+'" data-d="5">+5</button><button type="button" class="q" data-a="skm" data-id="'+x.id+'" data-d="10">+10</button></div>'
@@ -1378,7 +1432,12 @@ const A={
  imos(b){const v=b.dataset.v,i=IM.sizes.indexOf(v);if(i>=0)IM.sizes.splice(i,1);else IM.sizes.push(v);IM.sizes.sort((x,y)=>OSL5.indexOf(x)-OSL5.indexOf(y));b.classList.toggle('on',IM.sizes.includes(v))},
  imfile(){const e=document.getElementById('imf');if(e)e.click()},
  imtext(){const e=document.getElementById('imt'),t=e?e.value:'';if(!t.trim())return bad('#imt','Tempel daftar barangnya dulu');IM.txt=t;imRun(async()=>[imCsv(t,true)])},
- imtog(b){const r=IM.recs[+b.dataset.i];if(!r||!r.ok)return;r.skip=!r.skip;const k=b.querySelector('.ck');b.classList.toggle('off',r.skip);if(k)k.classList.toggle('on',!r.skip);imUpd()},
+ imtog(b){const r=IM.recs[+b.dataset.i];if(!r||!r.ok)return;r.skip=!r.skip;IM.edited=true;const k=b.querySelector('.ck'),row=b.closest('.r,.cr')||b;row.classList.toggle('off',r.skip);if(k)k.classList.toggle('on',!r.skip);imUpd()},
+ imfix(b){imRefix(+b.dataset.i)},
+ imumum(b){imRefix(+b.dataset.i,'umum')},
+ imcancel(){if(!IM.edited&&!IM.recs.some(r=>isCek(r)&&r.fixN))return back(1);ask({title:'Buang hasil cek?',msg:'Belum ada data yang disimpan. Perbaikan yang sudah Anda buat akan hilang.',ok:'Buang'},()=>back(1))},
+ imstk(){back(1);setTimeout(()=>openPage(pgStock,[],{live:false}),reduce()?0:60)},
+ imdl(){imDlSkipped()},
  immore(){IM.lim+=60;const l=document.getElementById('iml');if(l)l.innerHTML=imList()},
  imsave(){imSave()},
  stk(){SK={kind:IK==='all'?'piston':IK,q:'',f:'all',v:{}};if(IK!=='all')return openPage(pgStock,[],{live:false});openPage(pgStkKind,[])},
@@ -1479,6 +1538,8 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
  const fm=t.dataset.fmt;if(fm==='money')fmtMoney(t);else if(fm==='qty')fmtQty(t);
  if(t.dataset.sug)showSug(t);
  if(t.id==='imt'){IM.txt=t.value;return}
+ if(t.dataset.imn!==undefined){const r=IM.recs[+t.dataset.imn];if(r)r.fixN=t.value;return}
+ if(t.dataset.imp!==undefined){const r=IM.recs[+t.dataset.imp];if(r){r.fixP=pm(t.value);if(r.ok)r.sell=r.fixP}return}
  if(t.id==='rsq'){RS.q=t.value;const l=document.getElementById('rsl');if(l)l.innerHTML=rsList();return}
  if(t.id==='skpt'){SKP.txt=t.value;return}
  if(t.id==='skq'){SK.q=t.value;const l=document.getElementById('skl');if(l)l.innerHTML=skList();return}
@@ -1501,7 +1562,8 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
   updPv()}});
 const AMIME={mp3:'audio/mpeg',wav:'audio/wav',ogg:'audio/ogg',oga:'audio/ogg',m4a:'audio/mp4',aac:'audio/aac',mp4:'audio/mp4',webm:'audio/webm'};
 document.addEventListener('change',e=>{const s=e.target;
- if(s.id==='imf'&&s.files&&s.files.length){const fl=[...s.files];s.value='';imRun(async()=>{let b=[];for(const f of fl){imSet('Membaca '+f.name);b=b.concat(await imRead(f))}return b});return}
+ if(s.dataset&&s.dataset.imp!==undefined){const r=IM.recs[+s.dataset.imp];if(r&&r.ok&&r.sell>0&&r.skip&&!r.ex){r.skip=false;IM.edited=true;imRedraw()}else if(r&&r.ok)imUpd();return}
+ if(s.id==='imf'&&s.files&&s.files.length){const fl=[...s.files];s.value='';imRun(async()=>{let b=[];for(const f of fl){imSet('Membaca '+f.name);const bl=await imRead(f);b=b.concat(IM.kind==='auto'?bl.map(x=>({n:f.name,rows:x})):bl)}return b});return}
  if(s.id&&s.id.indexOf('sf-')===0&&s.files&&s.files[0]){const k=s.id.slice(3),f=s.files[0];s.value='';
   if(f.size>307200)return toast('File terlalu besar, maksimal 300 KB');
   const r=new FileReader();r.onload=()=>{const ext=(f.name.split('.').pop()||'').toLowerCase(),mime=AMIME[ext]||(f.type&&f.type.indexOf('audio')===0?f.type:'');
