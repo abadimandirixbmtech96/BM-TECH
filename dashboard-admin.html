@@ -7489,6 +7489,7 @@
     loadCategories();
     refreshSearchAfterEditor();
     refreshTasksIfVisible();
+    refreshDetailAfterEditor();
   }
   function pushEditorState() { try { history.pushState({ editorModal: true }, ''); } catch (e) {} }
 
@@ -7777,11 +7778,9 @@
           folderId = data ? data.folder_id : null;
         } catch (err) { folderId = null; }
       }
-      noteDetailOverlay.classList.remove('open');
-      openEditor(rc._nid, { folder: folderId || undefined, rec: rc._rid });
+      openEditor(rc._nid, { folder: folderId || undefined, rec: rc._rid });   // detail dibiarkan terbuka di bawah editor
       return;
     }
-    noteDetailOverlay.classList.remove('open');
     openEditor(note.id, { folder: note.folder_id, rec: rc._rid || undefined });
   }
   (function () {
@@ -7798,6 +7797,66 @@
       }
     });
   })();
+
+  // Isi ulang detail note yang sedang terbuka (tanpa menutup), pilihan hari & posisi gulir dipertahankan
+  function fillNoteDetail(note, day) {
+    currentDetailNote = note;
+    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+    detailFullContent = getDisplayTable(note);
+    detailDay = 'all';
+    renderHutangSummary(note);
+    buildDayPicker(note, detailFullContent);
+    if (day && day !== 'all') {
+      const chip = Array.from(document.querySelectorAll('#noteDayPicker .day-chip')).find(c => c.dataset.day === day);
+      if (chip) {
+        detailDay = day;
+        document.querySelectorAll('#noteDayPicker .day-chip').forEach(c => {
+          const on = c === chip;
+          c.classList.toggle('active', on);
+          c.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        try { chip.scrollIntoView({ inline: 'center', block: 'nearest' }); } catch (e) {}
+      }
+    }
+    paintNoteBody();
+  }
+
+  let detailRefreshSeq = 0;
+  async function refreshDetailAfterEditor() {
+    if (!noteDetailOverlay.classList.contains('open') || !currentDetailNote) return;
+    const old = currentDetailNote, day = detailDay, seq = ++detailRefreshSeq;
+    const cardsEl = document.getElementById('noteDetailCards');
+    const wrap = document.querySelector('.note-detail-table-wrap');
+    const st = { c: cardsEl.scrollTop, t: wrap ? wrap.scrollTop : 0, l: wrap ? wrap.scrollLeft : 0 };
+    try {
+      let fresh = null;
+      if (old._merged) {
+        const vf = vfParse(activeCategoryId);
+        if (vf) {
+          const { data, error } = await supabaseClient.from('notes').select('*').order('created_at', { ascending: false });
+          if (!error && Array.isArray(data)) {
+            const sameWeek = data.filter(x => noteHasVf(x, vf)).filter(x => {
+              const dd = getNoteEffectiveDate(x);
+              return dd && !isNaN(dd) && getWeekAnchorThursday(dd).getTime() === old._weekAnchor;
+            });
+            fresh = mergeNotesByWeek(sameWeek, vf).find(m => m._weekAnchor === old._weekAnchor) || null;
+            if (!fresh) { if (seq === detailRefreshSeq) noteDetailOverlay.classList.remove('open'); return; }   // semua baris pekan ini sudah dihapus
+          }
+        }
+      } else if (!old.id.startsWith('__')) {
+        const { data, error } = await supabaseClient.from('notes').select('*').eq('id', old.id).maybeSingle();
+        if (!error) {
+          if (!data) { if (seq === detailRefreshSeq) noteDetailOverlay.classList.remove('open'); return; }   // note dihapus di editor
+          fresh = Object.assign({}, old, data);
+        }
+      }
+      if (!fresh || seq !== detailRefreshSeq || !noteDetailOverlay.classList.contains('open') || currentDetailNote !== old) return;
+      detailExtraNotes[fresh.id] = fresh;
+      fillNoteDetail(fresh, day);
+      cardsEl.scrollTop = st.c;
+      if (wrap) { wrap.scrollTop = st.t; wrap.scrollLeft = st.l; }
+    } catch (err) { console.warn('Gagal menyegarkan detail setelah editor:', err); }
+  }
 
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
@@ -7883,8 +7942,7 @@
       openEditRowDialog(currentDetailNote);   // rekap gabungan: pilih nomor baris, editor dibuka di note aslinya
       return;
     }
-    noteDetailOverlay.classList.remove('open');
-    openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });
+    openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });   // detail dibiarkan terbuka di bawah editor
   });
 
   // ---- Rekap gabungan: pilih nomor baris yang mau diedit ----
@@ -7971,8 +8029,7 @@
       folderId = data ? data.folder_id : null;
     }
     closeEditRowDialog();
-    noteDetailOverlay.classList.remove('open');
-    openEditor(noteId, { folder: folderId || undefined, rec: recId });
+    openEditor(noteId, { folder: folderId || undefined, rec: recId });   // detail dibiarkan terbuka di bawah editor
   }
 
   editRowInput.addEventListener('input', editRowValidate);
