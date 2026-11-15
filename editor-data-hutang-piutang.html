@@ -494,6 +494,7 @@
 <!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
+<script src="/bm-merge.js"></script>
 <script>
   const SUPABASE_URL = 'https://zgzmbneqqzxnptbmlhsz.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
@@ -1063,6 +1064,7 @@
 
     existingNoteLoadFailed = false;
     lastKnownUpdatedAt = note.updated_at;
+    baseSnap = BMMerge.snapFromNote(note, SCHEMA_VERSION);
     noteTitle = note.title || '';
 
     let needsMigrationSave = false;
@@ -1121,6 +1123,7 @@
   let autosavePending = false;
   let autosaveRetryCount = 0;
   let hasUnsyncedChanges = false;
+  let baseSnap = null;   // isi note saat terakhir sinkron dengan server (dasar penggabungan otomatis)
 
   function buildPreviewText(){
     const last = sortedRecords().slice(-1)[0];
@@ -1143,6 +1146,7 @@
       date_tag: buildDateTag(),
       content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
     };
+    const snapMine = BMMerge.snapFromPayload(payload);   // salinan isi yang kukirim (aman dari perubahan saat menunggu server)
 
     let result;
     if (currentNoteId) {
@@ -1151,7 +1155,7 @@
       result = await query.select().single();
 
       if (result.error && (result.error.code === 'PGRST116' || /0 rows|no rows/i.test(result.error.message || ''))) {
-        return await handleSaveConflict(payload);
+        return await handleSaveConflict(payload, snapMine);
       }
     } else {
       result = await supabaseClient.from('notes').insert({ ...payload, folder_id: targetFolderId }).select().single();
@@ -1166,30 +1170,55 @@
 
     currentNoteId = result.data.id;
     lastKnownUpdatedAt = result.data.updated_at;
+    baseSnap = snapMine;
     window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
     return true;
   }
 
-  async function handleSaveConflict(myPayload){
-    const timpaVersiSaya = confirm(
-      'Data ini sudah diubah di tempat lain sejak kamu buka (mungkin device/admin lain). ' +
-      'Perubahanmu tetap aman tersimpan di HP ini.\n\n' +
-      'Pilih OK untuk TIMPA dengan versi kamu (perubahan di tempat lain akan hilang), ' +
-      'atau Batal untuk MUAT ULANG versi terbaru (perubahanmu di sesi ini akan dibuang).'
-    );
+  async function handleSaveConflict(myPayload, snapMine){
+    // Bentrok = perangkat/admin lain menyimpan lebih dulu. Tidak ada yang mengalah: isi terbaru di server
+    // digabung dengan perubahanku per data (id), lalu disimpan ulang. Diulang kalau ada yang menyimpan lagi di sela-selanya.
+    for (let attempt = 0; attempt < 8; attempt++) {
+      const cur = await supabaseClient.from('notes').select('*').eq('id', currentNoteId).single();
+      if (cur.error || !cur.data) {
+        if (cur.error && cur.error.code === 'PGRST116') { showSaveStatus('Data ini sudah dihapus di tempat lain', true, true); return false; }
+        showSaveStatus('Gagal tersimpan — mencoba lagi', true, true);
+        return false;
+      }
+      const theirs = cur.data;
+      const merged = BMMerge.merge(baseSnap, snapMine, {
+        title: theirs.title,
+        content: (theirs.content && theirs.content.schema === SCHEMA_VERSION) ? theirs.content : { records: [], trash: [], legacy: null }
+      });
+      const upd = await supabaseClient.from('notes').update({
+        title: merged.title || 'Untitled',
+        preview: myPayload.preview,
+        date_tag: myPayload.date_tag,
+        content: Object.assign({}, merged.content, { schema: SCHEMA_VERSION })
+      }).eq('id', currentNoteId).eq('updated_at', theirs.updated_at).select().single();
 
-    if (timpaVersiSaya) {
-      const forced = await supabaseClient.from('notes').update(myPayload).eq('id', currentNoteId).select().single();
-      if (forced.error) { showSaveStatus('Gagal tersimpan', true); return false; }
-      lastKnownUpdatedAt = forced.data.updated_at;
-      window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
-      return true;
+      if (!upd.error) {
+        lastKnownUpdatedAt = upd.data.updated_at;
+        const saved = BMMerge.snapFromPayload({ title: upd.data.title, content: upd.data.content });
+        // Terapkan hasil gabungan ke layar. Kalau kamu sempat mengetik lagi selama menyimpan, perubahan itu ikut digabung (bukan ditimpa).
+        const live = BMMerge.merge(snapMine, { title: noteTitle, content: { records, trash, legacy: legacyBackup } }, saved);
+        const liveChanged = !BMMerge.same(live.content.records, saved.content.records) || !BMMerge.same(live.content.trash, saved.content.trash) || live.title !== saved.title;
+        BMMerge.syncArray(records, live.content.records);
+        BMMerge.syncArray(trash, live.content.trash);
+        noteTitle = live.title;
+        legacyBackup = live.content.legacy || null;
+        baseSnap = saved;
+        if (liveChanged) autosavePending = true;
+        try { renderHome(); if (currentView === 'trash' && typeof renderTrash === 'function') renderTrash(); } catch (e) { console.warn(e); }
+        try { if (typeof showMigrationToast === 'function') showMigrationToast('Ada perubahan dari perangkat lain — sudah digabung otomatis dengan perubahanmu.'); } catch (e) {}
+        window.parent.postMessage({ type: 'note-autosaved', noteId: currentNoteId, folder: targetFolderId }, '*');
+        return true;
+      }
+      const isConflict = upd.error.code === 'PGRST116' || /0 rows|no rows/i.test(upd.error.message || '');
+      if (!isConflict) { console.error('[merge] gagal:', upd.error.message); showSaveStatus('Gagal tersimpan', true); return false; }
+      await new Promise(r => setTimeout(r, 120 * (attempt + 1) + Math.random() * 180));
     }
-
-    clearLocalDraft();
-    hasUnsyncedChanges = false;
-    showSaveStatus('Memuat versi terbaru...', false, true);
-    await loadExistingNote();
+    showSaveStatus('Gagal tersimpan — mencoba lagi', true, true);
     return false;
   }
 
