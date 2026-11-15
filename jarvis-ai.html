@@ -1039,7 +1039,8 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
   async function brainSheet() {
     page('Otak Jarvis', function (b) {
       b.appendChild(group('Tambah', [nav(I.add, 'Isi data baru', 'Harga, dokumen, aturan. Terpisah dari data bengkel', function () { brainForm(null); }),
-        nav(I.dl, 'Unggah file', 'txt, csv, md, json (maks 60.000 huruf)', function () { pickFile(function (d) { brainForm(null, d); }); })]));
+        nav(I.dl, 'Unggah file', 'txt, csv, md, json (maks 60.000 huruf)', function () { pickFile(function (d) { brainForm(null, d); }); }),
+        nav(I.tbl, 'Impor banyak file CSV', 'Daftar harga jasa diubah jadi kalimat yang terbaca, boleh banyak file', function () { BI = { items: [], pin: true, busy: false }; page('Impor ke Otak', brainImportFill); })]));
       var box = mk('div', '', 'gb'), g = mk('div', '', 'grp'); g.append(tx('h4', '', 'Isi Otak (dipakai bersama semua admin)'), box); box.appendChild(tx('div', 'note', 'Memuat…')); b.appendChild(g);
       supabaseClient.from('jarvis_brain').select('id,title,kind,content,pinned,active,updated_at').order('updated_at', { ascending: false }).limit(200).then(function (r) {
         box.textContent = '';
@@ -1093,6 +1094,111 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stro
       rd.readAsText(file);
     };
     f.click();
+  }
+
+  /* ================= impor banyak CSV ke Otak (tabel diubah jadi kalimat yang terbaca) ================= */
+  var BI = { items: [], pin: true, busy: false };
+  function csvRows(t) {
+    t = String(t || '').replace(/^﻿/, ''); var lines = t.split(/\r?\n/).filter(function (l) { return l.trim(); }); if (!lines.length) return [];
+    var d = ',', best = 0; [',', ';', '\t', '|'].forEach(function (c) { var n = lines.slice(0, 8).filter(function (l) { return l.indexOf(c) >= 0; }).length; if (n > best) { best = n; d = c; } });
+    var rows = [], row = [], cur = '', q = false;
+    for (var i = 0; i < t.length; i++) {
+      var ch = t[i];
+      if (q) { if (ch === '"') { if (t[i + 1] === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+      else if (ch === '"' && cur === '') q = true;
+      else if (ch === d) { row.push(cur); cur = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && t[i + 1] === '\n') i++; row.push(cur); cur = ''; if (row.some(function (c) { return c.trim(); })) rows.push(row.map(function (c) { return c.trim(); })); row = []; }
+      else cur += ch;
+    }
+    row.push(cur); if (row.some(function (c) { return c.trim(); })) rows.push(row.map(function (c) { return c.trim(); }));
+    return rows;
+  }
+  function rpTxt(v) { var n = Number(String(v).replace(/[^\d]/g, '')); return n ? 'Rp' + n.toLocaleString('id-ID') : String(v); }
+  function csvToText(name, text) {
+    var rows = csvRows(text); if (rows.length < 2) return null;
+    var head = rows[0].map(function (h) { return h.toLowerCase().replace(/[_\-]+/g, ' ').replace(/\s+/g, ' ').trim(); });
+    var core = String(name || 'data').replace(/\.[a-z0-9]+$/i, '').replace(/^[0-9a-f]{8}-/i, '').replace(/[_\-]+/g, ' ').replace(/^(data|daftar)\s+/i, '').trim() || 'data';
+    var title = (/^(harga|biaya|tarif|daftar)/i.test(core) ? 'Daftar ' + core.replace(/^daftar\s+/i, '') : 'Daftar harga ' + core).replace(/\s+/g, ' ').slice(0, 120);
+    var priceRe = /(harga|biaya|tarif|upah|ongkos|price)/;
+    var price = [], rng = {}, used = {}, desc = [], note = -1, unit = -1;
+    head.forEach(function (h, i) {
+      if (i === 0) return;
+      var m = /^(.*?) (min|max) ?(.*)$/.exec(h);
+      if (m && (m[2] === 'min' || m[2] === 'max')) { var k = m[1] + '|' + m[3]; rng[k] = rng[k] || { lab: m[1], unit: m[3] }; rng[k][m[2]] = i; used[i] = 1; return; }
+      if (priceRe.test(h)) { price.push(i); used[i] = 1; return; }
+      if (/^(catatan|keterangan|ket)$/.test(h)) { note = i; used[i] = 1; return; }
+      if (/^(satuan|per)$/.test(h)) { unit = i; used[i] = 1; return; }
+      desc.push(i);
+    });
+    if (!price.length) return null;
+    var lines = [];
+    rows.slice(1).forEach(function (r) {
+      var nm = r[0]; if (!nm) return;
+      var parts = [nm];
+      desc.forEach(function (i) { if (r[i]) parts.push(head[i].replace(/^jenis /, '') + ' ' + r[i]); });
+      Object.keys(rng).forEach(function (k) { var g = rng[k], a = r[g.min], b = r[g.max]; if (a && b) parts.push((g.lab === 'diameter' && /lemer|piston/i.test(core) ? 'diameter piston' : g.lab) + ' ' + a + '-' + b + (g.unit ? ' ' + g.unit : '')); else if (a || b) parts.push(g.lab + ' ' + (a || b) + (g.unit ? ' ' + g.unit : '')); });
+      var ps = price.map(function (i) { return r[i] ? { l: head[i].replace(/^harga /, ''), v: rpTxt(r[i]) } : null; }).filter(Boolean);
+      if (!ps.length) return;
+      var pt = ps.length === 1 && price.length === 1 ? ps[0].v : ps.map(function (p) { return p.l + ' ' + p.v; }).join('; ');
+      var ln = '- ' + parts.join(', ') + ': ' + pt + (unit >= 0 && r[unit] ? ' ' + r[unit] : '') + (note >= 0 && r[note] ? ' (' + r[note] + ')' : '');
+      lines.push(ln);
+    });
+    if (!lines.length) return null;
+    return { title: title, lines: lines, content: title + ' (Rupiah). Setiap baris berdiri sendiri.\n' + lines.join('\n') };
+  }
+  function readTextFile(file) { return new Promise(function (ok, no) { var rd = new FileReader(); rd.onerror = function () { no(new Error('Gagal membaca ' + file.name)); }; rd.onload = function () { ok(String(rd.result || '').replace(/\u0000/g, '')); }; rd.readAsText(file); }); }
+  async function brainImportPick() {
+    var f = mk('input'); f.type = 'file'; f.multiple = true; f.accept = '.csv,.tsv,.txt,text/*'; f.style.display = 'none'; document.body.appendChild(f);
+    f.onchange = async function () {
+      var files = Array.prototype.slice.call(f.files || []); f.remove(); if (!files.length) return;
+      BI.busy = true; pageRefresh();
+      var ex = {}; try { var r0 = await supabaseClient.from('jarvis_brain').select('id,title').limit(500); (r0.data || []).forEach(function (x) { ex[String(x.title).toLowerCase().trim()] = x.id; }); } catch (e) {}
+      var out = [], skip = [];
+      for (var i = 0; i < files.length; i++) {
+        var fl = files[i];
+        if (fl.size > 400 * 1024) { skip.push(fl.name + ': terlalu besar'); continue; }
+        try {
+          var t = await readTextFile(fl), d = csvToText(fl.name, t);
+          if (!d) { skip.push(fl.name + ': tidak ada kolom harga atau baris yang terbaca'); continue; }
+          d.file = fl.name; d.exId = ex[d.title.toLowerCase()] || null; d.on = true; out.push(d);
+        } catch (e) { skip.push(fl.name + ': ' + (e.message || 'gagal')); }
+      }
+      BI.items = out; BI.skip = skip; BI.busy = false; pageRefresh();
+    };
+    f.click();
+  }
+  function brainImportFill(b) {
+    if (BI.busy) { b.appendChild(tx('div', 'note', 'Membaca file…')); return; }
+    if (!BI.items.length) {
+      b.appendChild(tx('div', 'note', 'Pilih satu atau banyak file CSV. Tiap file menjadi satu entri Otak dengan kalimat per baris, misalnya "Lemer, mesin 4 Tak, diameter piston 47-59 mm: Rp40.000". Entri dengan judul yang sama diganti isinya, tidak dobel. Barang (piston, laher, stang seher) diimpor lewat Dashboard Warung, bukan di sini.'));
+      b.appendChild(group('Mulai', [nav(I.dl, 'Pilih file CSV', 'Boleh pilih banyak sekaligus', brainImportPick)]));
+      (BI.skip || []).forEach(function (m) { b.appendChild(tx('div', 'note', m)); });
+      return;
+    }
+    var tot = BI.items.filter(function (x) { return x.on; }).length;
+    b.appendChild(tx('div', 'note', tot + ' dari ' + BI.items.length + ' file akan disimpan. Periksa isinya, matikan yang tidak perlu.'));
+    BI.items.forEach(function (x) {
+      b.appendChild(group(x.title, [
+        toggleRow(x.exId ? 'Ganti isi yang sudah ada' : 'Entri baru', x.file + ' · ' + x.lines.length + ' baris', x.on, function (v) { x.on = v; }, I.book),
+        (function (n) { n.style.whiteSpace = 'pre-line'; return n; })(tx('div', 'note', x.lines.slice(0, 4).join('\n') + (x.lines.length > 4 ? '\n… dan ' + (x.lines.length - 4) + ' baris lain' : '')))]));
+    });
+    (BI.skip || []).forEach(function (m) { b.appendChild(tx('div', 'note', 'Dilewati: ' + m)); });
+    b.appendChild(group('Pilihan', [toggleRow('Sematkan', 'Dibaca penuh oleh Jarvis di tiap obrolan (hemat: entri pendek saja, total 6.000 huruf)', BI.pin, function (v) { BI.pin = v; }, I.check)]));
+    var act = mk('div', '', 'bfa'), sv = tx('button', 'pri', 'Simpan ke Otak'), bk = tx('button', '', 'Batal');
+    bk.onclick = pageBack;
+    sv.onclick = async function () {
+      var list = BI.items.filter(function (x) { return x.on; }); if (!list.length) return toast('Tidak ada file yang dipilih');
+      sv.disabled = true; sv.textContent = 'Menyimpan…'; var ok = 0, used = 0, fail = '';
+      for (var i = 0; i < list.length; i++) {
+        var x = list[i], pin = BI.pin && used + x.content.length <= 5500; if (pin) used += x.content.length;
+        var rec = { title: x.title, kind: 'harga', content: x.content.slice(0, 60000), pinned: pin, active: true };
+        var res = x.exId ? await supabaseClient.from('jarvis_brain').update(Object.assign({ updated_at: new Date().toISOString() }, rec)).eq('id', x.exId) : await supabaseClient.from('jarvis_brain').insert(rec);
+        if (res.error) { fail = brainErr(res.error); break; } ok++;
+      }
+      if (fail) { sv.disabled = false; sv.textContent = 'Simpan ke Otak'; return toast(ok + ' tersimpan, lalu gagal: ' + fail); }
+      toast(ok + ' entri tersimpan ke Otak'); pageBack();
+    };
+    act.append(bk, sv); b.appendChild(act);
   }
   function brainForm(row, pre) {
     row = row || null; var d = row || pre || {}; var st = { pinned: !!d.pinned, active: row ? !!row.active : true };
