@@ -2019,7 +2019,8 @@
   .nd-card.jump-hl { animation: jumpHl 2.2s ease-out; }
   .nd-head { padding-bottom: 8px; border-bottom: 1px solid var(--nd-line, rgba(128,128,128,.28)); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
   .nd-no { background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); border-radius: 8px; padding: 2px 8px; color: var(--text-primary); }
-  .nd-pj { margin-left: auto; border-radius: 999px; padding: 3px 10px; background: rgba(245,166,35,.18); color: #F5A623; font-weight: 800; text-align: right; }
+  /* PJ: warna tetap (tidak ikut tema), terang dan mencolok */
+  .nd-card .nd-pj { margin-left: auto; border-radius: 999px; padding: 4px 12px; background: #FFD60A !important; color: #111111 !important; -webkit-text-fill-color: #111111; border: 1.5px solid #B38F00; font-weight: 800; font-size: 12.5px; letter-spacing: .01em; text-align: right; box-shadow: 0 1px 3px rgba(0,0,0,.25); forced-color-adjust: none; filter: none; opacity: 1; }
   .nd-title { margin: 8px 0 6px; font-size: 16px; font-weight: 800; color: var(--text-primary); overflow-wrap: anywhere; }
   .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) minmax(0, 1fr); gap: 0; margin-top: 2px; font-size: 13px; }
   .nd-grid > dt, .nd-grid > dd { padding: 6px 0; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); }
@@ -2030,9 +2031,26 @@
   .nd-head > span { min-width: 0; }
   .nd-grid dd { min-width: 0; padding-left: 10px; margin: 0; color: var(--text-primary); overflow-wrap: anywhere; white-space: normal; }
   .nd-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); }
-  .nd-harga { font-size: 17px; font-weight: 800; color: var(--text-primary); }
-  .nd-harga small { font-size: 11px; font-weight: 700; color: var(--text-secondary); margin-right: 3px; }
-  .nd-metode { font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+  .nd-harga { display: inline-flex; flex-direction: column; gap: 1px; padding: 5px 12px 6px; border: 1px solid var(--nd-line, rgba(128,128,128,.4)); border-left: 4px solid #F0A529; border-radius: 10px; background: rgba(128,128,128,.08); }
+  .nd-harga > small { font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); line-height: 1.2; }
+  .nd-harga .nd-amt { font-size: 18px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; line-height: 1.2; white-space: nowrap; }
+  .nd-harga .nd-amt i { font-style: normal; font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-right: 4px; }
+  .nd-harga.nd-kosong { border-left-color: rgba(128,128,128,.5); }
+  .nd-harga.nd-kosong .nd-amt { color: var(--text-secondary); }
+  .nd-metode { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); padding-left: 12px; border-left: 1px solid var(--nd-line, rgba(128,128,128,.4)); align-self: stretch; display: inline-flex; align-items: center; }
+
+  /* Pergantian judul ala angka jam yang berputar */
+  .roll-ch { display: inline-block; position: relative; overflow: hidden; vertical-align: bottom; height: 1.25em; line-height: 1.25em; }
+  .roll-ch > span { display: block; white-space: pre; }
+  .roll-ch.go.up > span { animation: rollUp .42s cubic-bezier(.22,.9,.28,1) both; }
+  .roll-ch.go.down > span { animation: rollDown .42s cubic-bezier(.22,.9,.28,1) both; }
+  @keyframes rollUp   { from { transform: translateY(0); }     to { transform: translateY(-100%); } }
+  @keyframes rollDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+  .note-detail-cards.swap, .note-detail-table-wrap.swap { animation: bodySwap .38s ease both; }
+  @keyframes bodySwap { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .roll-ch.go > span, .note-detail-cards.swap, .note-detail-table-wrap.swap { animation: none !important; }
+  }
   .nd-foot .note-detail-bukti-group { margin-left: auto; }
 
   .note-detail-empty { padding: 40px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
@@ -7627,7 +7645,7 @@
     else if (cols.length) { used.add(cols[0].id); title = v(cols[0].id); }
     let foot = '';
     const footBits = [];
-    if (has('harga')) { used.add('harga'); const h = v('harga'); footBits.push(`<span class="nd-harga"><small>Rp</small>${escapeHtml(h && h !== '0' ? h : '–')}</span>`); }
+    if (has('harga')) { used.add('harga'); const h = v('harga'); const ada = !!(h && h !== '0'); footBits.push(`<span class="nd-harga${ada ? '' : ' nd-kosong'}"><small>Harga</small><span class="nd-amt">${ada ? '<i>Rp</i>' + escapeHtml(h) : 'Belum diisi'}</span></span>`); }
     if (has('metode')) { used.add('metode'); if (v('metode')) footBits.push(`<span class="nd-metode">${escapeHtml(v('metode'))}</span>`); }
     if (has('bukti')) {
       used.add('bukti');
@@ -7798,10 +7816,44 @@
     });
   })();
 
+  // Judul detail: bila diganti saat panel sudah terbuka (mis. lewat shortcut hijau/biru), tiap karakter yang berbeda berputar seperti angka jam
+  let titleRollTimer = 0;
+  function setDetailTitle(text, animate) {
+    const el = document.getElementById('noteDetailTitle');
+    const next = String(text || 'Untitled');
+    const prev = el.dataset.full || '';
+    el.dataset.full = next;
+    el.title = next;
+    clearTimeout(titleRollTimer);
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!animate || reduce || !prev || prev === next) { el.textContent = next; return; }
+    const a = Array.from(prev), b = Array.from(next);
+    const n = Math.max(a.length, b.length);
+    const forward = new Date(parseTitleDate(next) || 0) >= new Date(parseTitleDate(prev) || 0);
+    let html = '', delay = 0;
+    for (let i = 0; i < n; i++) {
+      const o = a[i] === undefined ? '' : a[i], c = b[i] === undefined ? '' : b[i];
+      if (o === c) { html += escapeHtml(c); continue; }
+      const top = forward ? o : c, bottom = forward ? c : o;   // maju: lama keluar ke atas; mundur: baru turun dari atas
+      html += `<span class="roll-ch ${forward ? 'up' : 'down'}" style="--d:${delay}ms"><span>${escapeHtml(top || ' ')}</span><span>${escapeHtml(bottom || ' ')}</span></span>`;
+      delay += 28;
+    }
+    el.innerHTML = html;
+    void el.offsetWidth;
+    el.querySelectorAll('.roll-ch').forEach(r => { r.style.height = ''; r.classList.add('go'); r.firstElementChild.style.animationDelay = r.style.getPropertyValue('--d'); r.lastElementChild.style.animationDelay = r.style.getPropertyValue('--d'); });
+    titleRollTimer = setTimeout(() => { el.textContent = next; }, 420 + delay + 60);
+  }
+  function parseTitleDate(t) {   // "11/11/26 · Rabu 08:01" -> tanggal, untuk menentukan arah putaran
+    const m = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(t);
+    if (!m) return 0;
+    const y = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
+    return new Date(y, Number(m[2]) - 1, Number(m[1])).getTime();
+  }
+
   // Isi ulang detail note yang sedang terbuka (tanpa menutup), pilihan hari & posisi gulir dipertahankan
   function fillNoteDetail(note, day) {
     currentDetailNote = note;
-    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+    setDetailTitle(note.title, false);
     detailFullContent = getDisplayTable(note);
     detailDay = 'all';
     renderHutangSummary(note);
@@ -7861,9 +7913,10 @@
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
     if (!note) return;
+    const wasOpen = noteDetailOverlay.classList.contains('open');   // sudah terbuka = pindah data lewat shortcut -> beri animasi
     currentDetailNote = note;
 
-    document.getElementById('noteDetailTitle').textContent = note.title || 'Untitled';
+    setDetailTitle(note.title, wasOpen);
 
     detailFullContent = getDisplayTable(note);
     detailDay = 'all';
@@ -7871,6 +7924,13 @@
     buildDayPicker(note, detailFullContent);
     paintNoteBody();
 
+    if (wasOpen) {
+      ['noteDetailCards', 'noteDetailTable'].forEach(id => {
+        const el = id === 'noteDetailCards' ? document.getElementById(id) : document.querySelector('.note-detail-table-wrap');
+        el.classList.remove('swap'); void el.offsetWidth; el.classList.add('swap');
+        setTimeout(() => el.classList.remove('swap'), 450);
+      });
+    }
     setNoteView(getSavedNoteView(), false);
     noteDetailOverlay.classList.add('open');
   }
