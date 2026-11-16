@@ -226,3 +226,18 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Highlight baca-suara, seleksi teks, tombol stop kirim, dan tombol stop di bar aksi: abu-abu netral.
 - Tombol "Jawab ulang" (hanya di jawaban terakhir); bubble user punya Salin dan Edit (edit menghapus pesan itu dan sesudahnya, teks kembali ke kolom tulis). Hanya di jarvis-ai.html.
 - NVIDIA ditunda.
+
+## 13. Insiden hilang data Buku Besar 15 Nov 2026 dan perbaikannya (sw v56)
+- Penyebab: editor-data-*.html menampilkan layar setelah 6 detik (`is-loading` dilepas timer) walau catatan belum selesai dimuat dari server (sinyal lemot). Saat itu `records` masih kosong dan `lastKnownUpdatedAt` null. Pengguna menambah satu data -> `saveNoteToDatabase` mengirim update TANPA kunci `updated_at` dan judul cadangan 'Untitled' -> seluruh catatan tertimpa. Jalur kedua: catatan dibuka offline dari draf HP tanpa titik awal (base/updated_at), lalu saat online disimpan tanpa kunci.
+- Perbaikan di kelima editor (administrator, operasional, kasbon, hutang-piutang, warung), pola sama:
+  - `serverSynced`: false sampai catatan benar-benar terbaca dari server. Selama false tidak ada simpan ke server (`saveNoteToDatabase`, `runAutosave`, `scheduleAutosave`, `reconcileLinks`).
+  - Kunci versi selalu dipakai (`.eq('updated_at', lastKnownUpdatedAt)`); tanpa itu simpan ditolak. Judul cadangan memakai judul server (`baseSnap.title`), tidak lagi sembarang 'Untitled'.
+  - Draf HP selalu ditulis dulu (juga saat muat gagal). Draf menyimpan `base` dan `lastKnown`; saat belum termuat, draf digabung per id dengan draf lama (tidak menimpa). Draf baru dihapus setelah benar-benar tersimpan (dan tidak dihapus bila ada ketikan baru selama menyimpan).
+  - Muat dari server dibatasi 15 detik dan dicoba ulang otomatis (jeda naik sampai 20 dtk) sampai berhasil; spanduk kuning menjelaskan keadaannya. Setelah termuat, draf digabung (BMMerge) lalu disimpan dengan kunci.
+  - `bmWouldShrink()`: simpan yang mengurangi jumlah data tanpa masuk Sampah ditahan, lalu muat ulang dan gabung (maks 3x). Server menolak hal yang sama lewat trigger `a_notes_guard` (error `BM_GUARD`), lihat guard-data.sql.
+  - Catatan baru memakai id dari HP (`bmUuid`) sehingga simpan ulang setelah jawaban server hilang tidak membuat catatan ganda (error 23505 dilanjutkan sebagai pembaruan).
+  - Bentrok: isi server berjenis lain tidak pernah ditimpa; tabel manual lama (columns/rows) dipertahankan sebagai `legacy`.
+- editor-folder.html `persist()`: baca-ubah-simpan dengan kunci `updated_at` dan ulang sampai 6x.
+- SQL (dijalankan pengguna di SQL Editor, bukan oleh Claude): backup-otomatis.sql (riwayat versi tiap simpan `notes_history`, snapshot tiap 3 jam `backup_snapshots`, pembersihan harian, tampilan `backup_status`), guard-data.sql (trigger `a_notes_guard`), pulihkan.sql (daftar versi lama dan cara memulihkan).
+- dashboard-admin.html: kartu tugas dan status LUNAS/SEBAGIAN/BELUM dari rencana task (hutang ungu, piutang biru; merah-kuning-hijau hanya berarti status bayar).
+- Uji: Playwright 6 skenario x 5 editor (server lambat, offline lalu online, muat gagal, dua HP bersamaan, penghapusan massal, catatan baru ganda). Kode lama gagal di skenario yang sama (menimpa jadi 1 data "Untitled").

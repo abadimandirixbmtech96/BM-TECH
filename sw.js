@@ -8,7 +8,7 @@
 // 3. Penulisan data (insert/update/delete/RPC tulis) TIDAK pernah disentuh: selalu langsung ke server.
 // 4. Salinan data dihapus saat keluar akun (logout) atau login baru, supaya akun lain tidak melihatnya.
 
-const CACHE_NAME = 'bmtech-shell-v50'; // v49: penggabungan otomatis saat bentrok simpan (bm-merge.js). sebelumnya: dinaikkan: suara natural Jarvis (Edge TTS) + pengaturan suara
+const CACHE_NAME = 'bmtech-shell-v56'; // v56: pengaman data editor (tidak simpan sebelum catatan termuat, kunci versi selalu, draf aman), kartu tugas + status lunas
 const DATA_CACHE = 'bmtech-data-v1';   // tidak ikut dihapus saat versi naik
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;              // lebih dari ini dengan salinan tersedia = pakai salinan dulu

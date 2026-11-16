@@ -1955,15 +1955,55 @@
   /* Pembeda Hutang (kita yang bayar, merah) vs Piutang (kita yang tagih, hijau) */
   .jenis-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.01em; }
   .jenis-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  .jenis-pill.hutang  { color: #D64B4B; background: rgba(214, 75, 75, 0.15); }
-  .jenis-pill.piutang { color: #2F9E5F; background: rgba(61, 170, 106, 0.17); }
-  .note-detail-table tbody tr.row-hutang  td:first-child { box-shadow: inset 3px 0 0 #D64B4B; }
-  .note-detail-table tbody tr.row-piutang td:first-child { box-shadow: inset 3px 0 0 #3DAA6A; }
+  /* Jenis (Hutang/Piutang) = ungu/biru; merah-kuning-hijau HANYA berarti status pembayaran */
+  .jenis-pill.hutang  { color: #8A63D9; background: rgba(138, 99, 217, 0.16); }
+  .jenis-pill.piutang { color: #2B8BD6; background: rgba(43, 139, 214, 0.16); }
+  .note-detail-table tbody tr.row-hutang  td:first-child { box-shadow: inset 3px 0 0 #8A63D9; }
+  .note-detail-table tbody tr.row-piutang td:first-child { box-shadow: inset 3px 0 0 #2B8BD6; }
+  .st-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; letter-spacing: .03em; white-space: nowrap; }
+  .st-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .st-pill.st-lunas    { color: #2F9E5F; background: rgba(61,170,106,.18); }
+  .st-pill.st-sebagian { color: #B87806; background: rgba(240,165,41,.22); }
+  .st-pill.st-belum    { color: #D64B4B; background: rgba(214,75,75,.16); }
+  .note-detail-table tbody tr.st-lunas    td:first-child { box-shadow: inset 4px 0 0 #3DAA6A; }
+  .note-detail-table tbody tr.st-sebagian td:first-child { box-shadow: inset 4px 0 0 #F0A529; }
+  .note-detail-table tbody tr.st-belum    td:first-child { box-shadow: inset 4px 0 0 #D64B4B; }
+  .note-detail-table tbody tr.st-lunas td { opacity: .78; }
+  .st-amt { font-variant-numeric: tabular-nums; margin-left: 4px; }
+  .nd-card.st-lunas    { box-shadow: inset 5px 0 0 #3DAA6A; }
+  .nd-card.st-sebagian { box-shadow: inset 5px 0 0 #F0A529; }
+  .nd-card.st-belum    { box-shadow: inset 5px 0 0 #D64B4B; }
+  .nd-card.st-lunas .nd-title, .nd-card.st-lunas .nd-m:not(.sisa) b { opacity: .75; }
+  .nd-title .jenis-pill { margin-left: 6px; vertical-align: 2px; }
+  .nd-bar { height: 8px; border-radius: 999px; background: rgba(128,128,128,.22); overflow: hidden; margin: 2px 0 10px; }
+  .nd-bar > i { display: block; height: 100%; border-radius: 999px; background: #D64B4B; transition: width .4s ease; }
+  .nd-bar.st-sebagian > i { background: #F0A529; }
+  .nd-bar.st-lunas > i { background: #3DAA6A; }
+  .nd-m3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .nd-m { min-width: 0; padding: 6px 9px 7px; border: 1px solid var(--nd-line, rgba(128,128,128,.35)); border-radius: 10px; background: rgba(128,128,128,.07); }
+  .nd-m small { display: block; font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: var(--text-secondary); line-height: 1.2; }
+  .nd-m b { display: block; font-size: 14.5px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .nd-m.sisa.st-belum { border-color: rgba(214,75,75,.5); background: rgba(214,75,75,.10); } .nd-m.sisa.st-belum b { color: #D64B4B; }
+  .nd-m.sisa.st-sebagian { border-color: rgba(240,165,41,.55); background: rgba(240,165,41,.12); } .nd-m.sisa.st-sebagian b { color: #B87806; }
+  .nd-m.sisa.st-lunas { border-color: rgba(61,170,106,.5); background: rgba(61,170,106,.12); } .nd-m.sisa.st-lunas b { color: #2F9E5F; }
+  .nd-ket { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); font-size: 13px; color: var(--text-secondary); overflow-wrap: anywhere; }
+  /* Task kartu */
+  .nd-card.tk2 { box-shadow: inset 5px 0 0 var(--tc); margin-bottom: 10px; animation: cardAppear .3s ease both; }
+  .tk2 .nd-head .tk-chip { margin-left: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tc); background: color-mix(in srgb, var(--tc) 16%, transparent); padding: 3px 10px; border-radius: 999px; text-align: right; }
+  .tk2 .tk-items { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tk2 .tk-item { padding: 2px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 700; color: var(--text-primary); background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); overflow-wrap: anywhere; }
+  .tk2 .tk-item.ok { color: #2F9E5F; border-color: rgba(61,170,106,.4); background: rgba(61,170,106,.14); }
+  .tk2 dd.nd-missing { color: #D64B4B; font-weight: 800; }
+  .tk2 dd.nd-missing::before { content: '\2715  '; }
+  .tk2 dd.nd-ok { color: var(--text-primary); }
+  .tk2 dt.nd-missing { color: #D64B4B; }
+  .tk2 .tk-foot2 { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 6px; padding-top: 9px; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); font-size: 11.5px; color: var(--text-secondary); }
+  .tk2 .tk-age { font-weight: 800; color: var(--tc); }
   .hp-summary { display: none; gap: 10px; margin: 0 0 10px; flex-shrink: 0; }
   .hp-summary.show { display: flex; }
   .hp-sum { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 14px; border: 1px solid transparent; }
-  .hp-sum.hutang  { background: rgba(214, 75, 75, 0.12);  border-color: rgba(214, 75, 75, 0.28); }
-  .hp-sum.piutang { background: rgba(61, 170, 106, 0.13); border-color: rgba(61, 170, 106, 0.30); }
+  .hp-sum.hutang  { background: rgba(138, 99, 217, 0.13);  border-color: rgba(138, 99, 217, 0.32); }
+  .hp-sum.piutang { background: rgba(43, 139, 214, 0.13); border-color: rgba(43, 139, 214, 0.32); }
   .hp-sum small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
   .hp-sum.hutang small  { color: #D64B4B; }
   .hp-sum.piutang small { color: #2F9E5F; }
@@ -2014,8 +2054,8 @@
   .nd-card:active { transform: scale(.985); }
   .nd-card:focus-visible { outline: 2px solid var(--accent-yellow); outline-offset: 2px; }
   .nd-card { min-width: 0; max-width: 100%; box-sizing: border-box; overflow: hidden; background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: var(--radius-lg); padding: 12px 14px; flex-shrink: 0; }
-  .nd-card.row-hutang  { box-shadow: inset 4px 0 0 #D64B4B; }
-  .nd-card.row-piutang { box-shadow: inset 4px 0 0 #3DAA6A; }
+  .nd-card.row-hutang  { box-shadow: inset 4px 0 0 #8A63D9; }
+  .nd-card.row-piutang { box-shadow: inset 4px 0 0 #2B8BD6; }
   .nd-card.jump-hl { animation: jumpHl 2.2s ease-out; }
   .nd-head { padding-bottom: 8px; border-bottom: 1px solid var(--nd-line, rgba(128,128,128,.28)); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
   .nd-no { background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); border-radius: 8px; padding: 2px 8px; color: var(--text-primary); }
@@ -4574,6 +4614,18 @@
     return `<span class="note-book-chip" style="background:${hexToRgba(color, 0.2)}"><i style="background:${color}"></i><span class="note-book-label">${escapeHtml(label)}</span></span>`;
   }
 
+  function moneyChipHtml(note) {
+    try {
+      if (!(isHutangNote(note) || isKasbonNote(note))) return '';
+      const recs = Array.isArray(note.content.records) ? note.content.records : [];
+      if (!recs.length) return '';
+      let belum = 0, sisa = 0;
+      recs.forEach(r => { const t = Number(r.total) || 0, d = Number(r.dibayar) || 0; if (moneyStatus(t, d) !== 'lunas') { belum++; sisa += Math.max(0, t - d); } });
+      return belum
+        ? `<span class="st-pill st-belum" style="max-width:100%;box-sizing:border-box;">${belum} belum &middot; Rp ${escapeHtml(moneyRp(sisa))}</span>`
+        : `<span class="st-pill st-lunas" style="max-width:100%;box-sizing:border-box;">Semua lunas</span>`;
+    } catch (e) { return ''; }
+  }
   function noteCardHtml(note, idx) {
     return `
       <div class="note-card ${note.is_glass ? 'liquid-glass' : ''} ${note.pinned ? 'pinned' : ''}" data-id="${escapeHtml(note.id)}" ${note._merged ? 'data-merged="1"' : ''} style="animation-delay: ${idx * 0.05}s">
@@ -4588,7 +4640,7 @@
         </div>
         <div class="note-meta-row">
           <span class="note-date-tag">${formatNoteTimestamp(note.created_at)}</span>
-          ${bookChipHtml(note)}
+          ${bookChipHtml(note)}${moneyChipHtml(note)}
         </div>
         <div class="note-checkbox">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -4965,6 +5017,23 @@
     { id: 'nominal', label: 'Harga' }
   ];
 
+  // Status pembayaran Hutang/Piutang/Kasbon: LUNAS / SEBAGIAN / BELUM
+  const MONEY_ST = {
+    lunas:   { label: 'Lunas',          short: 'LUNAS' },
+    sebagian:{ label: 'Sebagian',       short: 'SEBAGIAN' },
+    belum:   { label: 'Belum dibayar',  short: 'BELUM DIBAYAR' }
+  };
+  function moneyStatus(total, dibayar) {
+    total = Number(total) || 0; dibayar = Number(dibayar) || 0;
+    if (total > 0 && total - dibayar <= 0) return 'lunas';
+    return dibayar > 0 ? 'sebagian' : 'belum';
+  }
+  function moneyCellMeta(r, note) {
+    const total = Number(r && r.total) || 0, dibayar = Number(r && r.dibayar) || 0;
+    return { _st: moneyStatus(total, dibayar), _tot: total, _pay: dibayar, _sis: Math.max(0, total - dibayar), _nid: (note && note.id) || '', _rid: (r && r.id) || '' };
+  }
+  function moneyRp(n) { return Math.round(Number(n) || 0).toLocaleString('id-ID'); }
+
   function getDisplayTable(note) {
     if (note && note._vfFilter) return filterTableByVf(getNoteTable(note), note._vfFilter);
     if (isWarungNote(note) && Array.isArray(note.content.records)) {
@@ -5006,6 +5075,7 @@
           }
         };
       });
+      rows.forEach((rw, i) => Object.assign(rw.cells, moneyCellMeta(sorted[i], note)));
       return { columns: KASBON_COLUMNS, rows };
     }
     if (isHutangNote(note) && Array.isArray(note.content.records)) {
@@ -5029,6 +5099,7 @@
           }
         };
       });
+      rows.forEach((rw, i) => Object.assign(rw.cells, moneyCellMeta(sorted[i], note)));
       return { columns: HUTANG_COLUMNS, rows };
     }
     if (isOperasionalNote(note) && Array.isArray(note.content.records)) {
@@ -5107,15 +5178,33 @@
 
   const TASK_TYPES = {
     kasbon:    { badge: 'Kasbon belum lunas',     group: 'Kasbon belum lunas',     short: 'Kasbon',        sub: '',               color: '#F0555C', amountNote: 'sisa tagihan' },
-    hutang:    { badge: 'Hutang belum lunas',     group: 'Hutang belum lunas',     short: 'Hutang',        sub: '',               color: '#D64B4B', amountNote: 'sisa harus dibayar' },
-    piutang:   { badge: 'Piutang belum lunas',    group: 'Piutang belum lunas',    short: 'Piutang',       sub: '',               color: '#3DAA6A', amountNote: 'sisa ditagih' },
+    hutang:    { badge: 'Hutang belum lunas',     group: 'Hutang belum lunas',     short: 'Hutang',        sub: '',               color: '#8A63D9', amountNote: 'sisa harus dibayar' },
+    piutang:   { badge: 'Piutang belum lunas',    group: 'Piutang belum lunas',    short: 'Piutang',       sub: '',               color: '#2B8BD6', amountNote: 'sisa ditagih' },
     ditinggal: { badge: 'Barang ditinggal',       group: 'Barang masih ditinggal', short: 'Ditinggal',     sub: 'di bengkel',     color: '#4C9EFF' },
     belumbayar:{ badge: 'Barang dibawa, belum dibayar', group: 'Barang dibawa, belum dibayar', short: 'Belum dibayar', sub: 'barang sudah diambil', color: '#E0A526' },
     lengkap:   { badge: 'Data belum lengkap',     group: 'Data belum lengkap',     short: 'Belum lengkap', sub: 'perlu dilengkapi', color: '#FF8A4C' }
   };
   const TASK_TYPE_ORDER = ['kasbon', 'hutang', 'piutang', 'ditinggal', 'belumbayar', 'lengkap'];
   const TASK_MONEY_TYPES = ['kasbon', 'hutang', 'piutang'];
-  const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];
+  const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];   // (dipakai editor sebagai fokus)
+  // Kelengkapan satu baris Data Administrator. get(label) -> nilai; has(label) -> kolom ada.
+  // Wajib: PJ, Customer, Barang, Stok Barang ATAU Barang Keluar, Harga; Metode wajib bila Harga berisi angka.
+  function rowCompleteness(get, has, opt) {
+    opt = opt || {};
+    const out = [];
+    const add = (label, val, miss) => out.push({ label, val: String(val == null ? '' : val).trim(), missing: !!miss });
+    if (has('PJ')) add('PJ', get('PJ'), isEmptyValue(get('PJ')));
+    add('Customer', get('Customer'), isEmptyValue(get('Customer')));
+    add('Barang', get('Barang'), isEmptyValue(get('Barang')));
+    if (!opt.linked && (has('Stok Barang') || has('Barang Keluar'))) {
+      const st = String(get('Stok Barang') || '').trim(), kl = String(get('Barang Keluar') || '').trim();
+      add('Stok / Barang Keluar', [st && 'Stok: ' + st, kl && 'Keluar: ' + kl].filter(Boolean).join(' · '), isEmptyValue(st) && isEmptyValue(kl));
+    }
+    const h = get('Harga');
+    add('Harga', h, isHargaEmpty(h) && !isHargaCentang(h));
+    if (has('Metode') && !opt.auto && !isHargaEmpty(h) && !isHargaCentang(h)) add('Metode', get('Metode'), isEmptyValue(get('Metode')));
+    return { fields: out, missing: out.filter(f => f.missing).map(f => f.label) };
+  }
   const TASKS_FILTER_KEY = 'bmtech_tasks_filter_v1';
 
   let allKasbonNotes = [];
@@ -5367,13 +5456,23 @@
         dateText: taskDateText(when),
         jam: ok ? `${pad2(d.getHours())}:${pad2(d.getMinutes())}` : '',
         customer: String(r.customer || '').trim(),
-        barang: String(r.barang || '').trim()
+        barang: String(r.barang || '').trim(),
+        pj: String(r.pj || '').trim(),
+        harga: formatHargaCell(r.harga)
       };
       const a = AdminTrack.analyze(r, idx);
       if (a.ditinggal) tasks.push({ ...base, type: 'ditinggal', allLeft: a.ditinggal.allLeft, what: a.ditinggal.names.join(', '), paid: a.ditinggal.paid, paidNames: a.ditinggal.paidNames });
       if (a.belumbayar) tasks.push({ ...base, type: 'belumbayar', what: a.belumbayar.names.join(', '), paidNames: a.belumbayar.paidNames });
-      const missing = TASK_INCOMPLETE_FIELDS.filter(f => f === 'Harga' ? isHargaEmpty(formatHargaCell(r.harga)) : isEmptyValue(f === 'Customer' ? r.customer : r.barang));
-      if (missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing });
+      // Belum bayar = kolom Harga kosong (selain yang sudah ditandai lunas / ✓ / dilacak lewat baris pengambilan)
+      if (!a.belumbayar && !(r.ambilDari && r.ambilDari.length) && !r.hargaAuto && !r.ownPaid
+          && isHargaEmpty(formatHargaCell(r.harga)) && !isHargaCentang(r.harga)
+          && !Object.values(r.pickups || {}).some(p => p && p.paid)
+          && (base.customer || base.barang)) {
+        tasks.push({ ...base, type: 'belumbayar', what: base.barang || '-', paidNames: [], hargaKosong: true, harga: '' });
+      }
+      const rawGet = lb => ({ 'PJ': r.pj, 'Customer': r.customer, 'Barang': r.barang, 'Stok Barang': r.stokBarang, 'Barang Keluar': r.barangKeluar, 'Harga': formatHargaCell(r.harga), 'Metode': r.metode })[lb];
+      const comp = rowCompleteness(rawGet, () => true, { linked: !!(r.ambilDari && r.ambilDari.length), auto: !!r.hargaAuto });
+      if (comp.missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing: comp.missing, fields: comp.fields });
     });
   }
 
@@ -5411,7 +5510,9 @@
           dateText: taskDateText(when),
           jam: val('Jam') || '',
           customer: String(val('Customer') || '').trim(),
-          barang: String(val('Barang') || '').trim()
+          barang: String(val('Barang') || '').trim(),
+          pj: String(val('PJ') || '').trim(),
+          harga: String(val('Harga') || '').trim()
         };
 
         const stok = String(val('Stok Barang') || '').trim();
@@ -5419,6 +5520,7 @@
         const cells = (row && row.cells) || {};
         const paidFlag = !!cells._paid;
         const left = stokRemainingItems(stok, base.barang);
+        let pushedBB = false;
         // Baris pengambilan/pembayaran (terhubung ke titipan) bukan titipan: sisa barangnya dilacak di data titip
         // Harga berisi ANGKA = sudah dibayar lunas saat dititip; barangnya tetap harus dilacak sampai diambil
         const paidAtDrop = !isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal);
@@ -5443,12 +5545,16 @@
             names = names.map(n => n.replace(/[√✓✔☑✅]/g, '').trim()).filter(Boolean);
             const payKeys2 = new Set((cells._payKeys || []).map(k => normalizeKey(k)));
             const unpaid = names.filter(n => !payKeys2.has(normalizeKey(n)));
-            if (unpaid.length) tasks.push({ ...base, type: 'belumbayar', what: unpaid.join(', '), paidNames: names.filter(n => payKeys2.has(normalizeKey(n))) });
+            if (unpaid.length) { pushedBB = true; tasks.push({ ...base, type: 'belumbayar', what: unpaid.join(', '), paidNames: names.filter(n => payKeys2.has(normalizeKey(n))) }); }
           }
         }
 
-        const missing = TASK_INCOMPLETE_FIELDS.filter(f => (f === 'Harga' ? isHargaEmpty(val(f)) : isEmptyValue(val(f))));
-        if (missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing });
+        if (!pushedBB && !cells._linked && !paidFlag && !cells._payAll && isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal) && (base.customer || base.barang)) {
+          tasks.push({ ...base, type: 'belumbayar', what: base.barang || '-', paidNames: [], hargaKosong: true, harga: '' });
+        }
+        const hasCol = lb => columns.some(c => normalizeKey(c.label || '') === normalizeKey(lb));
+        const comp = rowCompleteness(val, hasCol, { linked: !!cells._linked, auto: paidFlag });
+        if (comp.missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing: comp.missing, fields: comp.fields });
       });
     });
 
@@ -5472,7 +5578,7 @@
           when,
           dateText: taskDateText(when),
           customer: String(r.nama || '').trim(),
-          total, dibayar, sisa,
+          total, dibayar, sisa, st: moneyStatus(total, dibayar),
           keterangan: String(r.keterangan || '').trim()
         });
       });
@@ -5499,7 +5605,7 @@
           when,
           dateText: taskDateText(when),
           customer: String(r.nama || '').trim(),
-          total, dibayar, sisa,
+          total, dibayar, sisa, st: moneyStatus(total, dibayar),
           keterangan: String(r.keterangan || '').trim()
         });
       });
@@ -5516,44 +5622,48 @@
   function taskCardHtml(t, idx) {
     const meta = TASK_TYPES[t.type];
     const isMoney = TASK_MONEY_TYPES.includes(t.type);
-    const name = escapeHtml(t.customer || (isMoney ? '(tanpa nama)' : '(tanpa customer)'));
+    const esc = escapeHtml;
     const age = taskAgeText(t.when);
-    let right = '';
-    let detail = '';
+    const when = [t.dateText, t.jam].filter(Boolean).join(' · ');
+    const dl = (label, html, cls) => `<dt${cls ? ' class="' + cls + '"' : ''}>${esc(label)}</dt><dd${cls ? ' class="' + cls + '"' : ''}>${html}</dd>`;
+    const chips = (arr, ok) => `<div class="tk-items">${arr.map(n => `<span class="tk-item${ok ? ' ok' : ''}">${esc(n)}</span>`).join('')}</div>`;
+    const where = `${esc(t.folderName)} &rsaquo; ${esc(t.noteTitle)}`;
+    let title = esc(t.customer || (isMoney ? '(tanpa nama)' : '(tanpa customer)'));
+    let rows = '', mid = '';
     if (isMoney) {
-      right = `<div class="tk-amount">${escapeHtml(taskRp(t.sisa))}<small>${escapeHtml(meta.amountNote || 'sisa')}</small></div>`;
-      detail = `Tagihan ${escapeHtml(taskRp(t.total))} &middot; Dibayar ${escapeHtml(taskRp(t.dibayar))}${t.keterangan ? ' &middot; ' + escapeHtml(t.keterangan) : ''}`;
+      const st = t.st || moneyStatus(t.total, t.dibayar);
+      const pct = t.total > 0 ? Math.max(0, Math.min(100, Math.round(t.dibayar / t.total * 100))) : 0;
+      mid = `<div class="nd-bar st-${st}"><i style="width:${pct}%"></i></div>` +
+        `<div class="nd-m3"><div class="nd-m"><small>Total</small><b>${esc(moneyRp(t.total))}</b></div>` +
+        `<div class="nd-m"><small>Dibayar</small><b>${esc(moneyRp(t.dibayar))}</b></div>` +
+        `<div class="nd-m sisa st-${st}"><small>${esc(meta.amountNote === 'sisa ditagih' ? 'Sisa ditagih' : 'Sisa')}</small><b>${esc(moneyRp(t.sisa))}</b></div></div>`;
+      if (t.keterangan) rows += dl('Keterangan', esc(t.keterangan));
     } else if (t.type === 'ditinggal') {
-      detail = (t.allLeft
-        ? `<b>Semua barang masih di bengkel:</b> ${escapeHtml(t.what || '-')}`
-        : `<b>Ditinggal:</b> ${escapeHtml(t.what)}`) +
-        (t.paid
-          ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar &#10003;</span></div>`
-          : (t.paidNames && t.paidNames.length
-            ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar: ${escapeHtml(t.paidNames.join(', '))}</span></div>`
-            : ''));
+      const items = String(t.what || '').split(/\s*,\s*/).filter(Boolean);
+      rows += dl(t.allLeft ? 'Semua di bengkel' : 'Masih di bengkel', chips(items.length ? items : ['-']));
+      if (t.barang && String(t.barang) !== String(t.what)) rows += dl('Barang masuk', esc(t.barang));
+      rows += dl('Pembayaran', t.paid ? '<span class="st-pill st-lunas">Sudah dibayar</span>'
+        : (t.paidNames && t.paidNames.length ? `<span class="st-pill st-sebagian">Sebagian</span> ${esc(t.paidNames.join(', '))}` : '<span class="st-pill st-belum">Belum dibayar</span>'));
     } else if (t.type === 'belumbayar') {
-      detail = `<b>Sudah dibawa, belum dibayar:</b> ${escapeHtml(t.what || '-')}` +
-        (t.paidNames && t.paidNames.length ? `<div style="margin-top:6px;"><span class="task-missing-chip" style="background:rgba(61,170,106,0.16);color:#3DAA6A;border-color:rgba(61,170,106,0.35);">Sudah dibayar: ${escapeHtml(t.paidNames.join(', '))}</span></div>` : '');
+      const items = String(t.what || '').split(/\s*,\s*/).filter(Boolean);
+      rows += dl('Barang', chips(items.length ? items : ['-']));
+      rows += dl('Harga', '<span class="st-pill st-belum">Kosong</span>');
+      if (t.paidNames && t.paidNames.length) rows += dl('Sudah dibayar', chips(t.paidNames, true));
     } else {
-      detail = (t.barang ? `<div>${escapeHtml(t.barang)}</div>` : '') +
-        `<div class="task-missing-row" style="margin-top:6px;"><span style="font-size:12px;color:var(--text-secondary);align-self:center;">Belum diisi:</span>${t.missing.map(f => `<span class="task-missing-chip">${escapeHtml(f)}</span>`).join('')}</div>`;
+      (t.fields || []).forEach(f => {
+        rows += f.missing ? dl(f.label, 'BELUM DIISI', 'nd-missing') : dl(f.label, esc(f.val || '-'), 'nd-ok');
+      });
     }
+    if (!isMoney) rows += dl('Catatan', where);
     return `
-      <div class="tk-card" data-idx="${idx}" style="--tc:${meta.color};">
-        <div class="tk-top">
-          <div style="min-width:0;">
-            <div class="tk-badge">${escapeHtml(meta.badge)}</div>
-            <div class="tk-name">${name}</div>
-          </div>
-          ${right}
-        </div>
-        <div class="tk-detail">${detail}</div>
-        <div class="tk-foot">
-          <span>${escapeHtml(t.folderName)} &rsaquo; baris ${t.rowIndex + 1}</span>
-          <span><span class="tk-age">${escapeHtml(age)}</span>${t.dateText ? ' &middot; ' + escapeHtml(t.dateText) : ''}</span>
-        </div>
-      </div>`;
+      <article class="nd-card tk2" data-idx="${idx}" tabindex="0" style="--tc:${meta.color};" title="Ketuk untuk membuka di editor">
+        <div class="nd-head"><span class="nd-no">${esc(String(t.rowIndex + 1).padStart(3, '0'))}</span><span>${esc(when)}</span>${t.pj ? `<span class="nd-pj">${esc(t.pj)}</span>` : ''}</div>
+        <div class="nd-title">${title}</div>
+        <div style="margin:-2px 0 8px;"><span class="tk-chip" style="margin:0;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--tc);">${esc(meta.badge)}${t.type === 'lengkap' ? ' &middot; ' + t.missing.length + ' kolom' : ''}</span></div>
+        ${mid}
+        ${rows ? `<dl class="nd-grid">${rows}</dl>` : ''}
+        <div class="tk-foot2"><span>${isMoney ? where : 'Baris ' + (t.rowIndex + 1)}</span><span><span class="tk-age">${esc(age)}</span></span></div>
+      </article>`;
   }
 
   let currentShownTasks = [];
@@ -5636,12 +5746,12 @@
   }
 
   document.getElementById('tasksList').addEventListener('click', (e) => {
-    const card = e.target.closest('.tk-card');
+    const card = e.target.closest('.tk2');
     if (!card) return;
     const t = currentShownTasks[Number(card.dataset.idx)];
     if (!t) return;
     // rec = ID data: editor langsung membuka data itu (tanpa scroll); row/focus tetap dikirim untuk editor yang membacanya
-    openEditor(t.noteId, { folder: t.folderId, rec: t.recId || undefined, row: t.rowIndex, focus: t.missing ? t.missing[0] : undefined });
+    openEditor(t.noteId, { folder: t.folderId, rec: t.recId || undefined, row: t.rowIndex, focus: (t.missing && TASK_INCOMPLETE_FIELDS.includes(t.missing[0])) ? t.missing[0] : undefined });
   });
 
   document.getElementById('tasksSummary').addEventListener('click', (e) => {
@@ -7644,8 +7754,30 @@
   }
 
   // Satu baris -> satu kartu (dipakai di HP supaya semua kolom terbaca tanpa geser)
+  function buildMoneyCard(cols, row, idx) {
+    const rc = row.cells || {};
+    const st = rc._st, meta = MONEY_ST[st];
+    const ridAttr = rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : '';
+    const when = [rc.tanggal, rc.jam].filter(Boolean).join(' · ');
+    const pct = rc._tot > 0 ? Math.max(0, Math.min(100, Math.round(rc._pay / rc._tot * 100))) : 0;
+    const jenis = rc.jenis ? ` <span class="jenis-pill ${rc.jenis === 'Hutang' ? 'hutang' : 'piutang'}">${escapeHtml(rc.jenis)}</span>` : '';
+    const ket = String(rc.keterangan == null ? '' : rc.keterangan).trim();
+    return `<article class="nd-card nd-money st-${st}"${ridAttr} data-ridx="${idx}" tabindex="0" title="Ketuk untuk membuka di editor">` +
+      `<div class="nd-head"><span class="nd-no">${escapeHtml(rc.no || '–')}</span><span>${escapeHtml(when)}</span><span class="st-pill st-${st}" style="margin-left:auto;">${escapeHtml(meta.short)}</span></div>` +
+      `<div class="nd-title">${escapeHtml(rc.nama || '(tanpa nama)')}${jenis}</div>` +
+      `<div class="nd-bar st-${st}" role="img" aria-label="${pct}% terbayar"><i style="width:${pct}%"></i></div>` +
+      `<div class="nd-m3">` +
+        `<div class="nd-m"><small>Total</small><b>${escapeHtml(moneyRp(rc._tot))}</b></div>` +
+        `<div class="nd-m"><small>Dibayar</small><b>${escapeHtml(moneyRp(rc._pay))}</b></div>` +
+        `<div class="nd-m sisa st-${st}"><small>${st === 'lunas' ? 'Status' : 'Sisa'}</small><b>${st === 'lunas' ? 'Lunas &#10003;' : escapeHtml(moneyRp(rc._sis))}</b></div>` +
+      `</div>` +
+      (ket ? `<div class="nd-ket">${escapeHtml(ket)}</div>` : '') +
+      `</article>`;
+  }
+
   function buildNoteCard(cols, row, idx) {
     const rc = row.cells || {};
+    if (rc._st) return buildMoneyCard(cols, row, idx);
     const has = id => cols.some(c => c.id === id);
     const jenisCls = rc.jenis === 'Hutang' ? 'hutang' : rc.jenis === 'Piutang' ? 'piutang' : '';
     const ridAttr = rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : '';
@@ -7733,12 +7865,13 @@
       const tbodyHtml = '<tbody>' + content.rows.map(row => {
         const rc = row.cells || {};
         const jenisCls = rc.jenis === 'Hutang' ? 'hutang' : rc.jenis === 'Piutang' ? 'piutang' : '';
-        const trAttrs = (rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : '') + (jenisCls ? ` class="row-${jenisCls}"` : '');
+        const trAttrs = (rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : '') + (rc._st ? ` class="st-${rc._st}"` : (jenisCls ? ` class="row-${jenisCls}"` : ''));
         return `<tr${trAttrs}>` + cols.map(c => {
           const val = row.cells ? row.cells[c.id] : '';
           if (c.id === 'jenis' && (val === 'Hutang' || val === 'Piutang')) {
             return `<td><span class="jenis-pill ${val === 'Hutang' ? 'hutang' : 'piutang'}">${val}</span></td>`;
           }
+          if (rc._st && c.id === 'sisa') return `<td><span class="st-pill st-${rc._st}">${escapeHtml(MONEY_ST[rc._st].short)}</span>${rc._st === 'lunas' ? '' : ' <b class="st-amt">' + escapeHtml(moneyRp(rc._sis)) + '</b>'}</td>`;
           if (c.id === 'barang') return `<td>${escapeHtml(val || '')}${jumpChipsHtml(rc)}</td>`;
           if (c.id === 'bukti') {
             const list = Array.isArray(row.cells && row.cells._buktiAll) ? row.cells._buktiAll : (val ? [val] : []);

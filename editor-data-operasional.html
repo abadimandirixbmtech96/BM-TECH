@@ -1305,6 +1305,62 @@
   const targetFolderId = urlParams.get('folder') || null;
   let lastKnownUpdatedAt = null;
   let existingNoteLoadFailed = false;
+  // ===== PENGAMAN DATA (v56) =====
+  // serverSynced: false sampai isi catatan ini BENAR-BENAR terbaca dari server (catatan baru = langsung true).
+  // Selama false, tidak boleh ada simpan ke server: daftar kosong di layar tidak boleh menimpa data asli.
+  let serverSynced = !currentNoteId;
+  let draftLoaded = false;          // layar berisi draf HP (dibuka offline), bukan data server
+  let loadInFlight = false, loadRetryTimer = null, loadRetryCount = 0, guardReloads = 0;
+  let newNoteId = null;             // id catatan baru dibuat di HP, supaya simpan ulang tidak membuat catatan ganda
+
+  function bmUuid(){
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    const b = new Uint8Array(16); crypto.getRandomValues(b); b[6] = (b[6] & 0x0f) | 0x40; b[8] = (b[8] & 0x3f) | 0x80;
+    const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+    return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
+  }
+  // Pengaman cadangan di sisi HP: simpan yang membuat jumlah data berkurang TANPA masuk Sampah dianggap kecelakaan.
+  function bmWouldShrink(){
+    try {
+      const bc = baseSnap && baseSnap.content; if (!bc) return false;
+      const bR = (bc.records || []).length, bT = (bc.trash || []).length;
+      return bR > 0 && records.length < bR && records.length + Math.max(trash.length - bT, 0) < bR;
+    } catch (e) { return false; }
+  }
+  function bmWithTimeout(p, ms){
+    return Promise.race([p, new Promise(res => setTimeout(() => res({ data: null, error: { message: 'timeout: server tidak menjawab' } }), ms))]);
+  }
+  function bmRedirect(url){ window.__bmRedirecting = true; window.location.replace(url); }
+  function setSyncBanner(text){
+    try {
+      let el = document.getElementById('bmSyncBanner');
+      if (!text) { if (el) el.remove(); return; }
+      if (!el) {
+        el = document.createElement('div'); el.id = 'bmSyncBanner';
+        el.style.cssText = 'position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:99999;padding:10px 14px;border-radius:12px;background:#B87806;color:#fff;font:600 13px/1.35 system-ui,sans-serif;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.35);pointer-events:none';
+        document.body.appendChild(el);
+      }
+      el.textContent = text;
+    } catch (e) {}
+  }
+  function scheduleLoadRetry(now){
+    if (window.__bmRedirecting || !currentNoteId || serverSynced || loadRetryTimer) return;
+    const wait = now ? 300 : Math.min(20000, 2500 * (loadRetryCount + 1));
+    loadRetryTimer = setTimeout(() => {
+      loadRetryTimer = null; loadRetryCount++;
+      if (navigator.onLine) loadExistingNote(); else scheduleLoadRetry();
+    }, wait);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && currentNoteId && !serverSynced && navigator.onLine) scheduleLoadRetry(true);
+  });
+  // Server menolak simpan yang akan menghapus data (pengaman di database): jangan timpa, muat ulang lalu gabungkan.
+  function bmGuardBlocked(){
+    try { clearTimeout(autosaveTimer); } catch (e) {}
+    setSyncBanner('Penyimpanan ditahan: perubahan ini akan menghapus data yang sudah ada di server. Data Anda aman di HP, sedang digabungkan ulang.');
+    if (guardReloads < 3) { guardReloads++; serverSynced = false; draftLoaded = false; scheduleLoadRetry(true); }
+    return false;
+  }
 
   let noteTitle = '';
   let records = [];
@@ -1880,8 +1936,24 @@
   }
   function saveLocalDraft(){
     try {
-      localStorage.setItem(getLocalDraftKey(), JSON.stringify({
-        title: noteTitle, records, trash, legacyBackup, base: baseSnap, savedAt: Date.now()
+      const key = getLocalDraftKey();
+      let recs = records, trs = trash, base = baseSnap, lk = lastKnownUpdatedAt, ttl = noteTitle, leg = legacyBackup;
+      if (currentNoteId && !serverSynced && !draftLoaded) {
+        // Isi catatan belum terbaca dari server: 'records' di layar hanya berisi yang baru diketik.
+        // Jangan timpa draf lama; gabungkan berdasarkan id.
+        try {
+          const old = JSON.parse(localStorage.getItem(key) || 'null');
+          if (old) {
+            const ids = new Set(records.map(r => r && r.id));
+            recs = (Array.isArray(old.records) ? old.records : []).filter(r => r && !ids.has(r.id)).concat(records);
+            const tids = new Set(trash.map(r => r && r.id));
+            trs = (Array.isArray(old.trash) ? old.trash : []).filter(r => r && !tids.has(r.id)).concat(trash);
+            base = old.base || base; lk = old.lastKnown || lk; ttl = ttl || old.title || ''; leg = leg || old.legacyBackup || null;
+          }
+        } catch (e) {}
+      }
+      localStorage.setItem(key, JSON.stringify({
+        title: ttl, records: recs, trash: trs, legacyBackup: leg, base, lastKnown: lk, unsynced: !serverSynced, savedAt: Date.now()
       }));
     } catch (e) {}
   }
@@ -1893,6 +1965,20 @@
   }
 
   async function loadExistingNote(){
+    if (loadInFlight) return;
+    loadInFlight = true;
+    try { await loadExistingNoteInner(); }
+    catch (e) {
+      console.error('[load]', e);
+      existingNoteLoadFailed = true;
+      try { showSaveStatus('Gagal memuat data — mencoba lagi otomatis', true, true); } catch (_) {}
+    }
+    finally { loadInFlight = false; }
+    if (serverSynced) { loadRetryCount = 0; setSyncBanner(''); }
+    else if (navigator.onLine) scheduleLoadRetry();
+  }
+
+  async function loadExistingNoteInner(){
     if (!currentNoteId) {
       // Note/tabel BARU (bukan buka data yang sudah ada) — otomatis kasih
       // judul berisi tanggal, hari, dan jam saat ini, meniru kebiasaan
@@ -1910,6 +1996,8 @@
         records = draft.records || [];
         trash = Array.isArray(draft.trash) ? draft.trash : [];
         legacyBackup = draft.legacyBackup || null;
+        baseSnap = draft.base || null; lastKnownUpdatedAt = draft.lastKnown || null; draftLoaded = true;
+        setSyncBanner('Mode offline: data dari HP. Akan digabung otomatis saat tersambung.');
         renderHome();
         showSaveStatus('Tersimpan di HP (offline)', false, true);
         return;
@@ -1917,16 +2005,20 @@
       // Belum ada draf di HP: lanjut membaca biasa. Saat offline, data diambil dari salinan penuh di HP (service worker).
     }
 
-    const { data: note, error } = await supabaseClient
+    clearTimeout(window.__bmBT);
+    window.__bmBT = setTimeout(() => { if (!serverSynced) setSyncBanner('Memuat data dari server... daftar di layar masih kosong sementara. Data Anda tidak hilang.'); }, 1200);
+    const { data: note, error } = await bmWithTimeout(supabaseClient
       .from('notes')
       .select('*')
       .eq('id', currentNoteId)
-      .single();
+      .single(), 15000);
+    clearTimeout(window.__bmBT);
 
     if (error || !note) {
       console.error('Gagal memuat data:', error && error.message);
       existingNoteLoadFailed = true;
-      showSaveStatus('Gagal memuat data — coba buka ulang', true, true);
+      showSaveStatus('Gagal memuat data — mencoba lagi otomatis', true, true);
+      setSyncBanner('Belum tersambung ke server. Data baru disimpan di HP dan digabung otomatis. Jangan hapus data aplikasi.');
       return;
     }
 
@@ -1941,11 +2033,12 @@
     const sch = note.content && note.content.schema;
     if (sch && sch !== SCHEMA_VERSION && otherEditors[sch]) {
       existingNoteLoadFailed = true; // blok autosave selama pengalihan
-      window.location.replace(otherEditors[sch] + window.location.search);
+      bmRedirect(otherEditors[sch] + window.location.search);
       return;
     }
 
     existingNoteLoadFailed = false;
+    serverSynced = true; draftLoaded = false; setSyncBanner('');
     lastKnownUpdatedAt = note.updated_at;
     baseSnap = BMMerge.snapFromNote(note, SCHEMA_VERSION);
     noteFolderId = note.folder_id || targetFolderId || null;
@@ -2001,7 +2094,7 @@
         });
       }
     } catch (e) { /* draft rusak/tidak terbaca — abaikan, jangan sampai gagal load */ }
-    clearLocalDraft();
+    if (!addedFromDraft) clearLocalDraft();   // draf baru dihapus setelah benar-benar tersimpan ke server
     if (addedFromDraft > 0) {
       showMigrationToast(`${addedFromDraft} data dari HP (belum sempat tersimpan sebelumnya) berhasil digabungkan kembali.`);
     }
@@ -2041,7 +2134,7 @@
 
   async function saveNoteToDatabase(silent){
     const payload = {
-      title: (noteTitle || '').trim() || 'Untitled',
+      title: (noteTitle || '').trim() || (baseSnap && baseSnap.title) || 'Untitled',
       preview: buildPreviewText(),
       date_tag: buildDateTag(),
       content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
@@ -2050,18 +2143,34 @@
 
     let result;
     if (currentNoteId) {
-      let query = supabaseClient.from('notes').update(payload).eq('id', currentNoteId);
-      if (lastKnownUpdatedAt) query = query.eq('updated_at', lastKnownUpdatedAt);
+      // TIDAK PERNAH simpan tanpa kunci versi: catatan harus sudah terbaca dari server dulu.
+      if (!serverSynced || !lastKnownUpdatedAt) {
+        try { showSaveStatus('Belum tersambung ke server — perubahan aman di HP', true, true); } catch (e) {}
+        return false;
+      }
+      if (bmWouldShrink()) return bmGuardBlocked();
+      let query = supabaseClient.from('notes').update(payload).eq('id', currentNoteId).eq('updated_at', lastKnownUpdatedAt);
       result = await query.select().single();
 
       if (result.error && (result.error.code === 'PGRST116' || /0 rows|no rows/i.test(result.error.message || ''))) {
         return await handleSaveConflict(payload, snapMine);
       }
     } else {
-      result = await supabaseClient.from('notes').insert({ ...payload, folder_id: targetFolderId }).select().single();
+      if (!newNoteId) newNoteId = bmUuid();
+      result = await supabaseClient.from('notes').insert({ ...payload, ...(newNoteId ? { id: newNoteId } : {}), folder_id: targetFolderId }).select().single();
+      if (result.error && result.error.code === '23505' && newNoteId) {
+        // Simpan sebelumnya sebenarnya sudah masuk (jawaban server hilang di jalan): lanjutkan sebagai pembaruan, bukan catatan ganda.
+        const cur0 = await supabaseClient.from('notes').select('*').eq('id', newNoteId).single();
+        if (cur0.data) {
+          currentNoteId = newNoteId; lastKnownUpdatedAt = cur0.data.updated_at; serverSynced = true;
+          baseSnap = BMMerge.snapFromNote(cur0.data, SCHEMA_VERSION);
+          return await handleSaveConflict(payload, snapMine);
+        }
+      }
     }
 
     if (result.error) {
+      if (/BM_GUARD/.test(result.error.message || '')) return bmGuardBlocked();
       console.error('[autosave] gagal:', result.error.message);
       if (!silent) alert('Gagal menyimpan ke database: ' + result.error.message);
       showSaveStatus('Gagal tersimpan', true);
@@ -2086,9 +2195,16 @@
         return false;
       }
       const theirs = cur.data;
+      const tc0 = theirs.content;
+      if (tc0 && tc0.schema && tc0.schema !== SCHEMA_VERSION) {
+        // Isi di server ternyata jenis catatan lain: jangan pernah ditimpa.
+        existingNoteLoadFailed = true;
+        showSaveStatus('Catatan ini jenis data lain — tidak ditimpa', true, true);
+        return false;
+      }
       const merged = BMMerge.merge(baseSnap, snapMine, {
         title: theirs.title,
-        content: (theirs.content && theirs.content.schema === SCHEMA_VERSION) ? theirs.content : { records: [], trash: [], legacy: null }
+        content: (theirs.content && theirs.content.schema === SCHEMA_VERSION) ? theirs.content : { records: [], trash: [], legacy: (theirs.content && (theirs.content.columns || theirs.content.rows)) ? theirs.content : null }
       });
       const upd = await supabaseClient.from('notes').update({
         title: merged.title || 'Untitled',
@@ -2115,6 +2231,7 @@
         return true;
       }
       const isConflict = upd.error.code === 'PGRST116' || /0 rows|no rows/i.test(upd.error.message || '');
+      if (/BM_GUARD/.test(upd.error.message || '')) return bmGuardBlocked();
       if (!isConflict) { console.error('[merge] gagal:', upd.error.message); showSaveStatus('Gagal tersimpan', true); return false; }
       await new Promise(r => setTimeout(r, 120 * (attempt + 1) + Math.random() * 180));
     }
@@ -2123,10 +2240,14 @@
   }
 
   function scheduleAutosave(){
-    if (existingNoteLoadFailed) return;
-    saveLocalDraft();
+    saveLocalDraft();   // SELALU amankan di HP dulu, apa pun keadaan koneksi/muat
     hasUnsyncedChanges = true;
     clearTimeout(autosaveTimer);
+    if (existingNoteLoadFailed || (currentNoteId && !serverSynced)) {
+      try { showSaveStatus('Belum tersambung ke server — perubahan aman di HP', true, true); } catch (e) {}
+      if (currentNoteId && !loadInFlight && navigator.onLine) scheduleLoadRetry(true);
+      return;
+    }
 
     // Jadwalkan dulu SEBELUM update tampilan status — supaya kalaupun ada
     // bug kecil di bagian tampilan (mis. elemen indikator hilang), proses
@@ -2141,6 +2262,7 @@
 
   async function runAutosave(){
     if (!navigator.onLine) { try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) {} return; }
+    if (currentNoteId && !serverSynced) { scheduleLoadRetry(true); return; }
     if (autosaveInFlight) { autosavePending = true; return; }
     autosaveInFlight = true;
 
@@ -2152,8 +2274,7 @@
 
       if (success) {
         autosaveRetryCount = 0;
-        hasUnsyncedChanges = false;
-        clearLocalDraft();
+        if (!autosavePending) { hasUnsyncedChanges = false; clearLocalDraft(); }   // ada ketikan baru selama menyimpan: draf jangan dihapus dulu
       } else {
         autosaveRetryCount++;
         const delay = Math.min(30000, 3000 * autosaveRetryCount);
@@ -2176,7 +2297,7 @@
 
   window.addEventListener('online', () => {
     autosaveRetryCount = 0;
-    if (existingNoteLoadFailed) {
+    if (existingNoteLoadFailed || (currentNoteId && !serverSynced)) {
       showSaveStatus('Koneksi kembali, memuat ulang...');
       loadExistingNote();
       return;
@@ -2191,6 +2312,7 @@
   let skipLeavePrompt = false;
   const sleepMs = ms => new Promise(r => setTimeout(r, ms));
   async function flushBeforeLeave(maxMs){
+    if (currentNoteId && !serverSynced) return false;   // data belum tersambung: aman di HP, jangan menunggu sia-sia
     const t0 = Date.now(); maxMs = maxMs || 8000;
     while (Date.now() - t0 < maxMs) {
       clearTimeout(autosaveTimer);
@@ -2308,7 +2430,7 @@
 
   // ---- Penjaga keluar: jangan keluar sebelum semua tersimpan & tersinkron ----
   function syncBusy(){
-    if (existingNoteLoadFailed) return false;
+    if (existingNoteLoadFailed || (currentNoteId && !serverSynced)) return false;
     if (hasUnsyncedChanges || autosaveInFlight) return true;
     return false;
   }

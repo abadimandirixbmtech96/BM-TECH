@@ -1146,11 +1146,23 @@
   // Tulis ke server: selalu baca isi TERBARU dulu (aman kalau dibuka di 2 HP), ubah, lalu simpan.
   // Field lain di content (mis. data yang tidak dikenal) tidak dibuang.
   async function persist(mutate) {
+    // Simpan dengan kunci versi: kalau HP lain menyimpan di sela-selanya, baca ulang lalu terapkan perubahan lagi (maks 6x).
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const done = await persistOnce(mutate);
+      if (done) return;
+      await new Promise(r => setTimeout(r, 150 * (attempt + 1) + Math.random() * 200));
+    }
+    throw new Error('Gagal menyimpan: data sedang diubah di perangkat lain. Coba lagi.');
+  }
+
+  async function persistOnce(mutate) {
     let content = {};
+    let lockAt = null;
     if (noteId) {
-      const { data, error } = await sb.from('notes').select('content').eq('id', noteId).single();
+      const { data, error } = await sb.from('notes').select('content,updated_at').eq('id', noteId).single();
       if (error) throw error;
       content = data.content && typeof data.content === 'object' ? data.content : {};
+      lockAt = data.updated_at;
     }
     const cur = Array.isArray(content.records) ? content.records : [];
     const tr = Array.isArray(content.trash) ? content.trash : [];
@@ -1163,8 +1175,11 @@
       date_tag: pad2(d.getHours() % 12 || 12) + ':' + pad2(d.getMinutes()) + (d.getHours() >= 12 ? ' PM' : ' AM')
     };
     if (noteId) {
-      const { error } = await sb.from('notes').update(payload).eq('id', noteId);
+      let q = sb.from('notes').update(payload).eq('id', noteId);
+      if (lockAt) q = q.eq('updated_at', lockAt);
+      const { data: upd, error } = await q.select('id');
       if (error) throw error;
+      if (!upd || !upd.length) return false;   // bentrok: ada yang menyimpan lebih dulu -> ulangi dengan isi terbaru
     } else {
       const f = [...cur].sort(byDate)[0];
       const { data, error } = await sb.from('notes').insert({ ...payload, title: noteTitle || (folder.name + ' ' + dmy(new Date(f ? f.created_at : Date.now()))), folder_id: folderId }).select().single();
@@ -1173,6 +1188,7 @@
     }
     records = cur; trash = tr;
     window.parent.postMessage({ type: 'note-autosaved', noteId, folder: folderId }, '*');
+    return true;
   }
 
   async function doSave(editId) {
