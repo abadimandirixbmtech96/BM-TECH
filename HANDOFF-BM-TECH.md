@@ -241,3 +241,11 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - SQL (dijalankan pengguna di SQL Editor, bukan oleh Claude): backup-otomatis.sql (riwayat versi tiap simpan `notes_history`, snapshot tiap 3 jam `backup_snapshots`, pembersihan harian, tampilan `backup_status`), guard-data.sql (trigger `a_notes_guard`), pulihkan.sql (daftar versi lama dan cara memulihkan).
 - dashboard-admin.html: kartu tugas dan status LUNAS/SEBAGIAN/BELUM dari rencana task (hutang ungu, piutang biru; merah-kuning-hijau hanya berarti status bayar).
 - Uji: Playwright 6 skenario x 5 editor (server lambat, offline lalu online, muat gagal, dua HP bersamaan, penghapusan massal, catatan baru ganda). Kode lama gagal di skenario yang sama (menimpa jadi 1 data "Untitled").
+
+## 14. Unduh cadangan dari Profil BM (sw v57)
+- Lokasi: my-profile-bm.html, halaman "Cadangan" (khusus Developer, pintasan `data-dev="backup"`). Tidak ada di dashboard-admin.html (sengaja, agar dashboard tidak makin besar).
+- Tombol "Unduh data terbaru sekarang" memanggil RPC `dev_backup_now`; daftar titik cadangan otomatis dari `dev_backup_list`; tombol Unduh per titik memanggil `dev_backup_get(p_at)` (keadaan semua tabel pada titik itu, diambil dari `backup_snapshots`). File JSON diunduh di HP: `backup-bm-tech-<yyyy-MM-dd_HH-mm WIB>.json`.
+- Ketiga RPC dijaga `is_dev_admin()` dan hanya boleh dipanggil role authenticated (tanpa token yang diketik). `backup_export(token)` tidak lagi boleh dipanggil anon.
+- Retensi mengikuti `do_backup_prune`: snapshot penuh 3 hari, lalu 1 per tabel per hari sampai 30 hari. Titik lama = hasil akhir hari itu.
+- Jalur Google Drive (Apps Script) ditunda: editor Apps Script sulit dipakai di HP. Bisa dipasang lewat komputer, perlu `grant execute on function public.backup_export(text) to anon;` kembali.
+- Uji: scratchpad/uji56/profil.js (Playwright, RPC dipalsukan): daftar, waktu WIB, unduh sekarang, unduh titik, isi kosong ditolak, error muat, non-Developer.
