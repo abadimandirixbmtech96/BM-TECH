@@ -620,6 +620,7 @@
   @keyframes scopeShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-6px); } 75%{ transform:translateX(6px); } }
   .scope-box.scope-shake{ animation:scopeShake .4s; }
   .scope-edit{ display:flex; flex-direction:column; gap:6px; margin-top:12px; font-size:13px; font-weight:700; }
+  .scope-edit select.need{ border-color:#d6453d; }
   .scope-edit select{ padding:10px 12px; border-radius:12px; border:2px solid rgba(128,128,128,0.4); font:inherit; background:var(--card, #fff); color:inherit; }
   .pickup-item{ display:flex; align-items:center; gap:10px; padding:7px 0; cursor:pointer; }
   .pickup-item input{ width:20px; height:20px; margin:0; accent-color:var(--accent); flex-shrink:0; }
@@ -1199,6 +1200,7 @@
           <div class="scope-edit" id="detScopeWrap" style="display:none;">
             <span>Harga ini untuk barang yang mana?</span>
             <select id="detScope">
+              <option value="">Pilih dulu\u2026</option>
               <option value="all">Semua barang</option>
               <option value="out">Yang dibawa pulang saja</option>
               <option value="stay">Yang ditinggal saja</option>
@@ -3655,16 +3657,40 @@
       set('detStokEdit', st.stok); set('detKetEdit', st.ket); set('detHargaEdit', st.harga);
       detMetode.set(st.metode || '', st.split); detBukti.setUrls(Array.isArray(st.bukti) ? st.bukti : []);
       wpDet.set(Array.isArray(st.warung) ? st.warung : []);
+      updateDetScope();
       if (document.getElementById('detScopeWrap').style.display !== 'none') set('detScope', st.scope);
+      updateDetScope();
       if (document.getElementById('detOwnPaidWrap').style.display !== 'none') document.getElementById('detOwnPaid').checked = !!st.own;
       showMigrationToast('Perubahan yang belum disimpan dipulihkan.');
     } catch (e) {}
   }
   // Dipakai tombol Kembali / Tutup / panah: kalau ada perubahan belum disimpan, tanya dulu
+  // Pertanyaan "Harga ini untuk barang yang mana?" muncul LANGSUNG begitu ada barang dibawa + barang ditinggal + Harga angka
+  // (tidak perlu simpan lalu buka lagi). Wajib dipilih sebelum Simpan.
+  function detScopeNeeded(){
+    const r = records.find(x => x.id === editingRecordId);
+    if (!r) return false;
+    if ((r.ambilDari && r.ambilDari.length) || (pkCtx === 'det' && pickupApplied.length)) return false;
+    const g = (id) => document.getElementById(id).value;
+    const h = parseHarga(g('detHargaEdit'));
+    if (isHargaKosong(h) || isCentangText(h)) return false;
+    const pp = parseStokItems({ barang: expandJumlahBarang(g('detBarangEdit')).trim(), barangKeluar: normalizeBJ(g('detKeluarEdit').trim()), stokBarang: normalizeBJ(g('detStokEdit').trim()), harga: h });
+    return (pp.outItems || []).length > 0 && pp.items.length > 0;
+  }
+  function updateDetScope(){
+    try {
+      const need = detScopeNeeded(), wrap = document.getElementById('detScopeWrap'), sel = document.getElementById('detScope');
+      const want = need ? 'flex' : 'none';
+      if (wrap.style.display !== want) wrap.style.display = want;
+      sel.classList.toggle('need', need && !sel.value);
+    } catch (e) {}
+  }
+  document.getElementById('detScope').addEventListener('change', updateDetScope);
   // Simpan / Batalkan hanya tampil kalau ada yang diubah (jadi Detail yang baru dibuka terlihat bersih)
   function syncDetailActions(){
     try {
       if (currentView !== 'detail') return;
+      updateDetScope();
       const el = document.getElementById('detailActionsEdit'), want = isDetailDirty() ? 'flex' : 'none';
       if (el.style.display !== want) el.style.display = want;
     } catch (e) {}
@@ -3716,11 +3742,8 @@
     const ownN = (r.ambilDari && r.ambilDari.length) ? parseStokItems(r).items.filter(i => !i.carried).length : 0;
     document.getElementById('detOwnPaidWrap').style.display = ownN ? 'flex' : 'none';
     document.getElementById('detOwnPaid').checked = !!r.ownPaid;
-    const pp = parseStokItems(r);
-    const bh = r.hargaAuto ? r.hargaBase : r.harga;
-    const showScope = !(r.ambilDari && r.ambilDari.length) && !isHargaKosong(bh) && !isCentangText(bh) && (pp.outItems || []).length > 0 && pp.items.length > 0;
-    document.getElementById('detScopeWrap').style.display = showScope ? 'flex' : 'none';
-    document.getElementById('detScope').value = r.hargaScope || 'all';
+    document.getElementById('detScope').value = r.hargaScope || '';
+    updateDetScope();
     // Detail selalu langsung bisa diedit: tombol Edit disembunyikan, Hapus & Tutup tetap ada
     document.getElementById('btnDetailEdit').style.display = 'none';
     document.getElementById('detailActionsView').style.display = 'flex';
@@ -3757,6 +3780,14 @@
     if (!pj) { alert('PJ wajib diisi.'); return; }
     if (detBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
     if (!validateMetode(detMetode, harga, () => document.getElementById('btnDetailSaveEdit').click())) return;
+    updateDetScope();
+    if (document.getElementById('detScopeWrap').style.display !== 'none' && !document.getElementById('detScope').value) {
+      const w = document.getElementById('detScopeWrap');
+      w.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      replayClass(w, 'scope-shake', 500);
+      appNotice({ title: 'Pilih dulu', text: 'Ada barang yang dibawa dan ada yang ditinggal. Pilih Harga ini untuk barang yang mana: semua barang, yang dibawa saja, atau yang ditinggal saja.', okLabel: 'Oke' });
+      return;
+    }
     const bukti = detBukti.getUrls();
 
     // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
