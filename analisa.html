@@ -778,12 +778,17 @@
       <div class="hero-nav" id="heroNav"></div>
       <div class="period-tabs">
         <button class="period-tab" data-period="day">Hari Ini</button>
+        <button class="period-tab" data-period="hari">Pilih Hari</button>
         <button class="period-tab" data-period="week">Pekan Ini</button>
         <button class="period-tab" data-period="pekan">Pilih Pekan</button>
         <button class="period-tab active" data-period="month">Bulan Ini</button>
         <button class="period-tab" data-period="year">Tahun Ini</button>
         <button class="period-tab" data-period="all">Semua</button>
         <button class="period-tab" data-period="custom">Kustom</button>
+      </div>
+
+      <div class="custom-range-row" id="hariRow">
+        <input type="date" class="date-input" id="hariInput" aria-label="Pilih hari">
       </div>
 
       <div class="custom-range-row" id="pekanRow">
@@ -1194,6 +1199,8 @@
   // --- Pekan (Kamis–Rabu) — sama persis dengan pengelompokan "Pekan N" di dashboard-admin.html ---
   const MONTH_SHORT_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
   let weekEpoch = null;     // pekan (Kamis) paling awal yang punya data di folder BUKU BESAR; batas bawah daftar pekan & tren
+  let selectedDay = null;   // hari (Date, 00:00) yang dipilih di tab "Pilih Hari"
+  const isDayMode = p => p === 'day' || p === 'hari';
   let selectedPekan = null; // awal pekan (Date, Kamis) yang dipilih di tab "Pilih Pekan"
 
   function getWeekAnchorThursday(date) {
@@ -1370,6 +1377,7 @@
 
   const periodLabels = {
     day: 'Total Pemasukan Hari Ini',
+    hari: 'Total Pemasukan Hari Dipilih',
     week: 'Total Pemasukan Pekan Ini',
     pekan: 'Total Pemasukan Pekan Dipilih',
     month: 'Total Pemasukan Bulan Ini',
@@ -1377,7 +1385,7 @@
     all: 'Total Pemasukan Sepanjang Waktu',
     custom: 'Total Pemasukan (Rentang Kustom)'
   };
-  const PERIOD_SHORT = { day: 'Hari Ini', week: 'Pekan Ini', pekan: 'Pekan Dipilih', month: 'Bulan Ini', year: 'Tahun Ini', all: 'Semua Waktu', custom: 'Rentang Kustom' };
+  const PERIOD_SHORT = { day: 'Hari Ini', hari: 'Hari Dipilih', week: 'Pekan Ini', pekan: 'Pekan Dipilih', month: 'Bulan Ini', year: 'Tahun Ini', all: 'Semua Waktu', custom: 'Rentang Kustom' };
 
   // Pekan (Kamis–Rabu) dengan nomor yang di-reset tiap bulan, sama dengan dashboard — bukan "minggu" Senin–Minggu
   function periodLabelText(period) {
@@ -1386,6 +1394,7 @@
       if (period === 'week') return `Total Pemasukan Pekan Ini (${label})`;
       return `Total Pemasukan ${label}`;
     }
+    if (period === 'hari') return `Total Pemasukan ${formatDateShort(getPeriodStart('hari', new Date()))}`;
     return periodLabels[period];
   }
 
@@ -1393,12 +1402,14 @@
     if (period === 'week' || period === 'pekan') {
       return pekanLabel(getPeriodStart(period, new Date()));
     }
+    if (period === 'hari') return formatDateShort(getPeriodStart('hari', new Date()));
     return PERIOD_SHORT[period];
   }
 
   function getPeriodStart(period, now) {
     const d = new Date(now);
     if (period === 'day') { d.setHours(0, 0, 0, 0); return d; }
+    if (period === 'hari') return selectedDay ? new Date(selectedDay) : startOfDay(now);
     if (period === 'week') return getWeekAnchorThursday(now);                       // Kamis pekan berjalan
     if (period === 'pekan') return selectedPekan ? new Date(selectedPekan) : getWeekAnchorThursday(now);
     if (period === 'month') { return new Date(d.getFullYear(), d.getMonth(), 1); }
@@ -1409,6 +1420,10 @@
   function getPeriodRange(period) {
     const now = new Date();
     if (period === 'custom' && customRange) return { start: customRange.start, end: customRange.end };
+    if (period === 'hari') {
+      const s = getPeriodStart('hari', now);
+      return { start: s, end: new Date(new Date(s.getFullYear(), s.getMonth(), s.getDate() + 1).getTime() - 1) };   // satu hari penuh 00:00–23:59:59
+    }
     if (period === 'pekan') {
       const s = getPeriodStart('pekan', now);
       // satu pekan penuh: Kamis 00:00 sampai Rabu 23:59:59
@@ -1420,7 +1435,7 @@
   function getPreviousPeriodRange(period) {
     const now = new Date();
     const start = getPeriodStart(period, now);
-    if (period === 'day') {
+    if (isDayMode(period)) {
       const prevEnd = new Date(start.getTime() - 1);
       const prevStart = new Date(start); prevStart.setDate(prevStart.getDate() - 1);
       return { start: prevStart, end: prevEnd };
@@ -1576,7 +1591,7 @@
     const total = sumTxs(txs);
     if (txs.length === 0) return { points: [], total: 0, unit: 'hari', txCount: 0 };
 
-    if (period === 'day') {
+    if (isDayMode(period)) {
       const sorted = [...txs].sort((a, b) => a.ts - b.ts);
       const points = sorted.map(t => ({
         label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t),
@@ -1976,7 +1991,7 @@
     if (!all.length) return out;
     const ts = all.map(e => e.t);
 
-    if (period === 'day') {
+    if (isDayMode(period)) {
       const lo = Math.min(...ts), hi = Math.max(...ts), f = t => hi > lo ? (t - lo) / (hi - lo) : 0.5;
       const mk = a => [...a].sort((x, y) => x.t - y.t).map(e => ({ f: f(e.t), v: e.v, label: e.label }));
       let run = 0;
@@ -2166,7 +2181,7 @@
       $(id + 'Hi').textContent = ok ? c(Math.max(...v)) : '-';
       $(id + 'Avg').textContent = ok ? c(v.reduce((a, b) => a + b, 0) / v.length) : '-';
       $(id + 'Lo').textContent = ok ? c(Math.min(...v)) : '-';
-      $(id + 'Unit').textContent = ok ? (period === 'day' ? 'Nilai per catatan' : 'Nilai per periode aktif') : '';
+      $(id + 'Unit').textContent = ok ? (isDayMode(period) ? 'Nilai per catatan' : 'Nilai per periode aktif') : '';
     });
   }
 
@@ -2677,7 +2692,7 @@
     } else {
       html += '<p class="bar-note" style="margin-top:0;">Jam transaksi belum tercatat pada periode ini.</p>';
     }
-    if (period !== 'day') {
+    if (!isDayMode(period)) {
       const dayCounts = DAY_ORDER.map(d => byDay[d]);
       const maxD = Math.max(...dayCounts);
       const pdi = dayCounts.indexOf(maxD);
@@ -2701,6 +2716,7 @@
     let rangeText;
     if (period === 'all') rangeText = 'Semua Waktu';
     else if (period === 'day') rangeText = `Hari Ini (${formatDateShort(range.start)})`;
+    else if (period === 'hari') rangeText = `Hari ${formatDateShort(range.start)}`;
     else if (period === 'week' || period === 'pekan') rangeText = `${periodShortText(period)} (${weekRangeLabel(range.start)})`;
     else rangeText = `${periodShortText(period)} (${formatDateShort(range.start)} – ${formatDateShort(range.end > now ? now : range.end)})`;
 
@@ -3204,6 +3220,15 @@
       customRow.classList.remove('show');
     }
 
+    if (period === 'hari') {
+      if (!selectedDay) selectedDay = startOfDay(new Date());
+      $('hariRow').classList.add('show');
+      $('hariInput').max = toLocalDateStr(new Date());
+      $('hariInput').value = toLocalDateStr(selectedDay);
+    } else {
+      $('hariRow').classList.remove('show');
+    }
+
     if (period === 'pekan') {
       $('pekanRow').classList.add('show');
       if (selectedPekan) $('pekanSelect').value = String(selectedPekan.getTime());
@@ -3215,6 +3240,13 @@
 
   document.querySelectorAll('.period-tab[data-period]').forEach(tab => {
     tab.addEventListener('click', () => activatePeriod(tab.dataset.period));
+  });
+
+  $('hariInput').addEventListener('change', (e) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(e.target.value);
+    if (!m) return;
+    selectedDay = new Date(+m[1], +m[2] - 1, +m[3]);
+    renderPeriodViews();
   });
 
   $('pekanSelect').addEventListener('change', (e) => {
