@@ -3578,6 +3578,15 @@
     } catch (e) {}
   }
   // Dipakai tombol Kembali / Tutup / panah: kalau ada perubahan belum disimpan, tanya dulu
+  // Simpan / Batalkan hanya tampil kalau ada yang diubah (jadi Detail yang baru dibuka terlihat bersih)
+  function syncDetailActions(){
+    try {
+      if (currentView !== 'detail') return;
+      const el = document.getElementById('detailActionsEdit'), want = isDetailDirty() ? 'flex' : 'none';
+      if (el.style.display !== want) el.style.display = want;
+    } catch (e) {}
+  }
+  setInterval(syncDetailActions, 250);
   function guardDetailLeave(proceed){
     if (!isDetailDirty()) { proceed(); return; }
     appNotice({
@@ -3632,7 +3641,7 @@
     // Detail selalu langsung bisa diedit: tombol Edit disembunyikan, Hapus & Tutup tetap ada
     document.getElementById('btnDetailEdit').style.display = 'none';
     document.getElementById('detailActionsView').style.display = 'flex';
-    document.getElementById('detailActionsEdit').style.display = 'flex';
+    document.getElementById('detailActionsEdit').style.display = 'none';   // muncul sendiri begitu ada yang diubah
     detBaseSig = detSig();
     restoreDetailDraft(r);
     // Kartu saran juga muncul di Detail (data yang belum terhubung ke titipan mana pun)
