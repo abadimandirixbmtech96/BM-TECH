@@ -1925,7 +1925,7 @@
 
   // --- Kartu hero geser: Pemasukan (gabungan) | Kasbon | Operasional | Bersih ---
   // Kasbon = total kasbon yang dicatat pada periode (sesuai tanggal catatan). Operasional = Harga catatan Buku Operasional pada periode.
-  const HERO_SL = [{ id: 'inc', name: 'Ringkasan' }, { id: 'kas', name: 'Kasbon' }, { id: 'ops', name: 'Operasional' }, { id: 'net', name: 'Bersih' }];
+  const HERO_SL = [{ id: 'inc', name: 'Ringkasan' }, { id: 'kas', name: 'Kasbon' }, { id: 'ops', name: 'Operasional' }, { id: 'net', name: 'Bersih' }, { id: 'lac', name: 'Bersih Cash' }, { id: 'bnk', name: 'Bersih Transfer' }];
   const HC = { inc: '#3DD68C', kas: '#F0A529', ops: '#B07CFF' };
   const heroSt = {};
   const fmtS = v => (v < 0 ? '- ' : '') + formatRupiah(Math.abs(v));
@@ -1944,7 +1944,17 @@
     const inc = getPeriodTxs(period).map(t => ({ t: t.ts || t.date.getTime(), v: t.amount, label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t) }));
     const kas = debtItems.filter(d => d.type === 'kasbon' && d.when && (all || (d.when >= start && d.when <= end)))
       .map(d => ({ t: d.when.getTime(), v: d.total, label: formatTime(d.when) + ' · ' + d.nama, nama: d.nama }));
-    return { inc, kas, ops: getOperasionalEvents(period) };
+    // Pecahan per metode bayar. Kasbon dianggap keluar dari laci (cash). Operasional: porsi transfer
+    // keluar dari rekening, sisanya (cash, campur, atau metode belum dipilih) dianggap keluar dari laci.
+    const cin = methodTxs(period, 'cash').map(t => ({ t: t.ts || t.date.getTime(), v: t.amount, label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t) }));
+    const tin = methodTxs(period, 'transfer').map(t => ({ t: t.ts || t.date.getTime(), v: t.amount, label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t) }));
+    const oc = [], ot = [];
+    opsInPeriod(period).filter(o => o.amount > 0).forEach(o => {
+      const lab = formatTime(o.when) + ' · ' + o.item;
+      if (o.amount - o.trf > 0) oc.push({ t: o.when.getTime(), v: o.amount - o.trf, label: lab });
+      if (o.trf > 0) ot.push({ t: o.when.getTime(), v: o.trf, label: lab });
+    });
+    return { inc, kas, ops: getOperasionalEvents(period), cin, tin, oc, ot };
   }
 
   // Candlestick = saldo berjalan (masuk - keluar): buka/tutup/tinggi/rendah per hari (atau per transaksi di 'Hari Ini')
@@ -1960,7 +1970,9 @@
   function buildHero(period) {
     const ev = heroEvents(period), all = [...ev.inc, ...ev.kas, ...ev.ops];
     const tot = { inc: ev.inc.reduce((s, e) => s + e.v, 0), kas: ev.kas.reduce((s, e) => s + e.v, 0), ops: ev.ops.reduce((s, e) => s + e.v, 0) };
-    const out = { ev, tot, ax: ['', ''], shared: false, ser: { inc: [], kas: [], ops: [], net: [] } };
+    tot.lac = ev.cin.reduce((s, e) => s + e.v, 0) - tot.kas - ev.oc.reduce((s, e) => s + e.v, 0);
+    tot.bnk = ev.tin.reduce((s, e) => s + e.v, 0) - ev.ot.reduce((s, e) => s + e.v, 0);
+    const out = { ev, tot, ax: ['', ''], shared: false, ser: { inc: [], kas: [], ops: [], net: [], lac: [], bnk: [] } };
     if (!all.length) return out;
     const ts = all.map(e => e.t);
 
@@ -1970,7 +1982,9 @@
       let run = 0;
       const net = [...ev.inc.map(e => ({ ...e, s: 1 })), ...ev.kas.map(e => ({ ...e, s: -1 })), ...ev.ops.map(e => ({ ...e, s: -1 }))]
         .sort((a, b) => a.t - b.t).map(e => { run += e.s * e.v; return { f: f(e.t), v: run, label: e.label }; });
-      out.ser = { inc: mk(ev.inc), kas: mk(ev.kas), ops: mk(ev.ops), net };
+      const run2 = (plus, minus) => { let r = 0; return [...plus.map(e => ({ ...e, s: 1 })), ...minus.map(e => ({ ...e, s: -1 }))]
+        .sort((a, b) => a.t - b.t).map(e => { r += e.s * e.v; return { f: f(e.t), v: r, label: e.label }; }); };
+      out.ser = { inc: mk(ev.inc), kas: mk(ev.kas), ops: mk(ev.ops), net, lac: run2(ev.cin, [...ev.kas, ...ev.oc]), bnk: run2(ev.tin, ev.ot) };
       out.ax = [formatTime(new Date(lo)), hi > lo ? formatTime(new Date(hi)) : ''];
       out.cd = candles([...ev.inc.map(e => ({ ...e, s: 1 })), ...ev.kas.map(e => ({ ...e, s: -1 })), ...ev.ops.map(e => ({ ...e, s: -1 }))]
         .sort((a, b) => a.t - b.t).map(e => ({ label: e.label, evs: [e] })));
@@ -1998,8 +2012,11 @@
     const keyOf = t => { const d = new Date(t); return byDay ? toLocalDateStr(d) : toLocalMonthStr(d); };
     const s = { inc: bk.map(() => 0), kas: bk.map(() => 0), ops: bk.map(() => 0) };
     ['inc', 'kas', 'ops'].forEach(k => ev[k].forEach(e => { const i = idx.get(keyOf(e.t)); if (i !== undefined) s[k][i] += e.v; }));
+    const sb = a => { const r = bk.map(() => 0); a.forEach(e => { const i = idx.get(keyOf(e.t)); if (i !== undefined) r[i] += e.v; }); return r; };
+    const sCin = sb(ev.cin), sTin = sb(ev.tin), sOc = sb(ev.oc), sOt = sb(ev.ot);
     const mk = a => a.map((v, i) => ({ f: bk.length > 1 ? i / (bk.length - 1) : 0.5, v, label: bk[i].label }));
-    out.ser = { inc: mk(s.inc), kas: mk(s.kas), ops: mk(s.ops), net: mk(s.inc.map((v, i) => v - s.kas[i] - s.ops[i])) };
+    out.ser = { inc: mk(s.inc), kas: mk(s.kas), ops: mk(s.ops), net: mk(s.inc.map((v, i) => v - s.kas[i] - s.ops[i])),
+      lac: mk(sCin.map((v, i) => v - s.kas[i] - sOc[i])), bnk: mk(sTin.map((v, i) => v - sOt[i])) };
     out.shared = true;
     const cg = bk.map(b => ({ label: b.label, evs: [] }));
     ['inc', 'kas', 'ops'].forEach(k => ev[k].forEach(e => { const i = idx.get(keyOf(e.t)); if (i !== undefined) cg[i].evs.push({ t: e.t, v: e.v, s: k === 'inc' ? 1 : -1 }); }));
@@ -2123,6 +2140,12 @@
     set('ops', 'Operasional', formatRupiah(t.ops), opsLoadError ? 'Gagal memuat Buku Operasional' : B.ev.ops.length ? `${B.ev.ops.length} catatan · ${new Set(B.ev.ops.map(e => normalizeKey(e.nama) || e.nama.toLowerCase())).size} item` : 'Belum ada operasional pada periode ini');
     set('net', 'Bersih', fmtS(net), `Pemasukan ${c(t.inc)} − Kasbon ${c(t.kas)} − Operasional ${c(t.ops)}`);
     $('netValWrap').className = 'income-total-value ' + (net < 0 ? 'hero-neg' : 'hero-pos');
+    const cinT = B.ev.cin.reduce((q, e) => q + e.v, 0), ocT = B.ev.oc.reduce((q, e) => q + e.v, 0), tinT = B.ev.tin.reduce((q, e) => q + e.v, 0), otT = B.ev.ot.reduce((q, e) => q + e.v, 0);
+    const noMet = getPeriodTxs(period).filter(x => !x.metode || (x.metode === 'campur' && !(x.cashAmt + x.trfAmt > 0))), noMetT = sumTxs(noMet);
+    set('lac', 'Bersih Cash', fmtS(t.lac), `Cash masuk ${c(cinT)} − Kasbon ${c(t.kas)} − Operasional cash ${c(ocT)}` + (noMet.length ? ` · ${noMet.length} transaksi (${c(noMetT)}) belum ada metode, tidak dihitung` : ''));
+    set('bnk', 'Bersih Transfer', fmtS(t.bnk), `Transfer masuk ${c(tinT)} − Operasional transfer ${c(otT)}` + (noMet.length ? ` · ${noMet.length} transaksi (${c(noMetT)}) belum ada metode, tidak dihitung` : ''));
+    $('lacValWrap').className = 'income-total-value ' + (t.lac < 0 ? 'hero-neg' : 'hero-pos');
+    $('bnkValWrap').className = 'income-total-value ' + (t.bnk < 0 ? 'hero-neg' : 'hero-pos');
     $('kasValWrap').className = 'income-total-value hero-kas'; $('opsValWrap').className = 'income-total-value hero-ops';
 
     const Lg = (name, color, pts) => ({ name, color, pts });
@@ -2135,9 +2158,11 @@
     drawHero('kas', [Lg('Kasbon', HC.kas, ser.kas)], B.ax, B.shared, 'Belum ada kasbon pada periode ini');
     drawHero('ops', [Lg('Operasional', HC.ops, ser.ops)], B.ax, B.shared, 'Belum ada data operasional');
     drawHero('net', [Lg('Bersih', net < 0 ? '#F0555C' : '#3DD68C', ser.net)], B.ax, B.shared, 'Belum ada data untuk periode ini');
+    drawHero('lac', [Lg('Bersih Cash', t.lac < 0 ? '#F0555C' : '#3DD68C', ser.lac)], B.ax, B.shared, 'Belum ada data untuk periode ini');
+    drawHero('bnk', [Lg('Bersih Transfer', t.bnk < 0 ? '#F0555C' : '#3B8FE0', ser.bnk)], B.ax, B.shared, 'Belum ada data untuk periode ini');
 
-    ['kas', 'ops', 'net'].forEach(id => {
-      const v = ser[id].map(p => p.v).filter(x => id === 'net' || x > 0), ok = v.length > 0;
+    ['kas', 'ops', 'net', 'lac', 'bnk'].forEach(id => {
+      const v = ser[id].map(p => p.v).filter(x => id === 'kas' || id === 'ops' ? x > 0 : true), ok = v.length > 0;
       $(id + 'Hi').textContent = ok ? c(Math.max(...v)) : '-';
       $(id + 'Avg').textContent = ok ? c(v.reduce((a, b) => a + b, 0) / v.length) : '-';
       $(id + 'Lo').textContent = ok ? c(Math.min(...v)) : '-';
@@ -2720,6 +2745,9 @@
       }
       const netV = total - kasT - opsT;
       lines.push(`*Bersih:* ${netV < 0 ? '- ' : ''}${formatRupiah(Math.abs(netV))} (Pemasukan − Kasbon − Operasional)`);
+      const lacV = hv.cin.reduce((q, e) => q + e.v, 0) - kasT - hv.oc.reduce((q, e) => q + e.v, 0), bnkV = hv.tin.reduce((q, e) => q + e.v, 0) - hv.ot.reduce((q, e) => q + e.v, 0);
+      lines.push(`*Bersih Cash (laci):* ${lacV < 0 ? '- ' : ''}${formatRupiah(Math.abs(lacV))} (Cash − Kasbon − Operasional cash)`);
+      lines.push(`*Bersih Transfer:* ${bnkV < 0 ? '- ' : ''}${formatRupiah(Math.abs(bnkV))} (Transfer − Operasional transfer)`);
     }
     const openDebt = debtItems.filter(d => d.sisa > 0);
     if (openDebt.length) {
@@ -2866,7 +2894,11 @@
       if (amount > 0) {
         if (metode === 'cash') cash = amount;
         else if (metode === 'transfer') trf = amount;
-        else if (metode === 'campur') { cash = Math.min(amount, Math.max(0, Number(r.bayarCash) || 0)); trf = Math.max(0, amount - cash); }
+        else if (metode === 'campur') {
+          const bc = Math.max(0, Number(r.bayarCash) || 0), bt = Math.max(0, Number(r.bayarTransfer) || 0);
+          cash = Math.min(amount, bc);
+          trf = (bc + bt) > 0 ? (bt > 0 ? Math.min(amount - cash, bt) : Math.max(0, amount - cash)) : 0;   // campur tanpa rincian = belum dipilih
+        }
       }
       const txt = (v, fb) => { const t = String(v == null ? '' : v).trim(); return t || fb; };
       out.push({
@@ -3260,7 +3292,7 @@
   });
 
   // --- Angka terlalu panjang: huruf dikecilkan sampai muat (kalau sudah paling kecil, dipotong "...") ---
-  const FIT_SELECTOR = '#incomeTotalValue, #kasValue, #opsValue, #netValue, #cashValue, #transferValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
+  const FIT_SELECTOR = '#incomeTotalValue, #kasValue, #opsValue, #netValue, #lacValue, #bnkValue, #cashValue, #transferValue, .income-mini-stat-value, .stat-card-value, .split-value, .bar-count, .recent-activity-amount, .tube-val';
   const FIT_MIN_PX = 8;
 
   function fitOne(el) {
