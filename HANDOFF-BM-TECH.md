@@ -250,3 +250,24 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Jangka panjang di Google Drive: Apps Script (akun pemilik) memanggil `backup_export(token)` tiap 2 jam, simpan `backup-bm-tech-<yyyy-MM-dd_HH-mm>.json` di folder "BM-TECH Backup". Retensi di Drive: semua file 3 hari terakhir, lalu 1 file terbaru per hari sampai 90 hari, sisanya dibuang. Gagal = email ke akun Apps Script. `backup_export` hanya boleh dipanggil anon (lewat token di tabel `backup_secret`); token tidak boleh masuk chat/repo.
 - Mengganti isi skrip Apps Script: jalankan SQL pembuat skrip (token disisipkan otomatis dari `backup_secret`), salin hasilnya, tempel ke Kode.gs, simpan, jalankan `mulai` sekali.
 - Uji: scratchpad/uji56/profil.js (Playwright, RPC dipalsukan; argumen `nodev` = admin biasa tanpa Developer/Owner).
+
+## 15. Analisa: Bersih Cash & Bersih Transfer (sw v59)
+- Hero Analisa punya 6 slide: Ringkasan, Kasbon, Operasional, Bersih, **Bersih Cash**, **Bersih Transfer**.
+- Bersih Cash (uang laci) = Cash masuk − Kasbon − Operasional cash. Bersih Transfer = Transfer masuk − Operasional transfer.
+- Kasbon dianggap keluar dari laci. Operasional: porsi transfer keluar dari rekening; cash, campur, dan metode belum dipilih dianggap keluar dari laci.
+- Transaksi Buku Besar tanpa metode bayar tidak masuk Cash maupun Transfer (ada catatan di keterangan slide). "Bersih" lama tetap = semua pemasukan − Kasbon − Operasional.
+- Operasional metode campur tanpa rincian bayarCash/bayarTransfer sekarang dianggap belum dipilih (sebelumnya semua dihitung transfer).
+- Pembayaran kasbon (dibayar) belum dihitung sebagai uang masuk karena tidak ada tanggal pelunasan.
+- Teks WhatsApp ikut memuat Bersih Cash dan Bersih Transfer.
+
+## 16. Analisa: tab Pilih Hari (sw v60)
+- Tab baru "Pilih Hari" (period `hari`) di samping Hari Ini: input tanggal, rentang 00:00–23:59:59 hari itu, tidak boleh memilih tanggal setelah hari ini.
+- Semua tampilan mode harian (grafik per transaksi, kartu Bersih Cash/Transfer, pembanding hari sebelumnya, teks WhatsApp) memakai helper `isDayMode()` yang berlaku untuk `day` dan `hari`.
+
+## 17. Editor Data Administrator: detail selalu bisa diedit (sw v61)
+- Halaman Detail langsung dalam mode edit (tombol Edit disembunyikan; Hapus dan Tutup tetap). Semua pilihan (Metode Bayar, "Harga ini untuk barang yang mana?", dll) langsung tampil.
+- Perubahan yang belum disimpan dijaga: Kembali, Tutup, panah kiri/kanan, dan lompat ke data terhubung menampilkan peringatan "Perubahan belum disimpan" (Tetap di sini / Keluar tanpa simpan).
+- Draf edit disimpan di localStorage (`admdash_editdraft_<note>_<record>`), dipulihkan saat detail dibuka lagi bila data asli belum berubah; dibuang saat Simpan / Batalkan Perubahan.
+- Kartu "Barang masih ditinggal / Belum dibayar": keterangan otomatis TIDAK menimpa keterangan yang sudah ditulis, teks kartu ditambahkan di belakang (`Keterangan lama · Ambil barang (...)`); pindah tombol mengganti teks kartu sebelumnya.
+- Tombol "Bayar saja": tulisan "Bayar duluan" hanya untuk barang yang masih ditinggal. Barang yang sudah dibawa memakai "Bayar (...)"; link disimpan dengan `taken: true`, tampil "Bayar:" di Terhubung.
+- Kartu saran juga muncul di Detail (satu elemen `#pickupCard` dipindah antara form Tambah Data dan `#detPickupSlot` oleh `pkSetCtx()`; peta kolom `PK()` memilih input form atau input Detail). Di Detail kartu hanya menawarkan titipan yang LEBIH LAMA dari data ini dan tidak menawarkan data itu sendiri. Hanya untuk data yang belum punya `ambilDari`; data yang sudah terhubung tidak diubah dari kartu. Saat Simpan, `resolvePickupLinks()` mengisi `ambilDari` (+ stokCarry, ownPaid) dan penandaan di data titipan lama berjalan lewat reconcileLinks seperti Tambah Data.
