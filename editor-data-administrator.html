@@ -1147,6 +1147,7 @@
           <div class="val" id="detCustomerView">—</div>
           <input type="text" id="detCustomerEdit" style="display:none;">
         </div>
+        <div id="detPickupSlot"></div>
         <div class="detail-row">
           <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
           <div class="val" id="detBarangView">—</div>
@@ -1227,18 +1228,18 @@
         </div>
       </div>
 
+      <div class="detail-actions" id="detailActionsEdit" style="display:none;">
+        <div class="btn-row">
+          <button class="btn-secondary" id="btnDetailCancelEdit">Batalkan Perubahan</button>
+          <button class="btn-primary" id="btnDetailSaveEdit">Simpan Perubahan</button>
+        </div>
+      </div>
       <div class="detail-actions" id="detailActionsView">
         <div class="btn-row">
           <button class="btn-secondary" id="btnDetailEdit">Edit</button>
           <button class="btn-danger-outline" id="btnDetailDelete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Hapus</button>
         </div>
         <button class="btn-secondary" id="btnDetailClose">Tutup</button>
-      </div>
-      <div class="detail-actions" id="detailActionsEdit" style="display:none;">
-        <div class="btn-row">
-          <button class="btn-secondary" id="btnDetailCancelEdit">Batal</button>
-          <button class="btn-primary" id="btnDetailSaveEdit">Simpan Perubahan</button>
-        </div>
       </div>
     </div>
   </section>
@@ -2893,8 +2894,20 @@
     if (name === 'settings') { const sc = el.querySelector('.scroll'); if (sc) replayClass(sc, 'anim-rows', 900); }
   }
   let homeScrollPos = 0;   // posisi gulir daftar Home, dipulihkan saat kembali dari Detail
+  // Kartu saran (barang ditinggal / belum dibayar) dipindah ke layar yang sedang dipakai
+  const pkHome = { parent: null, next: null };
+  function pkSetCtx(ctx){
+    const card = document.getElementById('pickupCard'); if (!card) return;
+    if (!pkHome.parent) { pkHome.parent = card.parentNode; pkHome.next = card.nextSibling; }
+    if (ctx === pkCtx && ((ctx === 'det') === (card.parentNode !== pkHome.parent))) return;
+    pkCtx = ctx;
+    if (ctx === 'det') document.getElementById('detPickupSlot').appendChild(card);
+    else pkHome.parent.insertBefore(card, pkHome.next && pkHome.next.parentNode === pkHome.parent ? pkHome.next : null);
+    try { resetPickupForm(); } catch (e) {}
+  }
   function goView(name){
     const prevView = currentView;
+    if (name !== 'detail') pkSetCtx('add');
     if (prevView === 'home' && name !== 'home') {
       const hs = document.getElementById('view-home').querySelector('.scroll');
       if (hs) homeScrollPos = hs.scrollTop;
@@ -2985,8 +2998,8 @@
 
   document.getElementById('btnAddBack').addEventListener('click', () => goView('home'));
   document.getElementById('btnSettingsBack').addEventListener('click', () => goView('home'));
-  document.getElementById('btnDetailBack').addEventListener('click', () => goView('home'));
-  document.getElementById('btnDetailClose').addEventListener('click', () => goView('home'));
+  document.getElementById('btnDetailBack').addEventListener('click', () => guardDetailLeave(() => goView('home')));
+  document.getElementById('btnDetailClose').addEventListener('click', () => guardDetailLeave(() => goView('home')));
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => goView(btn.dataset.nav));
   });
@@ -3492,6 +3505,7 @@
     renderLedger(r);
 
     exitEditMode();
+    enterDetailEdit();
     goView('detail');
     playDetailAnim();
   }
@@ -3522,12 +3536,60 @@
     document.getElementById('metodeGroupDet').style.display = '';
     document.getElementById('detailActionsView').style.display = 'flex';
     document.getElementById('detailActionsEdit').style.display = 'none';
+    document.getElementById('btnDetailEdit').style.display = '';
   }
 
-  document.getElementById('btnDetailEdit').addEventListener('click', () => {
+  // ---- Perubahan di Detail yang belum disimpan: dijaga & disimpan sebagai draf di HP ----
+  let detBaseSig = '';
+  function detState(){
+    const g = (id) => document.getElementById(id).value;
+    return {
+      pj: g('detPJedit'), customer: g('detCustomerEdit'), barang: g('detBarangEdit'), keluar: g('detKeluarEdit'),
+      stok: g('detStokEdit'), ket: g('detKetEdit'), harga: g('detHargaEdit'),
+      metode: detMetode.get(), split: detMetode.split(), bukti: detBukti.getUrls(), warung: wpDet.get(),
+      scope: g('detScope'), own: document.getElementById('detOwnPaid').checked
+    };
+  }
+  function detSig(){ try { return JSON.stringify(detState()); } catch (e) { return ''; } }
+  function isDetailDirty(){ return currentView === 'detail' && !!detBaseSig && detSig() !== detBaseSig; }
+  function detDraftKey(){ return 'admdash_editdraft_' + (currentNoteId || 'new') + '_' + editingRecordId; }
+  function writeDetailDraft(){
+    try {
+      if (currentView !== 'detail' || !detBaseSig) return;
+      if (!isDetailDirty()) { localStorage.removeItem(detDraftKey()); return; }
+      localStorage.setItem(detDraftKey(), JSON.stringify({ base: detBaseSig, state: detState(), at: Date.now() }));
+    } catch (e) {}
+  }
+  function clearDetailDraft(){ try { localStorage.removeItem(detDraftKey()); } catch (e) {} }
+  function restoreDetailDraft(r){
+    try {
+      const raw = localStorage.getItem(detDraftKey());
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (!d || !d.state || d.base !== detBaseSig) { clearDetailDraft(); return; }   // data berubah sejak draf dibuat: jangan timpa
+      const st = d.state, set = (id, v) => { document.getElementById(id).value = v == null ? '' : v; };
+      set('detPJedit', st.pj); set('detCustomerEdit', st.customer); set('detBarangEdit', st.barang); set('detKeluarEdit', st.keluar);
+      set('detStokEdit', st.stok); set('detKetEdit', st.ket); set('detHargaEdit', st.harga);
+      detMetode.set(st.metode || '', st.split); detBukti.setUrls(Array.isArray(st.bukti) ? st.bukti : []);
+      wpDet.set(Array.isArray(st.warung) ? st.warung : []);
+      if (document.getElementById('detScopeWrap').style.display !== 'none') set('detScope', st.scope);
+      if (document.getElementById('detOwnPaidWrap').style.display !== 'none') document.getElementById('detOwnPaid').checked = !!st.own;
+      showMigrationToast('Perubahan yang belum disimpan dipulihkan.');
+    } catch (e) {}
+  }
+  // Dipakai tombol Kembali / Tutup / panah: kalau ada perubahan belum disimpan, tanya dulu
+  function guardDetailLeave(proceed){
+    if (!isDetailDirty()) { proceed(); return; }
+    appNotice({
+      title: 'Perubahan belum disimpan', text: 'Data ini sudah kamu ubah tapi belum disimpan.',
+      okLabel: 'Tetap di sini',
+      extra: { label: 'Keluar tanpa simpan', onClick: () => { clearDetailDraft(); detBaseSig = ''; proceed(); } },
+      choices: null
+    });
+  }
+  function enterDetailEdit(){
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
-    playDetailAnim();
     document.getElementById('detPJview').style.display = 'none';
     document.getElementById('detCustomerView').style.display = 'none';
     document.getElementById('detBarangView').style.display = 'none';
@@ -3567,18 +3629,33 @@
     const showScope = !(r.ambilDari && r.ambilDari.length) && !isHargaKosong(bh) && !isCentangText(bh) && (pp.outItems || []).length > 0 && pp.items.length > 0;
     document.getElementById('detScopeWrap').style.display = showScope ? 'flex' : 'none';
     document.getElementById('detScope').value = r.hargaScope || 'all';
-    document.getElementById('detailActionsView').style.display = 'none';
+    // Detail selalu langsung bisa diedit: tombol Edit disembunyikan, Hapus & Tutup tetap ada
+    document.getElementById('btnDetailEdit').style.display = 'none';
+    document.getElementById('detailActionsView').style.display = 'flex';
     document.getElementById('detailActionsEdit').style.display = 'flex';
-  });
+    detBaseSig = detSig();
+    restoreDetailDraft(r);
+    // Kartu saran juga muncul di Detail (data yang belum terhubung ke titipan mana pun)
+    pkCtx = 'add'; pkSetCtx('det');
+    if (!(r.ambilDari && r.ambilDari.length)) schedulePickupLookup();
+  }
+  document.getElementById('btnDetailEdit').addEventListener('click', () => { playDetailAnim(); enterDetailEdit(); });
   document.getElementById('detHargaEdit').addEventListener('input', (e) => { e.target.value = formatHargaLive(e.target.value); });
-  document.getElementById('btnDetailCancelEdit').addEventListener('click', () => openDetail(editingRecordId));
+  document.getElementById('btnDetailCancelEdit').addEventListener('click', () => { clearDetailDraft(); detBaseSig = ''; openDetail(editingRecordId); });
 
   document.getElementById('btnDetailSaveEdit').addEventListener('click', () => {
     const r = records.find(x => x.id === editingRecordId);
     if (!r) return;
     const pj = document.getElementById('detPJedit').value.trim();
     const customer = document.getElementById('detCustomerEdit').value.trim();
-    const barang = expandJumlahBarang(document.getElementById('detBarangEdit').value).trim();
+    let barang = expandJumlahBarang(document.getElementById('detBarangEdit').value).trim();
+    const pkNew = (pkCtx === 'det' && pickupApplied.length && !(r.ambilDari && r.ambilDari.length));   // kartu saran dipakai di data ini
+    if (pkNew) { // sama seperti Tambah Data: nama barang yang diambil sudah tercatat di tanggal titipannya
+      const known = new Set();
+      pickupApplied.forEach(g => g.c.items.forEach(i => known.add(i.key.replace(/^out:/, '').replace(/#\d+$/, ''))));
+      const cleaned = splitList(barang).filter(t => isDateToken(t) || !known.has(itemKey(t))).join(', ');
+      if (cleaned) barang = cleaned;
+    }
     document.getElementById('detBarangEdit').value = barang;
     const barangKeluar = normalizeBJ(document.getElementById('detKeluarEdit').value.trim());
     const stokBarang = normalizeBJ(document.getElementById('detStokEdit').value.trim());
@@ -3616,9 +3693,21 @@
       if (document.getElementById('detOwnPaid').checked && !isHargaKosong(harga)) r.ownPaid = true; else delete r.ownPaid;
       if (wasOwn !== !!r.ownPaid && r.pickups) recomputeOrigin(r);
     }
+    if (pkNew) {   // data ini kini menjadi data pengambilan/pembayaran: hubungkan ke titipan, tanda di data lama dipasang otomatis
+      const links = resolvePickupLinks(barang);
+      if (links.length) {
+        r.ambilDari = links;
+        const carryKeys = carryKeysIn(stokBarang, carryNamesFromApplied());
+        if (carryKeys.length) r.stokCarry = carryKeys; else delete r.stokCarry;
+        if (gid('pickupOwnPaid').checked && !isHargaKosong(harga) && ownItemsInForm().length) r.ownPaid = true; else delete r.ownPaid;
+        delete r.hargaScope;
+      }
+    }
     (r.ambilDari || []).forEach(l => verifyLinks.add(l)); // data pengambilan diedit -> cek ulang data titipan
+    clearDetailDraft(); detBaseSig = '';
     scheduleAutosave();
     openDetail(editingRecordId);
+    showMigrationToast('Perubahan tersimpan.');
   });
 
   // =====================================================================
@@ -3956,7 +4045,7 @@
     });
   }
 
-  async function findPickupCandidates(pj, customer){
+  async function findPickupCandidates(pj, customer, excl){
     const npj = pjKey(pj), ncu = normText(customer);
     if (!npj || !ncu) return [];
     // PJ dianggap cocok kalau SAMA, atau salah satunya anggota/sebagian tim dari yang lain
@@ -3979,6 +4068,7 @@
     sources.forEach(src => {
       (src.recs || []).forEach(r => {
         if (!r || !r.id) return;
+        if (excl && (r.id === excl.id || new Date(r.created_at) >= new Date(excl.created_at))) return;
         if (normText(r.customer) !== ncu) return;
         const rel = pjRel(r.pj);
         if (!rel) return;
@@ -4069,7 +4159,7 @@
     if (wasHidden) { card.classList.remove('collapsed'); replayClass(card, 'pk-enter', 900); }
     const nItems = pickupCandidates.reduce((n, c) => n + c.items.length, 0);
     gid('pickupCount').textContent = nItems + ' barang';
-    const cust = gid('inputCustomer').value.trim();
+    const cust = gid(PK().customer).value.trim();
     gid('pickupTitle').textContent = (pickupCandidates.every(c => c.out) ? 'Belum dibayar' : 'Barang masih ditinggal') + (cust ? ' \u2014 ' + cust : '');
 
     gid('pickupList').innerHTML = pickupCandidates.map((c, ci) => `
@@ -4139,6 +4229,11 @@
 
   // Teks otomatis yang terakhir kita isi (supaya bisa diganti rapi kalau kamu pindah tombol,
   // tapi tidak menimpa kalau kamu sudah mengetik sendiri)
+  // Kartu saran dipakai di dua tempat: form Tambah Data dan halaman Detail (edit data yang sudah tersimpan)
+  let pkCtx = 'add';
+  const PK_ADD = { pj: 'inputPJ', customer: 'inputCustomer', barang: 'inputBarang', keluar: 'inputBarangKeluar', stok: 'inputStokBarang', ket: 'inputKeterangan', harga: 'inputHarga' };
+  const PK_DET = { pj: 'detPJedit', customer: 'detCustomerEdit', barang: 'detBarangEdit', keluar: 'detKeluarEdit', stok: 'detStokEdit', ket: 'detKetEdit', harga: 'detHargaEdit' };
+  const PK = () => (pkCtx === 'det' ? PK_DET : PK_ADD);
   let pickupAutoKet = '';
   let pickupAutoHarga = false;
   let pendingPickupRestore = null; // pilihan barang dari draft, dipasang setelah kartu saran terisi
@@ -4149,12 +4244,17 @@
     return /[()]/.test(list) ? (prefix + ': ' + list) : (prefix + ' (' + list + ')');
   }
   function setKeteranganAuto(txt){
-    const el = gid('inputKeterangan');
+    const el = gid(PK().ket);
     const cur = el.value.trim();
-    if (!cur || cur === pickupAutoKet) { el.value = txt; pickupAutoKet = txt; }
+    // Keterangan yang sudah kamu tulis TIDAK ditimpa: teks dari kartu ditambahkan di belakangnya.
+    // Teks kartu sebelumnya (kalau pindah tombol) diganti, bukan ditumpuk.
+    if (!cur || cur === pickupAutoKet) el.value = txt;
+    else if (pickupAutoKet && cur.includes(pickupAutoKet)) el.value = cur.replace(pickupAutoKet, txt);
+    else if (!cur.includes(txt)) el.value = cur + ' \u00B7 ' + txt;
+    pickupAutoKet = txt;
   }
   function setHargaAuto(wantCentang){
-    const el = gid('inputHarga');
+    const el = gid(PK().harga);
     const cur = el.value.trim();
     if (wantCentang) {
       if (!cur || (pickupAutoHarga && cur === LABEL_CENTANG_VAL)) { el.value = LABEL_CENTANG_VAL; pickupAutoHarga = true; }
@@ -4181,27 +4281,29 @@
     const candKeys = new Set();
     pickupCandidates.forEach(c => c.items.forEach(i => candKeys.add(i.key.replace(/^out:/, '').replace(/#\d+$/, ''))));
     const dt = datesText(groups);
-    const restBarang = splitList(gid('inputBarang').value.trim().replace(/^(?:\s*\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\s*[,;]?)+\s*/, ''))
+    const restBarang = splitList(gid(PK().barang).value.trim().replace(/^(?:\s*\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}\s*[,;]?)+\s*/, ''))
       .filter(t => !isDateToken(t) && !candKeys.has(itemKey(t))).join(', ');
-    gid('inputBarang').value = restBarang ? dt + ', ' + restBarang : dt; // hanya barang BARU yang tetap dipertahankan
+    gid(PK().barang).value = restBarang ? dt + ', ' + restBarang : dt; // hanya barang BARU yang tetap dipertahankan
 
-    const extras = splitList(gid('inputStokBarang').value).map(stripCentang)
+    const extras = splitList(gid(PK().stok).value).map(stripCentang)
       .filter(t => t && !isTidakAdaText(t) && !isBJWhole(t) && !candKeys.has(itemKey(t)));
 
     if (mode === 'bayar') {
       const stillAll = [].concat(...groups.map(g => g.c.out ? [] : g.c.items.filter(i => !i.out).map(i => i.name)));
-      gid('inputBarangKeluar').value = LABEL_TIDAK_ADA;
-      gid('inputStokBarang').value = stillAll.concat(extras).join(', ') || LABEL_TIDAK_ADA;
-      setKeteranganAuto(ketText('Bayar duluan', chosenNames));
+      gid(PK().keluar).value = LABEL_TIDAK_ADA;
+      gid(PK().stok).value = stillAll.concat(extras).join(', ') || LABEL_TIDAK_ADA;
+      // "Bayar duluan" hanya untuk barang yang MASIH ditinggal. Barang yang sudah diambil/dibawa = pelunasan biasa.
+      const adaSudahDiambil = groups.some(g => g.c.out || g.items.some(i => i.out));
+      setKeteranganAuto(ketText(adaSudahDiambil ? 'Bayar' : 'Bayar duluan', chosenNames));
       setHargaAuto(false);
-      gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 isi nominal Harga lalu simpan. Barang tetap tercatat ditinggal.';
+      gid('pickupDone').textContent = '\u2713 Form terisi \u00B7 isi nominal Harga lalu simpan.' + (stillAll.length ? ' Barang yang masih ditinggal tetap tercatat ditinggal.' : ' Barang ini sudah diambil, hanya pembayarannya yang dicatat.');
     } else {
       // Gaya bengkel: Barang Keluar = yang dibawa, Stok Barang = yang masih tersisa
       const chosenKeys = new Set();
       groups.forEach(g => g.items.forEach(i => chosenKeys.add(g.c.noteId + '|' + g.c.recordId + '|' + i.key)));
       const remain = [].concat(...groups.map(g => g.c.items.filter(i => !i.out && !chosenKeys.has(g.c.noteId + '|' + g.c.recordId + '|' + i.key)).map(i => i.name)));
-      gid('inputBarangKeluar').value = (remain.length || extras.length) ? chosenNames.join(', ') : LABEL_BJ;
-      gid('inputStokBarang').value = remain.concat(extras).join(', ') || LABEL_TIDAK_ADA;
+      gid(PK().keluar).value = (remain.length || extras.length) ? chosenNames.join(', ') : LABEL_BJ;
+      gid(PK().stok).value = remain.concat(extras).join(', ') || LABEL_TIDAK_ADA;
       setKeteranganAuto(ketText('Ambil barang', chosenNames));
       const allPaid = groups.every(g => g.items.every(i => i.paid));
       setHargaAuto(allPaid);
@@ -4217,11 +4319,16 @@
   }
   async function runPickupLookup(){
     const seq = ++pickupLookupSeq;
-    const pj = gid('inputPJ').value.trim();
-    const cu = gid('inputCustomer').value.trim();
+    const pj = gid(PK().pj).value.trim();
+    const cu = gid(PK().customer).value.trim();
     if (!pj || !cu) { setPickupCandidates([]); return; }
     let found = [];
-    try { found = await findPickupCandidates(pj, cu); } catch (e) { console.warn('[pickup] pencarian gagal:', e); }
+    let excl = null;
+    if (pkCtx === 'det') {   // di Detail: jangan tawarkan data ini sendiri, dan hanya titipan yang lebih lama darinya
+      excl = records.find(x => x.id === editingRecordId) || null;
+      if (!excl || (excl.ambilDari && excl.ambilDari.length)) { setPickupCandidates([]); return; }   // sudah terhubung: tidak diubah dari sini
+    }
+    try { found = await findPickupCandidates(pj, cu, excl); } catch (e) { console.warn('[pickup] pencarian gagal:', e); }
     if (seq !== pickupLookupSeq) return; // ada pencarian yang lebih baru
     setPickupCandidates(found);
     applyPendingPickupRestore();
@@ -4248,11 +4355,12 @@
     renderPickupCard();
     gid('pickupDone').textContent = '\u2713 Pilihan dari draft dipulihkan';
   }
-  ['inputPJ', 'inputCustomer'].forEach(id => {
+  ['inputPJ', 'inputCustomer', 'detPJedit', 'detCustomerEdit'].forEach(id => {
     const el = gid(id);
     if (!el) return;
-    el.addEventListener('input', schedulePickupLookup);
-    el.addEventListener('blur', schedulePickupLookup);
+    const isDet = id.indexOf('det') === 0;
+    el.addEventListener('input', () => { if ((pkCtx === 'det') === isDet) schedulePickupLookup(); });
+    el.addEventListener('blur', () => { if ((pkCtx === 'det') === isDet) schedulePickupLookup(); });
   });
   // Kartu tracking: panah tutup/buka, atau geser kepala kartu ke atas (tutup) / ke bawah (buka)
   (function(){
@@ -4270,6 +4378,7 @@
   gid('btnPickupApply').addEventListener('click', () => { pickupUnpaid = new Set(); applyPickupToForm('ambil'); renderPartialPanel(); refreshOwnPaidToggle(); });
   gid('btnPickupPay').addEventListener('click', () => { pickupUnpaid = new Set(); applyPickupToForm('bayar'); renderPartialPanel(); refreshOwnPaidToggle(); });
   gid('inputStokBarang').addEventListener('input', refreshOwnPaidToggle);
+  gid('detStokEdit').addEventListener('input', refreshOwnPaidToggle);
 
   function resetPickupForm(){
     pickupCandidates = []; pickupApplied = []; pickupChecked = new Set(); pickupMode = 'ambil';
@@ -4288,6 +4397,7 @@
   function groupToLink(g, mode){
     const names = g.items.map(i => i.name);
     const link = { noteId: g.c.noteId, recordId: g.c.recordId, mode, items: names, label: names.join(', '), tgl: g.c.tgl, synced: false };
+    if (mode === 'bayar' && (g.c.out || g.items.every(i => i.out))) link.taken = true;   // barang sudah diambil: bukan "bayar duluan"
     if (g.c.carry && g.c.carry.length) link.carry = g.c.carry.slice(); // titipan asal ini sendiri baris pengambilan lama
     if (mode === 'ambil') {
       const un = g.items.filter(i => !i.paid && pickupUnpaid.has(itemCk(g.c, i))).map(i => i.name);
@@ -4323,8 +4433,7 @@
     const unpaid = [].concat(...pickupApplied.map(g => g.items.filter(i => !i.paid && pickupUnpaid.has(itemCk(g.c, i))).map(i => i.name)));
     let txt = ketText('Ambil barang', names);
     if (unpaid.length) txt += ' \u00B7 belum bayar: ' + unpaid.join(', ');
-    const el = gid('inputKeterangan'), cur = el.value.trim();
-    if (!cur || cur === pickupAutoKet) { el.value = txt; pickupAutoKet = txt; }
+    setKeteranganAuto(txt);
   }
   function renderPartialPanel(){
     const wrap = gid('pickupPartialWrap'), list = gid('pickupPartialList');
@@ -4353,7 +4462,7 @@
     const pool = {};
     carryNamesFromApplied().forEach(n => { const k = itemKey(n); pool[k] = (pool[k] || 0) + 1; });
     const own = [];
-    splitList(gid('inputStokBarang').value).map(stripCentang)
+    splitList(gid(PK().stok).value).map(stripCentang)
       .filter(t => t && !isTidakAdaText(t) && !isBJWhole(t))
       .forEach(t => { const k = itemKey(t); if (pool[k] > 0) pool[k]--; else own.push(t); });
     return own;
@@ -4584,7 +4693,7 @@
     const row = gid('detLinkRow'), val = gid('detLinkView');
     const parts = []; // { text, noteId, recId }
     (r.ambilDari || []).forEach(l => {
-      parts.push({ text: '↩ ' + (l.mode === 'bayar' ? 'Bayar duluan: ' : 'Mengambil: ') + (l.label || 'barang') + (l.tgl ? ' (titipan ' + l.tgl + ')' : ''), noteId: l.noteId, recId: l.recordId });
+      parts.push({ text: '↩ ' + (l.mode === 'bayar' ? (l.taken ? 'Bayar: ' : 'Bayar duluan: ') : 'Mengambil: ') + (l.label || 'barang') + (l.tgl ? ' (titipan ' + l.tgl + ')' : ''), noteId: l.noteId, recId: l.recordId });
     });
     if (r.pickups) {
       Object.keys(r.pickups)
@@ -4632,7 +4741,8 @@
   }
 
   // Lompat ke data terhubung: di note ini -> buka detailnya; di note lain -> buka note itu
-  function jumpToLinked(noteId, recId){
+  function jumpToLinked(noteId, recId){ guardDetailLeave(() => jumpToLinkedNow(noteId, recId)); }
+  function jumpToLinkedNow(noteId, recId){
     if (!noteId || noteId === currentNoteId) {
       if (records.some(x => x.id === recId)) openDetail(recId);
       else appNotice({ title: 'Data Tidak Ditemukan', text: 'Data tujuan sudah dihapus.' });
@@ -4770,14 +4880,14 @@
     const set = (id, disabled) => { const el = gid(id); if (el) el.disabled = !!disabled; };
     set('btnAddPrev', n < 1);
     set('btnAddNext', true);
-    set('btnDetPrev', editing || pos <= 1);
-    set('btnDetNext', editing || pos > n);
+    set('btnDetPrev', pos <= 1);
+    set('btnDetNext', pos > n);
   }
 
   function bindPager(){
     gid('btnAddPrev').addEventListener('click', () => goPosition(currentPosition() - 1));
-    gid('btnDetPrev').addEventListener('click', () => { if (!isDetailEditing()) goPosition(currentPosition() - 1); });
-    gid('btnDetNext').addEventListener('click', () => { if (!isDetailEditing()) goPosition(currentPosition() + 1); });
+    gid('btnDetPrev').addEventListener('click', () => guardDetailLeave(() => goPosition(currentPosition() - 1)));
+    gid('btnDetNext').addEventListener('click', () => guardDetailLeave(() => goPosition(currentPosition() + 1)));
     gid('btnDraftDiscard').addEventListener('click', () => {
       if (window.confirm('Buang draft ini? Isi form akan dikosongkan.')) discardFormDraft();
     });
@@ -4787,16 +4897,21 @@
     } catch (e) { /* tanpa observer, panah tetap di-refresh setiap pindah halaman */ }
 
     // simpan draft otomatis: saat mengetik, berkala, dan saat aplikasi ditutup/disembunyikan
-    let draftTimer = null;
+    let draftTimer = null, detDraftTimer = null;
     FORM_FIELD_IDS.forEach(id => {
       gid(id).addEventListener('input', () => {
         clearTimeout(draftTimer);
         draftTimer = setTimeout(() => { if (currentView === 'add') writeFormDraft(); }, 500);
       });
     });
-    setInterval(() => { if (currentView === 'add') writeFormDraft(); }, 4000);
-    document.addEventListener('visibilitychange', () => { if (document.hidden && currentView === 'add') writeFormDraft(); });
-    window.addEventListener('pagehide', () => { if (currentView === 'add') writeFormDraft(); });
+    setInterval(() => { if (currentView === 'add') writeFormDraft(); writeDetailDraft(); }, 4000);
+    ['detPJedit', 'detCustomerEdit', 'detBarangEdit', 'detKeluarEdit', 'detStokEdit', 'detKetEdit', 'detHargaEdit', 'detScope', 'detOwnPaid'].forEach(id => {
+      const el = gid(id); if (!el) return;
+      el.addEventListener('input', () => { clearTimeout(detDraftTimer); detDraftTimer = setTimeout(writeDetailDraft, 500); });
+      el.addEventListener('change', () => { clearTimeout(detDraftTimer); detDraftTimer = setTimeout(writeDetailDraft, 300); });
+    });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) { if (currentView === 'add') writeFormDraft(); writeDetailDraft(); } });
+    window.addEventListener('pagehide', () => { if (currentView === 'add') writeFormDraft(); writeDetailDraft(); });
   }
   bindPager();
 
