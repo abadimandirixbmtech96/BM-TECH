@@ -8,7 +8,7 @@
 // 3. Penulisan data (insert/update/delete/RPC tulis) TIDAK pernah disentuh: selalu langsung ke server.
 // 4. Salinan data dihapus saat keluar akun (logout) atau login baru, supaya akun lain tidak melihatnya.
 
-const CACHE_NAME = 'bmtech-shell-v62'; // v62: Editor Admin: kartu saran barang ditinggal juga di Detail. v61: Editor Admin: detail langsung bisa diedit, peringatan perubahan belum tersimpan, draf edit, perbaikan tulisan Bayar duluan, keterangan tidak ditimpa. v60: Analisa: tab Pilih Hari (tanggal bebas). v59: Analisa: Bersih Cash (laci) dan Bersih Transfer, rincian campur operasional. v58: Profil BM, Cadangan untuk semua admin, status Google Drive 2 jam. v57: unduh backup. v56: pengaman data editor (tidak simpan sebelum catatan termuat, kunci versi selalu, draf aman), kartu tugas + status lunas
+const CACHE_NAME = 'bmtech-shell-v63'; // v63: Detail: tombol Simpan/Batalkan hanya tampil bila ada perubahan. v62: Editor Admin: kartu saran barang ditinggal juga di Detail. v61: Editor Admin: detail langsung bisa diedit, peringatan perubahan belum tersimpan, draf edit, perbaikan tulisan Bayar duluan, keterangan tidak ditimpa. v60: Analisa: tab Pilih Hari (tanggal bebas). v59: Analisa: Bersih Cash (laci) dan Bersih Transfer, rincian campur operasional. v58: Profil BM, Cadangan untuk semua admin, status Google Drive 2 jam. v57: unduh backup. v56: pengaman data editor (tidak simpan sebelum catatan termuat, kunci versi selalu, draf aman), kartu tugas + status lunas
 const DATA_CACHE = 'bmtech-data-v1';   // tidak ikut dihapus saat versi naik
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;              // lebih dari ini dengan salinan tersedia = pakai salinan dulu
