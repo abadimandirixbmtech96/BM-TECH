@@ -446,6 +446,9 @@
     resize:vertical;
   }
   .field textarea{ min-height:70px; font-weight:500; }
+  .field textarea.grow, .detail-row textarea.grow{ resize:none; overflow:hidden; min-height:0; line-height:1.4; display:block; }
+  .field textarea.grow[data-oneline]{ font-weight:600; }
+  .detail-row textarea.grow[data-oneline]{ font-weight:700; }
   .field input:focus, .field select:focus, .field textarea:focus{ border-color:var(--accent); }
   .field .price-input-wrap{ position:relative; }
   .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
@@ -653,6 +656,12 @@
     border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line-soft); cursor:pointer;
   }
   .theme-opt.active{ border-color:var(--accent); background:var(--accent-soft); }
+  .set-opt{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; margin-bottom:10px; border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line-soft); cursor:pointer; }
+  .set-opt b{ display:block; font-size:14.5px; font-weight:700; }
+  .set-opt small{ display:block; margin-top:4px; font-size:12.5px; line-height:1.4; color:var(--ink-soft); font-weight:500; }
+  .set-opt .dot{ width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
+  .set-opt.active{ border-color:var(--accent); background:var(--accent-soft); }
+  .set-opt.active .dot{ border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 3px var(--paper-alt); }
   .theme-opt b{ font-size:14.5px; font-weight:700; }
   .theme-opt .dot{ width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
   .theme-opt.active .dot{ border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 3px var(--paper-alt); }
@@ -1006,13 +1015,17 @@
         <label>Nomor</label>
         <div class="readonly-box"><span id="addPreviewNo">001</span><span class="auto-tag">Auto</span></div>
       </div>
-      <div class="field">
+      <div class="field" id="fldTanggalAuto">
         <label>Tanggal</label>
         <div class="readonly-box"><span id="addPreviewTanggal">—</span><span class="auto-tag">Auto</span></div>
       </div>
-      <div class="field">
+      <div class="field" id="fldWaktuAuto">
         <label>Waktu</label>
         <div class="readonly-box"><span id="addPreviewWaktu">—</span><span class="auto-tag">Auto</span></div>
+      </div>
+      <div class="field" id="fldWaktuCustom" style="display:none;">
+        <label>Tanggal &amp; Waktu <span class="opt-tag">(diatur sendiri)</span></label>
+        <input type="datetime-local" id="inputWaktuCustom">
       </div>
 
       <div class="field">
@@ -1052,7 +1065,7 @@
 
       <div class="field">
         <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
-        <input type="text" id="inputBarang" placeholder="Contoh: Blok kph, askruk blade 3pcs" autocomplete="off">
+        <textarea class="grow" rows="1" data-oneline="1" id="inputBarang" placeholder="Contoh: Blok kph, askruk blade 3pcs" autocomplete="off"></textarea>
       </div>
 
       <div class="field">
@@ -1063,7 +1076,7 @@
       <div class="field">
         <label class="lbl-out">Barang Keluar <span class="opt-tag">(opsional · yang dibawa pulang)</span></label>
         <div class="suggest-wrap">
-          <input type="text" id="inputBarangKeluar" placeholder="Yang dibawa pulang" autocomplete="off">
+          <textarea class="grow" rows="1" data-oneline="1" id="inputBarangKeluar" placeholder="Yang dibawa pulang" autocomplete="off"></textarea>
           <div class="suggest-list" id="keluarSuggestList"></div>
         </div>
       </div>
@@ -1071,14 +1084,14 @@
       <div class="field">
         <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(opsional · belum diambil)</span></label>
         <div class="suggest-wrap">
-          <input type="text" id="inputStokBarang" placeholder="Yang masih ditinggal" autocomplete="off">
+          <textarea class="grow" rows="1" data-oneline="1" id="inputStokBarang" placeholder="Yang masih ditinggal" autocomplete="off"></textarea>
           <div class="suggest-list" id="stokSuggestList"></div>
         </div>
       </div>
 
       <div class="field">
         <label>Keterangan <span class="opt-tag">(opsional)</span></label>
-        <textarea id="inputKeterangan" placeholder="Catatan tambahan"></textarea>
+        <textarea class="grow" rows="2" id="inputKeterangan" placeholder="Catatan tambahan"></textarea>
       </div>
 
       <div class="field">
@@ -1151,7 +1164,7 @@
         <div class="detail-row">
           <label class="lbl-in">Barang dan Jumlah <span class="opt-tag">(barang yang masuk)</span></label>
           <div class="val" id="detBarangView">—</div>
-          <input type="text" id="detBarangEdit" style="display:none;">
+          <textarea class="grow" rows="1" data-oneline="1" id="detBarangEdit" style="display:none;"></textarea>
         </div>
         <div class="detail-row" id="detWarungRow">
           <label class="lbl-in">Barang dari Warung</label>
@@ -1162,7 +1175,7 @@
           <label class="lbl-out">Barang Keluar <span class="opt-tag">(yang dibawa pulang)</span></label>
           <div class="val" id="detKeluarView">—</div>
           <div class="suggest-wrap">
-            <input type="text" id="detKeluarEdit" style="display:none;">
+            <textarea class="grow" rows="1" data-oneline="1" id="detKeluarEdit" style="display:none;"></textarea>
             <div class="suggest-list" id="detKeluarSuggestList"></div>
           </div>
         </div>
@@ -1170,14 +1183,14 @@
           <label class="lbl-stay">Barang Ditinggal <span class="opt-tag">(belum diambil)</span></label>
           <div class="val" id="detStokView">—</div>
           <div class="suggest-wrap">
-            <input type="text" id="detStokEdit" style="display:none;">
+            <textarea class="grow" rows="1" data-oneline="1" id="detStokEdit" style="display:none;"></textarea>
             <div class="suggest-list" id="detStokSuggestList"></div>
           </div>
         </div>
         <div class="detail-row">
           <label>Keterangan</label>
           <div class="val" id="detKetView">—</div>
-          <textarea id="detKetEdit" style="display:none;"></textarea>
+          <textarea class="grow" rows="2" id="detKetEdit" style="display:none;"></textarea>
         </div>
         <div class="detail-row">
           <label>Harga</label>
@@ -1254,6 +1267,12 @@
       <div class="section-label" style="margin-top:6px;">Judul Tabel</div>
       <div class="field">
         <input type="text" id="inputJudulTabel" placeholder="Contoh: Data Pembelian Barang September">
+      </div>
+
+      <div class="section-label" style="margin-top:6px;">Tambah Data</div>
+      <div class="set-opt" id="optCustomTime" role="switch" aria-checked="false" tabindex="0">
+        <span><b>Atur tanggal &amp; waktu sendiri</b><small>Saat Tambah Data, tanggal dan waktu bisa dipilih (misalnya mencatat data kemarin). Data masuk ke urutan sesuai tanggalnya, jadi nomor urut data lain bisa bergeser. Berlaku di HP ini saja.</small></span>
+        <div class="dot"></div>
       </div>
 
       <div class="section-label">Pemeliharaan Data</div>
@@ -3063,11 +3082,47 @@
   // =====================================================================
   // TAMBAH DATA
   // =====================================================================
+  // ---- Tanggal & waktu diatur sendiri (opsional, dinyalakan di Pengaturan, per HP) ----
+  const CT_KEY = 'admdash_custom_time';
+  function customTimeOn(){ try { return localStorage.getItem(CT_KEY) === '1'; } catch (e) { return false; } }
+  function toLocalInput(d){ const p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + 'T' + p(d.getHours()) + ':' + p(d.getMinutes()); }
+  function applyCustomTimeUI(){
+    const on = customTimeOn(), inp = document.getElementById('inputWaktuCustom');
+    document.getElementById('fldWaktuCustom').style.display = on ? '' : 'none';
+    document.getElementById('fldTanggalAuto').style.display = on ? 'none' : '';
+    document.getElementById('fldWaktuAuto').style.display = on ? 'none' : '';
+    if (on) { inp.max = toLocalInput(new Date()); if (!inp.value) inp.value = toLocalInput(new Date()); }
+    updateAddPreviewNo();
+  }
+  function chosenCustomDate(){
+    const v = document.getElementById('inputWaktuCustom').value, d = v ? new Date(v) : null;
+    return d && !isNaN(d.getTime()) ? d : null;
+  }
+  function updateAddPreviewNo(){
+    const d = customTimeOn() ? chosenCustomDate() : null;
+    const n = d ? records.filter(r => new Date(r.created_at) <= d).length + 1 : records.length + 1;
+    document.getElementById('addPreviewNo').textContent = pad3(n);
+  }
+  document.getElementById('inputWaktuCustom').addEventListener('input', updateAddPreviewNo);
+  document.getElementById('inputWaktuCustom').addEventListener('change', updateAddPreviewNo);
+  let pendingCustomAt = null;
+  function refreshCustomTimeOpt(){
+    const on = customTimeOn(), el = document.getElementById('optCustomTime');
+    el.classList.toggle('active', on); el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+  document.getElementById('optCustomTime').addEventListener('click', () => {
+    try { localStorage.setItem(CT_KEY, customTimeOn() ? '0' : '1'); } catch (e) {}
+    refreshCustomTimeOpt();
+  });
+  refreshCustomTimeOpt();
+
   function prepareAddForm(){
     const now = new Date();
     document.getElementById('addPreviewNo').textContent = pad3(records.length + 1);
     document.getElementById('addPreviewTanggal').textContent = fmtTanggal(now);
     document.getElementById('addPreviewWaktu').textContent = fmtWaktu(now);
+    document.getElementById('inputWaktuCustom').value = '';
+    applyCustomTimeUI();
     document.getElementById('inputPJ').value = '';
     document.getElementById('inputCustomer').value = '';
     document.getElementById('inputBarang').value = '';
@@ -3108,7 +3163,7 @@
   // Enter di <input> pindah ke field berikutnya (textarea dibiarkan: Enter = baris baru)
   FIELD_ORDER.flat().forEach(id => {
     const el = document.getElementById(id);
-    if (!el || el.tagName !== 'INPUT') return;
+    if (!el || (el.tagName !== 'INPUT' && !el.dataset.oneline)) return;
     el.setAttribute('enterkeyhint', 'next');
     el.addEventListener('keydown', (e) => {
       if (e.key !== 'Enter' || e.isComposing) return;
@@ -3118,6 +3173,24 @@
       focusNextField(el);
     });
   });
+
+  // Kolom Barang & Keterangan melebar otomatis mengikuti isi (baris baru dari tempelan diubah jadi spasi di kolom satu-baris)
+  const GROW_IDS = ['inputBarang', 'inputBarangKeluar', 'inputStokBarang', 'inputKeterangan', 'detBarangEdit', 'detKeluarEdit', 'detStokEdit', 'detKetEdit'];
+  function autoGrow(el){
+    if (!el || el.offsetParent === null) return;
+    el.style.height = 'auto';
+    const h = el.scrollHeight + 2;
+    el.style.height = h + 'px';
+  }
+  GROW_IDS.forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    el.addEventListener('input', () => {
+      if (el.dataset.oneline && /[\r\n]/.test(el.value)) { const pos = el.selectionStart; el.value = el.value.replace(/\s*[\r\n]+\s*/g, ' '); try { el.setSelectionRange(pos, pos); } catch (e) {} }
+      autoGrow(el);
+    });
+  });
+  setInterval(() => GROW_IDS.forEach(id => { const el = document.getElementById(id); if (el && el.offsetParent !== null && Math.abs(el.scrollHeight + 2 - el.clientHeight) > 3) autoGrow(el); }), 300);
+  window.addEventListener('resize', () => GROW_IDS.forEach(id => autoGrow(document.getElementById(id))));
 
   // Pecah nama PJ jadi orang per orang (abaikan pemisah "x", "dan", "&", "+", ",")
   function pjTokensOf(str){
@@ -3390,8 +3463,17 @@
     if (addBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
     if (!validateMetode(addMetode, harga, () => document.getElementById('btnBukaKonfirmasi').click())) return;
 
-    const now = new Date();
-    document.getElementById('cfNo').textContent = pad3(records.length + 1);
+    let now = new Date();
+    pendingCustomAt = null;
+    if (customTimeOn()) {
+      const d = chosenCustomDate();
+      if (!d) { alert('Isi tanggal dan waktu dulu.'); document.getElementById('inputWaktuCustom').focus(); return; }
+      if (d.getTime() > now.getTime() + 60000) { alert('Tanggal dan waktu tidak boleh melewati sekarang.'); document.getElementById('inputWaktuCustom').focus(); return; }
+      d.setSeconds(now.getSeconds(), now.getMilliseconds());   // detik diambil dari jam sekarang supaya tiap data punya waktu unik
+      if (d.getTime() > now.getTime()) d.setTime(now.getTime());
+      pendingCustomAt = d.toISOString(); now = d;
+    }
+    document.getElementById('cfNo').textContent = pad3((customTimeOn() ? records.filter(r => new Date(r.created_at) <= now).length : records.length) + 1);
     document.getElementById('cfTanggal').textContent = fmtTanggal(now);
     document.getElementById('cfWaktu').textContent = fmtWaktu(now);
     document.getElementById('cfPJ').textContent = pj;
@@ -3454,7 +3536,8 @@
       }
       pendingNewRecord.hargaScope = pendingScope;
     }
-    const now = new Date().toISOString();
+    const now = pendingCustomAt || new Date().toISOString();
+    pendingCustomAt = null;
     const recBaru = { id: uid(), ...pendingNewRecord, created_at: now };
     records.push(recBaru);
     BMWarungPick.sync(recBaru);   // potong stok warung (bila ada barang dari warung)
