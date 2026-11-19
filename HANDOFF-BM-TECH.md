@@ -271,3 +271,22 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Kartu "Barang masih ditinggal / Belum dibayar": keterangan otomatis TIDAK menimpa keterangan yang sudah ditulis, teks kartu ditambahkan di belakang (`Keterangan lama · Ambil barang (...)`); pindah tombol mengganti teks kartu sebelumnya.
 - Tombol "Bayar saja": tulisan "Bayar duluan" hanya untuk barang yang masih ditinggal. Barang yang sudah dibawa memakai "Bayar (...)"; link disimpan dengan `taken: true`, tampil "Bayar:" di Terhubung.
 - Kartu saran juga muncul di Detail (satu elemen `#pickupCard` dipindah antara form Tambah Data dan `#detPickupSlot` oleh `pkSetCtx()`; peta kolom `PK()` memilih input form atau input Detail). Di Detail kartu hanya menawarkan titipan yang LEBIH LAMA dari data ini dan tidak menawarkan data itu sendiri. Hanya untuk data yang belum punya `ambilDari`; data yang sudah terhubung tidak diubah dari kartu. Saat Simpan, `resolvePickupLinks()` mengisi `ambilDari` (+ stokCarry, ownPaid) dan penandaan di data titipan lama berjalan lewat reconcileLinks seperti Tambah Data.
+
+- (sw v63) Di Detail, tombol Simpan Perubahan / Batalkan Perubahan hanya tampil bila ada perubahan (`syncDetailActions`, cek tiap 250 ms lewat `isDetailDirty`). Detail yang baru dibuka hanya menampilkan Hapus dan Tutup.
+
+## 18. Editor Data Administrator: kolom melebar & tanggal/waktu sendiri (sw v64)
+- Kolom Barang dan Jumlah, Barang Keluar, Barang Ditinggal (Tambah Data dan Detail) kini `<textarea class="grow" data-oneline>`: tinggi mengikuti isi (`autoGrow`, dicek tiap 300 ms). Baris baru dari tempelan diubah jadi spasi dan Enter tetap pindah ke kolom berikut. Keterangan juga melebar otomatis.
+- Pengaturan > "Atur tanggal & waktu sendiri" (localStorage `admdash_custom_time`, per HP, default mati). Saat menyala, form Tambah Data memakai `#inputWaktuCustom` (datetime-local, tidak boleh melewati sekarang) menggantikan Tanggal/Waktu Auto. `created_at` = pilihan itu dengan detik dari jam sekarang. Nomor urut mengikuti urutan tanggal, jadi nomor data lain bisa bergeser. Detail/edit tetap tidak boleh mengubah created_at.
+
+## 19. Detail: pilihan "Harga ini untuk barang yang mana?" langsung & wajib (sw v65)
+- `updateDetScope()` menghitung tampil/tidaknya `#detScopeWrap` LANGSUNG dari isi form Detail (barang dibawa + barang ditinggal + Harga angka, belum terhubung/ambil kartu). Dicek tiap 250 ms, saat dibuka, dan setelah draf dipulihkan.
+- Opsi awal "Pilih dulu…" (kosong), kotak merah selama kosong. Simpan diblokir dengan pesan "Pilih dulu" sampai dipilih (Semua / Dibawa saja / Ditinggal saja). Tambah Data sudah wajib lewat popup konfirmasi sejak dulu.
+
+## 20. Status simpan saat sinyal lambat/offline (sw v66)
+- `Menyimpan...` kini sticky (dulu hilang 1,4 dtk sehingga layar kosong sambil menunggu). Setelah 4 dtk: "Sinyal lambat: N data masih dikirim, aman di HP. Jangan tutup dulu". Offline/gagal: "N data belum terkirim ke server (aman di HP)". `unsyncedCount()` membandingkan records/trash dengan `baseSnap`.
+- Update utama ke server dibungkus `bmWithTimeout(25000)`; timeout = gagal, dicoba lagi otomatis (jalur gabung menangani bila ternyata sudah masuk). "Tersimpan di server" tampil 2,4 dtk.
+
+## 21. Pita "ada versi baru" + Pulihkan data hilang (sw v67)
+- `bm-update.js` (dimuat di dashboard-admin, 5 editor, analisa): bila service worker baru mengambil alih saat halaman masih kode lama (`controllerchange` dengan `controller` sudah ada sebelumnya), tampil pita biru "Ada versi baru... Muat ulang". Tidak pernah muat ulang otomatis. Hanya di jendela utama (bukan iframe). HP dengan versi < v67 belum punya pita ini; baru berlaku setelah v67 terpasang.
+- Profil BM > Cadangan > "Pulihkan data yang hilang": RPC `note_versions(p_limit)` (daftar riwayat dari `notes_history`, hanya admin) dan `note_restore_missing(p_id)` (hanya MENAMBAH data dari versi lama yang id-nya tidak ada di records maupun trash catatan sekarang; tidak menimpa; bila catatan sudah dihapus, catatan dibuat ulang dari riwayat). Dua ketukan untuk konfirmasi.
+- Uji: scratchpad/uji56/upd.js, profil2.js.

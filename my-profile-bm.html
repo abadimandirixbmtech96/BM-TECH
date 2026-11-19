@@ -797,6 +797,9 @@
   <div class="sec">Titik cadangan otomatis</div>
   <p class="hint">Disimpan 7 hari terakhir di sistem, waktu WIB. Ketuk Unduh pada titik yang diinginkan.</p>
   <div class="card" id="bkList" style="padding:4px 18px"></div>
+  <div class="sec">Pulihkan data yang hilang</div>
+  <p class="hint">Daftar versi lama catatan yang punya LEBIH BANYAK data daripada sekarang. Pulihkan hanya menambahkan data yang hilang, tidak menimpa data yang ada.</p>
+  <div class="card" id="rvList" style="padding:4px 18px"></div>
   <div class="sec">Cadangan manual</div>
   <p class="hint">Cadangan lengkap juga bisa dibuat manual di Dashboard melalui Pengaturan, lalu Backup Semua Data.</p>
   <button class="btn ghost" id="bkOpen" type="button">Buka Dashboard</button>
@@ -1515,6 +1518,32 @@ function bmMain(REAL){
       }).join('');
     }).catch(function(e){ box.innerHTML = '<div class="hl"><span>Gagal memuat: ' + esc(T(String(e && e.message || e))) + '</span></div>'; });
   }
+  function loadRestoreList(){
+    var box = $('rvList');
+    if (!REAL || !REAL.c) { box.innerHTML = '<div class="hl"><span>Belum terhubung</span></div>'; return; }
+    box.innerHTML = '<div class="hl"><span>Memuat…</span></div>';
+    Promise.resolve(REAL.c.rpc('note_versions', { p_limit: 200 })).then(function(r){
+      if (r.error) throw r.error;
+      var rows = (Array.isArray(r.data) ? r.data : []).filter(function(x){ return x.op === 'DELETE' || (+x.rec_count || 0) > (+x.now_count || 0); }).slice(0, 25);
+      if (!rows.length) { box.innerHTML = '<div class="hl"><span>Tidak ada versi lama yang punya data lebih banyak. Semua aman.</span></div>'; return; }
+      box.innerHTML = rows.map(function(x){
+        var now = x.now_count == null ? 'catatan dihapus' : (x.now_count + ' data sekarang');
+        return '<div class="hl" style="align-items:center"><span>' + esc(fmtWib(x.saved_at)) + '<br><small style="color:var(--muted)">' + esc(x.title || '-') + ': ' + esc(x.rec_count) + ' data dulu, ' + esc(now) + '</small></span>' +
+          '<button class="mini-btn" type="button" data-rv="' + esc(x.id) + '">Pulihkan</button></div>';
+      }).join('');
+    }).catch(function(e){ box.innerHTML = '<div class="hl"><span>' + (/note_versions|function/i.test(String(e && e.message)) ? 'Fitur belum diaktifkan di server' : 'Gagal memuat: ' + esc(T(String(e && e.message || e)))) + '</span></div>'; });
+  }
+  var rvArm = null;
+  $('rvList').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-rv]'); if (!b) return;
+    if (rvArm !== b) { if (rvArm) rvArm.textContent = 'Pulihkan'; rvArm = b; b.textContent = 'Ketuk lagi'; return; }
+    rvArm = null; b.disabled = true; b.textContent = 'Memulihkan…';
+    Promise.resolve(REAL.c.rpc('note_restore_missing', { p_id: +b.getAttribute('data-rv') })).then(function(r){
+      if (r.error) throw r.error;
+      toast(+r.data > 0 ? (r.data + ' data dipulihkan') : 'Tidak ada yang perlu dipulihkan');
+      loadRestoreList();
+    }).catch(function(err){ toast('Gagal: ' + T(String(err && err.message || err))); b.disabled = false; b.textContent = 'Pulihkan'; });
+  });
   function dlBackup(fn, args, label, btn){
     if (!REAL || !REAL.c) return toast('Belum terhubung');
     if (bkBusy) return;
@@ -1655,7 +1684,7 @@ function bmMain(REAL){
     if (b.getAttribute('data-a') === 'recap') return goRecap();
     if (b.getAttribute('data-a') === 'jarvis') return goJv();
     if (b.getAttribute('data-a') === 'warung') { location.href = 'dashboard-shop.html'; return; }
-    if (b.getAttribute('data-a') === 'backup') { renderBackup(); loadBackupList(); return openPage('pgBackup'); }
+    if (b.getAttribute('data-a') === 'backup') { renderBackup(); loadBackupList(); loadRestoreList(); return openPage('pgBackup'); }
     var k = b.getAttribute('data-k') || null;
     if (!can(k)) return toast('Tidak ada izin');   // lapisan kedua: izin dicek lagi saat diketuk
     if (k === 'role') { goTab('akses'); if (b.getAttribute('data-t') === 'Tambah Admin') openAdm(null); return; }
@@ -1814,7 +1843,7 @@ function bmMain(REAL){
     var b = e.target.closest('[data-dev]'); if (!b) return;
     if (!isDev()) return toast('Akses Developer tidak aktif');          // lapisan kedua: dicek lagi saat diketuk
     var k = b.getAttribute('data-dev');
-    if (k === 'backup') { renderBackup(); loadBackupList(); return openPage('pgBackup'); }
+    if (k === 'backup') { renderBackup(); loadBackupList(); loadRestoreList(); return openPage('pgBackup'); }
     if (k === 'health') return openPage('pgHealth');
     if (k === 'logs') { renderLogsForm(); return openPage('pgLogs'); }
     if (k === 'popup') return testPopup();
