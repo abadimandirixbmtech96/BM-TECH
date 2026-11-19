@@ -4,6 +4,13 @@
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f4f4f2" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e0e0e" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="/manifest-shop.json">
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-shop-32.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-shop.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BM Warung">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <script src="/bm-theme.js"></script>
 <script>/* satu software: tema, warna aksen, dan huruf ikut pengaturan Dashboard (bm-theme, bm-accent, bm-font) */
 (function(){try{var t=localStorage.getItem('bm-theme')||localStorage.getItem('bm_theme')||'dark';if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
@@ -1583,4 +1590,6 @@ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
 buildNav();render(true);
 if(window.BMShopSync)BMShopSync.start({get:()=>D,set:v=>{D=v;if(!Array.isArray(D.kinds))D.kinds=[];regKinds(D.kinds,D.items);inval()},refresh:()=>{try{refresh()}catch(e){render(false)}},toast:m=>toast(m),pages:()=>PGS.length,blank});
 </script><script src="/bm-jarvis.js" defer></script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.error('SW gagal',e)})})}</script>
+<script src="/bm-update.js"></script>
 </body></html>
