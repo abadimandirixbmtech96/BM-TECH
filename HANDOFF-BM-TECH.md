@@ -290,3 +290,20 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - `bm-update.js` (dimuat di dashboard-admin, 5 editor, analisa): bila service worker baru mengambil alih saat halaman masih kode lama (`controllerchange` dengan `controller` sudah ada sebelumnya), tampil pita biru "Ada versi baru... Muat ulang". Tidak pernah muat ulang otomatis. Hanya di jendela utama (bukan iframe). HP dengan versi < v67 belum punya pita ini; baru berlaku setelah v67 terpasang.
 - Profil BM > Cadangan > "Pulihkan data yang hilang": RPC `note_versions(p_limit)` (daftar riwayat dari `notes_history`, hanya admin) dan `note_restore_missing(p_id)` (hanya MENAMBAH data dari versi lama yang id-nya tidak ada di records maupun trash catatan sekarang; tidak menimpa; bila catatan sudah dihapus, catatan dibuat ulang dari riwayat). Dua ketukan untuk konfirmasi.
 - Uji: scratchpad/uji56/upd.js, profil2.js.
+- (sw v68) Pulihkan data hilang dibatasi Owner/Developer (UI `#rvWrap` + RPC cek `is_owner() or is_dev_admin()`), `note_restore_missing(p_id, p_apply)`: ketukan pertama `p_apply=false` hanya menghitung, ketukan kedua `true` memulihkan dan dicatat di `activity_log`. Admin biasa tidak melihat bagiannya.
+
+## 22. Kesehatan Sistem lengkap (sw v69)
+- my-profile-bm.html > Alat Developer > Kesehatan: setelah daftar lama, memanggil RPC baru `system_health_detail()` (hanya `is_dev_admin()`). Menampilkan: grafik lingkaran pemakaian database (kelompok tabel vs batas 500 MB, gaya penyimpanan HP), grafik lingkaran + rincian per folder (isi catatan + riwayat versi, jumlah catatan/data/sampah, terakhir berubah, label terbanyak/sedikit), koneksi aktif, cache hit, riwayat versi, titik cadangan, file Storage, 12 tabel terbesar. Bila RPC belum ada: pesan "belum diaktifkan", daftar lama tetap tampil.
+- Uji: scratchpad/uji56/kes.js.
+
+## 23. Kesehatan untuk semua admin + PWA BM Warung (sw v70)
+- Pintasan "Kesehatan" di Profil BM kini untuk SEMUA admin (bukan hanya Developer). RPC `system_health` dan `system_health_detail` dijaga `is_admin()` (bukan `is_dev_admin()`). Isinya hanya ukuran/jumlah, bukan isi data.
+- PWA terpisah "BM Warung": `manifest-shop.json` (id/start_url `/dashboard-shop.html`, tema gelap), ikon `icons/icon-shop-*.png`, `apple-touch-icon-shop.png`, tag manifest/ikon/apple di `dashboard-shop.html`, pendaftaran `/sw.js` dan `bm-update.js` di halaman itu. Semua aset masuk precache `sw.js`. Dipasang lewat menu browser "Tambahkan ke layar utama" saat membuka `/dashboard-shop.html` (ikon dan nama terpisah dari BM-TECH Admin).
+
+## 24. Rombak Dashboard Warung (dashboard-shop.html, sw v71)
+- Font: Instrument Sans tertanam (woff 400/700, ada fitur tnum). Tidak lagi mengikuti `bm-font` Dashboard/perangkat. `button,input,select,textarea{font:inherit}`, `font-variant-numeric:tabular-nums`, `font-synthesis:none`.
+- Navigasi: 5 tab Beranda, Barang, Nota, Hutang, **Lainnya** (menggantikan Laporan). Tombol gear permanen di header dihapus. Lainnya = Laporan (Rekap stok, Penjualan, Terlaris, Pembelian), Barang (Jenis, Impor, Isi stok), Data (Backup, Ekspor), Aplikasi > Pengaturan (Tampilan, Suara scan, status Database, Hapus semua barang).
+- Beranda: 4 kartu ringkas (Omzet, Nota, Stok habis, Total hutang) + 4 grup pintasan (Penjualan, Stok, Keuangan, Laporan; `sc()`/`scg()`) lalu daftar Stok habis, Hutang terbesar, Nota terakhir. Baris "Rekap stok" lepas dihapus.
+- Mode demo dihapus: tag "Demo", teks "Mode demo", aksi `rfpick`/`rs` (pulihkan file / hapus data lokal). Sisa data lokal lama `bm_warung_v1/v2` dibuang otomatis begitu perangkat punya salinan database (`BMShopSync.cached()`). Data di database TIDAK disentuh (10 nota di shop_nota adalah salinan asli dari Hutang Piutang).
+- Status koneksi: pita `.bm-net` (Online/Offline/Data diperbarui) disembunyikan di halaman ini (`bm:refresh` tetap ditangani BMShopSync secara senyap). Chip di header (`#bm-sync-f`, bm-shop-sync.js `badge()`) hanya muncul bila ada perubahan belum terkirim, belum masuk, atau tanpa akses.
+- Uji: scratchpad/uji56/shop.js.

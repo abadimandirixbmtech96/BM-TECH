@@ -14,7 +14,6 @@
 <script src="/bm-theme.js"></script>
 <script>/* satu software: tema, warna aksen, dan huruf ikut pengaturan Dashboard (bm-theme, bm-accent, bm-font) */
 (function(){try{var t=localStorage.getItem('bm-theme')||localStorage.getItem('bm_theme')||'dark';if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
-var f=localStorage.getItem('bm-font');if(f&&f!=='default'&&window.BMTheme&&BMTheme.STACKS[f])document.documentElement.style.setProperty('--shop-font',BMTheme.STACKS[f]);
 if(localStorage.getItem('bm-font-bold')==='on')document.documentElement.classList.add('bold-mode')}catch(e){}})();</script>
 <title>Dashboard Warung</title>
 <style>
@@ -29,11 +28,11 @@ if(localStorage.getItem('bm-font-bold')==='on')document.documentElement.classLis
 :root[data-theme=dark]{color-scheme:dark;--bg:#0e0e0e;--sf:#171717;--bd:#2a2a2a;--tx:#ececec;--mu:#8f8f8f;--ac:var(--accent,#F4A81E);--acx:var(--accent,#F4A81E);--on:var(--on-accent,#1c1202);--er:#f26b63;--scrim:rgba(0,0,0,.6);--ng:rgba(34,34,34,.6);--nb:rgba(255,255,255,.1)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;scrollbar-width:thin;scrollbar-color:var(--bd) transparent}
 ::selection{background:color-mix(in srgb,var(--ac) 28%,transparent)}
-button,input{font-family:inherit;font-size:inherit}
+button,input,select,textarea,optgroup{font:inherit;letter-spacing:inherit}
 button{cursor:pointer;color:inherit}
 :focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 input:focus-visible,.sel:focus-visible{outline:0}
-body{margin:0;font:15px/1.45 var(--shop-font,"Instrument Sans"),system-ui,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;-webkit-font-smoothing:antialiased}
+body{margin:0;font:15px/1.45 "Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;font-synthesis:none;background:var(--bg);color:var(--tx);min-height:100vh;-webkit-font-smoothing:antialiased}
 body.lk{overflow:hidden}
 .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 header,main{max-width:520px;margin:0 auto}
@@ -237,7 +236,18 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 .qk{display:flex;gap:8px;margin-top:8px}.qk button{flex:1;height:38px;border-radius:10px;border:1px solid var(--bd);background:var(--sf);color:var(--ac);font-weight:700}
 .sk{padding:var(--s3) 14px;border-top:1px solid var(--bd)}.sk:first-child{border-top:0}.skh b{display:block}.skh small{color:var(--mu);font-size:var(--f1)}
 .acts{display:flex;gap:8px;margin-top:10px}.acts .bt{flex:1;padding:0 var(--s2);height:42px;font-size:14px}
-.demo{margin-left:6px;vertical-align:2px}
+.syc{flex:none;max-width:52vw;height:32px;padding:0 12px;border-radius:999px;border:1px solid currentColor;background:var(--sf);font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.syc[hidden]{display:none}
+.bm-net{display:none!important}
+.hg{margin-top:22px}.hg h4{margin:0 0 8px}
+.scs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.scs.n2,.scs.n4{grid-template-columns:1fr 1fr}
+.sc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:88px;padding:12px 6px;border:1px solid var(--bd);border-radius:var(--r2);background:var(--sf);color:var(--tx);text-align:center;transition:transform .15s var(--ease),background .2s}
+.scs.n2 .sc,.scs.n4 .sc{flex-direction:row;justify-content:flex-start;min-height:60px;padding:10px 12px;gap:12px;text-align:left}
+.sc:active{transform:scale(.96);background:var(--act)}
+.sci{position:relative;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--act);color:var(--acx);flex:none}
+.sci i{position:absolute;top:-6px;right:-8px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--er);color:#fff;font-size:11px;font-weight:700;line-height:18px;font-style:normal;text-align:center}
+.scl{font-size:13px;font-weight:700;line-height:1.2;min-width:0}
+.scl small{display:block;margin-top:2px;font-size:11.5px;font-weight:400;color:var(--mu)}
+.kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px}.kpi .c b{font-size:19px;display:block}
 html.bold-mode body *{font-weight:700!important}
 /* tablet & desktop: lebar mengikuti layar */@media(min-width:760px){header,main,.tbi,.pin{max-width:720px}.grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}}@media(min-width:1100px){header,main,.tbi,.pin{max-width:960px}}.sqc input.v{display:inline-block;width:58px;height:44px;padding:0;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--tx);text-align:center;font:700 18px/1 inherit;font-family:inherit;-moz-appearance:textfield;appearance:textfield}
 .sqc input.v:focus{border-color:var(--ac);background:var(--sf);outline:0}.sqc input.v.ch{color:var(--ac)}
@@ -245,7 +255,7 @@ html.bold-mode body *{font-weight:700!important}
 .r.er small,.er{color:var(--er)}.skp-ok{color:var(--ac)}
 </style></head><body>
 <div id="app">
-<header><div><div class="app">Buku Warung BM TECH<i class="tag mu demo">Demo</i></div><h1 id="ttl"></h1></div><button class="ib cog" data-a="st" aria-label="Pengaturan" id="gear"></button></header>
+<header><div><div class="app">Buku Warung BM TECH</div><h1 id="ttl"></h1></div><button type="button" id="bm-sync-f" class="syc" hidden></button></header>
 <main id="v"></main>
 <nav id="nv" aria-label="Menu utama"><i></i></nav>
 </div>
@@ -331,7 +341,8 @@ let r=null;try{r=JSON.parse(localStorage.getItem(K2))}catch(e){}
 let D=load(),C=null,AL={};
 const inval=()=>{C=null;AL={}};
 function save(){inval();if(window.BMShopSync)return true;try{localStorage.setItem(K2,JSON.stringify(D));return true}catch(e){toast('Gagal menyimpan: penyimpanan penuh');return false}}
-try{if(!window.BMShopSync&&!localStorage.getItem(K2)&&(D.items.length||D.notas.length))save()}catch(e){}
+/* Sisa mode demo: data lokal lama (bm_warung_v1/v2) dibuang setelah perangkat ini punya salinan database. */
+try{if(window.BMShopSync){if(BMShopSync.cached()){localStorage.removeItem(K1);localStorage.removeItem(K2)}}else if(!localStorage.getItem(K2)&&(D.items.length||D.notas.length))save()}catch(e){}
 
 /* ================= Mesin stok & biaya (diturunkan dari riwayat) ================= */
 function events(dd){const ev=[];let o=0;
@@ -526,14 +537,20 @@ const chips=(arr,cur,act,extra)=>'<div class="chips">'+arr.map(a=>'<button type=
 const mrow=(title,desc,icon,act,attrs,cls)=>'<div class="r mr'+(cls?' '+cls:'')+'" data-a="'+act+'" '+(attrs||'')+'><span class="bx">'+ic(icon)+'</span><div><b>'+esc(title)+'</b><small>'+esc(desc)+'</small></div>'+ic('chev')+'</div>';
 
 /* ================= Tab: Beranda ================= */
+const sc=(icon,label,act,attrs,badge,sub)=>'<button type="button" class="sc" data-a="'+act+'" '+(attrs||'')+'><span class="sci">'+ic(icon)+(badge?'<i>'+badge+'</i>':'')+'</span><span class="scl">'+esc(label)+(sub?'<small>'+esc(sub)+'</small>':'')+'</span></button>';
+const scg=(title,items)=>'<section class="hg"><h4>'+esc(title)+'</h4><div class="scs n'+items.length+'">'+items.join('')+'</div></section>';
 function vHome(){const st=cc().stock,t=today(),RD=rsData(),low=RD.rows.filter(r=>r.st==='out').map(r=>r.x).sort((a,b)=>(st[a.id]||0)-(st[b.id]||0));
- const nt=D.notas.filter(n=>n.t==='out'&&!n.void&&n.d===t),sold=nt.reduce((s,n)=>s+n.lines.reduce((a,l)=>a+(+l.q||0),0),0);
- const ds=debtors().filter(x=>x.a.debt>0.5).sort((a,b)=>b.a.debt-a.a.debt).slice(0,3);
+ const nt=D.notas.filter(n=>n.t==='out'&&!n.void&&n.d===t),S0=stats('today'),alld=debtors().filter(x=>x.a.debt>0.5),th=alld.reduce((s,x)=>s+x.a.debt,0);
+ const ds=alld.slice().sort((a,b)=>b.a.debt-a.a.debt).slice(0,3);
  const rc=D.notas.filter(n=>!n.void).sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:y.ts-x.ts).slice(0,5);
  return '<p class="date">'+HARI[new Date().getDay()]+', '+fmtLong(t)+'</p>'
- +'<div class="grid"><div class="c"><small>Nota hari ini</small><b>'+nt.length+'</b></div><div class="c"><small>Barang terjual</small><b>'+num(sold)+'</b></div></div>'
- +grp(mrow('Rekap stok',RD.cnt.filled+' barang terisi · '+num(RD.unit)+' unit'+(RD.cnt.new?' · '+RD.cnt.new+' belum dicatat':''),'box','rsopen',''))
- +'<h4>Stok habis'+(low.length?' ('+low.length+')':'')+'</h4>'
+ +'<div class="kpi"><div class="c"><small>Omzet hari ini</small><b>'+rp(S0.om)+'</b></div><div class="c"><small>Nota hari ini</small><b>'+nt.length+'</b></div>'
+ +'<div class="c"><small>Stok habis</small><b class="'+(low.length?'lw':'')+'">'+low.length+' barang</b></div><div class="c"><small>Total hutang</small><b class="'+(th>0.5?'lw':'')+'">'+rp(th)+'</b></div></div>'
+ +scg('Penjualan',[sc('sale','Jual baru','cnew','data-t="out"'),sc('buy','Beli baru','cnew','data-t="in"'),sc('inbox','Daftar nota','tab','data-i="2"')])
+ +scg('Stok',[sc('stock','Rekap stok','rsopen','',low.length||'', RD.cnt.filled+' barang terisi'),sc('edit','Isi stok','stk','','', 'Catat jumlah stok'),sc('plus','Tambah barang','inp','','', 'Satu per satu'),sc('up','Impor barang','imp','','', 'Dari file atau foto')])
+ +scg('Keuangan',[sc('debt','Hutang pelanggan','tab','data-i="3"',alld.length||'', alld.length+' pelanggan'),sc('plus','Pelanggan baru','pnew','','', 'Tambah nama')])
+ +scg('Laporan',[sc('chart','Penjualan','rep','data-v="sales"'),sc('sale','Terlaris','rep','data-v="top"'),sc('buy','Pembelian','rep','data-v="buy"')])
+ +'<h4 style="margin-top:26px">Stok habis'+(low.length?' ('+low.length+')':'')+'</h4>'
  +(low.length?grp(low.slice(0,5).map(x=>'<div class="r" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(x.name)+'</b><small>'+KL[kindOf(x)]+'</small></div><b class="lw">'+num(st[x.id]||0)+' '+esc(x.unit)+'</b></div>').join('')):'<p class="em">Tidak ada stok yang habis.</p>')
  +'<h4>Hutang terbesar</h4>'+(ds.length?grp(ds.map(x=>'<div class="r" data-a="pty" data-id="'+x.p.id+'"><div><b>'+esc(x.p.name)+'</b><small>'+x.a.rows.filter(r=>r.out>0.5).length+' nota belum lunas</small></div><b class="lw">'+rp(x.a.debt)+'</b></div>').join('')):'<p class="em">Tidak ada hutang.</p>')
  +'<h4>Nota terakhir</h4>'+(rc.length?grp(rc.map(notaRow).join('')):'<p class="em">Belum ada nota.</p>')}
@@ -593,12 +610,22 @@ function vDebt(){const ds=debtors(),th=ds.reduce((s,x)=>s+x.a.debt,0),tc=ds.redu
  return '<div class="grid"><div class="c"><small>Total hutang</small><b class="lw" data-cnt="'+th+'">'+rp(th)+'</b></div><div class="c"><small>Pelanggan berhutang</small><b>'+n+'</b></div></div>'+(tc>0.5?'<div class="c" style="margin-top:10px"><small>Saldo lebih (kredit pelanggan)</small><b class="ac" data-cnt="'+tc+'">'+rp(tc)+'</b></div>':'')
  +'<div style="display:flex;gap:8px;margin-top:12px"><input id="hq" class="in" placeholder="Cari pelanggan" aria-label="Cari pelanggan" autocomplete="off" value="'+esc(hq)+'"><button class="bt" style="flex:none" data-a="pnew">'+ic('plus')+'Pelanggan</button></div><div id="dl" style="margin-top:12px">'+partyListHtml()+'</div>'}
 
-/* ================= Tab: Laporan (hub) ================= */
-function vReports(){return '<p class="date">Pilih laporan yang ingin dilihat.</p>'+grp(
- mrow('Rekap stok','Stok terisi, habis, menipis, nilai stok. Bisa dibagikan','box','rsopen','')
- +mrow('Penjualan','Omzet, jumlah nota, rata-rata per nota','chart','rep','data-v="sales"')
- +mrow('Barang terlaris','Urutan barang yang paling banyak terjual','sale','rep','data-v="top"')
- +mrow('Pembelian stok','Total belanja dari pemasok','inbox','rep','data-v="buy"'))}
+/* ================= Tab: Lainnya (laporan, data, pengaturan) ================= */
+function vMore(){return '<p class="date">Laporan, data, dan pengaturan.</p>'
+ +'<h4 style="margin-top:6px">Laporan</h4>'+grp(
+  mrow('Rekap stok','Stok terisi, habis, menipis, nilai stok. Bisa dibagikan','stock','rsopen','')
+  +mrow('Penjualan','Omzet, jumlah nota, rata-rata per nota','chart','rep','data-v="sales"')
+  +mrow('Barang terlaris','Urutan barang yang paling banyak terjual','sale','rep','data-v="top"')
+  +mrow('Pembelian stok','Total belanja dari pemasok','buy','rep','data-v="buy"'))
+ +'<h4>Barang</h4>'+grp(
+  mrow('Jenis barang',(KORD.length-KBASE.length)+' jenis kustom. Tambah, impor ulang, kosongkan','box','kman','')
+  +mrow('Impor barang','Dari file Excel, CSV, PDF, atau foto','up','imp','')
+  +mrow('Isi stok','Catat jumlah stok barang','edit','stk',''))
+ +'<h4>Data</h4>'+grp(
+  mrow('Backup semua data','Simpan file JSON ke HP','down','bk','')
+  +mrow('Ekspor transaksi','File CSV untuk Excel','sale','cv','')
+  +mrow('Ekspor stok','File CSV daftar stok','box','cvs',''))
+ +'<h4>Aplikasi</h4>'+grp(mrow('Pengaturan','Tampilan, suara scan, status database','cog','st',''))}
 
 /* ================= Halaman laporan ================= */
 const repChips=()=>chips(PERS,RP,'rper');
@@ -773,18 +800,15 @@ function waText(pid){const p=pOf(pid),a=al(pid),rows=a.rows.filter(r=>r.out>0.5)
 function theme(){try{return localStorage.getItem('bm-theme')||localStorage.getItem(KT)||'dark'}catch(e){return'dark'}}
 function applyTheme(t){const r=document.documentElement;if(t==='light'||t==='dark')r.setAttribute('data-theme',t);else r.removeAttribute('data-theme')}
 function pgPlus(){return ''}
-function syncHint(sz){if(!window.BMShopSync)return '<p class="hint"><b>Mode demo:</b> belum terhubung ke database. Semua data hanya ada di browser HP ini dan bisa hilang kalau data browser dihapus. Data tersimpan di browser HP ini ('+D.items.length+' barang, '+D.notas.length+' nota, sekitar '+sz+' KB). Backup rutin agar aman.</p>';const s=BMShopSync.status();return '<p class="hint"><b>Database BM-TECH:</b> '+esc(s.text)+(s.lastSync?'. Terakhir sinkron '+new Date(s.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'')+'. Data tersimpan di server, salinannya ada di HP ini untuk dipakai saat offline ('+D.items.length+' barang, '+D.notas.length+' nota).'+(s.pending?' <b>'+s.pending+' perubahan belum terkirim.</b>':'')+'</p>'}
-function pgSettings(){const sz=Math.round(JSON.stringify(D).length/1024);
+function syncHint(){if(!window.BMShopSync)return '<p class="hint">Belum terhubung ke database. Tutup lalu buka aplikasi lagi saat ada sinyal.</p>';const s=BMShopSync.status();return '<p class="hint"><b>Database BM-TECH:</b> '+esc(s.text)+(s.lastSync?'. Terakhir sinkron '+new Date(s.lastSync).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}):'')+'. Data tersimpan di server, salinannya ada di HP ini untuk dipakai saat offline ('+D.items.length+' barang, '+D.notas.length+' nota).'+(s.pending?' <b>'+s.pending+' perubahan menunggu dikirim.</b>':'')+'</p>'}
+function pgSettings(){
  return pgh('Pengaturan','<h4 style="margin-top:8px">Tampilan</h4>'+chips([['auto','Otomatis'],['light','Terang'],['dark','Gelap']],theme(),'theme').replace('class="chips"','class="chips flat"')
  +'<h4>Suara scan</h4>'+chips([['1','Hidup'],['0','Mati']],sndOn()?'1':'0','snd').replace('class="chips"','class="chips flat"')
  +'<div style="height:10px"></div>'+grp(mrow('Suara berhasil',sndName('ok')||'Bawaan, ketuk untuk ganti','up','sndpick','data-k="ok"')+mrow('Suara kode tidak dikenal',sndName('no')||'Bawaan, ketuk untuk ganti','up','sndpick','data-k="no"')+(sndName('ok')||sndName('no')?mrow('Kembalikan suara bawaan','Hapus suara buatan sendiri','inbox','sndreset',''):''))
  +'<input id="sf-ok" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden><input id="sf-no" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden>'
  +'<p class="hint">Format MP3, WAV, OGG, atau M4A. Pakai suara pendek (di bawah 2 detik), maksimal 300 KB.</p>'
- +'<h4>Barang</h4>'+grp(mrow('Jenis barang',(KORD.length-KBASE.length)+' jenis kustom. Tambah, impor ulang, kosongkan','box','kman',''))
- +'<h4>Data</h4>'+grp(mrow('Backup semua data','Simpan file JSON ke HP','up','bk','')+mrow('Pulihkan dari file','Ganti data dengan file backup','inbox','rfpick','')+mrow('Ekspor transaksi','File CSV untuk Excel','sale','cv','')+mrow('Ekspor stok','File CSV daftar stok','box','cvs',''))
- +'<input id="rf" type="file" accept=".json,application/json" hidden>'
- +syncHint(sz)
- +'<h4>Hapus</h4>'+grp((window.BMShopSync?mrow('Hapus semua barang',D.items.length+' barang. Untuk impor ulang dari awal. Perlu verifikasi puzzle','trash','kclrall','','dn'):mrow('Hapus semua data','Tidak bisa dibatalkan','trash','rs','','dn'))),{})}
+ +'<h4>Database</h4>'+syncHint()
+ +(window.BMShopSync?'<h4>Hapus</h4>'+grp(mrow('Hapus semua barang',D.items.length+' barang. Untuk impor ulang dari awal. Perlu verifikasi puzzle','trash','kclrall','','dn')):''),{})}
 function dl(n,t,m){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:m}));a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 const csvText=rows=>'﻿'+rows.map(a=>a.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\n');
 function csvTx(){const r=[['Tanggal','Nomor','Jenis','Pihak','Barang','Jumlah','Satuan','Harga','Subtotal','Status','Catatan']];
@@ -1352,9 +1376,9 @@ function lnkList(){const s=LQ.toLowerCase(),sg=SC&&SC.cur?suggestFromCode(SC.cur
 function pgLink(){return pgh('Hubungkan ke barang','<p style="margin:0 0 12px;color:var(--mu)">Kode <b class="mono" style="color:var(--tx)">'+esc(SC?SC.cur:'')+'</b> akan diingat untuk barang yang dipilih.</p><input id="lq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(LQ)+'">'+chips(KCH,LKK,'lkk')+'<div id="lql" style="margin-top:12px">'+lnkList()+'</div>')}
 
 /* ================= Render tab ================= */
-const TABS=[['Beranda','home',vHome],['Barang','box',vItems],['Nota','sale',vNotaTab],['Hutang','debt',vDebt],['Laporan','chart',vReports]];
-const TTL=['Beranda','Barang','Nota','Hutang','Laporan'];
-function buildNav(){$('#nv').innerHTML='<i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('');$('#gear').innerHTML=ic('cog')}
+const TABS=[['Beranda','home',vHome],['Barang','box',vItems],['Nota','sale',vNotaTab],['Hutang','debt',vDebt],['Lainnya','dots',vMore]];
+const TTL=['Beranda','Barang','Nota','Hutang','Lainnya'];
+function buildNav(){$('#nv').innerHTML='<i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('')}
 function render(anim){$('#nv').style.setProperty('--i',tab);
  document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('on',i===tab);if(i===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
  const v=$('#v');$('#ttl').textContent=TTL[tab];v.innerHTML=TABS[tab][2]();
@@ -1509,8 +1533,6 @@ const A={
   if(commit(c))done('Tersimpan')},
  pdelp(b){const pid=b.dataset.id,p=D.parties.find(z=>z.id===pid);if(!p)return;ask({title:'Hapus pelanggan',msg:'Hapus "'+p.name+'" dari daftar?',ok:'Hapus',danger:1,puzzle:1},()=>{const c=clone(D);c.parties=c.parties.filter(z=>z.id!==pid);if(commit(c))done('Pelanggan dihapus')})},
  bk(){dl('bm-warung-backup-'+today()+'.json',JSON.stringify(D),'application/json')},cv(){csvTx()},cvs(){csvStok()},
- rfpick(){if(window.BMShopSync)return toast('Tidak tersedia saat tersambung database');const e=document.getElementById('rf');if(e)e.click()},
- rs(){if(window.BMShopSync)return toast('Tidak tersedia saat tersambung database');ask({title:'Hapus semua data',msg:'Semua barang, nota, dan hutang akan dihapus. Pastikan sudah backup.',ok:'Lanjut',danger:1},()=>{ask({title:'Yakin?',msg:'Data yang dihapus tidak bisa dikembalikan.',ok:'Hapus semua',danger:1},()=>{D=blank();if(save()){back(PGS.length);render(true);toast('Semua data dihapus')}})})},
  dyes(){const f=askCb;askClose();if(f)f()},dno(){askClose()},
  sel(b){const key=b.dataset.o,opts=OPT[key]||[],h=b.previousElementSibling,hook=b.dataset.hook;
   openMenu(b,opts,h?h.value:'',v=>{if(h)h.value=v;const s=b.querySelector('span');if(s)s.textContent=(opts.find(o=>o[0]===v)||['',v])[1];if(hook&&HOOK[hook])HOOK[hook](v);closeMenu()})},

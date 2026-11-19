@@ -7,7 +7,7 @@
  *   lalu dikirim sebagai satu paket ke RPC shop_terapkan (semua atau tidak sama sekali).
  * - Paket punya id. Kiriman ulang (sinyal putus) tidak membuat data dobel.
  * - Offline: paket disimpan di antrean HP dan dikirim saat sinyal kembali.
- * - Data demo lama (bm_warung_v2) tidak disentuh.
+ * - Data demo lama (bm_warung_v2) dibersihkan oleh dashboard-shop.html setelah salinan database ada.
  */
 (function () {
   'use strict';
@@ -379,31 +379,29 @@
     if (mode === 'akses') { toast('Minta admin menambahkan akun ini ke daftar kasir'); return; }
     toast(statusText()); syncNow();
   }
-  // Status ditampilkan di tempat label "Demo" pada header, agar tidak menutupi apa pun.
+  // Chip status di header hanya muncul bila perlu perhatian: perubahan belum terkirim, belum masuk, atau tanpa akses.
+  // Online/offline biasa tidak diberitahukan (data tetap tersimpan di HP dan dikirim otomatis).
   function badge() {
     if (!badgeEl) {
       var css = document.createElement('style');
-      css.textContent = '.bm-sync{cursor:pointer;color:var(--mu);border-color:currentColor}'
-        + '.bm-sync[data-m=siap]{color:#16a34a}'
-        + '.bm-sync[data-m=kirim],.bm-sync[data-m=mulai]{color:var(--acx,#9a5b00)}'
+      css.textContent = '.bm-sync{cursor:pointer;color:var(--acx,#9a5b00)}'
         + '.bm-sync[data-m=login],.bm-sync[data-m=akses]{color:var(--er,#dc2626)}'
-        + '@media (prefers-color-scheme:dark){:root:not([data-theme=light]) .bm-sync[data-m=siap]{color:#4ade80}}'
-        + ':root[data-theme=dark] .bm-sync[data-m=siap]{color:#4ade80}'
-        + '#bm-sync-f{position:fixed;right:16px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:60;background:var(--sf,#fff)}';
+        + '#bm-sync-f.fl{position:fixed;right:16px;top:calc(env(safe-area-inset-top,0px) + 8px);z-index:60;height:30px;padding:0 12px;border-radius:999px;border:1px solid currentColor;background:var(--sf,#fff);font:700 12px system-ui,sans-serif}';
       document.head.appendChild(css);
-      badgeEl = document.querySelector('.app .demo');
+      badgeEl = document.getElementById('bm-sync-f');
       if (!badgeEl) {
-        badgeEl = document.createElement('i'); badgeEl.id = 'bm-sync-f'; badgeEl.className = 'tag';
+        badgeEl = document.createElement('button'); badgeEl.type = 'button'; badgeEl.id = 'bm-sync-f'; badgeEl.className = 'fl'; badgeEl.hidden = true;
         document.body.appendChild(badgeEl);
       }
-      badgeEl.classList.remove('mu'); badgeEl.classList.add('bm-sync');
-      badgeEl.setAttribute('role', 'button'); badgeEl.setAttribute('tabindex', '0');
+      badgeEl.classList.add('bm-sync');
       badgeEl.setAttribute('aria-live', 'polite');
       badgeEl.addEventListener('click', onBadge);
-      badgeEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBadge(); } });
     }
+    var n = myOut().length;
+    var perlu = mode === 'login' || mode === 'akses' || n > 0;
+    badgeEl.hidden = !perlu;
     badgeEl.dataset.m = mode;
-    badgeEl.textContent = shortText();
+    badgeEl.textContent = n > 0 && mode !== 'login' && mode !== 'akses' ? n + ' belum terkirim' : shortText();
     badgeEl.title = statusText();
     badgeEl.setAttribute('aria-label', 'Status database: ' + statusText());
   }
