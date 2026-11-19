@@ -2676,7 +2676,8 @@
       }
       if (bmWouldShrink()) return bmGuardBlocked();
       let query = supabaseClient.from('notes').update(payload).eq('id', currentNoteId).eq('updated_at', lastKnownUpdatedAt);
-      result = await query.select().single();
+      result = await bmWithTimeout(query.select().single(), 25000);   // sinyal macet: jangan menggantung, coba lagi nanti (bila ternyata sudah masuk, jalur gabung menangani)
+      if (result.error && /^timeout/.test(result.error.message || '')) return false;
 
       if (result.error && (result.error.code === 'PGRST116' || /0 rows|no rows/i.test(result.error.message || ''))) {
         return await handleSaveConflict(payload, snapMine);
@@ -2765,6 +2766,20 @@
     return false;
   }
 
+  // Jumlah data yang beda dari salinan server terakhir (baru / diubah / dipindah ke sampah)
+  function unsyncedCount(){
+    try {
+      const bc = (baseSnap && baseSnap.content) || {};
+      const m = {}; (bc.records || []).forEach(r => { m[r.id] = JSON.stringify(r); });
+      const t = {}; (bc.trash || []).forEach(r => { t[r.id] = JSON.stringify(r); });
+      let n = 0;
+      records.forEach(r => { if (m[r.id] !== JSON.stringify(r)) n++; });
+      trash.forEach(r => { if (t[r.id] !== JSON.stringify(r)) n++; });
+      return n;
+    } catch (e) { return 0; }
+  }
+  function unsyncedLabel(){ const n = unsyncedCount(); return n > 0 ? n + ' data' : 'perubahan'; }
+  let slowTimer = null;
   function scheduleAutosave(){
     saveLocalDraft();   // SELALU amankan di HP dulu, apa pun keadaan koneksi/muat
     hasUnsyncedChanges = true;
@@ -2779,18 +2794,21 @@
     // bug kecil di bagian tampilan (mis. elemen indikator hilang), proses
     // penyimpanan ke server TETAP jalan dan tidak pernah ikut gagal.
     if (!navigator.onLine) {
-      try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) { console.error(e); }
+      try { showSaveStatus(unsyncedLabel() + ' belum terkirim ke server (aman di HP)', false, true); } catch (e) { console.error(e); }
       return;
     }
     autosaveTimer = setTimeout(runAutosave, 900);
-    try { showSaveStatus('Menyimpan...'); } catch (e) { console.error(e); }
+    try { if (!autosaveInFlight) showSaveStatus('Menyimpan...', false, true); } catch (e) { console.error(e); }
   }
 
   async function runAutosave(){
-    if (!navigator.onLine) { try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) {} return; }
+    if (!navigator.onLine) { try { showSaveStatus(unsyncedLabel() + ' belum terkirim ke server (aman di HP)', false, true); } catch (e) {} return; }
     if (currentNoteId && !serverSynced) { scheduleLoadRetry(true); return; }
     if (autosaveInFlight) { autosavePending = true; return; }
     autosaveInFlight = true;
+    try { showSaveStatus('Menyimpan...', false, true); } catch (e) {}
+    clearTimeout(slowTimer);
+    slowTimer = setTimeout(() => { if (autosaveInFlight) { try { showSaveStatus('Sinyal lambat: ' + unsyncedLabel() + ' masih dikirim, aman di HP. Jangan tutup dulu', false, true); } catch (e) {} } }, 4000);
 
     let success = false;
     try {
@@ -2808,14 +2826,15 @@
         autosaveTimer = setTimeout(runAutosave, delay);
       }
     } finally {
+      clearTimeout(slowTimer);
       // autosaveInFlight WAJIB direset apapun yang terjadi di atas — kalau
       // tidak, semua penyimpanan berikutnya akan macet permanen.
       autosaveInFlight = false;
     }
 
     try {
-      if (success) showSaveStatus('Tersimpan', false);
-      else showSaveStatus(`Gagal tersimpan — mencoba lagi (${autosaveRetryCount})...`, true, true);
+      if (success) showSaveStatus('Tersimpan di server', false);
+      else showSaveStatus(`${unsyncedLabel()} belum terkirim (sinyal buruk), mencoba lagi (${autosaveRetryCount})…`, true, true);
     } catch (e) { console.error(e); }
 
     if (autosavePending) { autosavePending = false; if (success) scheduleAutosave(); }
@@ -2833,7 +2852,7 @@
   });
   window.addEventListener('offline', () => {
     clearTimeout(autosaveTimer);
-    if (hasUnsyncedChanges) showSaveStatus('Tersimpan di HP (offline)', false, true);
+    if (hasUnsyncedChanges) showSaveStatus(unsyncedLabel() + ' belum terkirim ke server (aman di HP)', false, true);
   });
   // ===== Keluar dengan aman: simpan dulu, jangan sampai ada perubahan yang tertinggal =====
   let skipLeavePrompt = false;
@@ -2879,7 +2898,7 @@
     el.style.background = isError ? 'rgba(194,68,68,0.9)' : 'rgba(0,0,0,0.6)';
     el.style.opacity = '1';
     clearTimeout(saveStatusTimer);
-    if (!sticky) saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 1400);
+    if (!sticky) saveStatusTimer = setTimeout(() => { el.style.opacity = '0'; }, 2400);
   }
 
   let migrationToastTimer = null;
