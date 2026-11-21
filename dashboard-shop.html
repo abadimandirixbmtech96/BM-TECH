@@ -212,6 +212,16 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 .grp .r,.sc,.c,.kt,.bt,.chip{transition:transform .18s var(--ease),background .2s,box-shadow .2s,opacity .2s}
 @media(hover:hover){.sc:hover,.kt:hover{transform:translateY(-1px)}}
 .pg .pb{animation:fade .25s ease both}
+/* Isi stok cepat */
+.pg:has(#qkl) .cam{aspect-ratio:16/10;max-height:30vh}
+.qks{min-height:58px;margin-top:10px}
+.qkok{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:var(--r2);background:var(--act);border:1px solid var(--bd);animation:sin .3s var(--ease) both}
+.qkok b{display:block;font-size:var(--f2)}.qkok small{color:var(--mu);font-size:var(--f1)}.qkok .bt{height:40px;padding:0 12px;flex:none}
+.qkst{display:flex;align-items:center;gap:8px;margin:10px 0 2px;flex-wrap:wrap}.qkst span{font-size:var(--f1);color:var(--mu);margin-right:2px}.qkst .chip{min-width:44px;height:36px;padding:0 12px}
+.qkh{display:flex;align-items:center;justify-content:space-between;margin-top:6px}.qkh .tx{background:none;border:0;color:var(--ac);font-weight:700;padding:0 4px}
+#qkr{margin-top:8px}
+.sk2.pop{animation:qkpop .5s var(--spring)}@keyframes qkpop{0%{background:var(--act);transform:scale(.97)}60%{transform:scale(1.01)}100%{transform:none}}
+
 /* ===== Animasi penuh + adaptif semua perangkat ===== */
 :root{--dur:.38s;--sl:0}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -626,7 +636,7 @@ function vHome(){const st=cc().stock,t=today(),RD=rsData(),low=RD.rows.filter(r=
  +'<div class="kpi"><div class="c"><small>Omzet hari ini</small><b>'+rp(S0.om)+'</b></div><div class="c"><small>Nota hari ini</small><b>'+nt.length+'</b></div>'
  +'<div class="c"><small>Stok habis</small><b class="'+(low.length?'lw':'')+'">'+low.length+' barang</b></div><div class="c"><small>Total hutang</small><b class="'+(th>0.5?'lw':'')+'">'+rp(th)+'</b></div></div>'
  +scg('Penjualan',[sc('sale','Jual baru','cnew','data-t="out"'),sc('buy','Beli baru','cnew','data-t="in"'),sc('inbox','Daftar nota','tab','data-i="2"')])
- +scg('Stok',[sc('stock','Rekap stok','rsopen','',low.length||'', RD.cnt.filled+' barang terisi'),sc('edit','Isi stok','stk','','', 'Catat jumlah stok'),sc('plus','Tambah barang','inp','','', 'Satu per satu'),sc('up','Impor barang','imp','','', 'Dari file atau foto')])
+ +scg('Stok',[sc('stock','Rekap stok','rsopen','',low.length||'', RD.cnt.filled+' barang terisi'),sc('scan','Isi stok cepat','qk','','', 'Scan terus, kamera tetap buka'),sc('edit','Isi stok','stk','','', 'Ketik jumlah stok'),sc('up','Tempel daftar','stkp','','', 'Dari WhatsApp atau catatan'),sc('plus','Tambah barang','inp','','', 'Satu per satu'),sc('inbox','Impor barang','imp','','', 'Dari file atau foto')])
  +scg('Keuangan',[sc('debt','Hutang pelanggan','tab','data-i="3"',alld.length||'', alld.length+' pelanggan'),sc('plus','Pelanggan baru','pnew','','', 'Tambah nama')])
  +scg('Laporan',[sc('chart','Penjualan','rep','data-v="sales"'),sc('sale','Terlaris','rep','data-v="top"'),sc('buy','Pembelian','rep','data-v="buy"')])
  +'<h4 style="margin-top:26px">Stok habis'+(low.length?' ('+low.length+')':'')+'</h4>'
@@ -699,6 +709,7 @@ function vMore(){return '<p class="date">Laporan, data, dan pengaturan.</p>'
  +'<h4>Barang</h4>'+grp(
   mrow('Jenis barang',(KORD.length-KBASE.length)+' jenis kustom. Tambah, impor ulang, kosongkan','box','kman','')
   +mrow('Impor barang','Dari file Excel, CSV, PDF, atau foto','up','imp','')
+  +mrow('Isi stok cepat','Scan terus-menerus, kamera tetap terbuka','scan','qk','')
   +mrow('Isi stok','Catat jumlah stok barang','edit','stk',''))
  +'<h4>Data</h4>'+grp(
   mrow('Backup semua data','Simpan file JSON ke HP','down','bk','')
@@ -1205,11 +1216,11 @@ function skList(){const st=cc().stock,s=SK.q.toLowerCase(),rs=recSet(),all=SK.ki
   return gcard(key,g.b,g.a.length+' ukuran'+(ed?' · '+ed+' diubah':''),g.a.map(x=>skRow(x,osTxt(x))).join(''),open||GO[key])}).join(''):grp(arr.map(x=>skRow(x)).join(''));
  if(all)return KORD.map(k=>{const g=a.filter(x=>kindOf(x)===k);return g.length?'<h4>'+esc(KL[k])+' · '+g.length+'</h4>'+block(k,g):''}).join('');
  return block(SK.kind,a)}
-function pgStkKind(){return pgh('Isi stok','<p class="date">Pilih cara mengisi stok.</p>'+grp(mrow('Semua barang','Satu daftar, ketik jumlahnya langsung','box','stkk','data-k="all"')+mrow('Tempel daftar','Salin dari WhatsApp atau catatan, dicocokkan otomatis','up','stkp',''))+'<h4>Per jenis</h4>'+grp(KORD.map(k=>{const n=D.items.filter(x=>!x.arch&&kindOf(x)===k).length;return mrow(KL[k],n+' barang','box','stkk','data-k="'+k+'"')}).join('')))}
+function pgStkKind(){return pgh('Isi stok','<p class="date">Pilih cara mengisi stok.</p>'+grp(mrow('Scan cepat','Kamera tetap terbuka, scan terus-menerus','scan','qk','')+mrow('Semua barang','Satu daftar, ketik jumlahnya langsung','box','stkk','data-k="all"')+mrow('Tempel daftar','Salin dari WhatsApp atau catatan, dicocokkan otomatis','up','stkp',''))+'<h4>Per jenis</h4>'+grp(KORD.map(k=>{const n=D.items.filter(x=>!x.arch&&kindOf(x)===k).length;return mrow(KL[k],n+' barang','box','stkk','data-k="'+k+'"')}).join('')))}
 function pgStock(){return pgh('Isi stok '+(SK.kind==='all'?'semua barang':KS[SK.kind].toLowerCase()),'<input id="skq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(SK.q)+'">'+chips([['all','Semua'],['new','Belum diisi'],['zero','Stok kosong'],['np','Harga kosong']],SK.f,'skf')+'<p class="hint" style="margin:8px 0">Ketik jumlah yang ada di rak langsung di kotak angka (Enter pindah ke barang berikutnya), atau pakai tombol \u2212, +, +5, +10. Bisa juga scan kotak (+1 tiap kotak) atau tempel daftar dari WhatsApp. Yang tidak disentuh tidak diubah.</p><div id="skl">'+skList()+'</div>',{act:'<button class="ib" data-a="stkp" aria-label="Tempel daftar">'+ic('up')+'</button><button class="ib" data-a="sks" aria-label="Scan kotak untuk isi stok">'+ic('scan')+'</button>',foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
-function skSync(id,n,cur){const e=document.querySelector('[data-skv="'+id+'"]');if(e){if(e.tagName==='INPUT')e.value=String(n);else e.textContent=String(n);e.classList.toggle('ch',n!==cur)}const n2=document.getElementById('skn');if(n2)n2.textContent=skCnt()+' barang'}
+function skSync(id,n,cur){const e=document.querySelector('[data-skv="'+id+'"]');if(e){if(e.tagName==='INPUT')e.value=String(n);else e.textContent=String(n);e.classList.toggle('ch',n!==cur)}const n2=document.getElementById('skn');if(n2)n2.textContent=skCnt()+' barang';if(SC&&SC.quick){qkSaveDraft();qkRefresh()}}
 /* Isi stok dengan scan: tiap kotak yang terbaca menambah 1. Belum tersimpan sampai tombol Simpan di halaman Isi stok. */
-function skBump(x,quiet){if(x.arch){scPanel('<div class="rs"><b>'+esc(x.name)+'</b><span class="no">Barang nonaktif. Aktifkan dulu di halaman barang.</span></div>');if(!quiet)ping(false);return}
+function skBump(x,quiet){if(SC&&SC.quick)return qkBump(x,quiet);if(x.arch){scPanel('<div class="rs"><b>'+esc(x.name)+'</b><span class="no">Barang nonaktif. Aktifkan dulu di halaman barang.</span></div>');if(!quiet)ping(false);return}
  const id=x.id,cur=cc().stock[id]||0,v=SK.v[id]=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=r4(base+1);v.q=String(n);skSync(id,n,cur);if(!quiet)ping(true);
  const other=SK.kind!=='all'&&kindOf(x)!==SK.kind?'<small style="display:block;color:var(--mu)">Jenis '+esc(KS[kindOf(x)])+', tetap ikut tersimpan.</small>':'';
  scPanel('<div class="rs"><div class="rsh"><b>'+esc(x.name)+'</b><small>+1 · '+skCnt()+' barang diisi, belum disimpan</small></div>'
@@ -1222,7 +1233,40 @@ function skSave(){const c=clone(D),at=Date.now();let n=0,ns=0,np=0;
   if(v.p!==undefined&&v.p!==''){const p=pm(v.p);if(!(p>0))return bad('[data-sp="'+id+'"]','Harga harus lebih dari 0');if(p!==x.sell){x.sell=p;np++;ch=true}}
   if(ch)n++}
  if(!n)return toast('Belum ada angka yang berubah');
- if(!commit(c))return;SK.v={};done(n+' barang disimpan'+(np?' ('+np+' harga)':''))}
+ if(!commit(c))return;SK.v={};try{localStorage.removeItem(QKD)}catch(e){}done(n+' barang disimpan'+(np?' ('+np+' harga)':''))}
+
+/* ================= Isi stok cepat: kamera tetap terbuka, scan terus-menerus, tambah manual di halaman yang sama ================= */
+const QKD='bm_qk_draft';
+function qkSaveDraft(){try{const o={};Object.keys(SK.v).forEach(id=>{const v=SK.v[id];if(v&&v.q!==undefined&&v.q!=='')o[id]=v.q});if(Object.keys(o).length)localStorage.setItem(QKD,JSON.stringify({at:Date.now(),v:o}));else localStorage.removeItem(QKD)}catch(e){}}
+function qkLoadDraft(){try{const d=JSON.parse(localStorage.getItem(QKD)||'null');if(!d||!d.v)return null;const v={};Object.keys(d.v).forEach(id=>{if(itm(id))v[id]={q:d.v[id]}});return Object.keys(v).length?v:null}catch(e){return null}}
+const qkStep=()=>(SC&&SC.step)||1;
+function qkIdle(){return '<p class="hint" style="text-align:center;margin:10px 0 0">Arahkan kamera ke stiker atau tulisan di kotak. Tiap scan menambah '+qkStep()+', kamera tetap terbuka. Kotak yang sama: jauhkan sebentar lalu scan lagi.</p>'}
+function qkList(){const o=(SC&&SC.qo)||[];const ids=o.filter(id=>SK.v[id]&&SK.v[id].q!==undefined&&SK.v[id].q!=='');
+ if(!ids.length)return '<p class="hint" style="text-align:center;margin:6px 0 16px">Belum ada yang discan.</p>';
+ return ids.map(id=>{const x=itm(id);return x?skRow(x):''}).join('')}
+function qkRefresh(flashId){const l=document.getElementById('qkl');if(!l)return;if(!(document.activeElement&&l.contains(document.activeElement)))l.innerHTML=qkList();
+ const e=flashId&&l.querySelector('[data-skr="'+flashId+'"]');if(e&&!reduce()){e.classList.remove('pop');void e.offsetWidth;e.classList.add('pop')}
+ const t=document.getElementById('qkn');if(t){let u=0;Object.keys(SK.v).forEach(id=>{const v=SK.v[id];if(v&&v.q!==undefined&&v.q!==''){u+=r4((pq(v.q)||0)-(cc().stock[id]||0))}});t.textContent=(u>0?'+':'')+num(u)+' unit'}}
+function qkBump(x,quiet){const S=SC;if(!S)return;
+ if(x.arch){scPanel('<div class="rs"><b>'+esc(x.name)+'</b><span class="no">Barang nonaktif. Aktifkan dulu di halaman barang.</span></div>');if(!quiet)ping(false);return}
+ const id=x.id,cur=cc().stock[id]||0,v=SK.v[id]=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=r4(base+qkStep());v.q=String(n);
+ S.qo=(S.qo||[]).filter(z=>z!==id);S.qo.unshift(id);S.last=id;S.lastN=n;
+ if(!quiet)ping(true);qkSaveDraft();
+ scPanel('<div class="qkok"><div><b>'+esc(x.name)+'</b><small>+'+qkStep()+' · jadi '+num(n)+' '+esc(x.unit)+' (ada '+num(cur)+')</small></div><button type="button" class="bt sec" data-a="qkun" data-id="'+id+'">Batalkan</button></div>');
+ const sn=document.getElementById('skn');if(sn)sn.textContent=skCnt()+' barang';qkRefresh(id)}
+function qkSearch(q){const box=document.getElementById('qkr');if(!box)return;q=String(q||'').trim().toLowerCase();
+ if(q.length<2){box.innerHTML='';return}
+ const st=cc().stock,a=D.items.filter(x=>!x.arch&&(x.name.toLowerCase().includes(q)||[x.pc].concat(x.codes||[]).some(c=>c&&String(c).toLowerCase().includes(q)))).slice(0,8);
+ box.innerHTML=a.length?grp(a.map(x=>mrow(x.name,(x.sell>0?rp(x.sell)+' · ':'')+'ada '+num(st[x.id]||0)+' '+x.unit,'plus','qkadd','data-id="'+x.id+'"')).join('')):'<p class="hint" style="text-align:center">Tidak ada yang cocok. Coba kata lain atau tambah barang baru dari menu Barang.</p>'}
+function pgQuick(){return pgh('Isi stok cepat',camHtml()+'<div id="scr" class="qks">'+qkIdle()+'</div>'
+ +'<div class="qkst"><span>Tambah per scan</span>'+[1,5,10,12].map(n=>'<button type="button" class="chip'+(qkStep()===n?' on':'')+'" data-a="qkstep" data-n="'+n+'">'+n+'</button>').join('')+'</div>'
+ +'<div class="cw2"><input id="scm" class="in" placeholder="Tidak terbaca? Cari nama atau ketik kode" aria-label="Cari nama atau ketik kode" autocomplete="off" spellcheck="false"><button type="button" class="scb" data-a="scgo" aria-label="Cari">'+ic('search')+'</button></div><div id="qkr"></div>'
+ +'<div class="qkh"><h4>Sudah discan</h4><button type="button" class="tx" data-a="qkclr">Kosongkan</button></div><div id="qkl">'+qkList()+'</div>',
+ {foot:'<div class="ft"><div><small>Diisi</small><b id="skn">'+skCnt()+' barang</b><small id="qkn"></small></div><button class="bt" data-a="sksave">Simpan</button></div>'})}
+function openQuick(){OCR.fail=false;const dr=qkLoadDraft();SK={kind:'all',q:'',f:'all',v:dr||{}};
+ SC={ctx:'stock',quick:true,step:1,qo:dr?Object.keys(dr):[],fmt:'qr_code',fld:null,el:null,stream:null,det:null,run:false,hold:false,item:null,cur:null,wait:false,cand:'',cc:0,lastCode:'',lastSeen:0,seen:0,freeze:0,away:false,nocam:false};
+ const p=openPage(pgQuick,[],{live:false});SC.el=p.el;p.onpop=scStop;p.onshow=()=>{if(SC&&SC.wait){SC.wait=false;scHandle(SC.cur,true)}qkRefresh()};
+ scStart();qkRefresh();if(dr)setTimeout(()=>toast('Dilanjutkan dari scan sebelumnya ('+Object.keys(dr).length+' barang)'),400)}
 
 /* ================= Rekap stok otomatis ================= */
 let RS={f:'filled',k:'all',q:''};
@@ -1339,7 +1383,8 @@ function suggestFromCode(code){const c=cn(code),m=c.match(FAMRE);if(!m)return nu
 /* Huruf ukuran di kode harus cocok dengan OS barang yang dihubungkan; kalau tidak, kembalikan teks peringatan. */
 function codeOsWarn(x,code){const m=cn(code).match(FAMRE);if(!m||!x||kindOf(x)!=='piston')return'';const w=OSL[m[2]],h=(x.a||{}).os||'';if(!w||!h||normOS(w)===normOS(h))return'';return'Huruf '+m[2]+' pada kode berarti '+(w==='STD'?'STD':'OS '+w)+', tetapi barang ini '+(normOS(h)==='STD'?'STD':'OS '+h)+'. Tetap hubungkan?'}
 function scIdle(){return '<p class="hint" style="text-align:center;margin-top:14px">'+(SC&&SC.ctx==='stock'?'Scan kotak satu per satu. Tiap kotak menambah stok 1. Untuk kotak yang sama, jauhkan kamera sebentar lalu scan lagi.':SC&&SC.ctx==='field'?'Arahkan kamera ke stiker paket piston. Tulisan dan QR dibaca otomatis.':'Arahkan kamera ke stiker atau tulisan di kotak. Tulisan dan QR dibaca otomatis.')+'</p>'}
-function pgScan(){return pgh(SC&&SC.ctx==='stock'?'Scan untuk isi stok':'Scan barang','<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><button type="button" class="tch" id="tch" data-a="tch" aria-label="Senter" aria-pressed="false" hidden>'+ic('torch')+'<small id="tchl"></small></button><p class="camm" id="camm">Menyalakan kamera</p></div>'
+const camHtml=()=>'<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><button type="button" class="tch" id="tch" data-a="tch" aria-label="Senter" aria-pressed="false" hidden>'+ic('torch')+'<small id="tchl"></small></button><p class="camm" id="camm">Menyalakan kamera</p></div>';
+function pgScan(){return pgh(SC&&SC.ctx==='stock'?'Scan untuk isi stok':'Scan barang',camHtml()
  +'<div class="cw2" style="margin-top:12px"><input id="scm" class="in" placeholder="Tidak terbaca? Ketik kode atau seri" aria-label="Ketik kode atau seri" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="scb" data-a="scgo" aria-label="Cari kode">'+ic('search')+'</button></div>'
  +'<div id="scr">'+scIdle()+'</div>')}
 function openScan(ctx,fld,code){if(ctx==='cart'&&!CT)ctx='items';
@@ -1531,7 +1576,7 @@ const A={
  tab(b){setTab(+b.dataset.i)},
  st(){openPage(pgSettings,[],{live:true})},
  scc(){openScan('cart')},scb(){openScan('items')},scf(b){openScan('field',b.previousElementSibling)},
- scgo(){const e=document.getElementById('scm');if(!e)return;const v=e.value.trim();if(!v)return bad('#scm','Ketik kode dulu');e.value='';const R=ocTyped(v);if(R)ocHandle(R);else scHandle(v)},
+ scgo(){const e=document.getElementById('scm');if(!e)return;const v=e.value.trim();if(!v)return bad('#scm','Ketik nama atau kode dulu');if(SC&&SC.quick&&!findByCode(v)&&!ocTyped(v)&&!suggestFromCode(v))return qkSearch(v);e.value='';if(SC&&SC.quick)qkSearch('');const R=ocTyped(v);if(R)ocHandle(R);else scHandle(v)},
  scq(b){const i=document.getElementById('scq');if(!i)return;const v=Math.max(1,r4((pq(i.value)||0)+(+b.dataset.d)));i.value=fq(v)},
  scadd(){const x=SC&&SC.item;if(!x||!CT)return;const i=document.getElementById('scq'),qn=pq(i?i.value:'1');if(!(qn>0))return bad('#scq','Jumlah harus lebih dari 0');
   const out=CT.t==='out',st=cc().stock[x.id]||0,l=CT.lines.find(z=>z.i===x.id),tot=r4((l?+l.q||0:0)+qn);
@@ -1540,6 +1585,11 @@ const A={
   SC.item=null;SC.lastSeen=Date.now();toast(x.name+' +'+num(qn));scPanel('<div class="rs"><b>Ditambahkan ke nota</b><small style="display:block;color:var(--mu)">'+esc(x.name)+', total '+num(tot)+' '+esc(x.unit)+'. Scan barang berikutnya.</small></div>')},
  scpick(b){const x=D.items.find(z=>z.id===b.dataset.id);if(x&&SC){const code=SC.ocr?SC.ocr.pc:SC.cur,go=()=>{SC.item=x;if(code&&!pcOwner(code,x.id))learnCode(x,code);if(SC.ctx==='stock')skBump(x);else scShow(x)},w=code&&!pcOwner(code,x.id)?codeOsWarn(x,code):'';if(w)ask({title:'Ukuran tidak cocok',msg:w,ok:'Tetap hubungkan',danger:1},go);else go()}},
  sks(){openScan('stock')},
+ qk(){openQuick()},
+ qkstep(b){if(!SC)return;SC.step=+b.dataset.n||1;b.parentNode.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));const e=document.querySelector('#scr .hint');if(e)e.outerHTML=qkIdle()},
+ qkadd(b){const x=itm(b.dataset.id);if(!x||!SC)return;qkBump(x);const i=document.getElementById('scm');if(i){i.value='';}const r=document.getElementById('qkr');if(r)r.innerHTML=''},
+ qkun(b){const id=b.dataset.id,x=itm(id);if(!x||!SC)return;const cur=cc().stock[id]||0,v=SK.v[id]||{},base=v.q!==undefined&&v.q!==''?pq(v.q):cur,n=Math.max(0,r4(base-qkStep()));if(n===cur)delete v.q;else{v.q=String(n);SK.v[id]=v}qkSaveDraft();scPanel('<div class="qkok"><div><b>Dibatalkan</b><small>'+esc(x.name)+': kembali ke '+num(n)+'</small></div></div>');const sn=document.getElementById('skn');if(sn)sn.textContent=skCnt()+' barang';qkRefresh()},
+ qkclr(){if(!skCnt())return;ask({title:'Kosongkan hasil scan?',msg:skCnt()+' barang yang belum disimpan akan dibuang.',ok:'Kosongkan',danger:1},()=>{SK.v={};if(SC)SC.qo=[];qkSaveDraft();const sn=document.getElementById('skn');if(sn)sn.textContent='0 barang';qkRefresh();scPanel(qkIdle())})},
  rsopen(){RS={f:'filled',k:'all',q:''};openPage(pgRecapStock,[],{live:true})},
  rsf(b){RS.f=b.dataset.v;paint(PGS[PGS.length-1])},
  rsk(b){RS.k=b.dataset.v;paint(PGS[PGS.length-1])},
@@ -1702,11 +1752,12 @@ document.addEventListener('keydown',e=>{const t=e.target,tag=t&&t.tagName;if(tag
 document.addEventListener('focusin',e=>{if(e.target.dataset&&e.target.dataset.sug)showSug(e.target)});
 document.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.sug)setTimeout(()=>{if(SUGT===e.target&&document.activeElement!==e.target)hideSug()},150)});
 document.addEventListener('scroll',()=>{if(SUGT)hideSug()},true);
+document.addEventListener('keydown',e=>{const t=e.target;if(e.key==='Enter'&&t&&t.id==='scm'&&SC&&SC.quick){e.preventDefault();A.scgo()}});
 document.addEventListener('focusin',e=>{const t=e.target;if(t&&t.dataset&&t.dataset.sk!==undefined&&t.select)setTimeout(()=>{try{t.select()}catch(x){}},0)});
 document.addEventListener('keydown',e=>{const t=e.target;if(e.key!=='Enter'||!t||!t.dataset||t.dataset.sk===undefined)return;e.preventDefault();
  const all=[...(topPg()||document).querySelectorAll('input[data-sk]')],i=all.indexOf(t),n=all[i+1];
  if(n){n.scrollIntoView({block:'center'});n.focus()}else t.blur()});
-document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;if(t.classList)t.classList.remove('err');
+document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;if(t.classList)t.classList.remove('err');if(t.id==='scm'&&SC&&SC.quick){qkSearch(t.value);return}
  const fm=t.dataset.fmt;if(fm==='money')fmtMoney(t);else if(fm==='qty')fmtQty(t);
  if(t.dataset.sug)showSug(t);
  if(t.id==='imt'){IM.txt=t.value;return}
