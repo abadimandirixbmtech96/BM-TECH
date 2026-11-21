@@ -1,20 +1,10 @@
-// Service Worker BM-TECH: aplikasi tetap terbuka cepat walau sinyal lemot atau mati.
-//
-// 1. Tampilan aplikasi (HTML/JS/ikon/pustaka CDN): diambil dari cache dulu supaya langsung tampil,
-//    lalu diperbarui diam-diam di belakang. Versi baru dipakai pada pembukaan berikutnya.
-// 2. Data Supabase (hanya BACA: GET tabel + RPC baca yang terdaftar): coba jaringan dulu.
-//    Kalau gagal / terlalu lama, pakai salinan terakhir yang pernah berhasil. Halaman diberi tahu
-//    lewat pesan 'bm-data' supaya bisa menampilkan penanda "data terakhir".
-// 3. Penulisan data (insert/update/delete/RPC tulis) TIDAK pernah disentuh: selalu langsung ke server.
-// 4. Salinan data dihapus saat keluar akun (logout) atau login baru, supaya akun lain tidak melihatnya.
-
-const CACHE_NAME = 'bmtech-shell-v78'; // v78: Dashboard Warung: impor laher boleh pakai seri apa adanya. v77: Dashboard Warung: Isi stok cepat (scan terus-menerus, kamera tetap buka). v76: Dashboard Warung: senter scanner (Manual, Otomatis, Selalu). v75: Dashboard Warung: menu bawah tidak tenggelam (tanpa vw/transform, pengaman visualViewport), tombol Rekap stok satu baris. v74: Dashboard Warung: perbaiki tampilan Laporan berantakan (nama kelas bentrok), pengaturan Animasi (bawaan Hidup walau HP mengurangi animasi). v73: Dashboard Warung: animasi penuh (geser tab, ripple, muncul saat gulir), tampilan adaptif HP kecil, tablet, desktop (rel navigasi kiri), mendatar. v72: keluarga kode piston, ekspor PDF. v71: Dashboard Warung dirombak: font tertanam, tab Lainnya, beranda per grup, tanpa mode demo, chip status hanya bila perlu. v70: Kesehatan untuk semua admin; PWA terpisah BM Warung (manifest-shop, ikon, SW). v69: Kesehatan: grafik lingkaran pemakaian database dan per folder, rincian folder, detail kesehatan. v68: Pulihkan data hilang hanya Owner/Developer + hitung dulu sebelum pulihkan. v67: pita 'ada versi baru' (bm-update.js), Profil BM: Pulihkan data yang hilang dari riwayat catatan. v66: Editor Admin: status simpan tidak hilang saat sinyal lambat, jumlah data belum terkirim, simpan tidak menggantung. v65: Detail: pertanyaan 'Harga ini untuk barang yang mana?' muncul langsung dan wajib dipilih. v64: Editor Admin: kolom Barang/Keterangan melebar otomatis, setelan tanggal & waktu sendiri. v63: Detail: tombol Simpan/Batalkan hanya tampil bila ada perubahan. v62: Editor Admin: kartu saran barang ditinggal juga di Detail. v61: Editor Admin: detail langsung bisa diedit, peringatan perubahan belum tersimpan, draf edit, perbaikan tulisan Bayar duluan, keterangan tidak ditimpa. v60: Analisa: tab Pilih Hari (tanggal bebas). v59: Analisa: Bersih Cash (laci) dan Bersih Transfer, rincian campur operasional. v58: Profil BM, Cadangan untuk semua admin, status Google Drive 2 jam. v57: unduh backup. v56: pengaman data editor (tidak simpan sebelum catatan termuat, kunci versi selalu, draf aman), kartu tugas + status lunas
-const DATA_CACHE = 'bmtech-data-v1';   // tidak ikut dihapus saat versi naik
+const CACHE_NAME = 'bmtech-shell-v79';
+const DATA_CACHE = 'bmtech-data-v1';
 const DATA_ORIGIN = 'https://bm-data.invalid';
-const NET_WAIT_MS = 2500;              // lebih dari ini dengan salinan tersedia = pakai salinan dulu
-const NET_WAIT_SLOW_MS = 700;          // sesudah jaringan terbukti lemot: tunggu sebentar saja
+const NET_WAIT_MS = 2500;
+const NET_WAIT_SLOW_MS = 700;
 let slowUntil = 0;
-let lastWrite = 0;                     // waktu penulisan data terakhir dari perangkat ini                     // selama jendela ini permintaan berikutnya tidak menunggu lama lagi
+let lastWrite = 0;
 
 const PAGES = [
   '/admin-login.html', '/my-profile-bm.html', '/dashboard-admin.html', '/dashboard-shop.html',
@@ -43,7 +33,6 @@ const CDN = [
   'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'
 ];
 
-// RPC yang hanya membaca data (aman disalin untuk offline). RPC lain = menulis, tidak disentuh.
 const READ_RPC = new Set([
   'is_admin', 'is_karyawan', 'is_customer', 'get_customer_username', 'has_perm', 'shop_boleh',
   'shop_ambil_semua', 'weekly_summary', 'system_health', 'announcement_seen_counts', 'dev_logs'
@@ -74,14 +63,9 @@ self.addEventListener('message', (event) => {
   }
 });
 
-/* =====================================================================
-   SALINAN PENUH (mirror): saat online, semua tabel yang dipakai aplikasi diunduh ke HP.
-   Saat offline/lemot, permintaan baca apa pun (filter, urutan, satu baris, hitung) dijawab
-   dari salinan ini, jadi data yang belum pernah dibuka pun tetap tersedia.
-   ===================================================================== */
 const MIRROR = DATA_ORIGIN + '/mirror/';
 const PAGE = 1000;
-// [tabel, batas baris (0 = semua), urutan untuk tabel log]
+
 const MIRROR_TABLES = [
   ['notes', 0], ['folders', 0], ['trash_items', 0], ['pending_items', 0], ['customers', 0], ['karyawan', 0],
   ['admin_roles', 0], ['role_permissions', 0], ['announcements', 0], ['announcement_seen', 0], ['app_settings', 0],
@@ -101,7 +85,7 @@ async function fetchTable(base, headers, table, limit, order) {
     const to = from + PAGE - 1;
     const q = base + '/rest/v1/' + table + '?select=*' + (ordered ? '&order=' + ordered : '');
     const r = await fetch(q, { headers: Object.assign({ Range: from + '-' + to, 'Range-Unit': 'items' }, headers), cache: 'no-store' });
-    if (r.status === 400 && ordered && !order && !tried) { ordered = ''; tried = true; from -= PAGE; continue; }   // tabel tanpa kolom id
+    if (r.status === 400 && ordered && !order && !tried) { ordered = ''; tried = true; from -= PAGE; continue; }
     if (!r.ok && r.status !== 206) throw new Error(table + ' ' + r.status);
     const page = await r.json();
     if (!Array.isArray(page)) throw new Error(table + ' bukan daftar');
@@ -126,7 +110,7 @@ async function syncMirror(base, apikey, token, clientId) {
           headers: { 'content-type': 'application/json', 'x-bm-sub': sub, 'x-bm-at': String(Date.now()), 'x-bm-rows': String(rows.length) }
         }));
         ok++;
-      } catch (e) { fail++; }   // tabel tanpa izin (RLS) atau gagal: lewati, yang lain tetap jalan
+      } catch (e) { fail++; }
     }
   } finally { mirrorBusy = false; }
   const msg = { type: 'bm-mirror', ok: ok, fail: fail, at: Date.now() };
@@ -143,8 +127,7 @@ async function mirrorMeta(url, sub) {
   return { table: m[1], res: r, at: Number(r.headers.get('x-bm-at')) || 0 };
 }
 
-/* --- penjawab mini ala PostgREST untuk salinan penuh --- */
-function splitTop(str) {   // pisah koma di luar tanda kurung/kutip
+function splitTop(str) {
   const out = []; let depth = 0, q = false, cur = '';
   for (const ch of str) {
     if (ch === '"') q = !q;
@@ -167,7 +150,7 @@ function cmpVal(a, b) {
 }
 function likeRe(pat, ci) { return new RegExp('^' + pat.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/[*%]/g, '.*').replace(/_/g, '.') + '$', ci ? 'i' : ''); }
 function makeTest(col, expr) {
-  if (!/^[a-z_][a-z0-9_]*$/i.test(col)) return null;   // kolom JSON (->) dsb: tidak didukung
+  if (!/^[a-z_][a-z0-9_]*$/i.test(col)) return null;
   let neg = false;
   if (expr.startsWith('not.')) { neg = true; expr = expr.slice(4); }
   const dot = expr.indexOf('.');
@@ -196,7 +179,7 @@ async function answerFromMirror(req, url, meta) {
   const tests = [];
   for (const [k, v] of url.searchParams) {
     if (k === 'select') {
-      if (/[()!:]/.test(v)) return null;                      // relasi/alias: tidak didukung
+      if (/[()!:]/.test(v)) return null;
       const list = v.split(',').map((x) => x.trim()).filter(Boolean);
       cols = list.includes('*') ? null : list;
     } else if (k === 'order') {
@@ -235,7 +218,6 @@ async function answerFromMirror(req, url, meta) {
   return new Response(req.method === 'HEAD' ? null : JSON.stringify(rows), { status: 200, headers: h });
 }
 
-/* ---------- utilitas ---------- */
 const stripKey = (url) => new Request(url.origin + url.pathname);
 
 function putShell(key, response) {
@@ -244,7 +226,6 @@ function putShell(key, response) {
   return caches.open(CACHE_NAME).then((c) => c.put(key, clone)).catch(() => {});
 }
 
-// Ambil dari cache dulu (instan), perbarui di belakang. Tanpa cache: jaringan.
 function staleWhileRevalidate(event, key, fallback) {
   const net = fetch(event.request).then((r) => { if (r.ok) event.waitUntil(putShell(key, r.clone())); return r; });
   event.respondWith(
@@ -300,7 +281,7 @@ async function readData(key, sub) {
   const r = await c.match(key);
   if (!r) return null;
   const owner = r.headers.get('x-bm-sub') || '';
-  if (sub && owner && sub !== owner) return null;   // salinan milik akun lain
+  if (sub && owner && sub !== owner) return null;
   return r;
 }
 
@@ -314,7 +295,7 @@ function handleData(event, url) {
 
     const net = fetch(req).then(async (res) => {
       if (res.ok) {
-        // Token sudah kedaluwarsa (offline lama) → tidak ada sub; jangan simpan atas nama siapa pun
+
         if (sub) event.waitUntil(saveData(key, res, sub).catch(() => {}));
         notify(event.clientId, { type: 'bm-data', stale: false });
       }
@@ -323,7 +304,7 @@ function handleData(event, url) {
 
     const meta = (req.method === 'GET' || req.method === 'HEAD') ? await mirrorMeta(url, sub).catch(() => null) : null;
     if (!cached && !meta) return net;
-    // Salinan yang baru saja diperbarui (<15 dtk): langsung dipakai. Mencegah muat-ulang beruntun saat sinyal lemot.
+
     if (cached && Date.now() < slowUntil && Date.now() - at < 15000 && lastWrite < at) { event.waitUntil(net.catch(() => {})); return cached; }
 
     const wait = Date.now() < slowUntil ? NET_WAIT_SLOW_MS : NET_WAIT_MS;
@@ -335,10 +316,10 @@ function handleData(event, url) {
     slowUntil = Date.now() + 20000;
 
     if (res === 'slow') {
-      // Jaringan masih jalan di belakang; kalau berhasil, halaman diberi tahu ada data lebih baru
+
       event.waitUntil(net.then((r) => { if (r.ok) notify(event.clientId, { type: 'bm-data', fresh: true }); }).catch(() => {}));
     }
-    // Pilih salinan paling baru: jawaban persis yang pernah tersimpan, atau salinan penuh tabel
+
     if (meta && (!cached || meta.at > at)) {
       const m = await answerFromMirror(req, url, meta).catch(() => null);
       if (m) { notify(event.clientId, { type: 'bm-data', stale: true, at: meta.at, reason: res === 'slow' ? 'slow' : 'offline' }); return m; }
@@ -349,14 +330,12 @@ function handleData(event, url) {
   })());
 }
 
-/* ---------- lalu lintas ---------- */
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Supabase
   if (url.hostname.endsWith('.supabase.co')) {
-    // Keluar akun / login baru: buang salinan data lama (request tetap jalan normal ke server)
+
     if (url.pathname === '/auth/v1/logout' ||
         (url.pathname === '/auth/v1/token' && url.searchParams.get('grant_type') !== 'refresh_token')) {
       event.waitUntil(caches.delete(DATA_CACHE));
@@ -378,13 +357,12 @@ self.addEventListener('fetch', (event) => {
 
   if (req.method !== 'GET') return;
 
-  // Google Apps Script (Rekap Gaji): jangan disentuh
   if (url.hostname === 'script.google.com' || url.hostname.endsWith('.googleusercontent.com')) return;
 
   if (url.origin === self.location.origin) {
-    if (url.pathname.startsWith('/api/')) return;   // server Jarvis & unggah: selalu langsung
+    if (url.pathname.startsWith('/api/')) return;
     if (req.mode === 'navigate') {
-      // Kunci tanpa query string (?id=...&_t=...) supaya satu halaman = satu salinan
+
       let path = url.pathname === '/' ? '/admin-login.html' : url.pathname;
       if (/^\/role-customer-/.test(path)) path = '/customer-tracking.html';
       if (/^\/role-karyawan-/.test(path)) path = '/karyawan-tracking.html';
@@ -395,7 +373,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Pustaka CDN: cache dulu, jarang berubah (font Google dibiarkan ke browser: tidak ada di connect-src CSP)
   if (/^(cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)$/.test(url.hostname)) {
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req).then((r) => {
