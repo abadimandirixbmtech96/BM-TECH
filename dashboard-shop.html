@@ -281,7 +281,7 @@ main.tin{animation:tabin var(--dur) var(--ease) both}
 .imh{display:flex;align-items:center;gap:8px;margin-top:18px}.imh span{font-weight:600;color:var(--mu);font-size:var(--f1);font-variant-numeric:tabular-nums}.imhn,.imn{margin:2px 0 8px}
 .cr{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:12px 14px;border-top:1px solid var(--bd)}.cr:first-child{border-top:0}.cr.off .cb{opacity:.55}
 .cr .cb{flex:1 1 calc(100% - 60px);min-width:0}.cr .cb b{display:block;overflow-wrap:anywhere}.cr .cb small{display:block;margin-top:2px;color:var(--mu)}.cr .cb .lw{color:var(--er)}
-.cr .in{height:44px;min-width:0;flex:1 1 130px}.imnd{margin:6px 0 0;color:var(--mu);font-size:var(--f1)}.imnd summary{min-height:32px;display:flex;align-items:center;cursor:pointer}.cr .fa{display:flex;gap:8px;flex:1 1 100%}.cr .fa .bt{height:44px;flex:1;padding:0 10px;font-size:14px}
+.cr .in{height:44px;min-width:0;flex:1 1 130px}.imnd{margin:6px 0 0;color:var(--mu);font-size:var(--f1)}.imnd summary{min-height:32px;display:flex;align-items:center;cursor:pointer}.cr .fa{display:flex;flex-wrap:wrap;gap:8px;flex:1 1 100%}.cr .fa .bt{flex:1 1 130px;min-width:0}.cr .fa .bt{height:44px;flex:1;padding:0 10px;font-size:14px}
 .ckb{width:44px;height:44px;border:0;background:none;display:grid;place-items:center;flex:none;margin:-8px -8px -8px 0}
 .rt b{font-variant-numeric:tabular-nums}.r.rv>.rt{text-align:right}
 .imf{display:flex;flex-direction:column;gap:8px}.imf small{color:var(--mu);font-size:var(--f1);min-height:1em}.imf .two2{display:grid;grid-template-columns:auto 1fr;gap:10px}.imf .bt{height:48px}.imf .bt:disabled{opacity:.45}
@@ -1024,7 +1024,7 @@ function imVal(r){const k=r.kind;let f,err='',unit=KU[k];
  if(k==='piston'){const b=r.name.replace(/^(paket\s+piston|pkt\s+piston|piston)\s+/i,'').trim();f=fK(k,{base:b,os:r.os});
   if(!f.base)err='Nama tidak terbaca';else if(!f.os)err='OS belum ada, pilih ukuran OS di halaman sebelumnya';else if(r.os.charAt(0)==='?')err='OS "'+r.os.slice(1)+'" tidak dikenal (STD, 25 sampai 200)'}
  else if(k==='bearing'){const seri=r.seri.toUpperCase().replace(/\s+/g,' ');let br=(r.brand||r.name).replace(/\b(laher|bearing|bantalan)\b/ig,' ').replace(/\s+/g,' ').trim();
-  f=fK(k,{base:br,seri});if(!/^(?:\d{3,5}|\d{2,3}\/\d{2,3})(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
+  f=fK(k,{base:br,seri});if(!r.loose&&!/^(?:\d{3,5}|\d{2,3}\/\d{2,3})(?: ?[A-Z0-9]{1,5})?$/.test(f.seri))err=f.seri?'Seri "'+f.seri+'" tidak terbaca':'Seri tidak ketemu'}
  else if(k==='stang'){let b=r.name;if(b&&!/^stang/i.test(b))b='Stang seher '+b;f=fK(k,{base:b,jenis:r.jenis,versi:r.versi});if(!f.base)err='Nama tidak terbaca'}
  else{f=fK(k,{base:r.name});unit=r.unit||KU[k]||'pcs';if(!f.base)err='Nama tidak terbaca'}
  const o={kind:k,ok:!err,err,f,unit,sell:r.sell||0,q:r.q,pc:r.pc,cat:r.cat,assumed:!!r.assumed,dup:0,skip:false};
@@ -1157,7 +1157,7 @@ function imRow(r,i,lab){
    +(r.ok?'<button type="button" class="ckb" data-a="imtog" data-i="'+i+'" aria-label="Sertakan atau lewati"><span class="ck'+(r.skip?'':' on')+'"></span></button>':'')
    +(r.ok?'':'<input class="in" data-imn="'+i+'" placeholder="'+esc(FIXPH[r.kind]||'Nama')+'" autocomplete="off" autocapitalize="characters" aria-label="Perbaiki '+esc(nm)+'" value="'+esc(r.fixN||'')+'">')
    +'<input class="in" data-imp="'+i+'" data-fmt="money" inputmode="numeric" autocomplete="off" placeholder="Harga jual" aria-label="Harga '+esc(nm)+'" value="'+(pv>0?esc(String(pv).replace(/\B(?=(\d{3})+(?!\d))/g,'.')):'')+'">'
-   +(r.ok?'':'<div class="fa"><button type="button" class="bt sec" data-a="imfix" data-i="'+i+'">Cek lagi</button>'+(r.kind!=='umum'?'<button type="button" class="bt sec" data-a="imumum" data-i="'+i+'">Jadikan barang lain</button>':'')+'</div>')
+   +(r.ok?'':'<div class="fa"><button type="button" class="bt sec" data-a="imfix" data-i="'+i+'">Cek lagi</button>'+(r.kind==='bearing'?'<button type="button" class="bt sec" data-a="imloose" data-i="'+i+'">Pakai apa adanya</button>':'')+(r.kind!=='umum'?'<button type="button" class="bt sec" data-a="imumum" data-i="'+i+'">Jadikan barang lain</button>':'')+'</div>')
    +'</div>'}
  const pr=r.sell>0?rp(r.sell):(r.ex&&r.ex.sell>0?rp(r.ex.sell):'Harga kosong');
  const sub=(r.ex?'<i class="tag mu">Sudah ada</i>':'<i class="tag mu">Baru</i>')+(r.assumed?'<i class="tag mu">OS otomatis</i>':'')+(r.dup?'<i class="tag mu">Dobel digabung</i>':'');
@@ -1659,6 +1659,7 @@ const A={
  imtog(b){const r=IM.recs[+b.dataset.i];if(!r||!r.ok)return;r.skip=!r.skip;IM.edited=true;const k=b.querySelector('.ck'),row=b.closest('.r,.cr')||b;row.classList.toggle('off',r.skip);if(k)k.classList.toggle('on',!r.skip);imUpd()},
  imfix(b){imRefix(+b.dataset.i)},
  imumum(b){imRefix(+b.dataset.i,'umum')},
+ imloose(b){const i=+b.dataset.i,r=IM.recs[i];if(!r||!r.raw)return;const v=String(r.fixN||r.raw.seri||r.raw.name||'').trim();if(!v)return toast('Ketik seri atau namanya dulu');r.raw.loose=true;r.fixN=v;imRefix(i)},
  imcancel(){if(!IM.edited&&!IM.recs.some(r=>isCek(r)&&r.fixN))return back(1);ask({title:'Buang hasil cek?',msg:'Belum ada data yang disimpan. Perbaikan yang sudah Anda buat akan hilang.',ok:'Buang'},()=>back(1))},
  imstk(){back(1);setTimeout(()=>openPage(pgStock,[],{live:false}),reduce()?0:60)},
  imdl(){imDlSkipped()},
