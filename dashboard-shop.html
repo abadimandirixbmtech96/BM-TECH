@@ -82,7 +82,7 @@ main.tin{animation:tin .2s var(--ease)}
 button.sel{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);text-align:left;cursor:pointer}
 button.sel .ic{color:var(--mu);width:18px;height:18px}
 button.sel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two.three{grid-template-columns:1fr 1fr 1fr;gap:8px}.two.three .bt{padding:0 8px}
 .bt{border:0;border-radius:10px;height:46px;padding:0 var(--s4);background:var(--ac);color:var(--on);font-weight:600;font-size:15px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);transition:transform .15s var(--ease),opacity .2s}
 .bt:active{transform:scale(.97);opacity:.9}.bt:disabled{opacity:.45;pointer-events:none}
 .bt.full{display:flex;width:100%;margin-top:var(--s3)}
@@ -112,7 +112,7 @@ button.sel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pv small{display:block;color:var(--mu);font-size:var(--f1)}
 .pv b{display:block;font-size:var(--f3);margin:2px 0 4px;overflow-wrap:anywhere}
 .pv .ok{color:var(--acx)}.pv .no{color:var(--er)}
-nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(94vw,440px);display:flex;padding:6px;border-radius:34px;z-index:20;background:var(--ng);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--nb);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+nav{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom) + var(--navfix,0px));width:auto;max-width:440px;box-sizing:border-box;display:flex;padding:6px;border-radius:34px;z-index:20;background:var(--ng);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--nb);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav{background:var(--sf)}}
 nav button{flex:1;position:relative;z-index:1;background:none;border:0;color:var(--mu);font-size:10px;font-weight:600;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .25s}
 nav button.on{color:var(--acx)}
@@ -176,7 +176,7 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 #sug{position:fixed;z-index:45;background:var(--sf);border:1px solid var(--bd);border-radius:10px;padding:4px;animation:pop .14s var(--ease) both}
 .sg{display:block;width:100%;height:40px;padding:0 var(--s3);border:0;background:none;border-radius:8px;text-align:left;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sg:active{background:var(--act)}
-.dlg{position:fixed;z-index:61;left:50%;top:50%;width:min(86vw,340px);transform:translate(-50%,-50%);background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:20px 18px 18px;animation:dlgin .22s var(--ease) both}
+.dlg{position:fixed;z-index:61;left:50%;top:50%;width:min(calc(100% - 40px),340px);transform:translate(-50%,-50%);background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:20px 18px 18px;animation:dlgin .22s var(--ease) both}
 .dlg p{margin:0 0 16px;color:var(--mu)}
 .pzd p{margin:0 0 12px}.pzb{position:relative;height:96px;border-radius:12px;margin-bottom:12px;overflow:hidden;border:1px solid var(--bd);background:repeating-linear-gradient(135deg,var(--sf2,rgba(127,127,127,.08)) 0 10px,transparent 10px 20px),var(--bg)}
 .pzb i{position:absolute;left:8px;width:46px;height:46px;border-radius:12px}
@@ -213,12 +213,12 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 .pg .pb{animation:fade .25s ease both}
 /* ===== Animasi penuh + adaptif semua perangkat ===== */
 :root{--dur:.38s;--sl:0}
-html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth}
-body{min-height:100vh;min-height:100dvh;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);overscroll-behavior-y:contain}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overscroll-behavior-y:contain}
 img,svg,canvas,video{max-width:100%}
 /* pindah tab: geser sesuai arah */
 main.tin{animation:tabin var(--dur) var(--ease) both}
-@keyframes tabin{from{opacity:0;transform:translate3d(calc(var(--sl)*26px),6px,0)}to{opacity:1;transform:none}}
+@keyframes tabin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 /* halaman: masuk dari kanan di layar kecil, sebagai panel melayang di layar lebar */
 @keyframes pgup{from{opacity:0;transform:translateY(40px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes pgdn{to{opacity:0;transform:translateY(32px) scale(.985)}}
@@ -244,7 +244,7 @@ main.tin{animation:tabin var(--dur) var(--ease) both}
 /* HP sangat sempit */
 @media(max-width:359px){:root{--s4:12px}.grid{grid-template-columns:1fr 1fr}nav button{font-size:9px}.bt{padding:0 12px;font-size:14px}}
 /* layar pendek / mendatar */
-@media(max-height:480px) and (orientation:landscape){nav{bottom:calc(6px + env(safe-area-inset-bottom));padding:3px}nav button{flex-direction:row;justify-content:center;gap:6px;padding:6px 0}main{padding-bottom:80px}header{padding-top:calc(8px + env(safe-area-inset-top))}}
+@media(max-height:480px) and (orientation:landscape){nav{bottom:calc(6px + env(safe-area-inset-bottom) + var(--navfix,0px));padding:3px}nav button{flex-direction:row;justify-content:center;gap:6px;padding:6px 0}main{padding-bottom:80px}header{padding-top:calc(8px + env(safe-area-inset-top))}}
 /* tablet / desktop: halaman terbuka sebagai panel di tengah, navigasi jadi rel kiri di layar lebar */
 @media(min-width:760px){
  .pg{inset:0;background:var(--scrim);align-items:center;justify-content:center;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -253,14 +253,14 @@ main.tin{animation:tabin var(--dur) var(--ease) both}
  .pg{animation:fade .25s ease both}.pg.out{animation:fade .2s ease reverse forwards}
 }
 @media(min-width:1100px){
- body{padding-left:calc(96px + env(safe-area-inset-left))}
- nav{left:calc(12px + env(safe-area-inset-left));top:50%;bottom:auto;transform:translateY(-50%);width:72px;flex-direction:column;padding:8px 6px;border-radius:36px}
+ body{padding-left:96px}
+ nav{left:calc(12px + env(safe-area-inset-left));right:auto;margin:0;max-width:none;top:50%;bottom:auto;transform:translateY(-50%);width:72px;flex-direction:column;padding:8px 6px;border-radius:36px}
  nav button{padding:12px 0 8px}
  nav i{left:6px;right:6px;width:auto;top:8px;bottom:auto;height:calc((100% - 16px)/5);transform:translate3d(0,calc(var(--i,0)*100%),0)}
  main{padding-bottom:48px}
 }
 @media(prefers-contrast:more){:root{--bd:#8a8a8a}}
-@media (prefers-reduced-motion:reduce){:root:not([data-mo=on]){scroll-behavior:auto}:root:not([data-mo=on]) .rvl{opacity:1;transform:none}:root:not([data-mo=on]) .rpl{display:none}}
+@media (prefers-reduced-motion:reduce){:root:not([data-mo=on]) .rvl{opacity:1;transform:none}:root:not([data-mo=on]) .rpl{display:none}}
 :root[data-mo=off] *,:root[data-mo=off] *:before,:root[data-mo=off] *:after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}:root[data-mo=off] .rvl{opacity:1;transform:none}
 @media(prefers-reduced-motion:reduce){:root[data-mo=off] *,:root[data-mo=off] *:before,:root[data-mo=off] *:after,:root:not([data-mo=on]) *,:root:not([data-mo=on]) *:before,:root:not([data-mo=on]) *:after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}}
 .in.ta{height:150px;padding:12px var(--s3);text-align:left;resize:none;line-height:1.45;font-family:inherit}
@@ -292,7 +292,7 @@ main.tin{animation:tabin var(--dur) var(--ease) both}
 .qk{display:flex;gap:8px;margin-top:8px}.qk button{flex:1;height:38px;border-radius:10px;border:1px solid var(--bd);background:var(--sf);color:var(--ac);font-weight:700}
 .sk{padding:var(--s3) 14px;border-top:1px solid var(--bd)}.sk:first-child{border-top:0}.skh b{display:block}.skh small{color:var(--mu);font-size:var(--f1)}
 .acts{display:flex;gap:8px;margin-top:10px}.acts .bt{flex:1;padding:0 var(--s2);height:42px;font-size:14px}
-.syc{flex:none;max-width:52vw;height:32px;padding:0 12px;border-radius:999px;border:1px solid currentColor;background:var(--sf);font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.syc[hidden]{display:none}
+.syc{flex:none;max-width:52%;height:32px;padding:0 12px;border-radius:999px;border:1px solid currentColor;background:var(--sf);font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.syc[hidden]{display:none}
 .bm-net{display:none!important}
 .hg{margin-top:22px}.hg h4{margin:0 0 8px}
 .scs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.scs.n2,.scs.n4{grid-template-columns:1fr 1fr}
@@ -596,6 +596,16 @@ function vals(el){const o={};if(el)el.querySelectorAll('input[name]').forEach(i=
  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('rvi');io.unobserve(x.target)}}),{rootMargin:'0px 0px -6% 0px',threshold:.05});
   window.rvScan=root=>{if(reduce())return;(root||document).querySelectorAll('.grp,.sum,.grid,.hg').forEach(el=>{if(el.dataset.rv)return;el.dataset.rv=1;const r=el.getBoundingClientRect();if(r.top<innerHeight*0.9)return;el.classList.add('rvl');io.observe(el);setTimeout(()=>el.classList.add('rvi'),2500)})}}
  else window.rvScan=()=>{}})();
+/* Pengaman menu bawah: di sebagian HP (zoom teks/halaman Chrome, mode jendela) posisi 'bottom' bisa jatuh di luar layar.
+   Ukur terhadap layar yang benar-benar terlihat (visualViewport) lalu naikkan secukupnya. Tidak dijalankan saat mengetik. */
+function navFix(){const n=document.getElementById('nv'),vv=window.visualViewport;if(!n||!vv)return;
+ const ae=document.activeElement;if(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))return;
+ if(window.matchMedia&&matchMedia('(min-width:1100px)').matches){n.style.removeProperty('--navfix');return}
+ const cur=parseFloat(n.style.getPropertyValue('--navfix'))||0,r=n.getBoundingClientRect(),lim=vv.offsetTop+vv.height-10;
+ const nx=Math.max(0,Math.ceil(cur+(r.bottom-lim)));if(Math.abs(nx-cur)>1)n.style.setProperty('--navfix',nx+'px')}
+(function(){if(typeof window==='undefined'||!window.addEventListener)return;const f=()=>requestAnimationFrame(navFix);
+ window.addEventListener('resize',f);window.addEventListener('orientationchange',()=>setTimeout(f,300));window.addEventListener('pageshow',f);
+ if(window.visualViewport)visualViewport.addEventListener('resize',f);document.addEventListener('visibilitychange',f);[0,300,1200,3000].forEach(t=>setTimeout(f,t))})();
 function stagger(root){if(reduce())return;(root||document).querySelectorAll('.grp,.grid,.hg').forEach(g=>{if(g.dataset.sg)return;g.dataset.sg=1;g.classList.add('stg');let n=0;[...g.children].forEach(c=>{c.style.setProperty('--n',Math.min(n++,12))})})}
 function countUp(root){stagger(root);if(window.rvScan)rvScan(root);if(reduce())return;(root||document).querySelectorAll('[data-cnt]').forEach(el=>{const to=+el.dataset.cnt;if(!to)return;const t0=performance.now(),du=650;(function f(t){const p=Math.min(1,(t-t0)/du),e=1-Math.pow(1-p,3);el.textContent=rp(to*e);if(p<1)requestAnimationFrame(f)})(t0)})}
 const nw=id=>id&&id===fresh?' new':'';
@@ -1245,7 +1255,7 @@ function pgRecapStock(){const d=rsData(),c=d.cnt,now=new Date();
   +chips([['filled','Terisi '+c.filled],['out','Habis '+c.out],['low','Menipis '+c.low],['new','Belum dicatat '+c.new],['all','Semua '+c.all]],RS.f,'rsf')
   +chips([['all','Semua jenis']].concat(KORD.map(k=>[k,KS[k]])),RS.k,'rsk')
   +'<div id="rsl" style="margin-top:12px">'+rsList()+'</div>',
-  {foot:'<div class="two"><button class="bt sec" data-a="rsshare">Bagikan</button><button class="bt sec" data-a="rspdf">PDF</button><button class="bt" data-a="rscsv">CSV</button></div>'})}
+  {foot:'<div class="two three"><button class="bt sec" data-a="rsshare">Bagikan</button><button class="bt sec" data-a="rspdf">PDF</button><button class="bt" data-a="rscsv">CSV</button></div>'})}
 function rsText(){const d=rsData(),a=rsFiltered(d),now=new Date(),L=['*REKAP STOK BM TECH*','Per '+fmtLong(today())+' '+pad(now.getHours())+'.'+pad(now.getMinutes()),'Barang terisi: '+d.cnt.filled+' dari '+d.cnt.all+' · total '+num(d.unit)+' unit','Nilai stok (modal): '+rp(d.val),''];
  KORD.forEach(k=>{const g=a.filter(r=>kindOf(r.x)===k);if(!g.length)return;L.push('*'+KL[k].toUpperCase()+'* ('+g.length+')');g.forEach(r=>L.push('• '+r.x.name+': '+(r.known?num(r.s)+' '+r.x.unit:'belum dicatat')));L.push('')});
  return L.join('\n').trim()}
@@ -1500,7 +1510,7 @@ function render(anim){$('#nv').style.setProperty('--i',tab);
  const v=$('#v');$('#ttl').textContent=TTL[tab];v.innerHTML=TABS[tab][2]();
  if(anim){v.classList.remove('tin');void v.offsetWidth;v.classList.add('tin');countUp(v)}
  fresh=null}
-function setTab(n){if(n===tab)return;document.documentElement.style.setProperty('--sl',n>tab?1:-1);tab=n;render(true);window.scrollTo&&scrollTo({top:0})}
+function setTab(n){if(n===tab)return;tab=n;render(true);setTimeout(navFix,450);window.scrollTo&&scrollTo({top:0})}
 
 /* ================= Aksi (klik) ================= */
 const A={
