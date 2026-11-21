@@ -1,14 +1,3 @@
-/* BM-TECH Kasir <-> Supabase
- * Versi: shop-sync-v3-2026-11-12
- *
- * Cara kerja:
- * - Data kasir dimuat dari database lewat RPC shop_ambil_semua (RLS tetap berlaku).
- * - Setiap commit() di dashboard-shop.html dibandingkan dengan data sebelumnya,
- *   lalu dikirim sebagai satu paket ke RPC shop_terapkan (semua atau tidak sama sekali).
- * - Paket punya id. Kiriman ulang (sinyal putus) tidak membuat data dobel.
- * - Offline: paket disimpan di antrean HP dan dikirim saat sinyal kembali.
- * - Data demo lama (bm_warung_v2) dibersihkan oleh dashboard-shop.html setelah salinan database ada.
- */
 (function () {
   'use strict';
 
@@ -21,7 +10,7 @@
 
   var app = null, client = null, userId = null;
   var outbox = [], cache = null;
-  var mode = 'mulai';          // mulai | siap | kirim | offline | login | akses
+  var mode = 'mulai';
   var isAdmin = false, lastSync = 0, lastErr = '';
   var flushing = false, pulling = false, commitSeq = 0, pendingData = null, started = false;
 
@@ -43,7 +32,6 @@
   var num = function (v) { return v == null || v === '' ? 0 : +v; };
   function toast(m) { try { app && app.toast(m); } catch (e) {} }
 
-  /* ---------------- Server -> bentuk data kasir ---------------- */
   function lineD(l) {
     var o = { i: l.barang_id || null, name: l.nama, unit: l.satuan || 'pcs', q: num(l.qty), p: num(l.harga) };
     if (l.modal != null) o.c = num(l.modal);
@@ -85,7 +73,6 @@
     return { v: 2, items: items, parties: parties, notas: notas, rets: rets, pays: pays, adj: adj, seq: seq, kinds: kinds };
   }
 
-  /* ---------------- Bentuk data kasir -> baris database ---------------- */
   function itemRow(x) {
     return { id: x.id, jenis: x.kind || 'umum', nama_dasar: x.base || x.name, atribut: x.a || {}, nama: x.name,
       kategori: x.cat || '', satuan: x.unit || 'pcs', harga_jual: +x.sell || 0, harga_beli: +x.buy || 0,
@@ -118,7 +105,6 @@
       catatan: a.note || '', urut: +a.ts || Date.now() };
   }
 
-  /* ---------------- Bandingkan data lama dan baru ---------------- */
   function byId(a) { var m = {}; (a || []).forEach(function (x) { m[x.id] = x; }); return m; }
   function diff(A, B) {
     var ops = [], dels = [], baru = [];
@@ -134,7 +120,12 @@
     for (k in kA) if (!kB[k]) dels.push({ op: 'kind_delete', id: k, _o: 6 });
 
     var iA = byId(A.items), iB = byId(B.items);
-    for (k in iB) if (!iA[k] || J(itemRow(iA[k])) !== J(itemRow(iB[k]))) ops.push({ op: 'item_upsert', row: itemRow(iB[k]) });
+    for (k in iB) {
+      var rB = itemRow(iB[k]);
+      if (!iA[k]) { ops.push({ op: 'item_upsert', row: rB }); continue; }
+      var rA = itemRow(iA[k]), ub = Object.keys(rB).filter(function (f) { return f !== 'id' && J(rA[f]) !== J(rB[f]); });
+      if (ub.length) ops.push({ op: 'item_upsert', row: rB, ubah: ub });
+    }
     for (k in iA) if (!iB[k]) dels.push({ op: 'item_delete', id: k, _o: 4 });
 
     var nA = byId(A.notas), nB = byId(B.notas);
@@ -173,7 +164,6 @@
     }
     for (k in aA) if (!aB[k]) dels.push({ op: 'adj_delete', id: k, _o: 3 });
 
-    // Urutan: pihak, barang, nota, retur, bayar, stok; lalu hapus dari yang paling bergantung.
     var ord = { kind_upsert: 0, party_upsert: 1, item_upsert: 2, nota_upsert: 3, ret_insert: 4, pay_insert: 5, adj_insert: 6 };
     ops.sort(function (x, y) { return ord[x.op] - ord[y.op]; });
     dels.sort(function (x, y) { return x._o - y._o; });
@@ -182,7 +172,6 @@
     return { ops: ops, baru: baru };
   }
 
-  /* ---------------- Antrean dan pengiriman ---------------- */
   function saveOut() { ls(K_OUT, outbox); }
   function saveCache(d) { cache = { v: 1, uid: userId, at: Date.now(), data: d }; ls(K_CACHE, cache); }
   function myOut() { return outbox.filter(function (b) { return !b.uid || b.uid === userId; }); }
@@ -264,24 +253,22 @@
       isAdmin = !!s.admin;
       if (!s.boleh) { setMode('akses'); return; }
       lastSync = Date.now(); setMode('siap');
-      if (seq0 !== commitSeq || myOut().length) return;   // ada perubahan baru selama memuat
+      if (seq0 !== commitSeq || myOut().length) return;
       var nd = toD(s), cur = app.get();
       if (J(nd) === J(cur)) { saveCache(cur); return; }
-      if (!force && app.pages() > 0) { pendingData = nd; return; }   // jangan ganggu form yang sedang dibuka
+      if (!force && app.pages() > 0) { pendingData = nd; return; }
       pendingData = null; app.set(nd); saveCache(nd); app.refresh();
     } finally {
       pulling = false; badge();
     }
   }
 
-  /* ---------------- Status di layar ---------------- */
   var badgeEl = null;
   function setMode(m) {
     var was = mode; mode = m; badge();
     if (m === 'login' && was !== 'login' && was !== 'mulai') showLogin('Sesi berakhir. Masuk lagi agar data bisa disimpan.');
   }
 
-  /* ---------------- Masuk langsung di halaman kasir ---------------- */
   var loginEl = null;
   function showLogin(msg) {
     if (!client) { toast('Pustaka Supabase belum termuat. Periksa sinyal lalu buka ulang.'); return; }
@@ -307,7 +294,7 @@
       loginEl = document.createElement('div');
       loginEl.id = 'bm-login'; loginEl.hidden = true;
       loginEl.setAttribute('role', 'dialog'); loginEl.setAttribute('aria-modal', 'true'); loginEl.setAttribute('aria-labelledby', 'bm-login-t');
-      /* Satu pintu masuk: login di Profil BM, lalu semua aplikasi (Dashboard, Warung, Jarvis) ikut terbuka. */
+
       loginEl.innerHTML = '<form novalidate><h2 id="bm-login-t">Masuk dulu</h2>'
         + '<p class="s">Masuk lewat Profil BM. Setelah itu Dashboard Warung, Dashboard, dan Jarvis langsung bisa dipakai tanpa login lagi.</p>'
         + '<p class="m" role="alert"></p>'
@@ -379,8 +366,7 @@
     if (mode === 'akses') { toast('Minta admin menambahkan akun ini ke daftar kasir'); return; }
     toast(statusText()); syncNow();
   }
-  // Chip status di header hanya muncul bila perlu perhatian: perubahan belum terkirim, belum masuk, atau tanpa akses.
-  // Online/offline biasa tidak diberitahukan (data tetap tersimpan di HP dan dikirim otomatis).
+
   function badge() {
     if (!badgeEl) {
       var css = document.createElement('style');
@@ -411,9 +397,16 @@
     if (myOut().length) flush(); else pull();
   }
 
-  /* ---------------- API untuk dashboard-shop.html ---------------- */
   window.BMShopSync = {
     version: 'shop-sync-v3-2026-11-12',
+    peek: async function () {
+      if (!client || !userId || mode === 'offline') return null;
+      try {
+        var res = await client.rpc('shop_ambil_semua');
+        if (res.error || !res.data || !res.data.boleh) return null;
+        return toD(res.data);
+      } catch (e) { return null; }
+    },
     cached: function () {
       cache = ls(K_CACHE); outbox = ls(K_OUT) || [];
       return cache && cache.data ? cache.data : null;
@@ -472,7 +465,7 @@
 
   async function afterSession(session) {
     userId = session.user && session.user.id;
-    try { if (window.BMJarvis && window.BMJarvis.refresh) setTimeout(window.BMJarvis.refresh, 300); } catch (e) {}   // tombol Jarvis muncul begitu sesi siap
+    try { if (window.BMJarvis && window.BMJarvis.refresh) setTimeout(window.BMJarvis.refresh, 300); } catch (e) {}
     if (cache && cache.uid && cache.uid !== userId) {
       cache = null; ls(K_CACHE, null);
       app.set(app.blank()); app.refresh();
