@@ -158,6 +158,7 @@ nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);
 @keyframes rsup{0%{opacity:0;transform:translateY(26px) scale(.98)}100%{opacity:1;transform:none}}
 .cam video{width:100%;height:100%;object-fit:cover;display:block}
 .aim{position:absolute;left:10%;right:10%;top:24%;bottom:24%;border:2px solid rgba(255,255,255,.9);border-radius:var(--r1);pointer-events:none}
+.tch{position:absolute;right:10px;top:10px;z-index:3;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;padding:0;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);transition:background .25s,color .25s,transform .2s var(--spring)}.tch[hidden]{display:none}.tch svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}.tch.on{background:var(--ac);color:var(--on);border-color:var(--ac)}.tch.on svg{fill:currentColor}.tch:active{transform:scale(.9)}.tch small{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.7);white-space:nowrap;pointer-events:none}
 .camm{position:absolute;inset:0;margin:0;display:grid;place-items:center;text-align:center;padding:16px;color:#fff;font-size:var(--f2);background:rgba(0,0,0,.6)}.camm[hidden]{display:none}
 .rs{margin-top:12px;padding:var(--s4);border:1px solid var(--bd);border-radius:var(--r2);background:var(--sf);animation:rsup .42s var(--spring)}
 .rs .rsh{margin-bottom:6px}.rs .rsh b{display:block;font-size:var(--f3)}.rs .rsh small{color:var(--mu);font-size:var(--f1)}
@@ -352,6 +353,7 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const setT=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t};
 const P={ok:'M5 12l5 5 9-10',home:'M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',box:'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8',sale:'M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h4',debt:'M4 5h14a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2zM4 5v12M9 10h6',chart:'M4 20V10M10 20V4M16 20v-8M22 20H2',chev:'M9 6l6 6-6 6',back:'M15 6l-6 6 6 6',x:'M6 6l12 12M18 6L6 18',plus:'M12 5v14M5 12h14',cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',down:'M6 9l6 6 6-6',inbox:'M12 3v12m-5-5l5 5 5-5M4 21h16',cog:'M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z',
  stock:'M3 7l9-4 9 4-9 4zM3 12l9 4 9-4M3 17l9 4 9-4',scan:'M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16',search:'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5',minus:'M5 12h14',edit:'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',dots:'M5 12a1 1 0 1 0 .01 0M12 12a1 1 0 1 0 .01 0M19 12a1 1 0 1 0 .01 0',trash:'M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3',up:'M12 21V9m-5 5l5-5 5 5M4 3h16',buy:'M3 4h2l2.4 11h10.2L20 7H6.2M9 20a1 1 0 1 0 0 .01M17 20a1 1 0 1 0 0 .01'};
+P.torch='M13 2 4 14h7l-1 8 9-12h-7z';
 const ic=(n,c)=>'<svg class="ic'+(c?' '+c:'')+'" viewBox="0 0 24 24" aria-hidden="true"><path d="'+P[n]+'"/></svg>';
 const KI={piston:'<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 9h24v23a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4zM12 15h24M12 20h24M12 25h24"/><circle cx="24" cy="31" r="2.6"/></svg>',
  bearing:'<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="6"/><circle cx="24" cy="24" r="11" stroke-dasharray="2.4 3.6"/></svg>',
@@ -883,6 +885,7 @@ function syncHint(){if(!window.BMShopSync)return '<p class="hint">Belum terhubun
 function pgSettings(){
  return pgh('Pengaturan','<h4 style="margin-top:8px">Tampilan</h4>'+chips([['auto','Otomatis'],['light','Terang'],['dark','Gelap']],theme(),'theme').replace('class="chips"','class="chips flat"')
  +'<h4>Animasi</h4>'+chips([['on','Hidup'],['auto','Ikuti HP'],['off','Mati']],moPref(),'mo').replace('class="chips"','class="chips flat"')
+ +'<h4>Senter scanner</h4>'+chips([['man','Manual'],['auto','Otomatis'],['on','Selalu']],torchMode(),'tcm').replace('class="chips"','class="chips flat"')+'<p class="hint">Manual: nyalakan dengan tombol di kamera. Otomatis: menyala sendiri saat gelap. Selalu: menyala begitu kamera terbuka. Tidak semua HP punya senter di kamera.</p>'
  +'<h4>Suara scan</h4>'+chips([['1','Hidup'],['0','Mati']],sndOn()?'1':'0','snd').replace('class="chips"','class="chips flat"')
  +'<div style="height:10px"></div>'+grp(mrow('Suara berhasil',sndName('ok')||'Bawaan, ketuk untuk ganti','up','sndpick','data-k="ok"')+mrow('Suara kode tidak dikenal',sndName('no')||'Bawaan, ketuk untuk ganti','up','sndpick','data-k="no"')+(sndName('ok')||sndName('no')?mrow('Kembalikan suara bawaan','Hapus suara buatan sendiri','inbox','sndreset',''):''))
  +'<input id="sf-ok" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden><input id="sf-no" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" hidden>'
@@ -1336,7 +1339,7 @@ function suggestFromCode(code){const c=cn(code),m=c.match(FAMRE);if(!m)return nu
 /* Huruf ukuran di kode harus cocok dengan OS barang yang dihubungkan; kalau tidak, kembalikan teks peringatan. */
 function codeOsWarn(x,code){const m=cn(code).match(FAMRE);if(!m||!x||kindOf(x)!=='piston')return'';const w=OSL[m[2]],h=(x.a||{}).os||'';if(!w||!h||normOS(w)===normOS(h))return'';return'Huruf '+m[2]+' pada kode berarti '+(w==='STD'?'STD':'OS '+w)+', tetapi barang ini '+(normOS(h)==='STD'?'STD':'OS '+h)+'. Tetap hubungkan?'}
 function scIdle(){return '<p class="hint" style="text-align:center;margin-top:14px">'+(SC&&SC.ctx==='stock'?'Scan kotak satu per satu. Tiap kotak menambah stok 1. Untuk kotak yang sama, jauhkan kamera sebentar lalu scan lagi.':SC&&SC.ctx==='field'?'Arahkan kamera ke stiker paket piston. Tulisan dan QR dibaca otomatis.':'Arahkan kamera ke stiker atau tulisan di kotak. Tulisan dan QR dibaca otomatis.')+'</p>'}
-function pgScan(){return pgh(SC&&SC.ctx==='stock'?'Scan untuk isi stok':'Scan barang','<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><p class="camm" id="camm">Menyalakan kamera</p></div>'
+function pgScan(){return pgh(SC&&SC.ctx==='stock'?'Scan untuk isi stok':'Scan barang','<div class="cam" id="cam"><video id="scv" playsinline muted></video><div class="aim"></div><div class="lock" id="lock"><i></i><i></i><i></i><i></i></div><div class="flash" id="flash"></div><button type="button" class="tch" id="tch" data-a="tch" aria-label="Senter" aria-pressed="false" hidden>'+ic('torch')+'<small id="tchl"></small></button><p class="camm" id="camm">Menyalakan kamera</p></div>'
  +'<div class="cw2" style="margin-top:12px"><input id="scm" class="in" placeholder="Tidak terbaca? Ketik kode atau seri" aria-label="Ketik kode atau seri" autocomplete="off" autocapitalize="characters" spellcheck="false"><button type="button" class="scb" data-a="scgo" aria-label="Cari kode">'+ic('search')+'</button></div>'
  +'<div id="scr">'+scIdle()+'</div>')}
 function openScan(ctx,fld,code){if(ctx==='cart'&&!CT)ctx='items';
@@ -1354,6 +1357,16 @@ function lockTo(v,bb,snap){const cam=document.getElementById('cam'),lk=document.
  lk.classList.add('v');cam.classList.add('lk');
  if(snap){lk.classList.remove('snap');void lk.offsetWidth;lk.classList.add('snap');const f=document.getElementById('flash');if(f){f.classList.remove('f');void f.offsetWidth;f.classList.add('f')}}}
 function lockHide(){const cam=document.getElementById('cam'),lk=document.getElementById('lock');if(lk)lk.classList.remove('v','snap');if(cam)cam.classList.remove('lk')}
+/* Senter scanner: Manual (tombol), Otomatis (nyala sendiri saat gelap), Selalu (nyala begitu kamera terbuka) */
+const torchMode=()=>{try{const v=localStorage.getItem('bm_torch');return v==='auto'||v==='on'?v:'man'}catch(e){return'man'}};
+const TCL={man:'Manual',auto:'Otomatis',on:'Selalu'};
+async function torchSet(S,on){if(!S||!S.stream||!S.tcap)return false;try{await S.stream.getVideoTracks()[0].applyConstraints({advanced:[{torch:!!on}]});S.tOn=!!on;S.tAt=Date.now();torchUi(S);return true}catch(e){return false}}
+function torchUi(S){const b=document.getElementById('tch');if(!b||!S)return;b.hidden=!S.tcap;b.classList.toggle('on',!!S.tOn);b.setAttribute('aria-pressed',S.tOn?'true':'false');const l=document.getElementById('tchl');if(l)l.textContent=S.tOn?'Senter '+(torchMode()==='auto'?'(auto)':''):'';}
+async function torchInit(S,tr){let cp={};try{cp=tr.getCapabilities?tr.getCapabilities():{}}catch(e){}S.tcap=!!cp.torch;S.tOn=false;S.tUser=false;torchUi(S);if(!S.tcap)return;
+ const m=torchMode();if(m==='on'){await torchSet(S,true)}
+ else if(m==='auto'){const cv=document.createElement('canvas');cv.width=32;cv.height=24;const x=cv.getContext('2d',{willReadFrequently:true}),v=document.getElementById('scv');
+  const tick=async()=>{if(!S.run||SC!==S)return;if(!S.tUser&&v&&v.videoWidth&&Date.now()-(S.tAt||0)>2500){try{x.drawImage(v,0,0,32,24);const d=x.getImageData(0,0,32,24).data;let sum=0;for(let i=0;i<d.length;i+=4)sum+=d[i]*.299+d[i+1]*.587+d[i+2]*.114;const L=sum/(d.length/4);
+    if(!S.tOn&&L<50)await torchSet(S,true);else if(S.tOn&&L>175)await torchSet(S,false)}catch(e){}}setTimeout(tick,700)};setTimeout(tick,900)}}
 async function scStart(){const S=SC,v=document.getElementById('scv');
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||window.isSecureContext===false)return camMsg('Kamera hanya jalan lewat alamat https. Ketik kode di kolom bawah.');
  
@@ -1361,6 +1374,7 @@ async function scStart(){const S=SC,v=document.getElementById('scv');
   if(SC!==S||!S.el){st.getTracks().forEach(t=>t.stop());return}
   S.stream=st;v.srcObject=st;try{await v.play()}catch(e){}
   try{const tr=st.getVideoTracks()[0],cp=tr.getCapabilities?tr.getCapabilities():{};if(cp.focusMode&&cp.focusMode.includes('continuous'))await tr.applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
+  try{await torchInit(S,st.getVideoTracks()[0])}catch(e){}
   S.det=null;if('BarcodeDetector' in window){try{const sup=await BarcodeDetector.getSupportedFormats();if(sup.includes('qr_code'))S.det=new BarcodeDetector({formats:['qr_code']})}catch(e){try{S.det=new BarcodeDetector({formats:['qr_code']})}catch(e2){}}}
   camMsg('');S.run=true;if(S.det)scLoop(S,v);ocLoop(S,v)}
  catch(e){camMsg(e&&e.name==='NotAllowedError'?'Izin kamera ditolak. Aktifkan izin kamera, atau ketik kode di kolom bawah.':'Kamera tidak bisa dibuka. Ketik kode di kolom bawah.')}}
@@ -1577,6 +1591,8 @@ const A={
  lnkpick(b){const x=itm(b.dataset.id),code=SC&&SC.cur;if(!x||!code)return;const o=pcOwner(code);if(o)return toast('Kode sudah dipakai '+o.name);
   const go=()=>{const c=clone(D),y=c.items.find(z=>z.id===x.id);y.pc=code;if(commit(c)){SC.wait=true;back(1);toast('Kode dihubungkan ke '+x.name)}};
   const w=codeOsWarn(x,code);if(w)ask({title:'Ukuran tidak cocok',msg:w,ok:'Tetap hubungkan',danger:1},()=>{if(x.pc&&cn(x.pc)!==cn(code))ask({title:'Ganti kode pabrik',msg:x.name+' sudah punya kode '+x.pc+'. Ganti dengan '+code+'?',ok:'Ganti'},go);else go()});else if(x.pc&&cn(x.pc)!==cn(code))ask({title:'Ganti kode pabrik',msg:x.name+' sudah punya kode '+x.pc+'. Ganti dengan '+code+'?',ok:'Ganti'},go);else go()},
+ tch(){const S=SC;if(!S)return;S.tUser=true;torchSet(S,!S.tOn).then(ok=>{if(!ok)toast('Senter tidak tersedia di kamera ini')})},
+ tcm(b){try{localStorage.setItem('bm_torch',b.dataset.v)}catch(e){}const p=PGS[PGS.length-1];if(p)paint(p);toast('Senter scanner: '+TCL[b.dataset.v])},
  snd(b){try{localStorage.setItem('bm_snd',b.dataset.v)}catch(e){}const p=PGS[PGS.length-1];if(p)paint(p);if(b.dataset.v==='1')ping(true)},
  sndpick(b){const e=document.getElementById('sf-'+b.dataset.k);if(e)e.click()},
  sndreset(){try{['ok','no'].forEach(k=>{localStorage.removeItem(SNDK[k]);localStorage.removeItem(SNDK[k]+'_n')})}catch(e){}delete AUD.ok;delete AUD.no;const p=PGS[PGS.length-1];if(p)paint(p);toast('Suara bawaan dipakai kembali');playSnd('ok')},back(){back()},
