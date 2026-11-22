@@ -307,3 +307,61 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Mode demo dihapus: tag "Demo", teks "Mode demo", aksi `rfpick`/`rs` (pulihkan file / hapus data lokal). Sisa data lokal lama `bm_warung_v1/v2` dibuang otomatis begitu perangkat punya salinan database (`BMShopSync.cached()`). Data di database TIDAK disentuh (10 nota di shop_nota adalah salinan asli dari Hutang Piutang).
 - Status koneksi: pita `.bm-net` (Online/Offline/Data diperbarui) disembunyikan di halaman ini (`bm:refresh` tetap ditangani BMShopSync secara senyap). Chip di header (`#bm-sync-f`, bm-shop-sync.js `badge()`) hanya muncul bila ada perubahan belum terkirim, belum masuk, atau tanpa akses.
 - Uji: scratchpad/uji56/shop.js.
+
+## 25. Dashboard Warung: keluarga kode piston, PDF, animasi (sw v72)
+- Keluarga kode piston: `FAMRE` menerima 2-4 segmen (AKH-KWB-C, AKY-4Y2-1630-C); keluarga = semua sebelum huruf ukuran terakhir. Bila keluarga dipakai beberapa model (RX-K dan RXS satu kode 4Y2) `suggestFromCode` mengembalikan `amb:true`, tidak auto-link, `famPick` menampilkan semua model pada ukuran cocok. `codeOsWarn` memperingatkan bila huruf ukuran tidak sama dengan OS barang (scpick dan lnkpick). Anchor OCR menerima 4 segmen dan huruf A-I.
+- Ekspor PDF tanpa pustaka (`pdfBuild`, Helvetica, tabel multi halaman, landscape untuk transaksi): Lainnya > Data (Transaksi PDF, Stok PDF) dan tombol PDF di Rekap stok.
+- Animasi: `stagger()` memberi baris/kartu muncul berurutan (via countUp), transisi tekan, fade halaman; tetap patuh prefers-reduced-motion.
+- DB: 10 nota uji (shop_nota) dihapus; cadangan di tabel zz_backup_shop_nota_uji dan zz_backup_shop_nota_baris_uji (boleh di-drop nanti).
+- Data janggal belum diubah: RX-K OS 175 berkode -D (seharusnya OS 75), RX-K OS 75 kode kosong.
+
+## 26. Dashboard Warung: animasi penuh + adaptif perangkat (sw v73)
+- Blok CSS/JS "Animasi penuh + adaptif" di dashboard-shop.html: tab bergeser sesuai arah (--sl), ripple (pointerdown), kartu muncul saat tergulir (IntersectionObserver, cadangan 2,5 dtk), dialog/toast pegas, shimmer `.skl`, focus-visible, target sentuh 44px (pointer:coarse), scrollbar halus (pointer:fine).
+- Breakpoint: <360px (HP sempit), landscape tinggi <480px (nav ringkas), >=760px (halaman jadi panel tengah dengan blur), >=1100px (nav jadi rel kiri vertikal). Semua patuh prefers-reduced-motion. Diuji 320, 390, 820, 1366, 844x390.
+
+## 27. Dashboard Warung: perbaikan bentrok kelas + pengaturan Animasi (sw v74)
+- Bug: kelas baru `.rv` dan `.in` bentrok dengan kelas lama (`.r.rv` baris, `.in` input) sehingga seksi Laporan berantakan. Diganti `.rvl`/`.rvi`. Aturan: sebelum menambah nama kelas, grep dulu di dashboard-shop.html.
+- Animasi: Chrome Android membaca "hapus animasi" sistem sebagai prefers-reduced-motion sehingga semua animasi mati. Sekarang ada Pengaturan > Animasi (Hidup / Ikuti HP / Mati), simpan di localStorage `bm_mo`, bawaan Hidup; atribut `data-mo` di <html> diset awal di head. `reduce()` membaca pengaturan ini.
+
+## 28. Dashboard Warung: menu bawah tenggelam (sw v75)
+- Gejala di HP pengguna (zoom halaman Chrome sekitar 119%): menu bawah turun keluar layar dan melebar.
+- Perbaikan: nav tidak lagi memakai left:50% + translateX(-50%) + width vw; sekarang left/right 12px + margin auto + max-width 440px. Pengaman `navFix()` mengukur nav terhadap visualViewport dan menaikkan lewat `--navfix` bila tenggelam (tidak jalan saat mengetik; dipanggil saat muat, resize, ganti tab). body tidak lagi min-height 100dvh, scroll-behavior smooth dihapus, animasi tab hanya fade + naik 8px.
+- Tes `uji56/qa.js`: 3 ukuran (346x705 meniru zoom 119%, 412, 360), terang/gelap, 5 tab + Rekap + Jual, cek tanpa geser samping, nav utuh, simulasi nav tenggelam 62px pulih.
+
+## 29. Dashboard Warung: senter scanner (sw v76)
+- Pengaturan > Senter scanner: Manual / Otomatis / Selalu (localStorage `bm_torch`: man/auto/on, bawaan Manual). Tombol petir di pojok kanan atas kamera scan (`#tch`, aksi `tch`), tersembunyi bila track kamera tidak punya capability `torch` (mis. iPhone Safari).
+- Otomatis: tiap 700 ms ukur kecerahan frame (canvas 32x24); nyala bila luma < 50, mati bila > 175, jeda minimal 2,5 dtk; setelah pengguna mengetuk tombol, otomatis berhenti mengatur selama sesi scan itu. Selalu: nyala begitu kamera terbuka. Senter mati sendiri saat kamera ditutup (track dihentikan).
+- Tes `uji56/torch.js` memakai getUserMedia tiruan (canvas.captureStream + capability torch).
+
+## 30. Dashboard Warung: Isi stok cepat (sw v77)
+- Halaman `pgQuick` (`openQuick`, aksi `qk`): kamera tetap terbuka, tiap scan menambah stok (jumlah per scan 1/5/10/12), semua jalur scan lama dipakai ulang (`SC.ctx='stock'`, `SC.quick=true`; `skBump` mengarah ke `qkBump`). Tidak ada perpindahan halaman setelah scan; kode tak dikenal / keluarga ambigu muncul di panel `#scr` di bawah kamera.
+- Manual di halaman yang sama: kolom `#scm` mencari nama atau kode (`qkSearch`, tap hasil = +1) dan Enter / tombol cari menjalankan `scgo`.
+- Daftar "Sudah discan" memakai `skRow` (− / + / +5 / +10 / ketik angka), disimpan lewat `skSave` yang sama dengan Isi stok biasa (satu penyesuaian per barang, alasan "Isi stok").
+- Draft otomatis disimpan di localStorage `bm_qk_draft` dan dipulihkan saat halaman dibuka lagi; dihapus saat Simpan atau Kosongkan.
+- Pintu masuk: tile Beranda > Stok (6 tile sekarang), Isi stok > Scan cepat, Lainnya > Barang. Tes `uji56/quick.js`.
+
+## 31. Impor laher: "Pakai apa adanya" (sw v78)
+- Baris laher yang serinya tidak cocok pola angka (mis. "BEAT GENIO") kini punya tombol Pakai apa adanya (`imloose`): teks yang diketik dipakai sebagai seri tanpa pemeriksaan pola (`raw.loose` dibaca `imVal`). Tombol Cek lagi tetap memeriksa pola ketat. Tes `uji56/imp.js`.
+
+## 32. Anti data palsu, scanner gaya iPhone, ekspor kode mesin, tanpa komentar (sw v79)
+- DB `shop_terapkan` (migrasi shop_terapkan_item_patch_kolom): op `item_upsert` boleh membawa `ubah` (daftar kolom). Bila barang sudah ada, hanya kolom itu yang ditulis; tanpa `ubah` perilaku lama (tulis semua). `bm-shop-sync.js` mengirim `ubah` untuk barang yang sudah ada, supaya HP dengan data basi tidak menimpa harga/nama yang diubah HP lain. Diuji dalam transaksi yang dibatalkan.
+- `BMShopSync.peek()` mengambil data server terbaru tanpa menerapkan. `skSave` (Isi stok ketik angka akhir) memeriksa dulu; bila stok di server beda, muncul peringatan dan selisih dihitung dari stok server.
+- Scan: QR harus di dalam bingkai (`inAim`), terbaca sama 3 kali dan minimal 250 ms. OCR 3 kali (2 bila kodenya cocok persis). Hanya kode yang cocok persis (`findByCode`, laher seri persis `ocExact`) yang otomatis; tebakan keluarga kode atau tebakan dari tulisan memunculkan kartu `scConfirm` (Ya / Bukan -> `scnot` -> pilihan lain). Kode tidak pernah ditempel otomatis.
+- Draft Isi stok cepat (`bm_qk_draft`) menyimpan tambahan `{d:{id:+n}}`, bukan angka akhir; draft format lama dibuang.
+- `pq('1.000')` = 1000.
+- Bingkai scanner: luar bingkai digelapkan (box-shadow), sudut putih bernapas, sudut kunci hijau saat terkunci.
+- Tidak berkedip: `paint(p,first)` hanya menjalankan animasi berurutan saat halaman pertama dibuka. Barang: grup membuka dengan animasi tinggi (grid rows); baris punya efek tekan; filter Barang/Nota memakai `swapIn`.
+- Lainnya > Data > Kode mesin (`pgKode`, CSV/PDF).
+- Semua komentar di dashboard-shop.html, bm-shop-sync.js, sw.js dihapus atas permintaan pemilik (catatan sejarah versi ada di HANDOFF ini). Tes: `uji56/scan2.js` + semua tes lama.
+
+## 33. Tanpa kedip (v80)
+- `morph()`/`mkids()`/`mattr()` di dashboard-shop.html: `render(false)` dan `paint()` (selain pembukaan pertama) menambal DOM di tempat, bukan `innerHTML`. Chip filter (Barang, Nota, Pengaturan, dll.) tidak dibuat ulang sehingga transisi warna/pegas jalan dan tidak berkedip. Input yang sedang fokus tidak disentuh.
+- sw.js CACHE_NAME v80.
+
+## 34. Dashboard Admin + Buku Operasional per pekan (sw v81)
+- Buku Operasional: 1 pekan (Kamis–Rabu) = 1 catatan. `editor-data-operasional.html`: `opWeekStart`, `opNoteWeek` (pekan dari data paling awal, lalu tanggal di judul, lalu created_at), `findWeekNote`, `adoptNoteId`. Dibuka tanpa id: otomatis memakai catatan pekan ini. Simpan pertama (insert): dicek lagi; kalau catatan pekan sudah dibuat HP lain, data digabung lewat `handleSaveConflict` dengan base kosong (tidak ada catatan ganda). Judul catatan baru = `OPERASIONAL <tanggal Kamis>`. Daftar di editor diberi pemisah per hari (`.day-sep`), teks hero = rentang pekan.
+- Dashboard: detail catatan Operasional memakai pemilih hari (ALL + Kamis–Rabu) seperti rekap karyawan (`detailWeekAnchor`), dan pada ALL ada pemisah per hari di Kartu dan Tabel (`.nd-daysep`).
+- Tugas "Data belum lengkap": Metode tidak diwajibkan untuk data sebelum 11 Okt 2026 (`METODE_WAJIB_SEJAK`, `metodeLama`); Harga ✓ tetap membebaskan Metode. Data nyata: 394 → sekitar 82 (311 hanya kurang Metode, semuanya data lama 12 Sep–10 Okt).
+- Bagikan dalam tampilan Kartu (HP): PDF A4 tegak 2 kolom (`exportCardsPdf`, gambar langsung jsPDF, teks bisa dipilih, `pdfSafe` untuk huruf WinAnsi) dan gambar PNG lebar 1080 per halaman (`exportCardsImage`, canvas). Mengikuti hari yang dipilih. Lembar "File siap" (`offerFiles`): Bagikan (Web Share files) / Simpan. Tampilan Tabel tetap memakai ekspor tabel lama.
+- Kartu detail: judul kartu = customer → nama → item (sebelumnya kartu Operasional berjudul nomor "001").
+- Laci folder: buka/tutup folder dan tahun beranimasi (WAAPI tinggi + isi muncul berurutan, `accGrow/accShrink`), gulir otomatis bila isi terhalang (`accEnsureVisible`). Animasi CSS lama `folderAccIn` (berulang tiap render) dihapus.

@@ -185,6 +185,13 @@
   .recent-row .r-mid span{ font-size:11.5px; color:var(--ink-soft); font-weight:500; }
   .recent-row .r-right{ text-align:right; flex-shrink:0; font-size:13px; font-weight:800; color:var(--accent-ink); }
   body.surface-dark .recent-row .r-right{ color:var(--accent); }
+  .day-sep{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin:18px 2px 8px; padding-bottom:6px; border-bottom:1px solid var(--line); }
+  .day-sep:first-child{ margin-top:4px; }
+  .day-sep b{ font-size:13.5px; font-weight:800; color:var(--ink); }
+  .day-sep b small{ font-size:11.5px; font-weight:600; color:var(--ink-soft); margin-left:6px; }
+  .day-sep span{ font-size:12px; font-weight:700; color:var(--ink-soft); white-space:nowrap; }
+  .day-sep.today b small{ color:var(--accent-ink); }
+  body.surface-dark .day-sep.today b small{ color:var(--accent); }
   .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
 
   /* ---------- Bukti (upload gambar, opsional maks. 2) ---------- */
@@ -939,7 +946,7 @@
       <div class="greet-card">
         <p>Buku Operasional</p>
         <h3 id="homeGreetName">OPERASIONAL</h3>
-        <span>Catat pengeluaran operasional harian dengan rapi.</span>
+        <span id="homeWeekLabel">Catat pengeluaran operasional harian dengan rapi.</span>
       </div>
 
       <div class="stat-grid">
@@ -1294,7 +1301,7 @@
 <script>
   // =====================================================================
   // BUKU OPERASIONAL — KONSTAN & STATE
-  // Satu note = satu hari operasional ("OPERASIONAL dd-mm-yyyy").
+  // Satu note = satu pekan operasional, Kamis sampai Rabu ("OPERASIONAL dd-mm-yyyy", tanggal Kamisnya).
   // record: { id, buyer, seller, item, keterangan, harga, metode, bayarCash, bayarTransfer, bukti[], created_at }
   // Data ini hanya untuk penyimpanan; dibaca halaman analisa lewat content.records.
   // =====================================================================
@@ -1920,7 +1927,47 @@
     return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
   // Operasional: judul note otomatis OPERASIONAL dd-mm-yyyy (tanggal dibaca dashboard & analisa dari judul)
-  function generateOperasionalTitle(d){ return 'OPERASIONAL ' + fmtTanggal(d); }
+  function opWeekStart(d){
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay() - 4 + 7) % 7));
+    return x;
+  }
+  function generateOperasionalTitle(d){ return 'OPERASIONAL ' + fmtTanggal(opWeekStart(d)); }
+  function opNoteWeek(n){
+    const recs = (n && n.content && Array.isArray(n.content.records)) ? n.content.records : [];
+    let t = Infinity;
+    recs.forEach(r => { const v = r && r.created_at ? new Date(r.created_at).getTime() : NaN; if (!isNaN(v) && v < t) t = v; });
+    if (t === Infinity) {
+      const m = String((n && n.title) || '').match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);
+      if (m) { const y = m[3].length === 2 ? 2000 + +m[3] : +m[3]; const d = new Date(y, +m[2] - 1, +m[1]); if (!isNaN(d)) t = d.getTime(); }
+    }
+    if (t === Infinity && n && n.created_at) t = new Date(n.created_at).getTime();
+    return t === Infinity || isNaN(t) ? null : opWeekStart(new Date(t)).getTime();
+  }
+  async function findWeekNote(d){
+    if (!targetFolderId) return { note: null };
+    const res = await bmWithTimeout(supabaseClient.from('notes').select('id, title, content, created_at, updated_at, deleted_at').eq('folder_id', targetFolderId), 12000);
+    if (res.error) return { note: null, error: res.error };
+    const key = opWeekStart(d).getTime();
+    const hit = (res.data || []).filter(n => n && !n.deleted_at && n.id !== newNoteId && (!n.content || !n.content.schema || n.content.schema === SCHEMA_VERSION) && opNoteWeek(n) === key)
+      .sort((a, b) => ((b.content && b.content.records || []).length - (a.content && a.content.records || []).length) || (new Date(a.created_at) - new Date(b.created_at)));
+    return { note: hit[0] || null };
+  }
+  function adoptNoteId(id){
+    const oldKey = getLocalDraftKey();
+    currentNoteId = id;
+    try {
+      const raw = localStorage.getItem(oldKey);
+      if (raw && oldKey !== getLocalDraftKey()) {
+        const d = JSON.parse(raw), cur = JSON.parse(localStorage.getItem(getLocalDraftKey()) || 'null');
+        const recs = ((cur && cur.records) || []).concat((d && d.records) || []);
+        localStorage.setItem(getLocalDraftKey(), JSON.stringify(Object.assign({}, cur || {}, { title: (cur && cur.title) || '', records: recs, trash: (cur && cur.trash) || [], base: (cur && cur.base) || null })));
+        localStorage.removeItem(oldKey);
+      }
+      sessionStorage.removeItem('opdash_temp_draft_key');
+    } catch (e) {}
+    try { const u = new URL(window.location.href); u.searchParams.set('id', id); history.replaceState(history.state, '', u.toString()); } catch (e) {}
+  }
 
   // =====================================================================
   // LOAD NOTE DARI SUPABASE
@@ -1979,10 +2026,18 @@
   }
 
   async function loadExistingNoteInner(){
+    if (!currentNoteId && targetFolderId && navigator.onLine) {
+      setSyncBanner('Mencari catatan pekan ini...');
+      let found = null;
+      try { found = (await findWeekNote(new Date())).note; } catch (e) {}
+      setSyncBanner('');
+      if (found && !currentNoteId) {
+        adoptNoteId(found.id);
+        serverSynced = false;
+        showMigrationToast('Pekan ini sudah punya catatan. Data baru masuk ke catatan yang sama supaya tidak ganda.');
+      }
+    }
     if (!currentNoteId) {
-      // Note/tabel BARU (bukan buka data yang sudah ada) — otomatis kasih
-      // judul berisi tanggal, hari, dan jam saat ini, meniru kebiasaan
-      // aplikasi versi sebelumnya. Tetap bisa diganti manual lewat Pengaturan.
       if (!noteTitle) noteTitle = generateOperasionalTitle(new Date());
       renderHome();
       return;
@@ -2156,6 +2211,21 @@
         return await handleSaveConflict(payload, snapMine);
       }
     } else {
+      if (!newNoteId && targetFolderId) {
+        let t0 = Infinity;
+        records.forEach(r => { const v = r && r.created_at ? new Date(r.created_at).getTime() : NaN; if (!isNaN(v) && v < t0) t0 = v; });
+        const wk = await findWeekNote(t0 === Infinity ? new Date() : new Date(t0));
+        if (wk.error) { showSaveStatus('Belum tersambung ke server — perubahan aman di HP', true, true); return false; }
+        if (wk.note && !currentNoteId) {
+          adoptNoteId(wk.note.id);
+          lastKnownUpdatedAt = wk.note.updated_at; serverSynced = true;
+          noteTitle = wk.note.title || noteTitle;
+          payload.title = noteTitle; snapMine.title = noteTitle;
+          baseSnap = { title: noteTitle, content: { records: [], trash: [], legacy: null } };
+          try { showMigrationToast('Pekan ini sudah punya catatan. Data digabung ke catatan itu supaya tidak ganda.'); } catch (e) {}
+          return await handleSaveConflict(payload, snapMine);
+        }
+      }
       if (!newNoteId) newNoteId = bmUuid();
       result = await supabaseClient.from('notes').insert({ ...payload, ...(newNoteId ? { id: newNoteId } : {}), folder_id: targetFolderId }).select().single();
       if (result.error && result.error.code === '23505' && newNoteId) {
@@ -2506,6 +2576,13 @@
     document.getElementById('statCash').textContent = rpFmt(cash);
     document.getElementById('statTransfer').textContent = rpFmt(transfer);
     document.getElementById('homeGreetName').textContent = noteTitle && noteTitle.trim() ? noteTitle : 'OPERASIONAL';
+    try {
+      const wl = document.getElementById('homeWeekLabel');
+      const wk = opNoteWeek({ content: { records }, title: noteTitle }) || opWeekStart(new Date()).getTime();
+      const a = new Date(wk), e = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
+      const B = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      if (wl) wl.textContent = 'Pekan Kamis ' + a.getDate() + ' ' + B[a.getMonth()] + ' sampai Rabu ' + e.getDate() + ' ' + B[e.getMonth()] + ' ' + e.getFullYear();
+    } catch (e) {}
     renderRecentList();
   }
 
@@ -2523,13 +2600,30 @@
     }
     emptyEl.style.display = 'none';
 
+    const BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const dayInfo = {};
+    recent.forEach(r => {
+      const k = fmtTanggalFromISO(r.created_at);
+      const g = dayInfo[k] || (dayInfo[k] = { n: 0, sum: 0 });
+      g.n++; g.sum += hargaNominal(r.harga);
+    });
+    const todayK = fmtTanggal(new Date()), yestK = fmtTanggal(new Date(Date.now() - 86400000));
+    let lastDay = null;
     listEl.innerHTML = recent.map(r => {
+      const dk = fmtTanggalFromISO(r.created_at);
+      let sep = '';
+      if (dk !== lastDay) {
+        lastDay = dk;
+        const d = new Date(r.created_at), g = dayInfo[dk];
+        const rel = dk === todayK ? 'Hari ini' : dk === yestK ? 'Kemarin' : '';
+        sep = `<div class="day-sep${dk === todayK ? ' today' : ''}"><b>${NAMA_HARI[d.getDay()]}, ${d.getDate()} ${BLN[d.getMonth()]} ${d.getFullYear()}${rel ? '<small>' + rel + '</small>' : ''}</b><span>${g.n} data${g.sum ? ' · ' + rpFmt(g.sum) : ''}</span></div>`;
+      }
       const photo = (r.bukti && r.bukti.length) ? '<span class="r-photo-badge">📷</span>' : '';
       const rightHtml = !isHargaKosong(r.harga)
         ? `<div class="r-right">${metodeBadgeHtml(r.metode)}${photo}${escapeHtml(rupiah(r.harga))}</div>`
         : `<div class="r-right pending">${metodeBadgeHtml(r.metode)}${photo}Belum lengkap</div>`;
       const who = (escapeHtml(r.buyer) || '—') + (r.seller ? ' → ' + escapeHtml(r.seller) : '');
-      return `
+      return sep + `
         <div class="recent-row tap" data-id="${r.id}">
           <div class="r-no">${pad3(noMap.get(r.id))}</div>
           <div class="r-mid">

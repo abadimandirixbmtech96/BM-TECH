@@ -585,7 +585,17 @@ function fmtQty(t){let v=t.value.replace(/[^0-9,.]/g,'').replace(/\./g,',');cons
 const PGS=[];let NAVT=0,HOK=(typeof history!=='undefined'&&!!history.pushState)?null:false;
 const topPg=()=>PGS.length?PGS[PGS.length-1].el:null;
 function pgh(title,body,o){o=o||{};return '<div class="tb"><div class="tbi"><button class="ib" data-a="back" aria-label="Kembali">'+ic('back')+'</button><h2>'+esc(title)+'</h2>'+(o.act||'')+'</div></div><div class="pb"><div class="pin">'+body+'</div></div>'+(o.foot?'<div class="pf"><div class="pin">'+o.foot+'</div></div>':'')}
-function paint(p,first){const b=p.el.querySelector('.pb'),st=b?b.scrollTop:0;p.el.innerHTML=p.fn.apply(null,p.args);const nb=p.el.querySelector('.pb');if(nb&&st)nb.scrollTop=st;if(first)countUp(p.el)}
+function morph(el,h){const t=document.createElement('template');t.innerHTML=h;mkids(el,t.content)}
+function mattr(x,y){const n=x.nodeName;for(const a of Array.from(x.attributes))if(!y.hasAttribute(a.name))x.removeAttribute(a.name);for(const a of Array.from(y.attributes))if(x.getAttribute(a.name)!==a.value)x.setAttribute(a.name,a.value);
+ if(n==='INPUT'){if(x.type==='checkbox'||x.type==='radio')x.checked=y.hasAttribute('checked');else if(x!==document.activeElement){const v=y.getAttribute('value')||'';if(x.value!==v)x.value=v}}
+ else if(n==='OPTION')x.selected=y.hasAttribute('selected')}
+function mkids(a,b){let x=a.firstChild,y=b.firstChild;while(y){const ny=y.nextSibling;if(!x){a.appendChild(y)}
+  else if(x.nodeType===y.nodeType&&(x.nodeType!==1||x.nodeName===y.nodeName)){if(x.nodeType===1){mattr(x,y);if(x.nodeName==='TEXTAREA'){if(x!==document.activeElement&&x.value!==y.textContent)x.value=y.textContent}else mkids(x,y)}else if(x.nodeValue!==y.nodeValue)x.nodeValue=y.nodeValue;x=x.nextSibling}
+  else{const nx=x.nextSibling;a.replaceChild(y,x);x=nx}
+  y=ny}
+ while(x){const nx=x.nextSibling;a.removeChild(x);x=nx}
+ if(a.nodeName==='SELECT'){const o=Array.from(a.options).find(z=>z.selected);if(o)a.value=o.value}}
+function paint(p,first){const b=p.el.querySelector('.pb'),st=b?b.scrollTop:0;const h=p.fn.apply(null,p.args);if(first||!p.el.firstChild)p.el.innerHTML=h;else morph(p.el,h);const nb=p.el.querySelector('.pb');if(nb&&st)nb.scrollTop=st;if(first)countUp(p.el)}
 function openPage(fn,args,o){o=o||{};hideSug();NAVT++;const el=document.createElement('div');el.className='pg';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
  const p={fn,args:args||[],el,live:!!o.live,rev:!!o.rev};PGS.push(p);paint(p,true);$('#pages').appendChild(el);document.body.classList.add('lk');
  if(HOK!==false){try{history.pushState({pg:PGS.length},'');HOK=true}catch(e){HOK=false}}
@@ -1574,7 +1584,7 @@ const TTL=['Beranda','Barang','Nota','Hutang','Lainnya'];
 function buildNav(){$('#nv').innerHTML='<i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('')}
 function render(anim){$('#nv').style.setProperty('--i',tab);
  document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('on',i===tab);if(i===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
- const v=$('#v');$('#ttl').textContent=TTL[tab];v.innerHTML=TABS[tab][2]();
+ const v=$('#v');$('#ttl').textContent=TTL[tab];{const h=TABS[tab][2]();if(anim||!v.firstChild)v.innerHTML=h;else morph(v,h)}
  if(anim){v.classList.remove('tin');void v.offsetWidth;v.classList.add('tin');countUp(v)}
  fresh=null}
 function setTab(n){if(n===tab)return;tab=n;render(true);setTimeout(navFix,450);window.scrollTo&&scrollTo({top:0})}

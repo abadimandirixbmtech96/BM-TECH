@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bmtech-shell-v79';
+const CACHE_NAME = 'bmtech-shell-v81';
 const DATA_CACHE = 'bmtech-data-v1';
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;

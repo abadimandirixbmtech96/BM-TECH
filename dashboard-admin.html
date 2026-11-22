@@ -779,8 +779,12 @@
   }
   body.theme-light .folder-section-divider { border-top-color: rgba(0,0,0,0.08); }
 
-  .folder-year-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 14px; animation: folderAccIn 0.16s ease; }
-  .folder-month-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 4px 14px; animation: folderAccIn 0.16s ease; }
+  .folder-year-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 6px 14px; }
+  .folder-month-list { display: flex; flex-direction: column; gap: 2px; padding: 2px 0 4px 14px; }
+  .folder-item.acc-open .folder-count { color: var(--accent-yellow); }
+  .folder-item .folder-count { transition: color .2s ease; }
+  .folder-item.acc-tap { animation: accTap .32s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes accTap { 0% { transform: scale(1); } 40% { transform: scale(.965); } 100% { transform: scale(1); } }
   @keyframes folderAccIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
   .folder-year-item, .folder-month-item {
     display: flex;
@@ -2038,6 +2042,24 @@
     }
   }
   .day-picker[hidden], .note-detail-badge[hidden] { display: none !important; }
+  .xp-ready { position: fixed; inset: 0; z-index: 10050; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); background: rgba(0,0,0,0); transition: background .25s ease; }
+  .xp-ready.show { background: rgba(0,0,0,.42); }
+  .xp-box { width: 100%; max-width: 420px; background: var(--card-surface-dark, #1C1C20); color: var(--text-primary, #EDEAE2); border: 1px solid var(--card-border-dark, rgba(255,255,255,.08)); border-radius: 22px; padding: 18px 16px 14px; transform: translateY(24px); opacity: 0; transition: transform .32s cubic-bezier(.2,.8,.2,1), opacity .25s ease; box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+  .xp-ready.show .xp-box { transform: none; opacity: 1; }
+  .xp-box b { display: block; font-size: 16px; font-weight: 800; }
+  .xp-box p { margin: 4px 0 14px; font-size: 12px; color: var(--text-secondary); word-break: break-all; }
+  .xp-act { display: flex; gap: 8px; }
+  .xp-act button { flex: 1; height: 44px; border-radius: 14px; border: 1px solid var(--glass-pill-border, rgba(128,128,128,.3)); background: transparent; color: inherit; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .xp-act button.on { background: var(--accent-yellow); border-color: var(--accent-yellow); color: #1C1B19; }
+  .xp-act button:active { transform: scale(.96); }
+  body.theme-light .xp-box { background: #fff; color: #1A1A1A; border-color: rgba(0,0,0,.08); }
+  .nd-daysep { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 8px 2px 0; flex-shrink: 0; padding-bottom: 6px; border-bottom: 1px solid var(--glass-pill-border, rgba(128,128,128,.25)); }
+  .note-detail-cards > .nd-daysep:first-child { margin-top: 2px; }
+  .nd-daysep b { font-size: 13.5px; font-weight: 800; color: var(--text-primary, inherit); }
+  .nd-daysep b em { font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--accent-yellow); margin-left: 4px; }
+  .nd-daysep span { font-size: 12px; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+  .nd-daysep-row td { padding: 0 10px !important; background: transparent !important; border: 0 !important; }
+  .nd-daysep-row .nd-daysep { margin: 14px 0 6px; position: sticky; left: 10px; max-width: calc(100vw - 40px); }
   .day-picker { display: flex; gap: 6px; flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 2px; margin: -2px; }
   .day-picker::-webkit-scrollbar { display: none; }
   .day-chip { flex: 0 0 auto; min-width: 46px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 5px 10px; border-radius: 14px; border: 1px solid var(--glass-pill-border); background: var(--glass-pill-bg); color: var(--text-secondary); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .12s, background .15s; }
@@ -4077,7 +4099,7 @@
 
     function folderItemHtml(cat) {
       return `
-      <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}" data-cat-id="${cat.id}">
+      <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''} ${deleteModeCatId === cat.id ? 'menu-open' : ''}${expandedFolderId === cat.id ? ' acc-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           ${bookIcon(cat)}
           <span>${escapeHtml(cat.name)}</span>
@@ -4113,7 +4135,7 @@
 
     function pjItemHtml(cat) {
       return `
-      <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''}" data-cat-id="${cat.id}">
+      <div class="folder-item ${activeCategoryId === cat.id ? 'active' : ''}${expandedFolderId === cat.id ? ' acc-open' : ''}" data-cat-id="${cat.id}">
         <div class="folder-item-left">
           ${bookIcon(cat)}
           <span>${escapeHtml(cat.name)}</span>
@@ -4288,21 +4310,104 @@
     }).join('') + `</div>`;
   }
 
-  async function toggleFolderAccordion(catId) {
-    if (expandedFolderId === catId) {
-      expandedFolderId = null;
-      expandedYear = null;
-      renderCategories();
-      return;
+  const ACC_MS = 300, ACC_EASE = 'cubic-bezier(.2,.8,.2,1)';
+  let accBusy = 0;
+  function accListOf(catId) {
+    const it = document.querySelector(`#categoryFolderList .folder-item[data-cat-id="${CSS.escape(catId)}"]`);
+    const nx = it && it.nextElementSibling;
+    return nx && nx.classList.contains('folder-year-list') ? nx : null;
+  }
+  function accMonthsOf(catId, year) {
+    const y = document.querySelector(`#categoryFolderList .folder-year-item[data-cat-id="${CSS.escape(catId)}"][data-year="${year}"]`);
+    const nx = y && y.nextElementSibling;
+    return nx && nx.classList.contains('folder-month-list') ? nx : null;
+  }
+  function accScrollTo(box, target) {
+    const from = box.scrollTop, t0 = performance.now();
+    if (Math.abs(target - from) < 2) return;
+    const ease = x => 1 - Math.pow(1 - x, 3);
+    const step = now => {
+      const k = Math.min(1, (now - t0) / (ACC_MS + 80));
+      box.scrollTop = from + (target - from) * ease(k);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  function accEnsureVisible(headEl, finalH) {
+    const box = document.getElementById('categoryFolderList');
+    if (!box || !headEl) return;
+    const br = box.getBoundingClientRect(), hr = headEl.getBoundingClientRect();
+    const top = hr.top - br.top + box.scrollTop, bottom = top + hr.height + (finalH || 0);
+    const vTop = box.scrollTop, vBot = vTop + box.clientHeight;
+    let target = vTop;
+    if (bottom > vBot - 12) target = Math.min(bottom - box.clientHeight + 16, top - 8);
+    if (top < vTop + 4) target = top - 8;
+    target = Math.max(0, target);
+    if (target !== vTop) accScrollTo(box, target);
+  }
+  function accGrow(el, h0, headEl, fadeKids) {
+    if (!el) return;
+    const h1 = el.getBoundingClientRect().height;
+    accEnsureVisible(headEl, h1);
+    if (!el.animate) return;
+    if (Math.abs(h1 - h0) > 1) {
+      el.style.overflow = 'hidden';
+      const a = el.animate([{ height: h0 + 'px' }, { height: h1 + 'px' }], { duration: ACC_MS, easing: ACC_EASE });
+      a.onfinish = a.oncancel = () => { el.style.overflow = ''; };
     }
-
-    expandedFolderId = catId;
-    expandedYear = null;
+    if (fadeKids) Array.from(el.children).forEach((c, i) => {
+      if (c.classList.contains('folder-month-list')) return;
+      c.animate([{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: Math.min(i, 8) * 35, easing: ACC_EASE, fill: 'backwards' });
+    });
+  }
+  function accShrink(el) {
+    return new Promise(res => {
+      if (!el || !el.animate) return res();
+      const h = el.getBoundingClientRect().height;
+      el.style.overflow = 'hidden';
+      const a = el.animate([{ height: h + 'px', opacity: 1 }, { height: '0px', opacity: 0 }], { duration: 220, easing: ACC_EASE, fill: 'forwards' });
+      a.onfinish = a.oncancel = () => res();
+    });
+  }
+  function accRender() {
+    const box = document.getElementById('categoryFolderList');
+    const st = box ? box.scrollTop : 0;
     renderCategories();
+    if (box) box.scrollTop = st;
+  }
+  function accTapFx(catId) {
+    const it = document.querySelector(`#categoryFolderList .folder-item[data-cat-id="${CSS.escape(catId)}"]`);
+    if (!it) return;
+    it.classList.remove('acc-tap'); void it.offsetWidth; it.classList.add('acc-tap');
+    setTimeout(() => it.classList.remove('acc-tap'), 360);
+  }
+
+  async function toggleFolderAccordion(catId) {
+    if (accBusy) return;
+    accBusy = 1;
+    try {
+      accTapFx(catId);
+      if (expandedFolderId === catId) {
+        await accShrink(accListOf(catId));
+        expandedFolderId = null;
+        expandedYear = null;
+        accRender();
+        return;
+      }
+      if (expandedFolderId) await accShrink(accListOf(expandedFolderId));
+      expandedFolderId = catId;
+      expandedYear = null;
+      accRender();
+      accGrow(accListOf(catId), 0, document.querySelector(`#categoryFolderList .folder-item[data-cat-id="${CSS.escape(catId)}"]`), true);
+    } finally { accBusy = 0; }
 
     if (!folderYearMonthData[catId]) {
       await loadFolderYearMonths(catId);
-      if (expandedFolderId === catId) renderCategories();
+      if (expandedFolderId === catId) {
+        const old = accListOf(catId), h0 = old ? old.getBoundingClientRect().height : 0;
+        accRender();
+        accGrow(accListOf(catId), h0, document.querySelector(`#categoryFolderList .folder-item[data-cat-id="${CSS.escape(catId)}"]`), true);
+      }
     }
   }
 
@@ -4342,9 +4447,19 @@
     folderYearMonthData[catId] = { years, monthsByYear };
   }
 
-  function toggleYearAccordion(catId, year) {
-    expandedYear = (expandedYear === year) ? null : year;
-    renderCategories();
+  async function toggleYearAccordion(catId, year) {
+    if (accBusy) return;
+    accBusy = 1;
+    try {
+      const prev = expandedYear;
+      if (prev !== null && prev !== undefined) await accShrink(accMonthsOf(catId, prev));
+      expandedYear = (prev === year) ? null : year;
+      accRender();
+      if (expandedYear === year) {
+        const head = document.querySelector(`#categoryFolderList .folder-year-item[data-cat-id="${CSS.escape(catId)}"][data-year="${year}"]`);
+        accGrow(accMonthsOf(catId, year), 0, head, true);
+      }
+    } finally { accBusy = 0; }
   }
 
   function selectFolderMonth(catId, year, month) {
@@ -5202,9 +5317,11 @@
     }
     const h = get('Harga');
     add('Harga', h, isHargaEmpty(h) && !isHargaCentang(h));
-    if (has('Metode') && !opt.auto && !isHargaEmpty(h) && !isHargaCentang(h)) add('Metode', get('Metode'), isEmptyValue(get('Metode')));
+    if (has('Metode') && !opt.auto && !opt.lama && !isHargaEmpty(h) && !isHargaCentang(h)) add('Metode', get('Metode'), isEmptyValue(get('Metode')));
     return { fields: out, missing: out.filter(f => f.missing).map(f => f.label) };
   }
+  const METODE_WAJIB_SEJAK = new Date('2026-10-11T00:00:00+07:00').getTime();
+  function metodeLama(d) { return !!(d && !isNaN(d.getTime()) && d.getTime() < METODE_WAJIB_SEJAK); }
   const TASKS_FILTER_KEY = 'bmtech_tasks_filter_v1';
 
   let allKasbonNotes = [];
@@ -5471,7 +5588,7 @@
         tasks.push({ ...base, type: 'belumbayar', what: base.barang || '-', paidNames: [], hargaKosong: true, harga: '' });
       }
       const rawGet = lb => ({ 'PJ': r.pj, 'Customer': r.customer, 'Barang': r.barang, 'Stok Barang': r.stokBarang, 'Barang Keluar': r.barangKeluar, 'Harga': formatHargaCell(r.harga), 'Metode': r.metode })[lb];
-      const comp = rowCompleteness(rawGet, () => true, { linked: !!(r.ambilDari && r.ambilDari.length), auto: !!r.hargaAuto });
+      const comp = rowCompleteness(rawGet, () => true, { linked: !!(r.ambilDari && r.ambilDari.length), auto: !!r.hargaAuto, lama: metodeLama(d) });
       if (comp.missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing: comp.missing, fields: comp.fields });
     });
   }
@@ -5553,7 +5670,7 @@
           tasks.push({ ...base, type: 'belumbayar', what: base.barang || '-', paidNames: [], hargaKosong: true, harga: '' });
         }
         const hasCol = lb => columns.some(c => normalizeKey(c.label || '') === normalizeKey(lb));
-        const comp = rowCompleteness(val, hasCol, { linked: !!cells._linked, auto: paidFlag });
+        const comp = rowCompleteness(val, hasCol, { linked: !!cells._linked, auto: paidFlag, lama: metodeLama(when) });
         if (comp.missing.length > 0) tasks.push({ ...base, type: 'lengkap', missing: comp.missing, fields: comp.fields });
       });
     });
@@ -7790,8 +7907,8 @@
       head = `<div class="nd-head"><span class="nd-no">${escapeHtml(v('no') || '–')}</span><span>${escapeHtml(when)}</span>` +
              (v('pj') ? `<span class="nd-pj">${escapeHtml(v('pj'))}</span>` : '') + '</div>';
     }
-    if (has('customer')) { used.add('customer'); title = v('customer'); }
-    else if (cols.length) { used.add(cols[0].id); title = v(cols[0].id); }
+    const tk = ['customer', 'nama', 'item'].find(has) || (cols.find(c => !used.has(c.id)) || {}).id;
+    if (tk) { used.add(tk); title = v(tk); }
     let foot = '';
     const footBits = [];
     if (has('harga')) { used.add('harga'); const h = v('harga'); const ada = !!(h && h !== '0'); footBits.push(`<span class="nd-harga${ada ? '' : ' nd-kosong'}"><small>Harga</small><span class="nd-amt">${ada ? '<i>Rp</i>' + escapeHtml(h) : 'Belum diisi'}</span></span>`); }
@@ -7859,14 +7976,28 @@
       tableEl.innerHTML = '<tr><td class="note-detail-empty">' + msg + '</td></tr>';
       cardsEl.innerHTML = '<div class="note-detail-empty">' + msg + '</div>';
     } else {
-      cardsEl.innerHTML = content.rows.map((row, i) => buildNoteCard(content.columns, row, i)).join('');
+      const sepOn = detailDay === 'all' && !!detailWeekAnchor(currentDetailNote, content);
+      const dayCount = {};
+      if (sepOn) content.rows.forEach(r => { const k = normDayCell(r.cells && r.cells.tanggal); dayCount[k] = (dayCount[k] || 0) + 1; });
+      let lastK = null;
+      const sepBefore = row => {
+        if (!sepOn) return '';
+        const k = normDayCell(row.cells && row.cells.tanggal);
+        if (k === lastK) return '';
+        lastK = k;
+        return daySepLabel(k, dayCount[k] || 0);
+      };
+      cardsEl.innerHTML = content.rows.map((row, i) => { const sp = sepBefore(row); return (sp ? `<div class="nd-daysep">${sp}</div>` : '') + buildNoteCard(content.columns, row, i); }).join('');
+      lastK = null;
       const cols = content.columns;
       const theadHtml = '<thead><tr>' + cols.map(c => `<th>${escapeHtml(c.label || '')}</th>`).join('') + '</tr></thead>';
       const tbodyHtml = '<tbody>' + content.rows.map(row => {
+        const sp = sepBefore(row);
+        const sepTr = sp ? `<tr class="nd-daysep-row"><td colspan="${cols.length}"><div class="nd-daysep">${sp}</div></td></tr>` : '';
         const rc = row.cells || {};
         const jenisCls = rc.jenis === 'Hutang' ? 'hutang' : rc.jenis === 'Piutang' ? 'piutang' : '';
         const trAttrs = (rc._rid ? ` data-rid="${escapeHtml(rc._rid)}"` : '') + (rc._st ? ` class="st-${rc._st}"` : (jenisCls ? ` class="row-${jenisCls}"` : ''));
-        return `<tr${trAttrs}>` + cols.map(c => {
+        return sepTr + `<tr${trAttrs}>` + cols.map(c => {
           const val = row.cells ? row.cells[c.id] : '';
           if (c.id === 'jenis' && (val === 'Hutang' || val === 'Piutang')) {
             return `<td><span class="jenis-pill ${val === 'Hutang' ? 'hutang' : 'piutang'}">${val}</span></td>`;
@@ -7892,10 +8023,32 @@
   }
 
   // Rekap karyawan/customer (gabungan satu pekan): pilih ALL atau satu hari lewat deretan tanggal yang bisa digeser
+  const DAY_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+  function dayFromKey(k) {
+    const m = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(String(k || ''));
+    return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+  }
+  function detailWeekAnchor(note, content) {
+    if (!note) return null;
+    if (note._merged && note._weekAnchor) return new Date(note._weekAnchor);
+    if (!isOperasionalNote(note)) return null;
+    const rows = (content && content.rows) || [];
+    for (const r of rows) { const d = dayFromKey(normDayCell(r.cells && r.cells.tanggal)); if (d) return getWeekAnchorThursday(d); }
+    const e = getNoteEffectiveDate(note);
+    return e && !isNaN(e) ? getWeekAnchorThursday(e) : null;
+  }
+  function daySepLabel(k, n) {
+    const d = dayFromKey(k);
+    if (!d) return '';
+    const t = dayKeyOf(new Date()), y = dayKeyOf(new Date(Date.now() - 86400000));
+    const rel = k === t ? 'Hari ini' : k === y ? 'Kemarin' : '';
+    return `<b>${DAY_FULL[d.getDay()]}, ${d.getDate()} ${MONTH_SHORT_ID[d.getMonth()]} ${d.getFullYear()}${rel ? ' <em>' + rel + '</em>' : ''}</b><span>${n} data</span>`;
+  }
   function buildDayPicker(note, content) {
     const box = document.getElementById('noteDayPicker');
     const badge = document.getElementById('noteDetailBadge');
-    if (!note || !note._merged || !note._weekAnchor) {
+    const anchor = detailWeekAnchor(note, content);
+    if (!anchor) {
       box.hidden = true; box.innerHTML = ''; badge.hidden = false;
       return;
     }
@@ -7903,11 +8056,14 @@
     const rows = (content && content.rows) || [];
     const counts = {};
     rows.forEach(r => { const k = normDayCell(r.cells && r.cells.tanggal); if (k) counts[k] = (counts[k] || 0) + 1; });
-    const a = new Date(note._weekAnchor);
+    const a = anchor;
     const todayKey = dayKeyOf(new Date());
+    const days = [];
+    for (let i = 0; i < 7; i++) days.push(new Date(a.getFullYear(), a.getMonth(), a.getDate() + i));
+    Object.keys(counts).forEach(k => { const d = dayFromKey(k); if (d && !days.some(x => dayKeyOf(x) === k)) days.push(d); });
+    days.sort((x, y) => x - y);
     let html = `<button type="button" class="day-chip all active" data-day="all" aria-pressed="true"><b>ALL</b><small>${rows.length}</small></button>`;
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(a.getFullYear(), a.getMonth(), a.getDate() + i);
+    for (const d of days) {
       const k = dayKeyOf(d);
       html += `<button type="button" class="day-chip${counts[k] ? '' : ' empty'}${k === todayKey ? ' today' : ''}" data-day="${k}" aria-pressed="false" aria-label="${DAY_ABBR[d.getDay()]} ${d.getDate()} ${MONTH_SHORT_ID[d.getMonth()]}${counts[k] ? ', ' + counts[k] + ' data' : ', kosong'}"><b>${d.getDate()}</b><small>${DAY_ABBR[d.getDay()]}</small></button>`;
     }
@@ -8305,6 +8461,7 @@
   const shareLoadingText = document.getElementById('shareLoadingText');
 
   function openShareSheet() {
+    refreshShareSheetLabels();
     shareSheetOverlay.classList.add('open');
     shareSheet.classList.add('open');
   }
@@ -8408,6 +8565,7 @@
 
   document.getElementById('btnShareExportPdf').addEventListener('click', async () => {
     if (!currentDetailNote) return;
+    if (isCardViewActive()) { closeShareSheet(); return exportCardsPdf(currentDetailNote); }
     const content = getDisplayTable(currentDetailNote);
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
@@ -8677,6 +8835,7 @@
 
   document.getElementById('btnShareExportImage').addEventListener('click', async () => {
     if (!currentDetailNote) return;
+    if (isCardViewActive()) { closeShareSheet(); return exportCardsImage(currentDetailNote); }
     const content = getDisplayTable(currentDetailNote);
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || content.rows.length === 0) {
       alert('Tabel ini belum ada isinya, nggak ada yang bisa di-export.');
@@ -8745,6 +8904,342 @@
     return String(str).replace(/[&<>"']/g, c => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
     }[c]));
+  }
+
+  function isCardViewActive() {
+    return noteDetailOverlay.classList.contains('view-card') && !!window.matchMedia && matchMedia('(max-width: 640px)').matches;
+  }
+  function cardExportItems(note) {
+    const content = currentDetailContent();
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows) || !content.rows.length) return null;
+    const cols = content.columns;
+    const has = id => cols.some(c => c.id === id);
+    const sepOn = detailDay === 'all' && !!detailWeekAnchor(note, content);
+    const cnt = {};
+    if (sepOn) content.rows.forEach(r => { const k = normDayCell(r.cells && r.cells.tanggal); cnt[k] = (cnt[k] || 0) + 1; });
+    const items = [];
+    let lastK = null;
+    content.rows.forEach(row => {
+      const rc = row.cells || {};
+      const v = id => { const x = rc[id]; return (x === undefined || x === null) ? '' : String(x).trim(); };
+      if (sepOn) {
+        const k = normDayCell(rc.tanggal);
+        if (k !== lastK) {
+          lastK = k;
+          const d = dayFromKey(k);
+          if (d) items.push({ sep: true, label: `${DAY_FULL[d.getDay()]}, ${d.getDate()} ${MONTH_SHORT_ID[d.getMonth()]} ${d.getFullYear()}`, n: cnt[k] || 0 });
+        }
+      }
+      const when = [v('tanggal'), v('jam')].filter(Boolean).join(' · ');
+      if (rc._st) {
+        items.push({ money: true, no: v('no'), when, pj: '', title: v('nama') || '(tanpa nama)', tag: v('jenis'), st: rc._st,
+          tot: Number(rc._tot) || 0, pay: Number(rc._pay) || 0, sis: Number(rc._sis) || 0, ket: v('keterangan') });
+        return;
+      }
+      const used = new Set(['no', 'tanggal', 'jam', 'pj', 'harga', 'metode', 'bukti']);
+      let title = '';
+      const tk = ['customer', 'nama', 'item'].find(has) || (cols.find(c => !used.has(c.id) && c.type !== 'image') || {}).id;
+      if (tk) { used.add(tk); title = v(tk); }
+      const fields = cols.filter(c => !used.has(c.id) && c.type !== 'image' && v(c.id) !== '').map(c => ({ label: c.label || c.id, val: v(c.id) }));
+      const bukti = Array.isArray(rc._buktiAll) ? rc._buktiAll.filter(Boolean) : (v('bukti') ? [v('bukti')] : []);
+      items.push({ no: has('no') ? v('no') : '', when, pj: v('pj'), title: title || '(tanpa judul)', tag: v('jenis'), fields,
+        hasHarga: has('harga'), harga: v('harga'), metode: v('metode'), bukti });
+    });
+    return { items, rows: content.rows.length };
+  }
+
+  const CX = { bg: [255, 255, 255], ink: [28, 27, 25], soft: [110, 104, 95], line: [226, 221, 206], card: [250, 248, 243], acc: [217, 165, 54], red: [200, 60, 60], green: [45, 138, 85], orange: [214, 140, 30] };
+  function cardLayout(m, data, W, H) {
+    const M = 28, G = 10, PAD = 11, ncol = 2, cw = (W - 2 * M - G) / ncol, inner = cw - 2 * PAD;
+    const wrap = (txt, size, bold, width, max) => {
+      const out = [];
+      String(txt == null ? '' : txt).split(/\n/).forEach(par => {
+        const words = par.split(/\s+/).filter(Boolean);
+        let line = '';
+        words.forEach(w => {
+          let wd = w;
+          while (m(wd, size, bold) > width && wd.length > 1) {
+            let k = wd.length - 1;
+            while (k > 1 && m(wd.slice(0, k), size, bold) > width) k--;
+            if (line) { out.push(line); line = ''; }
+            out.push(wd.slice(0, k)); wd = wd.slice(k);
+          }
+          const t = line ? line + ' ' + wd : wd;
+          if (m(t, size, bold) <= width) line = t; else { if (line) out.push(line); line = wd; }
+        });
+        out.push(line);
+      });
+      const res = out.length ? out : [''];
+      if (max && res.length > max) { const r = res.slice(0, max); r[max - 1] = r[max - 1].replace(/.{0,2}$/, '') + '…'; return r; }
+      return res;
+    };
+    const LBW = Math.min(78, inner * 0.36);
+    function cardOps(it) {
+      const ops = [];
+      let y = PAD;
+      const head = [it.no, it.when].filter(Boolean).join('   ');
+      if (head || it.pj) {
+        if (head) ops.push({ t: 'text', x: PAD, y: y + 8, s: 8, b: true, c: CX.soft, txt: head });
+        if (it.pj) {
+          const pw = m(it.pj, 7.5, true) + 12;
+          ops.push({ t: 'pill', x: cw - PAD - pw, y: y - 1, w: pw, h: 13, c: [252, 231, 160], txt: it.pj, tc: CX.ink, s: 7.5 });
+        }
+        y += 16;
+      }
+      wrap(it.title, 12, true, inner - (it.tag ? m(it.tag, 7.5, true) + 16 : 0), 3).forEach((ln, i) => {
+        ops.push({ t: 'text', x: PAD, y: y + 11, s: 12, b: true, c: CX.ink, txt: ln });
+        if (i === 0 && it.tag) {
+          const pw = m(it.tag, 7.5, true) + 12;
+          ops.push({ t: 'pill', x: PAD + m(ln, 12, true) + 6, y: y + 1, w: pw, h: 13, c: it.tag === 'Hutang' ? [233, 222, 250] : [220, 236, 250], txt: it.tag, tc: it.tag === 'Hutang' ? [110, 70, 190] : [30, 110, 180], s: 7.5 });
+        }
+        y += 15;
+      });
+      y += 3;
+      if (it.money) {
+        const stc = it.st === 'lunas' ? CX.green : it.st === 'sebagian' ? CX.orange : CX.red;
+        const pct = it.tot > 0 ? Math.max(0, Math.min(1, it.pay / it.tot)) : 0;
+        ops.push({ t: 'rect', x: PAD, y, w: inner, h: 4, r: 2, c: CX.line });
+        if (pct > 0) ops.push({ t: 'rect', x: PAD, y, w: Math.max(4, inner * pct), h: 4, r: 2, c: stc });
+        y += 11;
+        const cw3 = inner / 3;
+        [['Total', moneyRp(it.tot), CX.ink], ['Dibayar', moneyRp(it.pay), CX.ink], [it.st === 'lunas' ? 'Status' : 'Sisa', it.st === 'lunas' ? 'Lunas' : moneyRp(it.sis), stc]].forEach((q, i) => {
+          ops.push({ t: 'text', x: PAD + i * cw3, y: y + 7, s: 7, b: true, c: CX.soft, txt: q[0].toUpperCase() });
+          ops.push({ t: 'text', x: PAD + i * cw3, y: y + 19, s: 10, b: true, c: q[2], txt: q[1] });
+        });
+        y += 24;
+        if (it.ket) wrap(it.ket, 8.5, false, inner, 4).forEach(ln => { ops.push({ t: 'text', x: PAD, y: y + 9, s: 8.5, b: false, c: CX.soft, txt: ln }); y += 11; });
+      } else {
+        (it.fields || []).forEach(f => {
+          const lines = wrap(f.val, 9, false, inner - LBW - 6, 6);
+          ops.push({ t: 'line', x1: PAD, y1: y, x2: cw - PAD, y2: y, c: CX.line });
+          ops.push({ t: 'text', x: PAD, y: y + 11, s: 7, b: true, c: CX.soft, txt: wrap(String(f.label).toUpperCase(), 7, true, LBW, 2)[0] });
+          lines.forEach((ln, i) => ops.push({ t: 'text', x: PAD + LBW + 6, y: y + 11 + i * 11.5, s: 9, b: false, c: CX.ink, txt: ln }));
+          y += 6 + lines.length * 11.5 + 2;
+        });
+        if (it.hasHarga || it.metode || (it.bukti && it.bukti.length)) {
+          ops.push({ t: 'line', x1: PAD, y1: y + 2, x2: cw - PAD, y2: y + 2, c: CX.line });
+          y += 6;
+          const qrN = Math.min(2, (it.bukti || []).length), qs = 30;
+          let fy = y;
+          if (it.hasHarga) {
+            const ada = !!(it.harga && it.harga !== '0');
+            const lunas = /[√✓✔☑✅]/.test(it.harga);
+            ops.push({ t: 'text', x: PAD, y: fy + 8, s: 7, b: true, c: CX.soft, txt: 'HARGA' });
+            ops.push({ t: 'text', x: PAD, y: fy + 22, s: 12, b: true, c: !ada ? CX.red : lunas ? CX.green : CX.ink, txt: !ada ? 'Belum diisi' : lunas ? 'Lunas ✓' : (/^[\d.]+$/.test(it.harga) ? 'Rp ' + it.harga : it.harga) });
+            fy += 26;
+          }
+          if (it.metode) { ops.push({ t: 'text', x: PAD, y: fy + 9, s: 8.5, b: true, c: CX.soft, txt: it.metode }); fy += 12; }
+          for (let i = 0; i < qrN; i++) ops.push({ t: 'qr', url: it.bukti[i], x: cw - PAD - (qrN - i) * (qs + 4) + 4, y: y + 1, w: qs, h: qs });
+          if (qrN) { const lb = 'Bukti foto', qw = qrN * (qs + 4) - 4; ops.push({ t: 'text', x: cw - PAD - qw / 2 - m(lb, 6.5, true) / 2, y: y + qs + 10, s: 6.5, b: true, c: CX.soft, txt: lb }); }
+          y = Math.max(fy, qrN ? y + qs + 13 : fy);
+        }
+      }
+      return { ops, h: y + PAD };
+    }
+    const pages = [[]];
+    let py = M, first = true;
+    const head = data.head;
+    const titleLines = wrap(head.title, 15, true, W - 2 * M, 2);
+    titleLines.forEach(ln => { pages[0].push({ t: 'text', x: M, y: py + 14, s: 15, b: true, c: CX.ink, txt: ln }); py += 19; });
+    pages[0].push({ t: 'text', x: M, y: py + 9, s: 8.5, b: false, c: CX.soft, txt: head.sub });
+    py += 14;
+    pages[0].push({ t: 'rect', x: M, y: py, w: W - 2 * M, h: 2, r: 1, c: CX.acc });
+    py += 12;
+    const newPage = () => { pages.push([]); py = M; first = false; };
+    const bottom = H - M - 14;
+    let row = [];
+    const flush = () => {
+      if (!row.length) return;
+      const rh = Math.max(...row.map(r => r.h));
+      if (py + rh > bottom && py > M + 1) newPage();
+      row.forEach((r, i) => {
+        const x = M + i * (cw + G);
+        pages[pages.length - 1].push({ t: 'card', x, y: py, w: cw, h: rh, ops: r.ops });
+      });
+      py += rh + G;
+      row = [];
+    };
+    data.items.forEach(it => {
+      if (it.sep) {
+        flush();
+        if (py + 22 + 60 > bottom) newPage();
+        const p = pages[pages.length - 1];
+        p.push({ t: 'text', x: M, y: py + 12, s: 10.5, b: true, c: CX.ink, txt: it.label });
+        const nt = it.n + ' data';
+        p.push({ t: 'text', x: W - M - m(nt, 8.5, true), y: py + 12, s: 8.5, b: true, c: CX.soft, txt: nt });
+        p.push({ t: 'line', x1: M, y1: py + 18, x2: W - M, y2: py + 18, c: CX.line });
+        py += 26;
+        return;
+      }
+      row.push(cardOps(it));
+      if (row.length === ncol) flush();
+    });
+    flush();
+    return { pages, usedLast: py, W, H, M };
+  }
+
+  function pdfSafe(s) {
+    return String(s == null ? '' : s)
+      .replace(/Lunas\s*[√✓✔☑✅]/g, 'Lunas').replace(/[√✓✔☑✅]/g, 'Lunas').replace(/→/g, '->').replace(/[\u{1F000}-\u{1FFFF}☀-➿️‍]/gu, '')
+      .replace(/[^\x20-\x7E\xA0-\xFF–—‘’“”•…€]/g, '').replace(/\s{2,}/g, ' ').trim();
+  }
+  async function qrDataFor(urls) {
+    const map = {};
+    for (const u of urls) { if (!map[u]) { const q = await buktiUrlToQrDataUrl(u); if (q) map[u] = q; } }
+    return map;
+  }
+  function cardHead(note, n) {
+    const cat = categoriesData.find(c => c.id === note.folder_id);
+    const bits = [];
+    if (cat) bits.push(cat.name);
+    if (detailDay !== 'all') { const d = dayFromKey(detailDay); if (d) bits.push(`${DAY_FULL[d.getDay()]}, ${d.getDate()} ${MONTH_SHORT_ID[d.getMonth()]} ${d.getFullYear()}`); }
+    bits.push(n + ' data');
+    const now = new Date();
+    bits.push('dibuat ' + `${pad2d(now.getDate())}-${pad2d(now.getMonth() + 1)}-${now.getFullYear()} ${pad2d(now.getHours())}:${pad2d(now.getMinutes())}`);
+    return { title: note.title || 'Untitled', sub: bits.join('  ·  ') };
+  }
+
+  async function exportCardsPdf(note) {
+    const data = cardExportItems(note);
+    if (!data) { alert('Belum ada data di tampilan ini.'); return; }
+    if (!window.jspdf) { alert('Pembuat PDF belum termuat. Cek koneksi lalu coba lagi.'); return; }
+    showShareLoading('Membuat PDF...');
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+      const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+      const m = (t, s, b) => { doc.setFont('helvetica', b ? 'bold' : 'normal'); doc.setFontSize(s); return doc.getTextWidth(pdfSafe(t)); };
+      const head = cardHead(note, data.rows);
+      const lay = cardLayout(m, { items: data.items, head }, W, H);
+      const urls = [];
+      lay.pages.forEach(p => p.forEach(o => { if (o.t === 'card') o.ops.forEach(q => { if (q.t === 'qr') urls.push(q.url); }); }));
+      const qr = urls.length ? await qrDataFor(urls) : {};
+      const draw = (o, ox, oy) => {
+        if (o.t === 'text') { doc.setFont('helvetica', o.b ? 'bold' : 'normal'); doc.setFontSize(o.s); doc.setTextColor(...o.c); doc.text(pdfSafe(o.txt), ox + o.x, oy + o.y); }
+        else if (o.t === 'rect') { doc.setFillColor(...o.c); doc.roundedRect(ox + o.x, oy + o.y, o.w, o.h, o.r || 0, o.r || 0, 'F'); }
+        else if (o.t === 'line') { doc.setDrawColor(...o.c); doc.setLineWidth(0.6); doc.line(ox + o.x1, oy + o.y1, ox + o.x2, oy + o.y2); }
+        else if (o.t === 'pill') { doc.setFillColor(...o.c); doc.roundedRect(ox + o.x, oy + o.y, o.w, o.h, o.h / 2, o.h / 2, 'F'); doc.setFont('helvetica', 'bold'); doc.setFontSize(o.s); doc.setTextColor(...o.tc); doc.text(pdfSafe(o.txt), ox + o.x + 6, oy + o.y + o.h - 3.6); }
+        else if (o.t === 'qr') { const d = qr[o.url]; if (d) { try { doc.addImage(d, 'PNG', ox + o.x, oy + o.y, o.w, o.h); } catch (e) {} } }
+        else if (o.t === 'card') {
+          doc.setFillColor(...CX.card); doc.setDrawColor(...CX.line); doc.setLineWidth(0.8);
+          doc.roundedRect(o.x, o.y, o.w, o.h, 8, 8, 'FD');
+          doc.setFillColor(...CX.acc); doc.roundedRect(o.x, o.y + 8, 2.4, o.h - 16, 1.2, 1.2, 'F');
+          o.ops.forEach(q => draw(q, o.x, o.y));
+        }
+      };
+      lay.pages.forEach((p, i) => {
+        if (i) doc.addPage();
+        p.forEach(o => draw(o, 0, 0));
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(...CX.soft);
+        doc.text('BM TECH', lay.M, H - 16);
+        const pg = 'Halaman ' + (i + 1) + ' / ' + lay.pages.length;
+        doc.text(pg, W - lay.M - doc.getTextWidth(pg), H - 16);
+      });
+      const name = safeFileName(note.title) + (detailDay !== 'all' ? '-' + detailDay : '') + '-kartu.pdf';
+      const blob = doc.output('blob');
+      hideShareLoading();
+      await offerFiles([new File([blob], name, { type: 'application/pdf' })], note.title);
+    } catch (err) {
+      console.error('Gagal PDF kartu:', err);
+      alert('Gagal membuat PDF: ' + err.message);
+    } finally { hideShareLoading(); }
+  }
+
+  async function exportCardsImage(note) {
+    const data = cardExportItems(note);
+    if (!data) { alert('Belum ada data di tampilan ini.'); return; }
+    showShareLoading('Membuat gambar...');
+    try {
+      const PX = 1080, W = 595.28, H = 841.89, sc = PX / W;
+      const FF = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+      const mc = document.createElement('canvas').getContext('2d');
+      const m = (t, s, b) => { mc.font = `${b ? 700 : 400} ${s}px ${FF}`; return mc.measureText(String(t == null ? '' : t)).width; };
+      const head = cardHead(note, data.rows);
+      const lay = cardLayout(m, { items: data.items, head }, W, H);
+      const urls = [];
+      lay.pages.forEach(p => p.forEach(o => { if (o.t === 'card') o.ops.forEach(q => { if (q.t === 'qr') urls.push(q.url); }); }));
+      const qrd = urls.length ? await qrDataFor(urls) : {};
+      const qimg = {};
+      await Promise.all(Object.keys(qrd).map(u => new Promise(res => { const im = new Image(); im.onload = () => { qimg[u] = im; res(); }; im.onerror = res; im.src = qrd[u]; })));
+      const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+      const rr = (ctx, x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); };
+      const files = [];
+      for (let i = 0; i < lay.pages.length; i++) {
+        const p = lay.pages[i], last = i === lay.pages.length - 1;
+        let ph = H;
+        if (last) { let maxY = 0; p.forEach(o => { const b = o.t === 'card' ? o.y + o.h : o.t === 'line' ? o.y2 : (o.y || 0) + (o.h || 0); if (b > maxY) maxY = b; }); ph = Math.min(H, maxY + lay.M + 14); }
+        const cv = document.createElement('canvas');
+        cv.width = PX; cv.height = Math.round(ph * sc);
+        const ctx = cv.getContext('2d');
+        ctx.scale(sc, sc);
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, ph);
+        ctx.textBaseline = 'alphabetic';
+        const draw = (o, ox, oy) => {
+          if (o.t === 'text') { ctx.font = `${o.b ? 700 : 400} ${o.s}px ${FF}`; ctx.fillStyle = rgb(o.c); ctx.fillText(String(o.txt), ox + o.x, oy + o.y); }
+          else if (o.t === 'rect') { ctx.fillStyle = rgb(o.c); rr(ctx, ox + o.x, oy + o.y, o.w, o.h, o.r || 0); ctx.fill(); }
+          else if (o.t === 'line') { ctx.strokeStyle = rgb(o.c); ctx.lineWidth = 0.6; ctx.beginPath(); ctx.moveTo(ox + o.x1, oy + o.y1); ctx.lineTo(ox + o.x2, oy + o.y2); ctx.stroke(); }
+          else if (o.t === 'pill') { ctx.fillStyle = rgb(o.c); rr(ctx, ox + o.x, oy + o.y, o.w, o.h, o.h / 2); ctx.fill(); ctx.font = `700 ${o.s}px ${FF}`; ctx.fillStyle = rgb(o.tc); ctx.fillText(String(o.txt), ox + o.x + 6, oy + o.y + o.h - 3.6); }
+          else if (o.t === 'qr') { const im = qimg[o.url]; if (im) ctx.drawImage(im, ox + o.x, oy + o.y, o.w, o.h); }
+          else if (o.t === 'card') {
+            ctx.fillStyle = rgb(CX.card); ctx.strokeStyle = rgb(CX.line); ctx.lineWidth = 0.8;
+            rr(ctx, o.x, o.y, o.w, o.h, 8); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = rgb(CX.acc); rr(ctx, o.x, o.y + 8, 2.4, o.h - 16, 1.2); ctx.fill();
+            o.ops.forEach(q => draw(q, o.x, o.y));
+          }
+        };
+        p.forEach(o => draw(o, 0, 0));
+        ctx.font = `400 7.5px ${FF}`; ctx.fillStyle = rgb(CX.soft);
+        ctx.fillText('BM TECH', lay.M, ph - 16);
+        if (lay.pages.length > 1) { const pg = (i + 1) + ' / ' + lay.pages.length; ctx.fillText(pg, W - lay.M - ctx.measureText(pg).width, ph - 16); }
+        const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+        if (blob) files.push(new File([blob], safeFileName(note.title) + (detailDay !== 'all' ? '-' + detailDay : '') + (lay.pages.length > 1 ? '-' + (i + 1) : '') + '.png', { type: 'image/png' }));
+      }
+      hideShareLoading();
+      if (!files.length) { alert('Gagal membuat gambar.'); return; }
+      await offerFiles(files, note.title);
+    } catch (err) {
+      console.error('Gagal gambar kartu:', err);
+      alert('Gagal membuat gambar: ' + err.message);
+    } finally { hideShareLoading(); }
+  }
+
+  function downloadFile(f) {
+    const url = URL.createObjectURL(f);
+    const a = document.createElement('a');
+    a.href = url; a.download = f.name;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  function offerFiles(files, title) {
+    return new Promise(resolve => {
+      let canShare = false;
+      try { canShare = !!(navigator.share && navigator.canShare && navigator.canShare({ files })); } catch (e) {}
+      const ov = document.createElement('div');
+      ov.className = 'xp-ready';
+      const kind = files[0].type === 'application/pdf' ? 'PDF' : (files.length > 1 ? files.length + ' gambar' : 'Gambar');
+      ov.innerHTML = `<div class="xp-box" role="dialog" aria-label="File siap"><b>${escapeHtml(kind)} siap</b><p>${escapeHtml(files.map(f => f.name).join(', '))}</p>` +
+        `<div class="xp-act">${canShare ? '<button type="button" data-x="share" class="on">Bagikan</button>' : ''}<button type="button" data-x="save"${canShare ? '' : ' class="on"'}>Simpan</button><button type="button" data-x="close">Tutup</button></div></div>`;
+      document.body.appendChild(ov);
+      requestAnimationFrame(() => ov.classList.add('show'));
+      const done = () => { ov.classList.remove('show'); setTimeout(() => ov.remove(), 260); resolve(); };
+      ov.addEventListener('click', async e => {
+        const b = e.target.closest('button[data-x]');
+        if (!b) { if (e.target === ov) done(); return; }
+        if (b.dataset.x === 'share') {
+          try { await navigator.share({ files, title: title || 'BM TECH' }); done(); }
+          catch (err) { if (err && err.name === 'AbortError') return; files.forEach(downloadFile); done(); }
+        } else if (b.dataset.x === 'save') { files.forEach(downloadFile); done(); }
+        else done();
+      });
+    });
+  }
+  function refreshShareSheetLabels() {
+    const card = isCardViewActive();
+    const t = document.querySelector('#shareSheet .share-sheet-title');
+    if (t) t.textContent = card ? 'Bagikan Kartu' : 'Bagikan Tabel';
+    const sub = (id, a, b) => { const el = document.querySelector('#' + id + ' .share-option-sub'); if (el) el.textContent = card ? a : b; };
+    sub('btnShareExportPdf', 'Kartu rapi di halaman A4, bisa dibagikan', 'Dokumen siap cetak, teksnya tetap bisa di-select');
+    sub('btnShareExportImage', 'Kartu jadi gambar PNG, siap kirim ke WhatsApp', 'PNG, gampang dikirim lewat WhatsApp/chat');
   }
 
   let allNotesData = [];
