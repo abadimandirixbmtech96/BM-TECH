@@ -113,10 +113,10 @@ nav{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(s
 nav.ng{touch-action:none}
 nav.press{transform:scale(1.06);transition:transform .3s cubic-bezier(.2,.9,.3,1.3),box-shadow .3s;box-shadow:0 18px 34px -8px rgba(0,0,0,.42),0 3px 8px rgba(0,0,0,.16)}
 nav u{position:absolute;inset:0;border-radius:inherit;pointer-events:none;text-decoration:none}
-nav .gb{background:color-mix(in srgb,var(--sf) 74%,transparent);-webkit-backdrop-filter:blur(26px) saturate(1.7);backdrop-filter:blur(26px) saturate(1.7)}
-nav .gl{box-shadow:inset 0 0 0 1px var(--nb),inset 2px 2px 4px -1px rgba(255,255,255,.4),inset -2px -2px 4px -1px rgba(255,255,255,.22),inset 0 10px 14px -10px rgba(255,255,255,.3)}
-nav .gl::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from 0deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 40deg,rgba(255,255,255,.04) 80deg,rgba(255,255,255,.35) 135deg,rgba(255,255,255,.05) 170deg,rgba(255,255,255,.04) 250deg,rgba(255,255,255,.85) 315deg,rgba(255,255,255,.55));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav .gb{background:var(--sf)}}
+nav .ngb{background:radial-gradient(120% 150% at 18% 0%,rgba(110,150,255,.2),transparent 62%),radial-gradient(110% 130% at 88% 100%,rgba(255,255,255,.14),transparent 60%),color-mix(in srgb,var(--sf) 56%,transparent);-webkit-backdrop-filter:blur(40px) saturate(1.9) brightness(1.04);backdrop-filter:blur(40px) saturate(1.9) brightness(1.04)}
+nav .ngl{box-shadow:inset 0 0 0 1px var(--nb),inset 2px 2px 4px -1px rgba(255,255,255,.4),inset -2px -2px 4px -1px rgba(255,255,255,.22),inset 0 10px 14px -10px rgba(255,255,255,.3)}
+nav .ngl::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from 0deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 40deg,rgba(255,255,255,.04) 80deg,rgba(255,255,255,.35) 135deg,rgba(255,255,255,.05) 170deg,rgba(255,255,255,.04) 250deg,rgba(255,255,255,.85) 315deg,rgba(255,255,255,.55));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav .ngb{background:var(--sf)}}
 nav button{flex:1;position:relative;z-index:1;background:none;border:0;color:var(--mu);font-size:10px;font-weight:600;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .25s}
 nav button.on{color:var(--acx)}
 nav svg{width:22px;height:22px;stroke-width:2;transition:transform .35s var(--spring)}
@@ -345,7 +345,7 @@ html.bold-mode body *{font-weight:700!important}
 <div id="app">
 <header><div><div class="app">Buku Warung BM TECH</div><h1 id="ttl"></h1></div><button type="button" id="bm-sync-f" class="syc" hidden></button></header>
 <main id="v"></main>
-<nav id="nv" aria-label="Menu utama"><u class="gb"></u><u class="gl"></u><i></i></nav>
+<nav id="nv" aria-label="Menu utama"><u class="ngb"></u><u class="ngl"></u><i></i></nav>
 <svg class="ngdefs" aria-hidden="true"><filter id="lensF" filterUnits="userSpaceOnUse" x="0" y="0" width="80" height="48" color-interpolation-filters="sRGB"><feImage id="lensMap" x="0" y="0" width="80" height="48" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="30" xChannelSelector="R" yChannelSelector="G" result="d1"/><feColorMatrix in="d1" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r"/><feDisplacementMap in="SourceGraphic" in2="m" scale="20" xChannelSelector="R" yChannelSelector="G" result="d2"/><feColorMatrix in="d2" values="0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="gb"/><feBlend in="r" in2="gb" mode="screen"/></filter></svg>
 </div>
 <div id="pages"></div><div id="mn"></div><div id="sug"></div><div id="dlg"></div><div id="ts" role="status" aria-live="polite"></div>
@@ -1640,7 +1640,7 @@ function ngInit(){const n=$('#nv');if(!n||NG.init)return;NG.init=true;
  window.addEventListener('resize',()=>{cancelAnimationFrame(NG.raf);NG.raf=0;NG.last=0;ngLayout()});
  if(window.ResizeObserver)new ResizeObserver(()=>{if(!NG.pressed)ngLayout()}).observe(n);
  ngLayout()}
-function buildNav(){$('#nv').innerHTML='<u class="gb"></u><u class="gl"></u><i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('')+'<u class="lens"></u>';ngInit();ngLayout()}
+function buildNav(){$('#nv').innerHTML='<u class="ngb"></u><u class="ngl"></u><i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('')+'<u class="lens"></u>';ngInit();ngLayout()}
 function render(anim){$('#nv').style.setProperty('--i',tab);
  document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('on',i===tab);if(i===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});NG.mark=tab;ngSync(tab);
  const v=$('#v');$('#ttl').textContent=TTL[tab];{const h=TABS[tab][2]();if(anim||!v.firstChild)v.innerHTML=h;else morph(v,h)}
