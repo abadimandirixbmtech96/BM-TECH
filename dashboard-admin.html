@@ -7133,6 +7133,36 @@
     return null;
   }
 
+  function searchTokens(q) {
+    return String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
+  }
+
+  /* Semua baris yang cocok (bukan hanya yang pertama). Setiap kata kunci harus ada di salah satu kolom
+     baris itu, jadi "joko 12-11" menemukan baris Joko pada tanggal 12. Kolom yang ditampilkan adalah
+     kolom yang memuat seluruh kata kunci; kalau tidak ada, kolom pertama yang memuat salah satu kata. */
+  function findAllMatchesInContent(content, q) {
+    const out = [];
+    if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return out;
+    const toks = searchTokens(q);
+    if (!toks.length) return out;
+    const cols = content.columns.filter(c => c.type !== 'image');
+    for (const row of content.rows) {
+      const cells = row.cells || {};
+      const vals = cols.map(c => {
+        const v = cells[c.id];
+        return (v === undefined || v === null) ? '' : String(v);
+      });
+      const low = vals.map(v => v.toLowerCase());
+      const all = low.join(' \u0001 ');
+      if (!toks.every(t => all.includes(t))) continue;
+      let k = low.findIndex(v => v && v.includes(q));
+      if (k < 0) k = low.findIndex(v => v && toks.some(t => v.includes(t)));
+      if (k < 0) continue;
+      out.push({ label: cols[k].label || 'Kolom', value: vals[k], row, col: cols[k], columns: content.columns });
+    }
+    return out;
+  }
+
   const SEARCH_TAG_FIELDS = [
     { title: 'PJ', ids: ['pj'], labels: ['pj'] },
     { title: 'Customer', ids: ['customer'], labels: ['customer', 'cust'] },
@@ -7374,15 +7404,15 @@
       ? []
       : categoriesData.filter(c => c.name.toLowerCase().includes(q));
 
-    const noteMatches = allNotesData
+    const noteMatches = [];
+    allNotesData
       .filter(n => !searchFolderFilter || n.folder_id === searchFolderFilter)
-      .map(n => {
+      .forEach(n => {
         const titleMatch = (n.title || '').toLowerCase().includes(q);
-        const cellMatch = findMatchInContent(getNoteTable(n), q);
-        if (!titleMatch && !cellMatch) return null;
-        return { note: n, cellMatch };
-      })
-      .filter(Boolean);
+        const hits = findAllMatchesInContent(getNoteTable(n), q);
+        if (hits.length) hits.forEach(h => noteMatches.push({ note: n, cellMatch: h }));
+        else if (titleMatch) noteMatches.push({ note: n, cellMatch: null });
+      });
     return { folderMatches, noteMatches };
   }
 
@@ -7407,6 +7437,7 @@
     const { folderMatches, noteMatches } = computeSearchMatches(q);
     const total = folderMatches.length + noteMatches.length;
     countEl.textContent = `Found ${total} results`;
+    const SEARCH_RENDER_MAX = 150;
 
     // Saran koreksi: hanya kalau hasilnya sedikit DAN kata koreksinya memang menemukan lebih banyak
     let suggestHtml = '';
@@ -7434,11 +7465,16 @@
       </div>
     `).join('');
 
-    const noteHtml = noteMatches.map(({ note: n, cellMatch }) => `
+    const rowWhen = (n, m) => {
+      const c = m && m.row && m.row.cells;
+      const tg = c && c.tanggal ? String(c.tanggal) : '', jm = c && c.jam ? String(c.jam) : '';
+      return (tg || jm) ? [tg, jm].filter(Boolean).join(' · ') : formatTimeOnly(n.created_at);
+    };
+    const noteHtml = noteMatches.slice(0, SEARCH_RENDER_MAX).map(({ note: n, cellMatch }) => `
       <div class="search-note-card" data-type="note" data-note-id="${n.id}" data-folder-id="${n.folder_id || ''}" data-rec-id="${escapeHtml((cellMatch && cellMatch.row && cellMatch.row.cells && cellMatch.row.cells._rid) || '')}">
         <p class="search-note-title">${highlightMatch(n.title || 'Untitled', term.trim())}</p>
         <div class="search-note-meta-row">
-          <span class="search-note-time-badge">${escapeHtml(formatTimeOnly(n.created_at))}</span>
+          <span class="search-note-time-badge">${escapeHtml(rowWhen(n, cellMatch))}</span>
           ${cellMatch ? `<span class="search-note-match-text">${highlightMatch(cellMatch.value, term.trim())}</span>` : ''}
         </div>
         <div class="search-note-folder-row">
@@ -7449,7 +7485,9 @@
       </div>
     `).join('');
 
-    list.innerHTML = suggestHtml + folderHtml + noteHtml;
+    const moreHtml = noteMatches.length > SEARCH_RENDER_MAX
+      ? `<p style="font-size:12.5px; color:var(--text-muted); text-align:center; padding:14px 4px;">Menampilkan ${SEARCH_RENDER_MAX} pertama dari ${noteMatches.length}. Tambah kata kunci (misalnya tanggal) untuk mempersempit.</p>` : '';
+    list.innerHTML = suggestHtml + folderHtml + noteHtml + moreHtml;
     if (!(opts && opts.keepScroll)) list.scrollTop = 0;
     wireSearchResultClicks();
     wireSearchSuggestClicks();
