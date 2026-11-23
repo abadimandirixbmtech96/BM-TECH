@@ -389,7 +389,6 @@
     opacity: 0.65;
   }
 
-
   .notes-container.view-card .note-card:active,
   .notes-container.view-grid .note-card:active {
     transform: scale(0.95);
@@ -479,7 +478,6 @@
     padding: 3px 9px;
     border-radius: 999px;
   }
-
 
   .tasks-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
   .tasks-head .page-title { margin-bottom: 2px; }
@@ -645,7 +643,7 @@
   }
 
   .folder-list { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
-  
+
   .folder-item {
     display: flex;
     align-items: center;
@@ -662,7 +660,6 @@
     transform: scale(0.98);
   }
 
-  /* ===== Liquid glass: penanda posisi (folder / bulan yang sedang dibuka) ===== */
   .folder-item.active, .folder-month-item.active {
     position: relative;
     isolation: isolate;
@@ -670,14 +667,13 @@
       radial-gradient(120% 140% at 10% 0%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 60%),
       linear-gradient(145deg, rgba(var(--accent-rgb), 0.13) 0%, rgba(var(--accent-rgb), 0.04) 55%, rgba(255,255,255,0.07) 100%);
     box-shadow:
-      inset 0 1.5px 0 rgba(255,255,255,0.70),     /* pantulan tepi atas */
-      inset 1.5px 0 0 rgba(255,255,255,0.30),     /* tepi kiri */
-      inset -1px 0 0 rgba(255,255,255,0.16),      /* tepi kanan */
-      inset 0 -1.5px 0 rgba(255,255,255,0.22),    /* tepi bawah */
-      inset 0 0 18px rgba(255,255,255,0.10),      /* cahaya dalam kaca */
+      inset 0 1.5px 0 rgba(255,255,255,0.70),
+      inset 1.5px 0 0 rgba(255,255,255,0.30),
+      inset -1px 0 0 rgba(255,255,255,0.16),
+      inset 0 -1.5px 0 rgba(255,255,255,0.22),
+      inset 0 0 18px rgba(255,255,255,0.10),
       0 6px 16px rgba(0,0,0,0.28);
   }
-  /* Bingkai pantulan di pinggiran (terang di sudut atas-kiri dan bawah-kanan seperti kaca iOS) */
   .folder-item.active::before, .folder-month-item.active::before {
     content: '';
     position: absolute;
@@ -691,7 +687,6 @@
     pointer-events: none;
     z-index: 0;
   }
-  /* Kilau lengkung di bagian atas */
   .folder-item.active::after, .folder-month-item.active::after {
     content: '';
     position: absolute;
@@ -1040,7 +1035,6 @@
     padding-bottom: calc(var(--kb, 0px) + 12px);
   }
 
-  /* --- Riwayat pencarian & saran "mungkin yang Anda maksud" --- */
   .search-history-head { display: flex; justify-content: space-between; align-items: center; margin: 6px 4px 6px; }
   .search-history-head span { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
   .search-history-clear { background: none; border: none; color: var(--accent-yellow); font-size: 13px; font-weight: 700; padding: 6px 4px; cursor: pointer; }
@@ -1237,8 +1231,6 @@
     animation: authSpin 0.7s linear infinite;
   }
   @keyframes authSpin { to { transform: rotate(360deg); } }
-
-
 
   .pzv-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 0 20px; opacity: 0; pointer-events: none; transition: opacity .18s ease; }
   .pzv-overlay.open { opacity: 1; pointer-events: auto; -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); }
@@ -1597,7 +1589,6 @@
   body.theme-light .btn-select-all { border-color: rgba(0, 0, 0, 0.4); background: rgba(0, 0, 0, 0.06); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08); }
   body.theme-light .btn-select-all.all-checked { background: var(--accent-yellow); border-color: var(--accent-yellow); box-shadow: 0 0 0 3px var(--accent-yellow-glow); }
 
-  /* Folder ALL: penanda asal buku di tiap kartu (warna khusus per buku + nama) */
   .note-meta-row { align-self: flex-start; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; max-width: 100%; min-width: 0; }
   .note-meta-row .note-date-tag { margin-top: 0; flex-shrink: 0; }
   .note-book-chip {
@@ -1615,7 +1606,6 @@
   }
   .note-book-chip i { display: block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .note-book-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* saat memilih note, kotak centang ada di pojok kanan bawah: sisakan ruang agar tidak menimpa chip */
   .notes-container.selection-mode .note-book-chip { max-width: calc(100% - 34px); }
   .notes-container.view-list .note-book-chip { color: var(--text-primary); }
 
@@ -1956,10 +1946,8 @@
   }
   .note-detail-table tbody tr:last-child td { border-bottom: none; }
 
-  /* Pembeda Hutang (kita yang bayar, merah) vs Piutang (kita yang tagih, hijau) */
   .jenis-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 11px 3px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.01em; }
   .jenis-pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  /* Jenis (Hutang/Piutang) = ungu/biru; merah-kuning-hijau HANYA berarti status pembayaran */
   .jenis-pill.hutang  { color: #8A63D9; background: rgba(138, 99, 217, 0.16); }
   .jenis-pill.piutang { color: #2B8BD6; background: rgba(43, 139, 214, 0.16); }
   .note-detail-table tbody tr.row-hutang  td:first-child { box-shadow: inset 3px 0 0 #8A63D9; }
@@ -1991,7 +1979,6 @@
   .nd-m.sisa.st-sebagian { border-color: rgba(240,165,41,.55); background: rgba(240,165,41,.12); } .nd-m.sisa.st-sebagian b { color: #B87806; }
   .nd-m.sisa.st-lunas { border-color: rgba(61,170,106,.5); background: rgba(61,170,106,.12); } .nd-m.sisa.st-lunas b { color: #2F9E5F; }
   .nd-ket { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--nd-line, rgba(128,128,128,.28)); font-size: 13px; color: var(--text-secondary); overflow-wrap: anywhere; }
-  /* Task kartu */
   .nd-card.tk2 { box-shadow: inset 5px 0 0 var(--tc); margin-bottom: 10px; animation: cardAppear .3s ease both; }
   .tk2 .nd-head .tk-chip { margin-left: auto; font-size: 10.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--tc); background: color-mix(in srgb, var(--tc) 16%, transparent); padding: 3px 10px; border-radius: 999px; text-align: right; }
   .tk2 .tk-items { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -2025,8 +2012,6 @@
   @keyframes jumpHl { 0%,60% { background: rgba(250,204,21,.35); } 100% { background: transparent; } }
   .note-detail-table tbody tr.jump-hl td { animation: jumpHl 2.2s ease-out; }
 
-
-  /* ===== Tampilan Kartu (HP): semua kolom terlihat tanpa geser kiri-kanan ===== */
   .note-detail-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-shrink: 0; }
   .note-detail-bar .note-detail-badge { margin-bottom: 0; }
   .view-toggle { display: none; padding: 3px; gap: 2px; border-radius: 999px; background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); }
@@ -2081,7 +2066,6 @@
   .nd-card.jump-hl { animation: jumpHl 2.2s ease-out; }
   .nd-head { padding-bottom: 8px; border-bottom: 1px solid var(--nd-line, rgba(128,128,128,.28)); display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); font-weight: 700; }
   .nd-no { background: var(--glass-pill-bg); border: 1px solid var(--glass-pill-border); border-radius: 8px; padding: 2px 8px; color: var(--text-primary); }
-  /* PJ: warna tetap (tidak ikut tema), terang dan mencolok */
   .nd-card .nd-pj { margin-left: auto; border-radius: 999px; padding: 4px 12px; background: #FFD60A !important; color: #111111 !important; -webkit-text-fill-color: #111111; border: 1.5px solid #B38F00; font-weight: 800; font-size: 12.5px; letter-spacing: .01em; text-align: right; box-shadow: 0 1px 3px rgba(0,0,0,.25); forced-color-adjust: none; filter: none; opacity: 1; }
   .nd-title { margin: 8px 0 6px; font-size: 16px; font-weight: 800; color: var(--text-primary); overflow-wrap: anywhere; }
   .nd-grid { display: grid; grid-template-columns: minmax(84px, 36%) minmax(0, 1fr); gap: 0; margin-top: 2px; font-size: 13px; }
@@ -2101,7 +2085,6 @@
   .nd-harga.nd-kosong .nd-amt { color: var(--text-secondary); }
   .nd-metode { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); padding-left: 12px; border-left: 1px solid var(--nd-line, rgba(128,128,128,.4)); align-self: stretch; display: inline-flex; align-items: center; }
 
-  /* Pergantian judul ala angka jam yang berputar */
   .roll-ch { display: inline-block; position: relative; overflow: hidden; vertical-align: bottom; height: 1.25em; line-height: 1.25em; }
   .roll-ch > span { display: block; white-space: pre; }
   .roll-ch.go.up > span { animation: rollUp .42s cubic-bezier(.22,.9,.28,1) both; }
@@ -2305,12 +2288,6 @@
     transform: translateY(calc(100% + 80px));
     box-shadow: none !important;
   }
-  /* ===================================================================
-     LAYAR LEBAR (tablet & laptop)
-     Di HP, tombol aksi memenuhi lebar sheet. Di layar lebar, tombol
-     dikecilkan dan diletakkan di kanan, dan sheet bawah dibatasi lebarnya
-     supaya tidak membentang selebar monitor. Tampilan HP tidak berubah.
-     =================================================================== */
   @media (min-width: 640px) {
     .tf-sheet,
     .karyawan-form-sheet,
@@ -2342,7 +2319,6 @@
     }
   }
 
-  /* Efek sorot kursor hanya untuk perangkat yang punya mouse/trackpad */
   @media (hover: hover) and (pointer: fine) {
     .tf-actions button:hover,
     .pzv-actions button:hover,
@@ -2352,16 +2328,6 @@
       filter: brightness(1.12);
     }
   }
-  /* ===================================================================
-     FULL SCREEN MENYESUAIKAN PERANGKAT
-     - Semua ukuran: tinggi layar mengikuti area yang benar-benar terlihat
-       (dvh), supaya tidak terpotong bar alamat di iPhone/Android.
-     - Tablet, laptop, monitor (768px ke atas): aplikasi memenuhi lebar
-       layar dengan margin kiri-kanan sama, kartu catatan otomatis jadi
-       beberapa kolom. Di monitor sangat lebar, isi dibatasi dan diletakkan
-       di tengah. Menu folder tetap panel geser seperti di HP.
-     Tampilan HP (di bawah 768px) tidak diubah.
-     =================================================================== */
   @supports (height: 100dvh) {
     body { height: 100dvh; }
     .tf-sheet { max-height: 82dvh; }
@@ -2369,7 +2335,6 @@
     .nas-folder-list { max-height: 42dvh; }
   }
 
-  /* iOS Safari: hilangkan kedip abu-abu saat tombol disentuh dan jeda ketuk-dua-kali */
   button,
   [role="button"],
   .header-btn,
@@ -2392,7 +2357,6 @@
 
     .bottom-bar { max-width: 640px; margin-left: auto; margin-right: auto; }
 
-    /* Pencarian: kolom tengah selebar nyaman dibaca, simetris kiri-kanan */
     .search-overlay { padding-left: 32px; padding-right: 32px; }
     .search-overlay > * {
       width: 100%;
@@ -2401,11 +2365,8 @@
       margin-right: auto;
     }
 
-    /* Detail catatan: tabel memakai lebar penuh, margin sama dengan layar lain */
     .note-detail-overlay { padding-left: 32px; padding-right: 32px; }
 
-    /* Layar sekunder (Settings, Customer, Karyawan, Sampah): penuh layar,
-       isinya tersusun dalam kolom-kolom mengikuti lebar perangkat */
     .settings-screen {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -2439,15 +2400,10 @@
     .karyawan-empty,
     .customer-empty { grid-column: 1 / -1; }
   }
-  /* ===================================================================
-     TRANSISI HALUS & TANPA KEDIP
-     =================================================================== */
   @view-transition { navigation: auto; }
 
-  /* Muat ulang daftar (mis. setelah keluar dari editor): kartu tidak muncul-ulang dengan animasi */
   .notes-container.no-anim .note-card { animation: none; }
 
-  /* Kerangka kartu saat data pertama belum datang, pengganti layar loading kosong */
   .skeleton-card {
     min-height: 110px;
     border-radius: 18px;
@@ -2457,7 +2413,6 @@
   }
   @keyframes bmSkeletonPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 0.9; } }
 
-  /* Editor: isi muncul halus setelah selesai dimuat */
   .editor-frame { opacity: 0; transition: opacity 0.2s ease; }
   .editor-modal.ready .editor-frame { opacity: 1; }
 
@@ -2465,7 +2420,6 @@
     .skeleton-card { animation: none; }
     .editor-frame { transition: none; }
   }
-  /* Panel halaman (Analisa, System Management, Daftar Nomor HP): naik dari bawah, dashboard tetap hidup di belakang */
   .page-modal {
     position: fixed;
     inset: 0;
@@ -2479,10 +2433,6 @@
   .page-modal.open { transform: translateY(0); }
   .page-modal.ready .editor-frame { opacity: 1; }
 
-  /* ============================================================
-     HEADER MELAYANG: blur + gradasi transparan di tepi bawah
-     (konten terlihat samar di bawahnya saat digulir, tidak ada kotak solid)
-     ============================================================ */
   :root { --hdr-rgb: 0, 0, 0; --glass-hi: rgba(255,255,255,.55); --glass-lo: rgba(255,255,255,.10); --glass-edge: rgba(255,255,255,.28); --glass-shadow: rgba(0,0,0,.35); }
   body.theme-light { --hdr-rgb: 245, 245, 247; --glass-hi: rgba(255,255,255,.95); --glass-lo: rgba(255,255,255,.35); --glass-edge: rgba(255,255,255,.9); --glass-shadow: rgba(30,30,60,.16); }
 
@@ -2507,9 +2457,6 @@
   }
   .content-scroll { padding-top: calc(var(--safe-top) + 78px) !important; }
 
-  /* ============================================================
-     LIQUID GLASS NYATA: lapisan kaca + kilau tepi + sorot cahaya
-     ============================================================ */
   .header-btn, .search-pill, .btn-compose-pencil {
     position: relative;
     background:
@@ -2544,13 +2491,8 @@
   }
   .header-btn > *, .search-pill > *, .btn-compose-pencil > * { position: relative; z-index: 1; }
   .hdr-filter-btn { overflow: visible; }
-  /* Angka harus melayang di pojok. Aturan ".header-btn > *" di atas membuatnya position:relative,
-     sehingga ikut masuk barisan isi tombol dan mendorong ikon ke kiri. */
   .hdr-filter-btn .tasks-filter-badge { position: absolute; top: -4px; right: -4px; z-index: 2; }
 
-  /* ============================================================
-     SENTUH / TAHAN = MEMBESAR (gaya iOS), bukan mengecil
-     ============================================================ */
   .header-btn, .search-pill, .btn-compose-pencil,
   .sel-bar-btn, .btn-share-note, .btn-edit-note, .karyawan-add-btn, .customer-add-btn, .btn-create-category,
   .btn-new-folder-complete, .nas-btn, .folder-empty-create-btn, .jump-chip, .btn-select-all {
@@ -2564,17 +2506,9 @@
   .sel-bar-btn:active, .btn-create-category:active, .btn-new-folder-complete:active,
   .nas-btn:active, .folder-empty-create-btn:active, .jump-chip:active { transform: scale(1.1) !important; }
 
-  /* ============================================================
-     NAVIGASI ATAS Notes | Tasks — gaya Liquid Glass iOS 27 (netral, tanpa warna biru)
-     Acuan iOS 27: kaca lebih bening, tepi lebih tegas (garis gelap tipis + sorot terang)
-     sebagai pengganti bayangan tebal, mode gelap: penanda tab terpilih justru lebih gelap.
-     DIAM    : trek pil netral + kapsul abu-abu halus di tab aktif (penanda halaman).
-     DISENTUH: kapsul membesar jadi lensa kaca bening yang menonjol keluar trek.
-               Tahan lalu geser untuk pindah tab; lepas = lensa meluncur lalu mengecil.
-     ============================================================ */
   .segmented-tabs {
     --seg-text: #8e8e93;
-    --seg-text-lens: var(--accent-yellow);   /* warna sistem (diatur di System Management) */
+    --seg-text-lens: var(--accent-yellow);
     position: relative;
     display: flex;
     padding: 4px;
@@ -2582,7 +2516,7 @@
     border-radius: 999px;
     background: linear-gradient(180deg, #fcfcfd 0%, #f3f3f5 100%) !important;
     -webkit-backdrop-filter: none !important;
-    backdrop-filter: none !important;   /* backdrop-filter di induk membatasi apa yang bisa dilihat anaknya */
+    backdrop-filter: none !important;
     border: 1px solid rgba(0, 0, 0, .075) !important;
     box-shadow:
       inset 0 1.5px 2px rgba(255, 255, 255, .95),
@@ -2605,8 +2539,6 @@
     letter-spacing: -0.01em;
     transition: color .25s ease;
   }
-  /* Label asli selalu abu-abu netral. Warna sistem HANYA muncul pada salinan label di dalam pil kaca (.seg-txt),
-     jadi saat pil digeser ke tab lain, warnanya ikut pindah dan label yang ditinggalkan kembali abu-abu. */
   .segmented-tabs .tab-btn:active { transform: none !important; filter: none !important; }
 
   @property --lx  { syntax: '<length>'; inherits: true; initial-value: 0px; }
@@ -2614,8 +2546,6 @@
   @property --lsx { syntax: '<number>'; inherits: true; initial-value: 1; }
   @property --lsy { syntax: '<number>'; inherits: true; initial-value: 1; }
 
-  /* DIAM: kapsul penanda halaman (abu-abu netral, tepi tipis). Semua properti di bawah
-     dibuat bisa dianimasikan (warna & jumlah lapis bayangan sama) supaya perubahan ke lensa mulus. */
   .seg-lens {
     --lsx: .97;
     --lsy: .9;
@@ -2644,7 +2574,6 @@
       background-color .3s ease, border-color .3s ease, box-shadow .3s ease;
     will-change: transform;
   }
-  /* DISENTUH: lensa kaca bening yang lebih besar dan menonjol keluar trek */
   .segmented-tabs.holding .seg-lens {
     --lsx: 1.16;
     --lsy: 1.42;
@@ -2658,7 +2587,6 @@
       0 14px 28px rgba(0, 0, 0, .12);
   }
 
-  /* Salinan label di dalam lensa (tajam); skalanya dibalik supaya huruf tidak melar */
   .seg-txt {
     position: absolute;
     top: -1px;
@@ -2678,7 +2606,6 @@
     box-shadow: none !important;
     pointer-events: none;
   }
-  /* Garis tepi dalam + kilau: hanya muncul saat disentuh (ketebalan kaca). Netral, tanpa warna. */
   .seg-ring {
     position: absolute;
     inset: 3px;
@@ -2711,7 +2638,6 @@
   .segmented-tabs.holding .seg-glint-a,
   .segmented-tabs.holding .seg-glint-b { opacity: 1; }
 
-  /* TEMA GELAP: trek gelap netral; penanda tab terpilih LEBIH GELAP dari trek (seperti iOS 27); lensa kaca bening */
   body:not(.theme-light) .segmented-tabs {
     --seg-text: #8e8e93;
     --seg-text-lens: var(--accent-yellow);
@@ -2753,10 +2679,6 @@
     .seg-lens, .segmented-tabs.holding .seg-lens { transition: background-color .15s ease, border-color .15s ease, box-shadow .15s ease; }
   }
 
-  /* ===================================================================
-     MODE GELAP: kaca lebih terang & bening (tidak hitam pekat),
-     MODE TERANG: menu tampilan (List/Card/Grid) ikut Liquid Glass
-     =================================================================== */
   body:not(.theme-light) {
     --bg-dark: #101013;
     --card-surface-dark: #1C1C20;
@@ -2778,7 +2700,6 @@
   body:not(.theme-light) .search-pill { color: #E6E6EA; }
   body:not(.theme-light) .search-pill span { color: #E6E6EA; }
 
-  /* Navigasi Notes | Tasks versi gelap: trek abu-abu terang, penanda terpilih LEBIH TERANG, teks aktif berwarna sistem yang dicerahkan */
   body:not(.theme-light) .segmented-tabs {
     --seg-text: #B4B4BC;
     --seg-text-lens: color-mix(in srgb, var(--accent-yellow) 55%, #ffffff);
@@ -2804,7 +2725,6 @@
     border-color: rgba(255,255,255,.55);
   }
 
-  /* Menu List / Card / Grid */
   body:not(.theme-light) .view-popup {
     background: linear-gradient(145deg, rgba(255,255,255,.20) 0%, rgba(255,255,255,.07) 100%), rgba(48,48,54,.78);
     border: 1px solid rgba(255,255,255,.22);
@@ -2828,11 +2748,9 @@
   body.theme-light .view-option:active { background: rgba(0,0,0,.07); }
   body.theme-light .view-option.active { color: var(--accent-yellow); }
 
-  /* Judul menu folder = tombol muat ulang halaman */
   .drawer-header h3.drawer-refresh { cursor: pointer; transition: transform .2s cubic-bezier(.34,1.56,.64,1), opacity .15s ease; }
   .drawer-header h3.drawer-refresh:active { transform: scale(.94); opacity: .6; }
 
-  /* ===== MODE GELAP v2: glassmorphism polos (blur + transparan), tanpa kilau/cahaya, tidak hitam ===== */
   body:not(.theme-light) .header::before {
     background: linear-gradient(180deg, rgba(var(--hdr-rgb), .30) 0%, rgba(var(--hdr-rgb), .16) 55%, rgba(var(--hdr-rgb), 0) 100%);
     -webkit-backdrop-filter: blur(14px);
@@ -2881,7 +2799,6 @@
   body:not(.theme-light) .seg-glint-a,
   body:not(.theme-light) .seg-glint-b { display: none; }
 
-  /* Tombol bulat tidak boleh gepeng saat judul panjang */
   .header-btn { flex-shrink: 0; min-width: 44px; }
   .settings-top h2 { min-width: 0; flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .note-detail-actions { flex-shrink: 0; }
@@ -3316,7 +3233,6 @@
   <iframe id="editorFrame" class="editor-frame" src="about:blank"></iframe>
 </div>
 
-<!-- Analisa, System Management, Daftar Nomor HP: terbuka sebagai panel di atas dashboard (seperti editor), tanpa memuat ulang dashboard -->
 <div class="page-modal" id="pageModal">
   <iframe id="pageFrame" class="editor-frame" src="about:blank"></iframe>
 </div>
@@ -3467,13 +3383,11 @@
     }
   });
 </script>
-
 <script>
   (async function guardAdminAccess() {
     const guardEl = document.getElementById('authGuardScreen');
     const appEl = document.getElementById('screenContainer');
     const OK_KEY = 'bm-admin-ok';
-    // Skrip utama (yang mendefinisikan loadCategories dll.) baru selesai dibaca setelah blok ini mulai
     const ready = document.readyState === 'loading'
       ? new Promise(r => document.addEventListener('DOMContentLoaded', r, { once: true }))
       : Promise.resolve();
@@ -3492,8 +3406,6 @@
       if (l && !l.children.length) l.innerHTML = Array.from({ length: 8 }, () => '<div class="skeleton-card"></div>').join('');
     }
 
-    // Admin yang sudah pernah diverifikasi di perangkat ini: tampilkan aplikasi langsung tanpa
-    // menunggu jaringan. Verifikasi tetap jalan di belakang layar; data dilindungi RLS di server.
     let okUid = null;
     try { okUid = localStorage.getItem(OK_KEY); } catch (e) {}
     const uid = localUserId();
@@ -3516,7 +3428,6 @@
     }
 
     if (timedOut && !optimistic) {
-      // Jangan biarkan spinner menggantung selamanya
       const guardText = guardEl.querySelector('span');
       if (guardText) guardText.textContent = 'Koneksi lambat, belum bisa memverifikasi.';
       const btn = document.createElement('button');
@@ -3529,7 +3440,6 @@
 
     if (!session && !timedOut) {
       try { localStorage.removeItem(OK_KEY); } catch (e) {}
-      // Tautan berbagi (?id=...): ingat tujuannya supaya terbuka setelah login (berlaku 30 menit)
       try {
         if (/[?&]id=/.test(window.location.search)) {
           sessionStorage.setItem('bm-pending-link', JSON.stringify({ s: window.location.search, t: Date.now() }));
@@ -3553,7 +3463,6 @@
       console.error('Gagal cek status admin (jaringan?):', error.message);
       await ready;
       revealApp();
-      // Offline / sinyal lemot: tetap tampilkan daftar dari data tersimpan (dulu kerangka abu-abu tertinggal selamanya)
       await (earlyLoad || loadCategories());
       if (!activeCategoryId) loadAllNotesInDashboard();
       return;
@@ -3568,7 +3477,6 @@
 
     try { localStorage.setItem(OK_KEY, session.user.id); } catch (e) {}
 
-    // Satu struktur dengan Profil: catat login perangkat ini, detak aktif, dan popup pengumuman (sekali per akun)
     try { if (window.BMSession) BMSession.afterAdminReady(supabaseClient, session, { popup: true, perms: true }); } catch (e) {}
 
     revealApp();
@@ -3581,7 +3489,7 @@
       clearTimeout(realtimeRefreshTimer);
       realtimeRefreshTimer = setTimeout(() => {
         const em = document.getElementById('editorModal');
-        if (em && em.classList.contains('open')) return; // daftar dimuat ulang sekali saat editor ditutup
+        if (em && em.classList.contains('open')) return;
         loadCategories();
         refreshTasksIfVisible();
       }, 400);
@@ -3610,9 +3518,6 @@
         rec: deepLinkParams.get('rec')
       });
     } else {
-      // Buka lagi editor yang tadi terbuka HANYA bila halaman baru saja dimuat ulang (maks. 15 menit)
-      // dan Dashboard tampil sendiri. Dashboard yang dimuat diam-diam di belakang Profil tidak boleh
-      // membuka editor: dulu ini membuat aplikasi tiba-tiba menampilkan editor saat baru dibuka.
       const resumeState = readOpenEditorState();
       const inHub = window.name === 'bm-dash-hub';
       if (resumeState && !inHub && resumeState.t && Date.now() - resumeState.t < 15 * 60 * 1000) {
@@ -3623,7 +3528,6 @@
     }
   })();
 </script>
-
 <script>
   let categoriesData = [];
   let notesData = [];
@@ -3644,13 +3548,11 @@
   const PJ_PREFIX = '__pj__';
   const PJ_COLOR = '#4FB58A';
   let pjNotesSource = [];
-  let pjNotesLoadedAt = 0;      // kapan pjNotesSource terakhir dimuat (untuk cache singkat)
+  let pjNotesLoadedAt = 0;
   let pjFolders = [];
 
-  // Cache tabel per note (WeakMap) + versi; naik versi = semua cache dianggap basi
   let tableCacheVer = 0;
   const tableCache = new WeakMap();
-  // loadCategories tidak boleh jalan paralel; panggilan saat berjalan digabung jadi satu putaran ulang
   let loadCatPromise = null, loadCatAgain = false;
 
   const CU_PREFIX = '__cu__';
@@ -3720,10 +3622,6 @@
     });
   }
 
-  // --- Folder karyawan (PJ) & customer: semua note dalam satu pekan digabung jadi SATU note ---
-  // Baris dari beberapa note (mis. hari ini 2 note, besok 1 note) disatukan berurutan dan diberi nomor ulang.
-  // Note gabungan ini hanya tampilan (tidak disimpan di database), jadi tidak bisa diedit / dipin / dihapus;
-  // untuk mengubah data, buka note aslinya di folder BUKU BESAR.
   function mergeNotesByWeek(notes, vf) {
     const buckets = new Map();
     notes.forEach(n => {
@@ -3747,7 +3645,6 @@
         const t = filterTableByVf(getNoteTable(n), filter);
         if (!t || !Array.isArray(t.rows)) return;
 
-        // Kolom disamakan lewat label (id kolom note lama acak), urutan kolom ikut note pertama
         const idMap = {};
         (t.columns || []).forEach(c => {
           const k = normalizeKey(c.label || c.id);
@@ -3764,7 +3661,7 @@
           const cells = {};
           Object.keys(r.cells || {}).forEach(cid => {
             if (idMap[cid]) cells[idMap[cid]] = r.cells[cid];
-            else if (cid.charAt(0) === '_') cells[cid] = r.cells[cid];   // penanda internal baris (_buktiAll, _paid, _linked, dst) ikut dibawa
+            else if (cid.charAt(0) === '_') cells[cid] = r.cells[cid];
           });
           rows.push({ ...r, cells });
         });
@@ -3790,7 +3687,6 @@
     }).sort((a, b) => b._weekAnchor - a._weekAnchor);
   }
 
-  // Sumber data folder karyawan/customer: pakai hasil loadCategories bila masih segar (<30 dtk), kalau tidak ambil ulang
   async function getPjNotesSource() {
     if (pjNotesLoadedAt && Date.now() - pjNotesLoadedAt < 30000) return { data: pjNotesSource, error: null };
     const { data, error } = await supabaseClient
@@ -3821,7 +3717,6 @@
       notesLoadFailed = true;
     } else {
       notesLoadFailed = false;
-      // Bulan mengikuti pekan (bulan tempat Kamis awalnya jatuh), supaya satu pekan tidak terbelah dua bulan
       const matched = (data || [])
         .filter(n => noteHasVf(n, vf))
         .filter(n => {
@@ -3840,7 +3735,7 @@
     const name = pjNameFromId(catId);
     if (!name) return;
     categoriesData.forEach(c => c.active = false);
-    expandedFolderId = catId;   // tetap terbuka selama masih di folder ini
+    expandedFolderId = catId;
     expandedYear = year;
     drawer.classList.remove('open');
     drawerOverlay.classList.remove('open');
@@ -3880,16 +3775,12 @@
   }
 
   async function loadCategoriesImpl() {
-    allNotesLoadedAt = 0;   // data berubah/dimuat ulang: cache pencarian/tugas dianggap basi
+    allNotesLoadedAt = 0;
     let { data: folders, error: folderError } = await supabaseClient
       .from('folders')
       .select('*')
       .order('created_at', { ascending: true });
 
-    // CATATAN: dulu di sini aplikasi otomatis MEMBUAT folder permanen yang tidak ada di daftar yang diterima.
-    // Itu berbahaya: kalau daftar yang datang kosong/tidak lengkap sesaat (sesi belum siap, jaringan, dsb.),
-    // kelima folder dibuat ulang, dan itu terulang setiap muat ulang (kejadian 8 Okt: 240 folder kembar).
-    // Pembuatan otomatis DIHAPUS. Folder permanen cukup ada sekali di database; di sini hanya diberi peringatan.
     if (!folderError) {
       const have = new Set((folders || [])
         .filter(f => f && !f.owner_username && typeof f.name === 'string')
@@ -3922,7 +3813,6 @@
     pjNotesLoadedAt = notesError ? 0 : Date.now();
     tableCacheVer++;
 
-    // Pertahankan data tahun/bulan folder yang sedang terbuka supaya tidak berkedip kosong
     const prevYm = folderYearMonthData;
     const keepYm = expandedFolderId;
     folderYearMonthData = {};
@@ -3961,9 +3851,6 @@
     if (keepYm) loadFolderYearMonths(keepYm).then(() => { if (expandedFolderId === keepYm) renderCategories(); });
   }
 
-  /* Muat ulang daftar notes sesuai tampilan aktif. Kalau sedang memilih bulan tertentu
-     (mis. Oktober 2026), filter bulannya harus ikut dipertahankan — kalau tidak, notes
-     bulan lain ikut muncul setelah keluar dari editor. */
   function reloadActiveNotes() {
     if (activeCategoryId === '__all__') return loadAllNotesInDashboard();
     if (isPjId(activeCategoryId)) return loadPjNotes(activeCategoryId, activeFilterYear, activeFilterMonth);
@@ -4004,8 +3891,6 @@
     renderNotes();
   }
 
-
-  // Warna tetap per buku (semua folder permanen berwarna kuning sama, jadi warna folder tidak bisa membedakan)
   const BOOK_COLORS = {
     bukubesar: '#2FA866',
     bukukasbon: '#E8892B',
@@ -4014,7 +3899,6 @@
     bukuoperasional: '#8B5CF6'
   };
 
-  // Nama di chip: yang jelas dibaca tanpa kata "BUKU" kecuali "Buku Besar" (kata "Besar" saja membingungkan)
   const BOOK_LABELS = {
     bukubesar: 'Buku Besar',
     bukukasbon: 'Kasbon',
@@ -4030,8 +3914,7 @@
     return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
   }
 
-  // ---- Ikon folder = buku 3D (warna mengikuti warna folder) ----
-  function shadeHex(hex, amt) { // amt -1..1 : negatif = lebih gelap, positif = lebih terang
+  function shadeHex(hex, amt) {
     let h = String(hex || '#D9A536').replace('#', '');
     if (h.length === 3) h = h.split('').map(c => c + c).join('');
     if (!/^[0-9a-fA-F]{6}$/.test(h)) h = 'D9A536';
@@ -4040,7 +3923,6 @@
     return '#' + n.map(v => Math.round(v + (t - v) * a).toString(16).padStart(2, '0')).join('');
   }
   function bookIcon(catOrColor) {
-    // Warna sama dengan penanda buku di kartu note (Buku Besar hijau, Kasbon oranye, dst.)
     const c = (catOrColor && typeof catOrColor === 'object')
       ? ((() => { try { return BOOK_COLORS[normalizeKey(catOrColor.name)]; } catch (e) { return null; } })() || catOrColor.color || '#D9A536')
       : (catOrColor || '#D9A536');
@@ -4200,7 +4082,6 @@
       item.addEventListener('touchend', () => clearTimeout(pressTimer));
       item.addEventListener('touchmove', () => clearTimeout(pressTimer));
 
-      // Komputer: klik kanan membuka menu edit/hapus yang sama dengan tekan-tahan di layar sentuh
       item.addEventListener('contextmenu', (e) => {
         if (e.target.closest('.folder-menu-popup')) return;
         e.preventDefault();
@@ -4431,7 +4312,7 @@
     (data || []).forEach(row => {
       const rawDate = getNoteEffectiveDate(row);
       if (!rawDate || isNaN(rawDate)) return;
-      const d = vfForYears ? getWeekAnchorThursday(rawDate) : rawDate;   // folder karyawan/customer: bulan mengikuti pekan
+      const d = vfForYears ? getWeekAnchorThursday(rawDate) : rawDate;
       const y = d.getFullYear();
       const m = d.getMonth() + 1;
       if (!map[y]) map[y] = new Set();
@@ -4468,9 +4349,9 @@
     if (!selected) return;
 
     categoriesData.forEach(c => c.active = (c.id === catId));
-    expandedFolderId = catId;   // tetap terbuka selama masih di folder ini
+    expandedFolderId = catId;
     expandedYear = year;
-    activeCategoryId = catId;   // diset sebelum render supaya bulan aktif langsung bertanda kaca
+    activeCategoryId = catId;
     activeFilterYear = year;
     activeFilterMonth = month;
     drawer.classList.remove('open');
@@ -4666,8 +4547,6 @@
 
     const groups = sortedKeys.map(key => {
       const b = buckets[key];
-      // Nomor pekan di-reset tiap bulan: Kamis pertama bulan itu = Pekan 1, Kamis kedua = Pekan 2, dst.
-      // Pekan dihitung milik bulan tempat hari Kamis awalnya jatuh.
       const num = Math.floor((b.anchor.getDate() - 1) / 7) + 1;
       b.notes.sort((x, y) => {
         const pinDiff = (y.pinned ? 1 : 0) - (x.pinned ? 1 : 0);
@@ -4719,7 +4598,6 @@
       return;
     }
 
-  // Di folder ALL, tiap kartu diberi penanda buku asalnya: titik berwarna + nama (tanpa kata "BUKU")
   function bookChipHtml(note) {
     if (activeCategoryId !== '__all__' || note._merged) return '';
     const cat = categoriesData.find(c => c.id === note.folder_id);
@@ -4764,7 +4642,6 @@
     `;
   }
 
-  
   const displayWeeks = groupNotesByWeek(notesData).reverse();
   let idxCounter = 0;
   const viewKey = [activeCategoryId, activeFilterYear, activeFilterMonth].join('|');
@@ -4785,7 +4662,7 @@
       card.addEventListener('click', () => {
         if (longPressed) { longPressed = false; return; }
         if (noteSelectionMode) {
-          if (card.dataset.merged !== '1') toggleNoteSelection(card.dataset.id);   // note gabungan bukan data asli
+          if (card.dataset.merged !== '1') toggleNoteSelection(card.dataset.id);
         } else {
           openNoteDetail(card.dataset.id);
         }
@@ -4793,7 +4670,7 @@
 
       card.addEventListener('touchstart', () => {
         longPressed = false;
-        if (card.dataset.merged === '1') return;   // tidak ada pin / pindah / hapus untuk note gabungan
+        if (card.dataset.merged === '1') return;
         pressTimer = setTimeout(() => {
           longPressed = true;
           if (!noteSelectionMode) enterSelectionMode(card.dataset.id);
@@ -4811,7 +4688,6 @@
   const viewOptions = document.querySelectorAll('.view-option');
   const notesList = document.getElementById('notesList');
 
-  // Ingat pilihan tampilan (list / card / grid) di perangkat ini
   const VIEW_MODE_KEY = 'bm-admin-view-mode';
   const VALID_VIEW_MODES = ['view-list', 'view-card', 'view-grid'];
   (function restoreViewMode() {
@@ -4892,7 +4768,6 @@
     tasksDataLoadedOnce = true;
     renderTasks();
   });
-
 
   function normalizeKey(str) {
     return String(str).toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -5066,10 +4941,6 @@
     { id: 'keterangan', label: 'Keterangan' }
   ];
 
-  // =====================================================================
-  // BUKU HUTANG PIUTANG — data terpisah dari buku besar, warung & kasbon
-  // schema 'hutangpiutang-data-v1': { jenis('hutang'|'piutang'), nama, total, dibayar, keterangan }
-  // =====================================================================
   const HUTANG_SCHEMA = 'hutangpiutang-data-v1';
   const HUTANG_EDITOR_FILE = 'editor-data-hutang-piutang.html';
 
@@ -5081,11 +4952,6 @@
     return !!(cat && /hutang|piutang/i.test(cat.name || ''));
   }
 
-  // =====================================================================
-  // BUKU OPERASIONAL — data terpisah (hanya penyimpanan; dibaca halaman analisa).
-  // schema 'operasional-data-v1': { buyer, seller, item, keterangan, harga, metode, bayarCash, bayarTransfer, bukti[] }
-  // Tidak masuk Tasks, folder per PJ/Customer, maupun pencarian global (sama seperti Warung/Kasbon/Hutang).
-  // =====================================================================
   const OPERASIONAL_SCHEMA = 'operasional-data-v1';
   const OPERASIONAL_EDITOR_FILE = 'editor-data-operasional.html';
 
@@ -5132,7 +4998,6 @@
     { id: 'nominal', label: 'Harga' }
   ];
 
-  // Status pembayaran Hutang/Piutang/Kasbon: LUNAS / SEBAGIAN / BELUM
   const MONEY_ST = {
     lunas:   { label: 'Lunas',          short: 'LUNAS' },
     sebagian:{ label: 'Sebagian',       short: 'SEBAGIAN' },
@@ -5266,7 +5131,7 @@
   }
 
   function getNoteEffectiveDate(note) {
-    if (note && note._weekAnchor) return new Date(note._weekAnchor);   // note gabungan per pekan
+    if (note && note._weekAnchor) return new Date(note._weekAnchor);
     if (note && note.title) {
       const m = String(note.title).match(/(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2,4})/);
       if (m) {
@@ -5301,9 +5166,7 @@
   };
   const TASK_TYPE_ORDER = ['kasbon', 'hutang', 'piutang', 'ditinggal', 'belumbayar', 'lengkap'];
   const TASK_MONEY_TYPES = ['kasbon', 'hutang', 'piutang'];
-  const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];   // (dipakai editor sebagai fokus)
-  // Kelengkapan satu baris Data Administrator. get(label) -> nilai; has(label) -> kolom ada.
-  // Wajib: PJ, Customer, Barang, Stok Barang ATAU Barang Keluar, Harga; Metode wajib bila Harga berisi angka.
+  const TASK_INCOMPLETE_FIELDS = ['Customer', 'Barang', 'Harga'];
   function rowCompleteness(get, has, opt) {
     opt = opt || {};
     const out = [];
@@ -5338,7 +5201,6 @@
   function isStokNone(v) { return normalizeKey(v) === 'tidakada'; }
   function isStokBJ(v) { return normalizeKey(v) === 'bj'; }
   function isHargaCentang(v) { return /[√✓✔☑✅]/.test(String(v == null ? '' : v)); }
-  // Daftar barang yang MASIH ditinggal dari kolom Stok Barang ("B&J", "A ✓, B", "Piston 2 pcs", ...)
   function stokRemainingItems(stok, barang) {
     const raw = String(stok == null ? '' : stok).trim();
     const clean = raw.replace(/[√✓✔☑✅]/g, '').replace(/\s+/g, ' ').trim();
@@ -5376,10 +5238,6 @@
     return categoriesData.filter(c => !c.ownerUsername && !c.schema && !isPjId(c.id));
   }
 
-  // ===== Pelacak barang Data Administrator (SALINAN logika editor-data-administrator.html) =====
-  // Dulu Task membaca baris tabel yang sudah "diratakan" sehingga tidak tahu: barang kembar (krengkes, krengkes),
-  // lingkup Harga (dibawa / ditinggal / semua), barang yang sudah diambil tapi bayarnya menyusul, barang baru yang
-  // ditinggal di baris pengambilan, dan barang yang dibawa di hari titip yang sama. Sekarang dihitung dari record asli.
   const AdminTrack = (function () {
     const CENT_G = /[\u221A\u2713\u2714\u2611\u2705]/g;
     const normText = s => String(s == null ? '' : s).trim().replace(/\s+/g, ' ').toLowerCase();
@@ -5391,12 +5249,10 @@
     const splitList = s => String(s == null ? '' : s).split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
     const itemKey = name => normText(stripCentang(name));
     const isDateToken = t => /^\d{1,2}[.\/-]\d{1,2}[.\/-]\d{2,4}$/.test(String(t == null ? '' : t).trim());
-    // Barang kembar diberi kunci unik: gardan, gardan#2, gardan#3
     function withUniqueKeys(items) {
       const seen = {};
       return items.map(i => { const n = (seen[i.key] = (seen[i.key] || 0) + 1); return n > 1 ? Object.assign({}, i, { key: i.key + '#' + n }) : i; });
     }
-    // Barang sudah DIBAWA semua (Barang Keluar terisi, Stok "Tidak ada") tapi Harga kosong = belum dibayar
     function outUnpaidNames(o, text) {
       if (!o) return null;
       const links = Array.isArray(o.ambilDari) ? o.ambilDari : [];
@@ -5423,7 +5279,6 @@
         if (!names.length) names = ['B&J'];
         return { whole: true, text, items: withUniqueKeys(names.map(n => ({ key: itemKey(n), name: n, done: allDone }))) };
       }
-      // Barang BAWAAN: sisa titipan lama yang hanya disalin ke Stok Barang baris pengambilan (dilacak di data asalnya)
       const carry = {};
       (Array.isArray(o.stokCarry) ? o.stokCarry : []).forEach(k => { carry[k] = (carry[k] || 0) + 1; });
       const items = withUniqueKeys(splitList(text)
@@ -5435,7 +5290,6 @@
           if (carried) carry[key]--;
           return { key, name: i.name, done: i.done, carried };
         }));
-      // Barang yang DIBAWA PULANG di hari titip yang sama (Barang Keluar terisi, tapi masih ada sisa di Stok Barang)
       let outItems = [];
       const isLinkRow = Array.isArray(o.ambilDari) && o.ambilDari.length > 0;
       if (!isLinkRow && items.length) {
@@ -5465,13 +5319,12 @@
         if (p.payItems == null) all = true; else p.payItems.forEach(k => set.add(k));
       });
       if (all) parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
-      if (o.ownPaid) { // Harga baris pengambilan juga melunasi barang yang baru ditinggal
+      if (o.ownPaid) {
         parsed.items.forEach(i => { if (!i.carried) set.add(i.key); });
         (parsed.outItems || []).forEach(i => set.add(i.key));
       }
       return set;
     }
-    // Baris pengambilan LAMA (belum punya stokCarry): tebak barang bawaan dari data titipan asalnya
     function resolveCarry(r, idx) {
       if (Array.isArray(r.stokCarry)) return r.stokCarry;
       const links = Array.isArray(r.ambilDari) ? r.ambilDari : [];
@@ -5503,7 +5356,6 @@
       });
       return m;
     }
-    // Hasil: barang yang masih DITINGGAL dan barang yang DIBAWA tapi belum dibayar untuk satu record
     function analyze(r, idx) {
       const none = { ditinggal: null, belumbayar: null };
       if (!r) return none;
@@ -5514,10 +5366,9 @@
         if (carry.length) rr = Object.assign({}, r, { stokCarry: carry });
       }
       const parsed = parseStokItems(rr);
-      if (isPickupRow && !parsed.out && !parsed.items.some(i => !i.carried)) return none; // tidak ada barang baru di baris pengambilan
-      if (!isPickupRow && isCentangText(r.harga) && !r.hargaAuto) return none;            // Harga ✓ ketikan manual = sudah beres
+      if (isPickupRow && !parsed.out && !parsed.items.some(i => !i.carried)) return none;
+      if (!isPickupRow && isCentangText(r.harga) && !r.hargaAuto) return none;
       const paidSet = paidKeySet(rr, parsed);
-      // Harga ANGKA di baris titip = lunas saat dititip; lingkupnya (hargaScope) bisa hanya yang dibawa / hanya yang ditinggal
       if (!isPickupRow && !isHargaKosong(r.harga) && !isCentangText(r.harga)) {
         const sc = r.hargaScope || 'all';
         if (sc !== 'out') parsed.items.forEach(i => paidSet.add(i.key));
@@ -5526,26 +5377,23 @@
       const dibawaUnpaid = [], dibawaPaid = [];
       let ditinggal = null;
       if (parsed.out) {
-        // semua barang sudah dibawa: yang belum dibayar jadi tugas
         parsed.items.forEach(i => (paidSet.has(i.key) ? dibawaPaid : dibawaUnpaid).push(i.name));
       } else {
-        const taken = (r.pickup && !r.pickups) ? new Set(parsed.items.map(i => i.key)) : takenKeys(rr, parsed); // format lama = sudah diambil semua
+        const taken = (r.pickup && !r.pickups) ? new Set(parsed.items.map(i => i.key)) : takenKeys(rr, parsed);
         const left = parsed.items.filter(i => !i.done && !i.carried && !taken.has(i.key));
         if (left.length) {
           const paidNames = left.filter(i => paidSet.has(i.key)).map(i => i.name);
           ditinggal = { names: left.map(i => i.name), paidNames, paid: paidNames.length === left.length,
                         allLeft: !!parsed.whole && left.length === parsed.items.length };
         }
-        // dibawa di hari titip yang sama
         (parsed.outItems || []).forEach(i => (paidSet.has(i.key) ? dibawaPaid : dibawaUnpaid).push(i.name));
-        // sudah diambil, bayarnya menyusul (ambil semua, baru sebagian yang dibayar)
         const pk = Object.values(r.pickups || {}).filter(Boolean);
         parsed.items.forEach(i => {
           if (i.carried || i.done) return;
           const entries = pk.filter(p => p.mode !== 'bayar' && Array.isArray(p.items) && p.items.includes(i.key));
           if (!entries.length) return;
           if (paidSet.has(i.key)) dibawaPaid.push(i.name);
-          else if (entries.some(p => p.paid)) dibawaUnpaid.push(i.name);   // (kalau Harga kosong, ditagih lewat baris pengambilannya)
+          else if (entries.some(p => p.paid)) dibawaUnpaid.push(i.name);
         });
       }
       return { ditinggal, belumbayar: dibawaUnpaid.length ? { names: dibawaUnpaid, paidNames: dibawaPaid } : null };
@@ -5553,7 +5401,6 @@
     return { analyze, buildIndex };
   })();
 
-  // Task untuk satu note Data Administrator (schema admin-data-v1), dibaca dari record aslinya
   function adminTasksOf(note, idx, tasks) {
     const pad2 = n => String(n).padStart(2, '0');
     const recs = [...note.content.records].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -5580,7 +5427,6 @@
       const a = AdminTrack.analyze(r, idx);
       if (a.ditinggal) tasks.push({ ...base, type: 'ditinggal', allLeft: a.ditinggal.allLeft, what: a.ditinggal.names.join(', '), paid: a.ditinggal.paid, paidNames: a.ditinggal.paidNames });
       if (a.belumbayar) tasks.push({ ...base, type: 'belumbayar', what: a.belumbayar.names.join(', '), paidNames: a.belumbayar.paidNames });
-      // Belum bayar = kolom Harga kosong (selain yang sudah ditandai lunas / ✓ / dilacak lewat baris pengambilan)
       if (!a.belumbayar && !(r.ambilDari && r.ambilDari.length) && !r.hargaAuto && !r.ownPaid
           && isHargaEmpty(formatHargaCell(r.harga)) && !isHargaCentang(r.harga)
           && !Object.values(r.pickups || {}).some(p => p && p.paid)
@@ -5593,7 +5439,6 @@
     });
   }
 
-  // Hasil dihitung sekali per set data (dipakai renderTasks dan sheet filter); otomatis basi bila data dimuat ulang
   let tasksMemo = { n: null, k: null, h: null, v: -1, r: [] };
   function computeTasks() {
     if (tasksMemo.n === allNotesData && tasksMemo.k === allKasbonNotes && tasksMemo.h === allHutangNotes && tasksMemo.v === tableCacheVer) return tasksMemo.r;
@@ -5608,7 +5453,6 @@
 
     allNotesData.forEach(note => {
       if (isCustomNote(note)) return;
-      // Note format baru (Data Administrator): hitung dari record asli, bukan dari baris tabel yang sudah diratakan
       if (note.content && note.content.schema === 'admin-data-v1' && Array.isArray(note.content.records)) { adminTasksOf(note, adminIdx, tasks); return; }
       const content = getNoteTable(note);
       if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return;
@@ -5638,8 +5482,6 @@
         const paidFlag = !!cells._paid;
         const left = stokRemainingItems(stok, base.barang);
         let pushedBB = false;
-        // Baris pengambilan/pembayaran (terhubung ke titipan) bukan titipan: sisa barangnya dilacak di data titip
-        // Harga berisi ANGKA = sudah dibayar lunas saat dititip; barangnya tetap harus dilacak sampai diambil
         const paidAtDrop = !isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal);
         if (!cells._linked && left.any && ((isHargaEmpty(hargaVal) && !isHargaCentang(hargaVal)) || paidFlag || paidAtDrop)) {
           const payKeys = new Set((cells._payKeys || []).map(k => normalizeKey(k)));
@@ -5648,8 +5490,6 @@
           tasks.push({ ...base, type: 'ditinggal', allLeft: left.whole, what: left.names.join(', '), paid: paidNames.length === left.names.length, paidNames });
         }
 
-        // Barang sudah DIBAWA semua (Barang Keluar terisi, Stok "Tidak ada") tapi Harga kosong = belum dibayar.
-        // Berlaku juga untuk baris pengambilan (terhubung ke titipan) selama belum dibayar lewat "Bayar saja".
         {
           const keluar = String(val('Barang Keluar') || '').trim();
           const stokClean = stok.replace(/[√✓✔☑✅]/g, '').trim();
@@ -5792,7 +5632,7 @@
 
     const folders = getTaskFolders();
     const validFolderIds = new Set(folders.map(f => f.id));
-    if (categoriesData.length) {   // jangan hapus filter tersimpan saat daftar folder belum/gagal dimuat
+    if (categoriesData.length) {
       let pruned = false;
       [...tasksFilter.folders].forEach(id => { if (!validFolderIds.has(id)) { tasksFilter.folders.delete(id); pruned = true; } });
       if (pruned) saveTasksFilter();
@@ -5867,7 +5707,6 @@
     if (!card) return;
     const t = currentShownTasks[Number(card.dataset.idx)];
     if (!t) return;
-    // rec = ID data: editor langsung membuka data itu (tanpa scroll); row/focus tetap dikirim untuk editor yang membacanya
     openEditor(t.noteId, { folder: t.folderId, rec: t.recId || undefined, row: t.rowIndex, focus: (t.missing && TASK_INCOMPLETE_FIELDS.includes(t.missing[0])) ? t.missing[0] : undefined });
   });
 
@@ -5919,7 +5758,6 @@
     renderTasksFilterSheet();
     renderTasks();
   });
-
 
   let noteSelectionMode = false;
   let selectedNoteIds = new Set();
@@ -6125,7 +5963,6 @@
   (function () {
     const t = document.getElementById('drawerTitleRefresh');
     if (!t) return;
-    // Segarkan data tanpa memuat ulang halaman
     const go = (silent) => {
       t.classList.add('bm-spin');
       Promise.resolve(loadCategories()).catch(() => {}).then(() => {
@@ -6139,7 +5976,7 @@
     window.addEventListener('bm:refresh', (e) => {
       e.preventDefault();
       const em = document.getElementById('editorModal');
-      if (em && em.classList.contains('open')) return;   // editor sedang dipakai: jangan ganggu
+      if (em && em.classList.contains('open')) return;
       go(true);
     });
     t.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
@@ -6149,7 +5986,6 @@
   const drawer = document.getElementById('drawer');
   const drawerOverlay = document.getElementById('drawerOverlay');
 
-  // Saat drawer dibuka, menu tahun/bulan diarahkan ke folder yang sedang aktif (kalau sempat berpindah ke folder lain)
   function syncDrawerToActive() {
     const id = activeCategoryId;
     if (!id || id === '__all__' || deleteModeCatId) return;
@@ -6381,8 +6217,6 @@
 
   const TRASH_DAYS = 30;
   const BUKTI_BUCKET = 'bukti';
-  // Gambar ImgBB ditampilkan lewat /api/img (proxy Vercel) karena i.ibb.co diblokir di sebagian jaringan.
-  // Yang tersimpan di data tetap URL aslinya; URL Supabase dan lainnya dibiarkan.
   function buktiSrc(u){
     return (typeof u === 'string' && /^https:\/\/i\.ibb\.co\//.test(u)) ? '/api/img?u=' + encodeURIComponent(u) : (u || '');
   }
@@ -6394,7 +6228,7 @@
   }
 
   function collectBuktiPathsFromNotes(notes){
-    const marker = '/storage/v1/object/public/' + BUKTI_BUCKET + '/'; // hanya foto Supabase; foto ImgBB tidak ikut dihapus
+    const marker = '/storage/v1/object/public/' + BUKTI_BUCKET + '/';
     const paths = [];
     (notes || []).forEach(n => {
       const c = n && n.content;
@@ -6486,9 +6320,6 @@
   }
 
   async function purgeExpiredTrash(){
-    // Batas kedaluwarsa dihitung dari jam SERVER, bukan jam HP. Kalau jam perangkat salah/maju jauh,
-    // jam HP bisa membuat isi Sampah terhapus permanen lebih cepat dari seharusnya.
-    // Kalau jam server tidak bisa didapat, tidak ada yang dihapus.
     let serverNowMs = NaN;
     try {
       const { data: sn, error: snErr } = await supabaseClient.rpc('server_now');
@@ -6839,7 +6670,6 @@
     }
   });
 
-
   const KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/create-karyawan';
   const DELETE_KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/delete-karyawan';
   const karyawanScreen = document.getElementById('karyawanScreen');
@@ -7084,7 +6914,6 @@
     localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
   });
 
-
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
   const btnSearchBack = document.getElementById('btnSearchBack');
@@ -7137,9 +6966,6 @@
     return String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
   }
 
-  /* Semua baris yang cocok (bukan hanya yang pertama). Setiap kata kunci harus ada di salah satu kolom
-     baris itu, jadi "joko 12-11" menemukan baris Joko pada tanggal 12. Kolom yang ditampilkan adalah
-     kolom yang memuat seluruh kata kunci; kalau tidak ada, kolom pertama yang memuat salah satu kata. */
   function findAllMatchesInContent(content, q) {
     const out = [];
     if (!content || !Array.isArray(content.columns) || !Array.isArray(content.rows)) return out;
@@ -7173,8 +6999,6 @@
     return (columns || []).find(c => f.ids.includes(c.id) || f.labels.includes(normalizeKey(c.label || ''))) || null;
   }
 
-  /* Nama PJ / Customer / Barang dari baris yang cocok. Kolom yang cocok dengan kata kunci
-     sudah tampil di atas, jadi tidak diulang di samping nama folder. */
   function buildSearchRowTags(cellMatch, q) {
     if (!cellMatch || !cellMatch.row) return '';
     return SEARCH_TAG_FIELDS.map(f => {
@@ -7226,7 +7050,6 @@
     searchFilterPopup.classList.remove('open');
   });
 
-  // --- Riwayat pencarian (disimpan di perangkat ini) ---
   const SEARCH_HISTORY_KEY = 'bm-search-history';
   const SEARCH_HISTORY_MAX = 10;
 
@@ -7237,9 +7060,8 @@
     } catch (e) { return []; }
   }
   function persistSearchHistory(arr) {
-    try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr)); } catch (e) { /* penyimpanan diblokir: abaikan */ }
+    try { localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(arr)); } catch (e) {  }
   }
-  // Kata kunci terbaru di paling atas, tanpa duplikat (huruf besar/kecil dianggap sama)
   function saveSearchHistory(term) {
     const t = String(term || '').replace(/\s+/g, ' ').trim().slice(0, 60);
     if (t.length < 2) return;
@@ -7270,7 +7092,6 @@
         </div>`).join('')}`;
   }
 
-  // Isi kolom pencarian dengan kata kunci tertentu (dari riwayat atau saran), lalu cari
   function applySearchTerm(term) {
     const field = document.getElementById('searchInputField');
     field.value = term;
@@ -7294,11 +7115,8 @@
     if (clearBtn) clearBtn.addEventListener('click', () => { clearSearchHistory(); renderSearchResults(''); });
   }
 
-  // --- Saran pencarian cerdas: "Mungkin yang Anda maksud ..." (koreksi ketikan berdasarkan isi data) ---
-  const SEARCH_SUGGEST_BELOW = 3;   // saran hanya muncul kalau hasil kurang dari ini
+  const SEARCH_SUGGEST_BELOW = 3;
 
-  // Jarak edit (Damerau-Levenshtein): sisip, hapus, ganti, dan tukar dua huruf bersebelahan = 1 langkah.
-  // Berhenti lebih awal kalau sudah melewati batas.
   function editDistance(a, b, max) {
     const al = a.length, bl = b.length;
     if (Math.abs(al - bl) > max) return max + 1;
@@ -7321,8 +7139,6 @@
     return prev[bl];
   }
 
-  // Daftar kata dari data (judul, isi tabel, nama folder) beserta seberapa sering muncul.
-  // Dibuat sekali setiap data dimuat ulang.
   let searchVocabCache = { ref: null, vocab: null };
   function getSearchVocab() {
     if (searchVocabCache.ref === allNotesData && searchVocabCache.vocab) return searchVocabCache.vocab;
@@ -7331,7 +7147,7 @@
       const words = String(text || '').toLowerCase().match(/[\p{L}\p{N}]+/gu);
       if (!words) return;
       words.forEach(w => {
-        if (w.length < 3 || w.length > 24 || !/\p{L}/u.test(w)) return;   // angka murni bukan salah ketik
+        if (w.length < 3 || w.length > 24 || !/\p{L}/u.test(w)) return;
         vocab.set(w, (vocab.get(w) || 0) + 1);
       });
     };
@@ -7353,7 +7169,6 @@
     return vocab;
   }
 
-  // Kata terdekat dari data untuk satu kata yang salah ketik; null kalau tidak ada yang cukup dekat
   function closestVocabWord(token, vocab) {
     if (token.length < 4) return null;
     const maxDist = token.length <= 5 ? 1 : 2;
@@ -7371,8 +7186,6 @@
     return best ? best.word : null;
   }
 
-  // Koreksi seluruh kata kunci (per kata). Kata yang sudah ada di data, atau baru diketik sebagian,
-  // dibiarkan. Mengembalikan kalimat hasil koreksi, atau null kalau tidak ada yang perlu diperbaiki.
   function suggestQuery(term) {
     const vocab = getSearchVocab();
     if (vocab.size === 0) return null;
@@ -7422,7 +7235,6 @@
     const countEl = document.getElementById('searchResultsCount');
     const q = term.trim().toLowerCase();
 
-    // Belum mengetik: tampilkan riwayat pencarian (bukan daftar folder)
     if (!q) {
       headerEl.style.display = 'none';
       searchFilterPopup.classList.remove('open');
@@ -7439,7 +7251,6 @@
     countEl.textContent = `Found ${total} results`;
     const SEARCH_RENDER_MAX = 150;
 
-    // Saran koreksi: hanya kalau hasilnya sedikit DAN kata koreksinya memang menemukan lebih banyak
     let suggestHtml = '';
     if (total < SEARCH_SUGGEST_BELOW) {
       const sug = suggestQuery(term.trim());
@@ -7493,8 +7304,6 @@
     wireSearchSuggestClicks();
   }
 
-  // Dipanggil saat editor ditutup: hasil pencarian yang sedang terbuka diperbarui dengan kata kunci,
-  // filter folder, dan posisi gulir yang sama.
   async function refreshSearchAfterEditor() {
     if (!searchOverlay.classList.contains('open')) return;
     const list = document.getElementById('searchResultsList');
@@ -7515,10 +7324,9 @@
     });
     document.querySelectorAll('#searchResultsList [data-type="note"]').forEach(item => {
       item.addEventListener('click', () => {
-        // Pencarian dibiarkan terbuka di bawah editor: saat editor ditutup, kata kunci, filter, dan posisi gulir masih sama.
         const field = document.getElementById('searchInputField');
-        if (field) { saveSearchHistory(field.value); field.blur(); }   // simpan ke riwayat; tutup keyboard dan jangan muncul lagi saat kembali
-        openEditor(item.dataset.noteId, { folder: item.dataset.folderId, rec: item.dataset.recId || null });   // editor langsung menampilkan data yang dicari
+        if (field) { saveSearchHistory(field.value); field.blur(); }
+        openEditor(item.dataset.noteId, { folder: item.dataset.folderId, rec: item.dataset.recId || null });
       });
     });
   }
@@ -7530,7 +7338,6 @@
     if (!v) { renderSearchResults(v); return; }
     searchDebounce = setTimeout(() => renderSearchResults(document.getElementById('searchInputField').value), 150);
   });
-  // Tekan Enter / tombol cari di keyboard: simpan ke riwayat dan tutup keyboard supaya hasil terlihat penuh
   document.getElementById('searchInputField').addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     e.preventDefault();
@@ -7671,10 +7478,6 @@
 
   const OPEN_EDITOR_STORAGE_KEY = 'bmtech_open_editor';
 
-  // Muat halaman ke iframe editor. Iframe disembunyikan sampai selesai dimuat lalu muncul halus,
-  // jadi pengguna melihat panel naik dengan mulus, bukan layar putih/loading.
-  // Memuat iframe lewat location.replace (bukan .src) supaya TIDAK menambah entri riwayat browser.
-  // Kalau tidak, tombol kembali Android mundur ke about:blank di dalam iframe = layar kosong.
   function navigateFrame(frame, url) {
     try { frame.contentWindow.location.replace(url); } catch (e) { frame.src = url; }
   }
@@ -7688,7 +7491,7 @@
     editorModal.classList.remove('ready');
     editorFrame.onload = function () {
       if (!frameIsBlank(editorFrame)) editorModal.classList.add('ready');
-      try { if (window.BMSession && !frameIsBlank(editorFrame)) BMSession.applyToFrame(editorFrame.contentWindow); } catch (e) {}   // sembunyikan tombol hapus/Sampah sesuai izin role
+      try { if (window.BMSession && !frameIsBlank(editorFrame)) BMSession.applyToFrame(editorFrame.contentWindow); } catch (e) {}
     };
     editorReadyTimer = setTimeout(() => editorModal.classList.add('ready'), 6000);
     navigateFrame(editorFrame, url);
@@ -7747,7 +7550,6 @@
     pushEditorState();
   }
 
-  // Setelah panel (iframe) ditutup, fokus keyboard harus kembali ke dashboard, kalau tidak Esc berikutnya tidak sampai
   function returnFocusToDashboard() {
     try {
       const a = document.activeElement;
@@ -7756,7 +7558,6 @@
     } catch (e) {}
   }
 
-  // Muat ulang daftar tugas kalau tab Tugas sedang terbuka (setelah editor ditutup / ada perubahan realtime)
   function refreshTasksIfVisible() {
     const tt = document.getElementById('tabTasks');
     if (!tt || !tt.classList.contains('active')) return;
@@ -7770,8 +7571,6 @@
     clearOpenEditorState();
     editorModal.classList.remove('open');
     clearTimeout(editorReadyTimer);
-    // Panel ditutup di layar, tapi halaman editor JANGAN langsung dibuang: minta ia menyelesaikan penyimpanan dulu.
-    // (Kalau dibuang saat masih menyimpan, browser memunculkan pop-up "Leave site?" dan perubahan bisa hilang.)
     const frameToBlank = editorFrame;
     let blanked = false;
     const blankNow = () => {
@@ -7783,7 +7582,7 @@
     else {
       editorFlushWaiter = () => setTimeout(blankNow, 300);
       try { editorFrame.contentWindow.postMessage('flush-save', window.location.origin); } catch (e) { setTimeout(blankNow, 500); }
-      setTimeout(blankNow, 20000);   // batas aman kalau editor tidak menjawab
+      setTimeout(blankNow, 20000);
     }
     loadCategories();
     refreshSearchAfterEditor();
@@ -7793,25 +7592,20 @@
   function pushEditorState() { try { history.pushState({ editorModal: true }, ''); } catch (e) {} }
 
   window.addEventListener('message', (e) => {
-    // Hanya pesan dari iframe editor kita sendiri yang dipercaya (jendela lain tidak boleh menutup editor / menyimpan state)
     if (e.source !== editorFrame.contentWindow || e.origin !== window.location.origin) return;
     if (e.data && e.data.type === 'flush-done' && editorFlushWaiter) editorFlushWaiter();
     if (e.data === 'close-editor') {
-      if (history.state && history.state.editorModal) history.back(); // memicu popstate -> closeEditorModal
+      if (history.state && history.state.editorModal) history.back();
       else closeEditorModal();
     }
     if (e.data === 'note-autosaved' || (e.data && e.data.type === 'note-autosaved')) {
       if (e.data && e.data.noteId) saveOpenEditorState(e.data.noteId, e.data.folder);
-      // daftar dimuat ulang sekali saat editor ditutup, bukan di setiap simpan otomatis
     }
   });
-
-
 
   const noteDetailOverlay = document.getElementById('noteDetailOverlay');
   let currentDetailNote = null;
 
-  // ---- Pintasan titipan <-> pengambilan/pembayaran ----
   function fmtJumpDate(iso) {
     const d = iso ? new Date(iso) : null;
     if (!d || isNaN(d)) return '';
@@ -7835,19 +7629,15 @@
     });
     return out.length ? `<div class="jump-chips">${out.join('')}</div>` : '';
   }
-  // Note hasil gabungan pekan / hasil ambil dari server (tidak ada di notesData) disimpan sementara di sini
   const detailExtraNotes = {};
   const rowsHaveRid = (n, rid) => !!(n && n.content && Array.isArray(n.content.rows) &&
     n.content.rows.some(r => r && r.cells && r.cells._rid === rid));
 
   async function resolveJumpNote(noteId, recId) {
-    // 1) note asli ada langsung di daftar yang sedang tampil
     let n = notesData.find(x => x.id === noteId);
     if (n && !n._merged) return n;
-    // 2) tampilan karyawan/customer = rekap gabungan per pekan; cari rekap yang memuat baris tujuan
     n = notesData.find(x => x._merged && rowsHaveRid(x, recId));
     if (n) return n;
-    // 3) tidak sedang termuat (beda pekan/bulan/folder) -> ambil dari server
     const { data, error } = await supabaseClient.from('notes').select('*').order('created_at', { ascending: false });
     if (error || !Array.isArray(data)) return null;
     const target = data.find(x => x.id === noteId);
@@ -7889,7 +7679,6 @@
     jumpToRecord(b.dataset.jn, b.dataset.jr);
   });
 
-  // Ringkasan di atas tabel Buku Hutang Piutang: sisa Hutang (harus dibayar) dan sisa Piutang (harus ditagih) dipisah
   function renderHutangSummary(note) {
     const box = document.getElementById('noteDetailSummary');
     if (!box) return;
@@ -7908,7 +7697,6 @@
     box.className = 'hp-summary show';
   }
 
-  // Satu baris -> satu kartu (dipakai di HP supaya semua kolom terbaca tanpa geser)
   function buildMoneyCard(cols, row, idx) {
     const rc = row.cells || {};
     const st = rc._st, meta = MONEY_ST[st];
@@ -7970,7 +7758,6 @@
       (rows ? `<dl class="nd-grid">${rows}</dl>` : '') + foot + '</article>';
   }
 
-  // Pilihan tampilan Kartu/Tabel (hanya muncul di HP; di layar lebar selalu Tabel)
   const noteViewToggle = document.getElementById('noteViewToggle');
   const NOTE_VIEW_KEY = 'bmNoteView';
   function getSavedNoteView() {
@@ -7991,7 +7778,6 @@
   });
   setNoteView(getSavedNoteView(), false);
 
-  // ---- Isi detail note: dipakai ulang saat pilihan hari berubah ----
   let detailFullContent = null, detailShownRows = [], detailDay = 'all';
   const DAY_ABBR = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
   const pad2d = n => String(n).padStart(2, '0');
@@ -8060,7 +7846,6 @@
     }
   }
 
-  // Rekap karyawan/customer (gabungan satu pekan): pilih ALL atau satu hari lewat deretan tanggal yang bisa digeser
   const DAY_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
   function dayFromKey(k) {
     const m = /^(\d{1,2})-(\d{1,2})-(\d{4})$/.exec(String(k || ''));
@@ -8125,7 +7910,6 @@
     if (wrap) wrap.scrollTop = 0;
   });
 
-  // Ketuk kartu = buka editor langsung di data itu
   async function openCardInEditor(row) {
     const note = currentDetailNote;
     if (!note || !row || !row.cells) return;
@@ -8140,7 +7924,7 @@
           folderId = data ? data.folder_id : null;
         } catch (err) { folderId = null; }
       }
-      openEditor(rc._nid, { folder: folderId || undefined, rec: rc._rid });   // detail dibiarkan terbuka di bawah editor
+      openEditor(rc._nid, { folder: folderId || undefined, rec: rc._rid });
       return;
     }
     openEditor(note.id, { folder: note.folder_id, rec: rc._rid || undefined });
@@ -8160,7 +7944,6 @@
     });
   })();
 
-  // Judul detail: bila diganti saat panel sudah terbuka (mis. lewat shortcut hijau/biru), tiap karakter yang berbeda berputar seperti angka jam
   let titleRollTimer = 0;
   function setDetailTitle(text, animate) {
     const el = document.getElementById('noteDetailTitle');
@@ -8178,7 +7961,7 @@
     for (let i = 0; i < n; i++) {
       const o = a[i] === undefined ? '' : a[i], c = b[i] === undefined ? '' : b[i];
       if (o === c) { html += escapeHtml(c); continue; }
-      const top = forward ? o : c, bottom = forward ? c : o;   // maju: lama keluar ke atas; mundur: baru turun dari atas
+      const top = forward ? o : c, bottom = forward ? c : o;
       html += `<span class="roll-ch ${forward ? 'up' : 'down'}" style="--d:${delay}ms"><span>${escapeHtml(top || ' ')}</span><span>${escapeHtml(bottom || ' ')}</span></span>`;
       delay += 28;
     }
@@ -8187,14 +7970,13 @@
     el.querySelectorAll('.roll-ch').forEach(r => { r.style.height = ''; r.classList.add('go'); r.firstElementChild.style.animationDelay = r.style.getPropertyValue('--d'); r.lastElementChild.style.animationDelay = r.style.getPropertyValue('--d'); });
     titleRollTimer = setTimeout(() => { el.textContent = next; }, 420 + delay + 60);
   }
-  function parseTitleDate(t) {   // "11/11/26 · Rabu 08:01" -> tanggal, untuk menentukan arah putaran
+  function parseTitleDate(t) {
     const m = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/.exec(t);
     if (!m) return 0;
     const y = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
     return new Date(y, Number(m[2]) - 1, Number(m[1])).getTime();
   }
 
-  // Isi ulang detail note yang sedang terbuka (tanpa menutup), pilihan hari & posisi gulir dipertahankan
   function fillNoteDetail(note, day) {
     currentDetailNote = note;
     setDetailTitle(note.title, false);
@@ -8236,13 +8018,13 @@
               return dd && !isNaN(dd) && getWeekAnchorThursday(dd).getTime() === old._weekAnchor;
             });
             fresh = mergeNotesByWeek(sameWeek, vf).find(m => m._weekAnchor === old._weekAnchor) || null;
-            if (!fresh) { if (seq === detailRefreshSeq) noteDetailOverlay.classList.remove('open'); return; }   // semua baris pekan ini sudah dihapus
+            if (!fresh) { if (seq === detailRefreshSeq) noteDetailOverlay.classList.remove('open'); return; }
           }
         }
       } else if (!old.id.startsWith('__')) {
         const { data, error } = await supabaseClient.from('notes').select('*').eq('id', old.id).maybeSingle();
         if (!error) {
-          if (!data) { if (seq === detailRefreshSeq) noteDetailOverlay.classList.remove('open'); return; }   // note dihapus di editor
+          if (!data) { if (seq === detailRefreshSeq) noteDetailOverlay.classList.remove('open'); return; }
           fresh = Object.assign({}, old, data);
         }
       }
@@ -8257,7 +8039,7 @@
   function openNoteDetail(noteId) {
     const note = notesData.find(n => n.id === noteId) || detailExtraNotes[noteId];
     if (!note) return;
-    const wasOpen = noteDetailOverlay.classList.contains('open');   // sudah terbuka = pindah data lewat shortcut -> beri animasi
+    const wasOpen = noteDetailOverlay.classList.contains('open');
     currentDetailNote = note;
 
     setDetailTitle(note.title, wasOpen);
@@ -8279,9 +8061,6 @@
     noteDetailOverlay.classList.add('open');
   }
 
-
-  // Geser tabel detail note: satu arah saja (kiri-kanan ATAU atas-bawah), tanpa diagonal.
-  // Scroll native disabled untuk sentuhan (touch-action:none); gerakan & momentum diatur manual -> tidak memantul.
   (function () {
     const wrap = document.querySelector('.note-detail-table-wrap');
     if (!wrap) return;
@@ -8312,7 +8091,7 @@
       const dt = Math.max(1, e.timeStamp - lt);
       const delta = axis === 'x' ? lx - x : ly - y;
       if (axis === 'x') wrap.scrollLeft += delta; else wrap.scrollTop += delta;
-      vel = 0.8 * (delta / dt) + 0.2 * vel;          // px/ms, diperhalus
+      vel = 0.8 * (delta / dt) + 0.2 * vel;
       lx = x; ly = y; lt = e.timeStamp;
       if (e.cancelable) e.preventDefault();
     }, { passive: false });
@@ -8320,7 +8099,7 @@
     const end = (e) => {
       if (!active) return;
       active = false;
-      if (!axis || (e.timeStamp - lt) > 80 || Math.abs(vel) < 0.05) return;   // jari berhenti dulu = tanpa luncuran
+      if (!axis || (e.timeStamp - lt) > 80 || Math.abs(vel) < 0.05) return;
       const ax = axis;
       let v = vel, last = performance.now();
       const step = (now) => {
@@ -8343,13 +8122,12 @@
   document.getElementById('btnNoteDetailEdit').addEventListener('click', () => {
     if (!currentDetailNote) return;
     if (currentDetailNote._merged) {
-      openEditRowDialog(currentDetailNote);   // rekap gabungan: pilih nomor baris, editor dibuka di note aslinya
+      openEditRowDialog(currentDetailNote);
       return;
     }
-    openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });   // detail dibiarkan terbuka di bawah editor
+    openEditor(currentDetailNote.id, { folder: currentDetailNote.folder_id });
   });
 
-  // ---- Rekap gabungan: pilih nomor baris yang mau diedit ----
   const editRowBackdrop = document.getElementById('editRowBackdrop');
   const editRowInput = document.getElementById('editRowInput');
   const editRowInfo = document.getElementById('editRowInfo');
@@ -8425,7 +8203,6 @@
     if (!row || !row.cells) return;
     const noteId = row.cells._nid, recId = row.cells._rid;
     editRowGo.disabled = true;
-    // Folder note asal: dari data folder PJ/customer yang sudah dimuat; kalau tidak ada, ambil dari server
     let src = pjNotesSource.find(n => n.id === noteId) || notesData.find(n => n.id === noteId);
     let folderId = src ? src.folder_id : null;
     if (!folderId) {
@@ -8433,7 +8210,7 @@
       folderId = data ? data.folder_id : null;
     }
     closeEditRowDialog();
-    openEditor(noteId, { folder: folderId || undefined, rec: recId });   // detail dibiarkan terbuka di bawah editor
+    openEditor(noteId, { folder: folderId || undefined, rec: recId });
   }
 
   editRowInput.addEventListener('input', editRowValidate);
@@ -8778,7 +8555,7 @@
       };
       const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
       downloadTextFile(`backup-bm-tech-${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8;', false);
-      try { Promise.resolve(supabaseClient.rpc('note_backup')).then(() => {}, () => {}); } catch (e) {}   // catat waktu backup untuk pengingat di Profil
+      try { Promise.resolve(supabaseClient.rpc('note_backup')).then(() => {}, () => {}); } catch (e) {}
       showLiquidAlert('Backup selesai', `${notes.length} catatan dari semua buku berhasil diunduh. Simpan file ini di tempat aman (Drive/WhatsApp ke diri sendiri).`);
     } catch (err) {
       console.error('Gagal backup:', err);
@@ -9293,7 +9070,7 @@
 
     if (error) {
       console.error('Gagal memuat semua notes:', error.message);
-      allNotesLoadFailed = true;   // data lama dipertahankan, jangan dikosongkan (tugas jadi tampak "beres" padahal gagal muat)
+      allNotesLoadFailed = true;
       return;
     }
     allNotesLoadFailed = false;
@@ -9352,13 +9129,11 @@
     );
   });
 
-  // ---- Panel halaman: buka Analisa / System Management / Daftar Nomor HP tanpa memuat ulang dashboard ----
   const pageModal = document.getElementById('pageModal');
   const pageFrame = document.getElementById('pageFrame');
   let pageReadyTimer = null;
   let pageThemeSnap = null;
 
-  // Pengaturan tampilan (warna, font, bahasa) disimpan di localStorage berawalan "bm-"
   function themeSnapshot() {
     try {
       return Object.keys(localStorage)
@@ -9399,9 +9174,6 @@
     pageModal.classList.remove('open');
     clearTimeout(pageReadyTimer);
     setTimeout(() => { if (!pageModal.classList.contains('open')) navigateFrame(pageFrame, 'about:blank'); }, 500);
-    // Kalau pengaturan tampilan berubah, dashboard dimuat ulang sekali (setelah panel turun)
-    // supaya warna/font/bahasa baru langsung berlaku, lalu layar Settings dibuka lagi.
-    // Warna/font/tema berubah: dipasang langsung tanpa reload. Hanya ganti bahasa yang perlu muat ulang.
     if (pageThemeSnap !== null && themeSnapshot() !== pageThemeSnap) {
       if (window.BMTheme && BMTheme.langChangedSinceLoad && !BMTheme.langChangedSinceLoad()) {
         applyAppearanceLive();
@@ -9416,24 +9188,18 @@
   window.addEventListener('message', (e) => {
     if (e.source !== pageFrame.contentWindow || e.origin !== window.location.origin) return;
     if (e.data && e.data.type === 'close-page') {
-      if (history.state && history.state.pageModal) history.back(); // memicu popstate -> closePageModal
+      if (history.state && history.state.pageModal) history.back();
       else closePageModal();
     }
   });
 
-  // ======================================================================
-  // TOMBOL KEMBALI PERANGKAT (Android / gestur iPhone)
-  // Menutup lapisan paling atas yang sedang terbuka (panel editor/halaman, sheet, layar Settings,
-  // pencarian, menu folder, dll.), satu per satu. Baru kalau tidak ada yang terbuka, keluar dari aplikasi.
-  // ======================================================================
   (function backButtonManager() {
     const $id = (i) => document.getElementById(i);
     const rm = (...ids) => () => ids.forEach(i => { const e = $id(i); if (e) e.classList.remove('open'); });
-    // id = elemen utama yang diberi kelas "open"; close = cara menutupnya (memakai fungsi tutup bawaan bila ada)
     const LAYERS = [
       { id: 'editRowBackdrop',       close: rm('editRowBackdrop') },
       { id: 'liquidAlertBackdrop',   close: rm('liquidAlertBackdrop') },
-      { id: 'pzvOverlay',            close: () => $id('pzvCancel').click() }, // batal = menyelesaikan konfirmasi dengan benar
+      { id: 'pzvOverlay',            close: () => $id('pzvCancel').click() },
       { id: 'imageLightboxOverlay',  close: () => closeLightbox() },
       { id: 'shareSheet',            close: () => closeShareSheet() },
       { id: 'noteActionSheet',       close: () => closeActionSheet() },
@@ -9452,14 +9218,13 @@
     const byId = {};
     LAYERS.forEach(L => { L.el = $id(L.id); byId[L.id] = L; });
 
-    const tracked = new Set();   // lapisan yang sedang terbuka dan punya entri riwayat
-    const stack = [];            // urutan pembukaan (yang terakhir dibuka ditutup paling dulu)
-    let internalPops = 0;        // history.back() yang kita panggil sendiri
+    const tracked = new Set();
+    const stack = [];
+    let internalPops = 0;
     let skipGuard = 0;
 
     function isLayerState(st) { return st && st.t === 'layer'; }
 
-    // Entri riwayat milik lapisan yang sudah tertutup lewat UI bisa "basi"; lewati saat mendarat di sana
     function skipStale() {
       const st = history.state;
       if (isLayerState(st) && !tracked.has(st.id) && skipGuard < 30) {
@@ -9475,7 +9240,6 @@
         if (open && !was) opened.push(L); else if (!open && was) closed.push(L);
       });
       closed.forEach(L => { tracked.delete(L.id); const i = stack.lastIndexOf(L.id); if (i >= 0) stack.splice(i, 1); });
-      // Ditutup lewat UI (panah kembali, tombol tutup): buang entri riwayatnya kalau memang yang teratas
       if (closed.length && !opened.length) {
         const st = history.state;
         if (isLayerState(st) && closed.some(L => L.id === st.id)) { internalPops++; history.back(); }
@@ -9487,7 +9251,6 @@
     });
     LAYERS.forEach(L => mo.observe(L.el, { attributes: true, attributeFilter: ['class'] }));
 
-    // Pintasan keyboard: "/" atau Ctrl/Cmd+K membuka pencarian (atau memfokuskan kolomnya kalau sudah terbuka)
     document.addEventListener('keydown', (e) => {
       if (e.isComposing || e.altKey) return;
       const el = document.activeElement, tag = el && el.tagName;
@@ -9495,16 +9258,15 @@
       const isK = (e.key === 'k' || e.key === 'K') && (e.ctrlKey || e.metaKey);
       const isSlash = e.key === '/' && !e.ctrlKey && !e.metaKey;
       if (!isK && !isSlash) return;
-      if (isSlash && typing) return;                       // "/" biasa kalau sedang mengetik
+      if (isSlash && typing) return;
       if (pageModal.classList.contains('open') || editorModal.classList.contains('open')) return;
       const searchOpen = $id('searchOverlay').classList.contains('open');
       if (searchOpen) { e.preventDefault(); const f = $id('searchInputField'); if (f) f.focus(); return; }
-      if (tracked.size > 0) return;                        // ada layar/sheet lain di atas dashboard
+      if (tracked.size > 0) return;
       e.preventDefault();
       $id('btnSearchOpen').click();
     });
 
-    // Dipakai gestur geser-dari-tepi (bm-swipe-back.js): hanya aktif kalau memang ada lapisan yang bisa ditutup
     window.__bmCanBack = () => tracked.size > 0 || pageModal.classList.contains('open') || editorModal.classList.contains('open');
 
     window.addEventListener('popstate', () => {
@@ -9525,8 +9287,6 @@
     });
   })();
 
-  // Beralih ke Profil. Bila Dashboard sedang berjalan di dalam Profil (tanpa reload), minta Profil menampilkan dirinya;
-  // bila dibuka sendiri (mis. tautan langsung), pindah halaman seperti biasa.
   document.getElementById('btnProfile').addEventListener('click', () => {
     if (window.parent !== window) {
       try {
@@ -9537,7 +9297,6 @@
     }
     window.location.href = 'my-profile-bm.html';
   });
-  // Profil memberi tahu bahwa Dashboard kembali terlihat: segarkan daftar tanpa reload halaman.
   window.addEventListener('message', (e) => {
     if (e.source !== window.parent || e.origin !== window.location.origin) return;
     if (e.data && e.data.type === 'bm-visible') { try { loadCategories(); } catch (err) {} }
@@ -9545,7 +9304,6 @@
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
   document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
   document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
-  // Kasir dibuka sebagai halaman penuh (aplikasi terpisah dengan menu sendiri).
   document.getElementById('btnOpenKasir').addEventListener('click', () => {
     try { window.top.location.href = '/dashboard-shop.html'; } catch (e) { window.location.href = '/dashboard-shop.html'; }
   });
@@ -9557,8 +9315,6 @@
   }
 </script>
 <script>
-  // iOS Safari: efek :active (tombol terlihat tertekan) baru bekerja kalau dokumen
-  // punya listener touchstart. Listener kosong ini membuat semua tombol responsif.
   document.addEventListener('touchstart', function () {}, { passive: true });
 </script>
 <script>
@@ -9571,7 +9327,6 @@
   }
 </script>
 <script>
-// Bersihkan sisa fitur terjemahan lama (cookie googtrans + pilihan bahasa) supaya halaman kembali murni Indonesia
 (function(){
   try {
     var h = location.hostname, past = ';expires=Thu, 01 Jan 1970 00:00:00 GMT';
@@ -9584,9 +9339,7 @@
   } catch (e) {}
 })();
 </script>
-
 <script>
-// Lensa kaca Notes | Tasks: mengikuti tab aktif, melebar saat ditahan, bisa digeser untuk pindah tab
 (function(){
   var nav = document.querySelector('.segmented-tabs');
   if (!nav) return;
@@ -9596,7 +9349,6 @@
   lens.className = 'seg-lens';
   lens.innerHTML = '<div class="seg-txt"></div><div class="seg-ring"></div><div class="seg-glint-a"></div><div class="seg-glint-b"></div>';
   nav.insertBefore(lens, nav.firstChild);
-  // salinan label (berwarna sistem) yang hanya tampak di dalam gelembung
   var txt = lens.querySelector('.seg-txt');
   var clones = tabs.map(function(t){
     var c = t.cloneNode(true);
@@ -9629,7 +9381,6 @@
     tabs.forEach(function(t){ var d = Math.abs(t.offsetLeft + t.offsetWidth / 2 - cx); if (d < bd) { bd = d; best = t; } });
     return best;
   }
-  // posisi lensa mengikuti jari secara langsung (titik tengah lensa = posisi jari)
   function follow(clientX){
     var nr = nav.getBoundingClientRect();
     var w = activeTab().offsetWidth;
@@ -9663,7 +9414,6 @@
       var cx = parseFloat(lens.style.getPropertyValue('--lx')) + activeTab().offsetWidth / 2;
       target = nearest(cx);
     } else if (e && e.type === 'pointerup') {
-      // ketukan biasa: pilih tab yang disentuh (karena pointer capture, klik bawaan tidak sampai ke tombol)
       var nr = nav.getBoundingClientRect();
       var el = document.elementFromPoint(upX, nr.top + nr.height / 2);
       target = (el && el.closest && el.closest('.tab-btn')) || nearest(upX - nr.left);
@@ -9676,7 +9426,6 @@
 })();
 </script>
 <script src="/bm-swipe-back.js" defer></script>
-
 <script src="/bm-update.js"></script>
 </body>
 </html>

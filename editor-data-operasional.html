@@ -57,10 +57,9 @@
     --skeleton-a:rgba(0,0,0,0.06);
     --skeleton-b:rgba(0,0,0,0.12);
 
-    /* ---- Tombol ADD DATA di bottom nav — ubah 3 angka ini saja untuk resize ---- */
-    --fab-size:44px;     /* diameter lingkaran tombol */
-    --fab-lift:14px;     /* seberapa tinggi tombol menonjol keluar navbar */
-    --fab-icon-size:18px;/* ukuran ikon "+" di dalamnya */
+    --fab-size:44px;
+    --fab-lift:14px;
+    --fab-icon-size:18px;
   }
 
   body.surface-dark{
@@ -96,7 +95,6 @@
 
   .app{ position:fixed; inset:0; display:flex; flex-direction:column; }
 
-  /* ---------- Top bar ---------- */
   .topbar{
     display:flex; align-items:center; gap:10px;
     padding:calc(var(--safe-top) + 12px) calc(var(--safe-left) + 16px) 12px calc(var(--safe-left) + 16px);
@@ -120,16 +118,13 @@
   }
   .topbar-action svg{ width:15px; height:15px; }
 
-  /* ---------- Scroll area ---------- */
   .scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(96px + var(--safe-bottom)); }
   .scroll.no-nav{ padding-bottom:calc(28px + var(--safe-bottom)); }
   .px{ padding-left:calc(var(--safe-left) + 18px); padding-right:calc(var(--safe-right) + 18px); }
 
-  /* ---------- Views ---------- */
   .view{ display:none; flex-direction:column; height:100%; }
   .view.active{ display:flex; }
 
-  /* ---------- Home ---------- */
   .greet-card{
     margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
     background:
@@ -194,7 +189,6 @@
   body.surface-dark .day-sep.today b small{ color:var(--accent); }
   .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
 
-  /* ---------- Bukti (upload gambar, opsional maks. 2) ---------- */
   .bukti-dropzone{
     border:1.5px dashed var(--line); border-radius:var(--radius-md); background:var(--paper-alt);
     padding:14px; transition:border-color .15s ease, background .15s ease;
@@ -233,7 +227,6 @@
   .bukti-view-thumb{ width:56px; height:56px; border-radius:10px; object-fit:cover; cursor:pointer; }
   .r-photo-badge{ font-size:12px; margin-right:2px; vertical-align:-1px; }
 
-  /* ---------- Metode bayar (Cash / Transfer) ---------- */
   .metode-group{ display:flex; gap:10px; }
   .metode-chip{
     flex:1; display:flex; align-items:center; justify-content:center; gap:7px; padding:13px 10px;
@@ -253,7 +246,6 @@
   .recent-row.row-flash{ animation:rowFlash 2.4s ease-out; border-radius:12px; }
   .detail-row .metode-group{ display:none; }
   .mt-badge.campur{ background:linear-gradient(90deg,rgba(61,170,106,0.22),rgba(59,143,224,0.22)); color:var(--ink); }
-  /* Bayar campur: dua kolom nominal muncul saat Cash & Transfer sama-sama menyala */
   .metode-split{ display:none; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
   .metode-split.show{ display:grid; }
   .detail-row .metode-split.show{ display:none; }
@@ -273,7 +265,6 @@
   .metode-group.need .metode-chip:not(.on){ border-color:#d9534f; border-style:dashed; }
   .field label .opt-tag.need, .detail-row label .opt-tag.need{ color:#d9534f; font-weight:800; opacity:1; }
 
-  /* ---------- Viewer bukti: preview geser (swipe) antar gambar ---------- */
   .bukti-viewer-overlay{
     position:fixed; inset:0; background:rgba(10,8,4,0.92); z-index:300;
     display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease;
@@ -295,12 +286,10 @@
   .bukti-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all .15s ease; }
   .bukti-dot.active{ background:#fff; width:16px; border-radius:3px; }
 
-  /* ---------- Bottom nav ---------- */
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
     display:flex; flex-direction:column;
   }
-  /* Layer background nav dengan cekungan (notch) di tengah, tinggi tetap 64px */
   .bottom-nav-surface{
     position:relative; height:64px;
     display:flex; align-items:center;
@@ -313,7 +302,6 @@
     clip-path:url(#navNotchClip);
     box-shadow:0 -2px 14px rgba(30,25,15,0.06);
   }
-  /* Strip pengisi safe-area bawah (mis. home-indicator iPhone), rata & tanpa cekungan */
   .bottom-nav-safe{
     height:var(--safe-bottom);
     background:var(--glass-bg);
@@ -328,7 +316,6 @@
   .nav-item span{ font-size:11px; font-weight:600; }
   .nav-item.active{ color:var(--accent); }
 
-  /* ---------- Tombol ADD DATA di tengah nav: flat, menonjol keluar cekungan ---------- */
   .nav-item-add{ gap:6px; justify-content:flex-end; }
   .nav-add-fab{
     width:var(--fab-size); height:var(--fab-size); border-radius:50%;
@@ -340,24 +327,18 @@
   .nav-add-fab svg{ width:var(--fab-icon-size); height:var(--fab-icon-size); }
   .nav-item-add span{
     font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft);
-    margin-top:calc(-1 * var(--fab-lift) + 4px); /* label tetap rapat di bawah lingkaran meski ukurannya berubah */
+    margin-top:calc(-1 * var(--fab-lift) + 4px);
   }
   .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{
     background:var(--accent-ink); transform:translateY(calc(-1 * var(--fab-lift))) scale(0.94);
   }
 
-
-
-  /* ---------- Form ---------- */
-
-  /* ---------- Tanpa blok teks biru & menu tekan-lama (kolom isian tetap bisa dipilih/disalin) ---------- */
   html, body{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; }
   input, textarea, select, [contenteditable="true"]{ -webkit-user-select:text; user-select:text; -webkit-touch-callout:default; }
   *:not(input):not(textarea)::selection{ background:transparent; color:inherit; }
   button, a, summary, .tap, .recent-row, .nav-item, .icon-btn{ outline:none; }
   img{ -webkit-user-drag:none; }
 
-  /* ---------- Pintasan Panduan ---------- */
   .topbar > .help-btn{
     margin-left:auto; width:42px; height:42px; flex-shrink:0; border:none; border-radius:14px; cursor:pointer;
     display:flex; align-items:center; justify-content:center; color:#fff;
@@ -398,15 +379,14 @@
   .guide-close svg{ width:18px; height:18px; stroke-width:2.8; }
   .guide-overlay iframe{ flex:1; width:100%; border:0; background:var(--paper); }
 
-  /* ---------- Pembeda 3 kolom barang: warna + bentuk ---------- */
   :root{ --c-in:#2f7fd1; --c-out:#e8832a; --c-stay:#9b6bd3; }
   .lbl-in, .lbl-out, .lbl-stay{ font-weight:800 !important; }
   .lbl-in, .lbl-out, .lbl-stay{ color:var(--ink) !important; }
   .lbl-in .opt-tag, .lbl-out .opt-tag, .lbl-stay .opt-tag{ color:var(--ink) !important; opacity:1 !important; font-weight:600; }
   .lbl-in::before, .lbl-out::before, .lbl-stay::before{ content:''; display:inline-block; width:11px; height:11px; margin-right:8px; vertical-align:-1px; }
-  .lbl-in::before{ background:var(--c-in); border-radius:50%; }                                   /* ● masuk */
-  .lbl-out::before{ background:var(--c-out); clip-path:polygon(0 0, 100% 50%, 0 100%); }           /* ▶ keluar */
-  .lbl-stay::before{ background:var(--c-stay); border-radius:2px; }                                /* ■ ditinggal */
+  .lbl-in::before{ background:var(--c-in); border-radius:50%; }
+  .lbl-out::before{ background:var(--c-out); clip-path:polygon(0 0, 100% 50%, 0 100%); }
+  .lbl-stay::before{ background:var(--c-stay); border-radius:2px; }
   #inputBarang, #detBarangEdit{ border-color:var(--c-in) !important; }
   #inputBarangKeluar, #detKeluarEdit{ border-color:var(--c-out) !important; }
   #inputStokBarang, #detStokEdit{ border-color:var(--c-stay) !important; }
@@ -430,7 +410,6 @@
   .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
   .field .price-input-wrap input{ padding-left:38px; }
 
-  /* ---------- Saran nama PJ (dropdown kustom, bukan datalist native) ---------- */
   .suggest-wrap{ position:relative; }
   .suggest-list{
     display:none; position:absolute; left:0; right:0; bottom:calc(100% + 8px); z-index:30;
@@ -478,7 +457,6 @@
   .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
   .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
 
-  /* ---------- Puzzle konfirmasi hapus ---------- */
   .pz-wrap{
     position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
     background:var(--paper-alt); margin-bottom:12px; touch-action:none; user-select:none; -webkit-user-select:none;
@@ -524,7 +502,6 @@
   .btn-row{ display:flex; gap:10px; }
   .btn-row > *{ flex:1; }
 
-  /* ---------- Detail ---------- */
   .detail-card{
     border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
     padding:6px 16px; margin-top:6px;
@@ -553,7 +530,6 @@
   .pk-toggle:active{ transform:scale(.9); }
   .pk-toggle svg{ width:17px; height:17px; stroke-width:3; transition:transform .45s cubic-bezier(0.34,1.56,0.64,1); }
   .pickup-card.collapsed .pk-toggle svg{ transform:rotate(180deg); }
-  /* Isi kartu menutup/membuka dengan halus (grid 1fr -> 0fr) */
   .pickup-collapse{ display:grid; grid-template-rows:1fr; opacity:1; margin-top:6px; transition:grid-template-rows .5s cubic-bezier(0.22,1,0.36,1), opacity .35s ease, margin-top .5s cubic-bezier(0.22,1,0.36,1); }
   .pickup-collapse-in{ overflow:hidden; min-height:0; }
   .pickup-card.collapsed .pickup-collapse{ grid-template-rows:0fr; opacity:0; margin-top:0; pointer-events:none; }
@@ -612,7 +588,6 @@
   .pager .icon-btn{ width:38px; height:38px; }
   .pager .icon-btn:disabled{ opacity:0.35; cursor:default; }
 
-  /* ---------- Tombol kembali & < > : modern + berwarna ---------- */
   .topbar > .icon-btn:first-child, .pager .icon-btn{
     border:none; border-radius:14px; box-shadow:0 4px 12px rgba(0,0,0,0.16);
     backdrop-filter:none; -webkit-backdrop-filter:none;
@@ -626,7 +601,6 @@
   .draft-bar button{ border:none; background:transparent; color:inherit; font-size:12.5px; font-weight:800; text-decoration:underline; cursor:pointer; padding:4px 6px; flex-shrink:0; }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
 
-  /* ---------- Settings ---------- */
   .theme-opt{
     display:flex; align-items:center; justify-content:space-between; padding:14px 16px; margin-bottom:10px;
     border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line-soft); cursor:pointer;
@@ -636,10 +610,9 @@
   .theme-opt .dot{ width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
   .theme-opt.active .dot{ border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 3px var(--paper-alt); }
 
-  /* ---------- Modal / sheet ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
-    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); /* blur ala iOS */
+    -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4);
     display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
   .overlay.center{ align-items:center; padding:0 20px; }
@@ -660,7 +633,6 @@
   .modal-icon.danger{ background:var(--danger-soft); color:var(--danger); }
   .modal-card h3{ margin:0 0 6px 0; font-size:18px; font-weight:800; text-align:center; }
   .modal-card p.desc{ margin:0 0 16px 0; font-size:13.5px; color:var(--ink-soft); text-align:center; line-height:1.5; }
-  /* ---------- Dialog pemberitahuan (pengganti alert bawaan browser) ---------- */
   .notice-choices{ margin:0 0 14px 0; }
   .notice-choices .metode-chip:active{ transform:scale(0.97); }
   .notice-hint{ margin:0 0 16px 0; padding:10px 12px; border-radius:12px; background:var(--paper-alt); border:1px solid var(--line-soft);
@@ -675,9 +647,6 @@
   .preview-row span:last-child{ font-weight:750; text-align:right; }
   .preview-row span.empty-val{ color:var(--ink-soft); font-weight:600; font-style:italic; }
 
-
-  /* ---------- Loading / toast ---------- */
-
   #saveStatusIndicator{
     position:fixed; top:calc(var(--safe-top) + 10px); right:14px; z-index:500;
     font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:var(--radius-pill);
@@ -689,14 +658,10 @@
     line-height:1.5; opacity:0; transform:translateY(10px); transition:opacity .25s ease, transform .25s ease; pointer-events:none;
   }
   #migrationToast.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
-  /* ===================================================================
-     MEMUAT HALUS & LAYAR LEBAR
-     =================================================================== */
   .scroll { transition: opacity 0.25s ease; }
   html.is-loading .scroll { opacity: 0; }
   @media (prefers-reduced-motion: reduce) { .scroll { transition: none; } }
 
-  /* Tablet, laptop, monitor: isi berada di kolom tengah yang nyaman dibaca, simetris kiri-kanan */
   @media screen and (min-width: 768px) {
     .topbar,
     .px {
@@ -707,12 +672,8 @@
     .bottom-nav { max-width: 560px; margin-left: auto; margin-right: auto; }
   }
 
-  /* =====================================================================
-     ANIMASI HALUS — perpindahan halaman, buka/tutup detail, dialog, daftar
-     ===================================================================== */
   :root{ --ease-out:cubic-bezier(.22,1,.36,1); }
 
-  /* Perpindahan halaman (arah mengikuti tujuan) */
   .view.active.anim-right{ animation:vRight .42s var(--ease-out) backwards; }
   .view.active.anim-left { animation:vLeft  .42s var(--ease-out) backwards; }
   .view.active.anim-up   { animation:vUp    .42s var(--ease-out) backwards; }
@@ -722,7 +683,6 @@
   @keyframes vUp   { from{ opacity:0; transform:translateY(36px) scale(.985); } to{ opacity:1; transform:none; } }
   @keyframes vBack { from{ opacity:0; transform:scale(.972); } to{ opacity:1; transform:none; } }
 
-  /* Isi (baris-baris) muncul berurutan: detail, daftar Home, Settings */
   .anim-rows > *{ animation:rowIn .5s var(--ease-out) backwards; }
   @keyframes rowIn{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:none; } }
   .anim-rows > :nth-child(1){ animation-delay:0ms; }
@@ -742,7 +702,6 @@
   .anim-rows > :nth-child(15){ animation-delay:448ms; }
   .anim-rows > :nth-child(16){ animation-delay:480ms; }
 
-  /* Dialog & sheet: masuk dengan pegas halus */
   .overlay{ transition:opacity .28s ease; }
   .modal-card{ transition:transform .42s var(--ease-out), opacity .28s ease; }
   .overlay.center .modal-card{ transform:translateY(18px) scale(.95); opacity:0; }
@@ -750,7 +709,6 @@
   .overlay:not(.center) .modal-card{ opacity:0; }
   .overlay:not(.center).show .modal-card{ opacity:1; }
 
-  /* Sentuhan: tombol & kartu terasa "menekan" */
   .recent-row, .menu-card, .stat-card, .nav-item, .icon-btn, .btn-primary, .btn-secondary, .btn-danger-outline, .metode-chip{
     transition:transform .2s var(--ease-out), background .25s ease, border-color .25s ease, color .25s ease, box-shadow .25s ease, opacity .2s ease;
   }
@@ -759,7 +717,6 @@
   .nav-item.active svg{ animation:navPop .45s var(--ease-out); }
   @keyframes navPop{ 0%{ transform:scale(.8); } 55%{ transform:scale(1.14); } 100%{ transform:scale(1); } }
 
-  /* Bayar campur: kolom nominal & keterangan membuka halus */
   .metode-split.show{ animation:popIn .36s var(--ease-out); }
   @keyframes popIn{ from{ opacity:0; transform:translateY(-8px) scale(.97); } to{ opacity:1; transform:none; } }
   .split-status{ transition:color .25s ease; }
@@ -771,7 +728,6 @@
     .overlay, .modal-card{ transition:none; }
   }
 
-  /* ---------- Barang ditinggal: Pilih semua, tombol Bukti, animasi ---------- */
   .pickup-rec-head{ flex-wrap:wrap; }
   .pk-right{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; justify-content:flex-end; margin-left:auto; }
   .pk-bukti{ display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); background:var(--paper-alt); color:var(--ink);
@@ -813,10 +769,6 @@
   .bukti-viewer-overlay{ transition:opacity .28s ease; }
   @media (prefers-reduced-motion: reduce){ .pickup-card.pk-enter, .pickup-card.pk-enter *, .pickup-item input, .img-swap{ animation:none !important; } }
 
-  /* =====================================================================
-     TEKS TIDAK BISA DISELEKSI / KLIK-KANAN (kecuali kolom isian & gambar),
-     tanpa sorotan biru saat disentuh
-     ===================================================================== */
   html, body, .app{ -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent; }
   *{ -webkit-tap-highlight-color:transparent; }
   ::selection{ background:transparent; color:inherit; }
@@ -825,14 +777,10 @@
   img{ -webkit-user-select:auto; user-select:auto; -webkit-touch-callout:default; }
 </style>
 <script>
-  // Isi halaman disembunyikan sampai data selesai dimuat, lalu muncul halus (tanpa kedip kosong-lalu-terisi).
-  // Pengaman: tampilkan paksa setelah 6 detik kalau jaringan macet.
   document.documentElement.classList.add('is-loading');
   setTimeout(function () { document.documentElement.classList.remove('is-loading'); }, 6000);
 </script>
 <script src="/bm-theme.js"></script>
-
-<!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
 <script src="/bm-dialog.js"></script>
@@ -842,15 +790,13 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
-      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
+      persistSession: true,
+      autoRefreshToken: true,
       storage: window.localStorage,
-      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
+      storageKey: 'bmtech-auth'
     }
   });
 </script>
-
-<!-- Auth Guard -->
 <script>
   (async function guardAdminAccess() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -873,7 +819,6 @@
     }
   })();
 </script>
-
 <script>
   window.addEventListener('error', function (e) {
     console.error('Unhandled error:', e.error || e.message);
@@ -884,11 +829,9 @@
     alert('Terjadi error tak terduga (async): ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
   });
 </script>
-
 </head>
 <body>
 <script>
-  /* Sinkron dengan System Management & dashboard-admin: tema, warna sistem, font, teks tebal */
   (function () {
     var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
     function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -935,8 +878,7 @@
   })();
 </script>
 <div class="app">
-
-  <!-- ============ HOME ============ -->
+  
   <section class="view active" id="view-home">
     <div class="topbar">
       <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -961,8 +903,7 @@
       <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk tombol "+" di bawah untuk mulai.</p>
     </div>
   </section>
-
-  <!-- ============ TAMBAH DATA ============ -->
+  
   <section class="view" id="view-add">
     <div class="topbar">
       <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -1054,8 +995,7 @@
       </button>
     </div>
   </section>
-
-  <!-- ============ DETAIL DATA ============ -->
+  
   <section class="view" id="view-detail">
     <div class="topbar">
       <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -1141,8 +1081,7 @@
       </div>
     </div>
   </section>
-
-  <!-- ============ SETTINGS ============ -->
+  
   <section class="view" id="view-settings">
     <div class="topbar">
       <button class="icon-btn" id="btnSettingsBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -1166,8 +1105,7 @@
       <div class="theme-opt" data-theme="dark"><b>Gelap</b><div class="dot"></div></div>
     </div>
   </section>
-
-  <!-- ============ SAMPAH ============ -->
+  
   <section class="view" id="view-trash">
     <div class="topbar">
       <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
@@ -1179,8 +1117,7 @@
       <button class="btn-danger-outline" id="btnEmptyTrash" style="display:none; width:100%; margin-top:14px;">Kosongkan Sampah</button>
     </div>
   </section>
-
-  <!-- ============ BOTTOM NAV ============ -->
+  
   <svg width="0" height="0" style="position:absolute" aria-hidden="true">
     <defs>
       <clipPath id="navNotchClip" clipPathUnits="objectBoundingBox">
@@ -1205,8 +1142,7 @@
     </div>
     <div class="bottom-nav-safe"></div>
   </div>
-
-  <!-- ============ MODAL: KONFIRMASI ============ -->
+  
   <div class="overlay center" id="overlayConfirm">
     <div class="modal-card">
       <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
@@ -1230,8 +1166,7 @@
       </div>
     </div>
   </div>
-
-  <!-- ============ MODAL: HAPUS ============ -->
+  
   <div class="overlay center" id="overlayDelete">
     <div class="modal-card">
       <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
@@ -1253,8 +1188,7 @@
       </div>
     </div>
   </div>
-
-  <!-- Viewer bukti: tap thumbnail buat lihat ukuran penuh, geser (swipe) kalau ada 2 gambar -->
+  
   <div class="bukti-viewer-overlay" id="overlayBuktiViewer">
     <div class="bukti-viewer-stage" id="buktiViewerStage">
       <button class="bukti-viewer-close" id="btnBuktiViewerClose" aria-label="Tutup"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -1264,8 +1198,7 @@
       <div class="bukti-viewer-dots" id="buktiViewerDots"></div>
     </div>
   </div>
-
-  <!-- ============ PANDUAN (tampil di atas Editor, tanpa meninggalkan halaman) ============ -->
+  
   <div class="guide-overlay" id="guideOverlay" aria-hidden="true">
     <div class="guide-bar">
       <button type="button" class="guide-close" id="btnGuideClose">
@@ -1278,8 +1211,7 @@
   <div id="saveStatusIndicator"></div>
   <div id="migrationToast"></div>
 </div>
-
-  <!-- ============ MODAL: PEMBERITAHUAN (pengganti alert) ============ -->
+  
   <div class="overlay center" id="overlayNotice">
     <div class="modal-card">
       <div class="modal-icon" id="noticeIcon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
@@ -1299,12 +1231,6 @@
   </div>
 
 <script>
-  // =====================================================================
-  // BUKU OPERASIONAL — KONSTAN & STATE
-  // Satu note = satu pekan operasional, Kamis sampai Rabu ("OPERASIONAL dd-mm-yyyy", tanggal Kamisnya).
-  // record: { id, buyer, seller, item, keterangan, harga, metode, bayarCash, bayarTransfer, bukti[], created_at }
-  // Data ini hanya untuk penyimpanan; dibaca halaman analisa lewat content.records.
-  // =====================================================================
   const SCHEMA_VERSION = 'operasional-data-v1';
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -1312,13 +1238,10 @@
   const targetFolderId = urlParams.get('folder') || null;
   let lastKnownUpdatedAt = null;
   let existingNoteLoadFailed = false;
-  // ===== PENGAMAN DATA (v56) =====
-  // serverSynced: false sampai isi catatan ini BENAR-BENAR terbaca dari server (catatan baru = langsung true).
-  // Selama false, tidak boleh ada simpan ke server: daftar kosong di layar tidak boleh menimpa data asli.
   let serverSynced = !currentNoteId;
-  let draftLoaded = false;          // layar berisi draf HP (dibuka offline), bukan data server
+  let draftLoaded = false;
   let loadInFlight = false, loadRetryTimer = null, loadRetryCount = 0, guardReloads = 0;
-  let newNoteId = null;             // id catatan baru dibuat di HP, supaya simpan ulang tidak membuat catatan ganda
+  let newNoteId = null;
 
   function bmUuid(){
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -1326,7 +1249,6 @@
     const h = Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
     return h.slice(0, 8) + '-' + h.slice(8, 12) + '-' + h.slice(12, 16) + '-' + h.slice(16, 20) + '-' + h.slice(20);
   }
-  // Pengaman cadangan di sisi HP: simpan yang membuat jumlah data berkurang TANPA masuk Sampah dianggap kecelakaan.
   function bmWouldShrink(){
     try {
       const bc = baseSnap && baseSnap.content; if (!bc) return false;
@@ -1361,7 +1283,6 @@
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && currentNoteId && !serverSynced && navigator.onLine) scheduleLoadRetry(true);
   });
-  // Server menolak simpan yang akan menghapus data (pengaman di database): jangan timpa, muat ulang lalu gabungkan.
   function bmGuardBlocked(){
     try { clearTimeout(autosaveTimer); } catch (e) {}
     setSyncBanner('Penyimpanan ditahan: perubahan ini akan menghapus data yang sudah ada di server. Data Anda aman di HP, sedang digabungkan ulang.');
@@ -1371,9 +1292,9 @@
 
   let noteTitle = '';
   let records = [];
-  let trash = [];            // { ...record, deleted_at } — disimpan 30 hari
+  let trash = [];
   const TRASH_DAYS = 30;
-  let legacyBackup = null;   // isi lama note (kalau ada) — TIDAK PERNAH dihapus
+  let legacyBackup = null;
 
   let currentView = 'home';
   let editingRecordId = null;
@@ -1382,18 +1303,11 @@
 
   const gid = (id) => document.getElementById(id);
 
-  // Harga kosong = belum diisi (null, '', 0). Teks bebas / centang dianggap terisi.
   function isHargaKosong(h){ return h == null || h === '' || h === 0 || /^0+$/.test(String(h).trim()); }
   function isCentangText(v){ return /[√✓✔☑✅]/.test(String(v == null ? '' : v)); }
 
-  // =====================================================================
-  // HELPERS
-  // =====================================================================
-
   function uid(){ return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
 
-  // ---------- Metode bayar: 'cash' | 'transfer' | 'campur' | '' (belum dipilih) ----------
-  // 'campur' = sebagian Cash + sebagian Transfer; nominalnya disimpan di bayarCash & bayarTransfer.
   const METODE = {
     cash: { label: 'Cash', icon: '💵' },
     transfer: { label: 'Transfer', icon: '🏦' },
@@ -1409,14 +1323,12 @@
     return METODE[m].icon + ' ' + METODE[m].label;
   }
   function metodeBadgeHtml(m){ return METODE[m] ? `<span class="mt-badge ${m}">${METODE[m].icon} ${METODE[m].label}</span>` : ''; }
-  // Nominal Harga sebagai angka (0 kalau bukan nominal murni, mis. bertanda centang)
   function hargaNominal(h){
     if (typeof h === 'number') return h > 0 ? h : 0;
     const s = String(h == null ? '' : h).trim();
     if (!s || /[√✓✔☑✅]/.test(s) || !/^(rp\.?\s*)?\d[\d.,\s]*$/i.test(s)) return 0;
     return Number(s.replace(/\D/g, '')) || 0;
   }
-  // Pemilih metode: Cash & Transfer bisa dinyalakan bersamaan (= campur) dan memunculkan dua kolom nominal.
   function setupMetodePicker(groupEl, onChange, getHarga){
     let selC = false, selT = false;
     const panel = document.createElement('div');
@@ -1452,7 +1364,7 @@
     groupEl.addEventListener('click', (e) => {
       const b = e.target.closest('.metode-chip');
       if (!b) return;
-      if (b.dataset.metode === 'cash') selC = !selC; else selT = !selT; // ketuk lagi = batal
+      if (b.dataset.metode === 'cash') selC = !selC; else selT = !selT;
       if (!selC) inC.value = '';
       if (!selT) inT.value = '';
       paint();
@@ -1462,7 +1374,7 @@
       return () => {
         self.value = fmt(num(self));
         const h = harga();
-        if (h > 0) { const rest = h - num(self); other.value = rest > 0 ? fmt(rest) : ''; } // sisanya terisi otomatis
+        if (h > 0) { const rest = h - num(self); other.value = rest > 0 ? fmt(rest) : ''; }
         status();
         if (onChange) onChange(api.get());
       };
@@ -1491,7 +1403,6 @@
     () => refreshMetodeNeed(),
     () => hargaNominal(parseHarga(document.getElementById('detHargaEdit').value)));
 
-  // Tulis pilihan metode ke record (dan bersihkan sisa nominal campur kalau bukan campur)
   function applyMetodeToRecord(rec, picker){
     const m = picker.get();
     delete rec.metode; delete rec.bayarCash; delete rec.bayarTransfer;
@@ -1503,10 +1414,8 @@
     }
   }
   function rpFmt(n){ return 'Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID'); }
-  // Pemeriksaan sebelum simpan. Kembali true kalau boleh lanjut.
   function validateMetode(picker, harga, onPicked){
     const needIt = hargaButuhMetode(harga);
-    // Harga kosong tapi metode dipilih: tidak ada yang dibayar, jadi metode tidak ada gunanya
     if (picker.get() && isHargaKosong(harga)) {
       refreshMetodeNeed();
       appNotice({
@@ -1527,7 +1436,7 @@
         onChoose: (m) => {
           picker.set(m); refreshMetodeNeed();
           if (picker === addMetode) { try { writeFormDraft(); } catch (e) {} }
-          if (m === 'campur') return; // isi nominal dulu (keyboard tidak dipaksa muncul)
+          if (m === 'campur') return;
           if (onPicked) onPicked();
         }
       });
@@ -1549,8 +1458,6 @@
     return true;
   }
 
-  // Aturan: Harga berisi nominal angka => Metode Bayar WAJIB dipilih.
-  // Harga bertanda centang (\u2713 / \u221A dst.) = urusan sudah beres, metode boleh kosong.
   function hargaButuhMetode(h){
     if (typeof h === 'number') return h > 0;
     const s = String(h == null ? '' : h).trim();
@@ -1576,25 +1483,13 @@
       });
     } catch (e) {}
   }
-  setInterval(refreshMetodeNeed, 400); // Harga bisa terisi otomatis dari fitur ambil/bayar, jadi dicek berkala
+  setInterval(refreshMetodeNeed, 400);
 
-  // =====================================================================
-  // BUKTI (upload gambar opsional, maks. 2 per data) — disimpan di Supabase
-  // Storage, bucket "bukti" (bucket + policy dibuat sekali lewat SQL, lihat
-  // catatan terpisah). Pakai supabaseClient yang sama dengan data notes,
-  // jadi tidak perlu API key tambahan.
-  // Foto baru diunggah ke ImgBB; sebelumnya dikompres lewat <canvas> (maks 1024px,
-  // JPEG, target <= 200 KB). Foto lama di Supabase Storage tetap tampil & tetap bisa dihapus.
-  // =====================================================================
-  const BUKTI_BUCKET = 'bukti'; // hanya untuk foto LAMA yang masih di Supabase Storage
+  const BUKTI_BUCKET = 'bukti';
 
-  // ---- ImgBB lewat Vercel: foto baru tidak membebani Supabase free tier ----
-  // Browser tidak memegang API key. Foto dikirim ke /api/upload-bukti (Vercel Function),
-  // yang menyimpan IMGBB_API_KEY di Environment Variable dan meneruskannya ke ImgBB.
   const BUKTI_UPLOAD_ENDPOINT = '/api/upload-bukti';
-  // Target ukuran per foto setelah dikecilkan (foto HP 1-2 MB -> sekitar 80-200 KB).
   const BUKTI_TARGET_BYTES = 200 * 1024;
-  const BUKTI_STEPS = [[1024, 0.72], [1024, 0.6], [900, 0.5], [800, 0.45]]; // [sisi terpanjang px, kualitas JPEG]
+  const BUKTI_STEPS = [[1024, 0.72], [1024, 0.6], [900, 0.5], [800, 0.45]];
 
   function loadImageFromFile(file){
     return new Promise((resolve, reject) => {
@@ -1612,13 +1507,12 @@
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); // PNG transparan -> latar putih, bukan hitam
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
     ctx.drawImage(img, 0, 0, w, h);
     return new Promise((resolve, reject) => {
       canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Gagal memproses gambar')), 'image/jpeg', quality);
     });
   }
-  // Kecilkan bertahap sampai <= BUKTI_TARGET_BYTES; kalau tetap besar, pakai hasil terkecil.
   async function compressImageFile(file){
     const img = await loadImageFromFile(file);
     let best = null;
@@ -1647,8 +1541,6 @@
       return json.url;
     } finally { clearTimeout(timer); }
   }
-  // Upload -> { url, path }. path selalu null: ImgBB tidak punya hapus lewat client,
-  // jadi foto yang dibuang hanya dilepas dari data (file di ImgBB tidak memakan kuota Supabase).
   async function uploadBukti(blob){
     let lastErr;
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -1658,10 +1550,6 @@
     throw lastErr;
   }
 
-  // Hapus file di bucket. Dipanggil saat: user hapus thumbnail (sebelum/sesudah simpan),
-  // dan saat seluruh data dihapus — supaya tidak ada file nyangkut (beda dari ImgBB yang
-  // tidak punya cara hapus dari client). Gagal hapus tidak masalah besar (biarkan, jangan
-  // sampai mengganggu alur user) — cukup dicatat di console.
   function deleteBuktiFromSupabase(paths){
     const list = (paths || []).filter(Boolean);
     if (!list.length) return;
@@ -1669,24 +1557,17 @@
       .then(({ error }) => { if (error) console.warn('Gagal hapus file bukti lama:', error.message); })
       .catch(err => console.warn('Gagal hapus file bukti lama:', err.message));
   }
-  // Path Supabase Storage selalu berbentuk ".../object/public/<bucket>/<path>" — ambil bagian setelah nama bucket.
-  // Gambar ImgBB ditampilkan lewat /api/img (proxy Vercel) karena i.ibb.co diblokir di sebagian jaringan.
-  // Yang tersimpan di data tetap URL aslinya. URL Supabase / blob: dibiarkan apa adanya.
   function buktiSrc(u){
     return (typeof u === 'string' && /^https:\/\/i\.ibb\.co\//.test(u)) ? '/api/img?u=' + encodeURIComponent(u) : (u || '');
   }
   function buktiPathFromUrl(url){
-    if (!url || url.indexOf('/storage/v1/object/public/' + BUKTI_BUCKET + '/') === -1) return null; // ImgBB & lainnya: tidak ada yang dihapus
+    if (!url || url.indexOf('/storage/v1/object/public/' + BUKTI_BUCKET + '/') === -1) return null;
     const marker = '/' + BUKTI_BUCKET + '/';
     return url.slice(url.indexOf(marker) + marker.length);
   }
 
-  // Satu controller dipakai 2x: form Tambah Data & mode Edit di Detail Data.
-  // Menangani 3 cara input (drag & drop, pilih dari galeri, foto dari kamera),
-  // preview thumbnail instan (sebelum upload selesai), status upload/gagal,
-  // dan hapus per gambar (langsung terhapus juga dari Storage). Maks 2 gambar per data.
   function setupBuktiUploader(cfg){
-    let items = []; // { id, url, path, previewUrl, status: 'uploading'|'done'|'error' }
+    let items = [];
 
     function render(){
       cfg.thumbs.innerHTML = items.map((it, i) => `
@@ -1745,7 +1626,7 @@
       const removeBtn = e.target.closest('.bukti-thumb-remove');
       if (removeBtn) {
         const idx = Number(removeBtn.dataset.idx);
-        if (items[idx].path) deleteBuktiFromSupabase([items[idx].path]); // sudah keburu terupload -> hapus dari Storage juga
+        if (items[idx].path) deleteBuktiFromSupabase([items[idx].path]);
         items.splice(idx, 1);
         render();
         return;
@@ -1753,7 +1634,7 @@
       const thumb = e.target.closest('.bukti-thumb');
       if (!thumb) return;
       const idx = Number(thumb.dataset.idx);
-      if (items[idx].status === 'error') { items.splice(idx, 1); render(); return; } // gagal -> hapus, biar bisa dicoba lagi
+      if (items[idx].status === 'error') { items.splice(idx, 1); render(); return; }
       const doneUrls = items.filter(it => it.status === 'done').map(it => it.url);
       openBuktiViewer(doneUrls, doneUrls.indexOf(items[idx].url));
     });
@@ -1793,7 +1674,6 @@
     openBuktiViewer(r.bukti, Number(img.dataset.idx));
   });
 
-  // Viewer geser (swipe kalau 2 gambar; tombol panah juga tersedia)
   let viewerUrls = [], viewerIndex = 0;
   function openBuktiViewer(urls, startIdx){
     if (!urls || !urls.length) return;
@@ -1833,19 +1713,15 @@
   function fmtWaktuFromISO(iso){ return fmtWaktu(new Date(iso)); }
 
   const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  // Judul otomatis untuk tabel/note BARU, meniru gaya lama: "27/09/26 · Minggu 14:23"
   function generateAutoTitleLama(d){
     const tgl = pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + String(d.getFullYear()).slice(-2);
     return `${tgl} · ${NAMA_HARI[d.getDay()]} ${fmtWaktu(d)}`;
   }
-  // Harga boleh angka murni (disimpan number, tampil "Rp 1.500") ATAU teks bebas dengan simbol apa pun
-  // (mis. "500rb + ongkir", "$20", "1.5jt-2jt") — teks bebas disimpan & ditampilkan apa adanya.
   function rupiah(n){
     if (typeof n === 'string') return n.trim();
     return n ? ('Rp ' + Math.round(Number(n) || 0).toLocaleString('id-ID')) : '';
   }
   function digitsOnly(str){ return (str || '').replace(/[^\d]/g, ''); }
-  // Cuma angka/titik/spasi -> otomatis diberi pemisah ribuan. Ada huruf/simbol -> dibiarkan apa adanya.
   function formatHargaLive(str){
     const v = str || '';
     if (!/^[\d.\s]*$/.test(v)) return v;
@@ -1853,7 +1729,6 @@
     if (!d) return '';
     return Number(d).toLocaleString('id-ID');
   }
-  // Angka murni -> number (kompatibel data lama). Ada simbol/huruf -> string apa adanya.
   function parseHarga(str){
     const v = (str || '').trim();
     if (!v) return 0;
@@ -1864,16 +1739,11 @@
     if (!h) return '';
     return typeof h === 'string' ? h : Number(h).toLocaleString('id-ID');
   }
-  // Tanda pengenal isi data: dua data dengan isi & waktu buat persis sama dianggap duplikat.
-  // ---------- SAMPAH (soft delete) ----------
-  // Hapus data = pindah ke `trash` dulu. Baru hilang permanen setelah TRASH_DAYS hari
-  // atau kalau user memilih "Hapus Permanen" / "Kosongkan Sampah".
   function trashDaysLeft(item){
     const d = new Date(item.deleted_at).getTime();
     if (isNaN(d)) return TRASH_DAYS;
     return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
   }
-  // Hapus file foto bukti dari storage untuk daftar record (dipanggil HANYA saat hilang permanen)
   function deleteBuktiOfRecords(list){
     (list || []).forEach(r => {
       if (r && r.bukti && r.bukti.length) deleteBuktiFromSupabase(r.bukti.map(buktiPathFromUrl));
@@ -1884,7 +1754,7 @@
     const expired = [];
     trash = trash.filter(t => {
       const d = new Date(t.deleted_at).getTime();
-      const keep = isNaN(d) || (Date.now() - d) < TRASH_DAYS * 86400000; // deleted_at rusak = jangan dibuang
+      const keep = isNaN(d) || (Date.now() - d) < TRASH_DAYS * 86400000;
       if (!keep) expired.push(t);
       return keep;
     });
@@ -1926,7 +1796,6 @@
   function escapeHtml(s){
     return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   }
-  // Operasional: judul note otomatis OPERASIONAL dd-mm-yyyy (tanggal dibaca dashboard & analisa dari judul)
   function opWeekStart(d){
     const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     x.setDate(x.getDate() - ((x.getDay() - 4 + 7) % 7));
@@ -1969,9 +1838,6 @@
     try { const u = new URL(window.location.href); u.searchParams.set('id', id); history.replaceState(history.state, '', u.toString()); } catch (e) {}
   }
 
-  // =====================================================================
-  // LOAD NOTE DARI SUPABASE
-  // =====================================================================
   function getLocalDraftKey(){
     if (currentNoteId) return 'opdash_draft_' + currentNoteId;
     let tempKey = sessionStorage.getItem('opdash_temp_draft_key');
@@ -1986,8 +1852,6 @@
       const key = getLocalDraftKey();
       let recs = records, trs = trash, base = baseSnap, lk = lastKnownUpdatedAt, ttl = noteTitle, leg = legacyBackup;
       if (currentNoteId && !serverSynced && !draftLoaded) {
-        // Isi catatan belum terbaca dari server: 'records' di layar hanya berisi yang baru diketik.
-        // Jangan timpa draf lama; gabungkan berdasarkan id.
         try {
           const old = JSON.parse(localStorage.getItem(key) || 'null');
           if (old) {
@@ -2057,7 +1921,6 @@
         showSaveStatus('Tersimpan di HP (offline)', false, true);
         return;
       }
-      // Belum ada draf di HP: lanjut membaca biasa. Saat offline, data diambil dari salinan penuh di HP (service worker).
     }
 
     clearTimeout(window.__bmBT);
@@ -2077,17 +1940,17 @@
       return;
     }
 
-    // Pengaman: note ini ternyata milik editor lain -> alihkan, jangan pernah ditimpa dengan format operasional.
     const otherEditors = {
       'warung-data-v1': 'editor-data-warung.html',
       'kasbon-data-v1': 'editor-data-kasbon.html',
       'hutangpiutang-data-v1': 'editor-data-hutang-piutang.html',
       'admin-data-v1': 'editor-data-administrator.html',
+      'operasional-data-v1': 'editor-data-operasional.html',
       'custom-data-v1': 'editor-folder.html'
     };
     const sch = note.content && note.content.schema;
     if (sch && sch !== SCHEMA_VERSION && otherEditors[sch]) {
-      existingNoteLoadFailed = true; // blok autosave selama pengalihan
+      existingNoteLoadFailed = true;
       bmRedirect(otherEditors[sch] + window.location.search);
       return;
     }
@@ -2105,7 +1968,6 @@
       trash = Array.isArray(note.content.trash) ? note.content.trash : [];
       legacyBackup = note.content.legacy || null;
     } else if (note.content && (note.content.columns || note.content.rows)) {
-      // Tabel manual lama di folder ini: diarsipkan apa adanya (tidak dikonversi), editor mulai dari data kosong.
       legacyBackup = note.content;
       records = [];
       trash = [];
@@ -2117,19 +1979,12 @@
       legacyBackup = null;
     }
 
-    // Gabungkan draft lokal (kalau ada) secara AMAN: data server adalah
-    // sumber kebenaran. Draft cuma boleh MENAMBAHKAN baris yang memang
-    // belum ada di server (dikenali lewat id) — supaya kalaupun ada draft
-    // basi tersangkut di HP (misal dari sesi yang gagal tersambung ke
-    // server), draft itu TIDAK PERNAH bisa menghapus atau menimpa data
-    // yang sudah benar-benar tersimpan di server.
     let addedFromDraft = 0;
     try {
       const raw = localStorage.getItem(getLocalDraftKey());
       if (raw) {
         const draft = JSON.parse(raw);
         if (draft.base && draft.base.content) {
-          // Draft punya titik awal -> gabungkan perubahan yang belum terkirim dengan isi server (edit data lama pun tidak hilang)
           const mergedDraft = BMMerge.merge(draft.base,
             { title: draft.title || '', content: { records: draft.records || [], trash: Array.isArray(draft.trash) ? draft.trash : [], legacy: draft.legacyBackup || null } },
             { title: noteTitle, content: { records, trash, legacy: legacyBackup } });
@@ -2142,14 +1997,14 @@
         const knownSigs = new Set([...records, ...trash].map(recordSignature));
         (draft.records || []).forEach(r => {
           if (!r || !r.id) return;
-          if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return; // sudah ada (id atau isinya sama)
+          if (knownIds.has(r.id) || knownSigs.has(recordSignature(r))) return;
           records.push(r);
           knownIds.add(r.id); knownSigs.add(recordSignature(r));
           addedFromDraft++;
         });
       }
-    } catch (e) { /* draft rusak/tidak terbaca — abaikan, jangan sampai gagal load */ }
-    if (!addedFromDraft) clearLocalDraft();   // draf baru dihapus setelah benar-benar tersimpan ke server
+    } catch (e) {  }
+    if (!addedFromDraft) clearLocalDraft();
     if (addedFromDraft > 0) {
       showMigrationToast(`${addedFromDraft} data dari HP (belum sempat tersimpan sebelumnya) berhasil digabungkan kembali.`);
     }
@@ -2163,15 +2018,12 @@
     if (needsMigrationSave || addedFromDraft > 0 || purgedCount > 0) scheduleAutosave();
   }
 
-  // =====================================================================
-  // SIMPAN KE SUPABASE (autosave debounce + offline draft + konflik)
-  // =====================================================================
   let autosaveTimer = null;
   let autosaveInFlight = false;
   let autosavePending = false;
   let autosaveRetryCount = 0;
   let hasUnsyncedChanges = false;
-  let baseSnap = null;   // isi note saat terakhir sinkron dengan server (dasar penggabungan otomatis)
+  let baseSnap = null;
 
   function buildPreviewText(){
     const last = sortedRecords().slice(-1)[0];
@@ -2194,11 +2046,10 @@
       date_tag: buildDateTag(),
       content: { schema: SCHEMA_VERSION, records, trash, legacy: legacyBackup }
     };
-    const snapMine = BMMerge.snapFromPayload(payload);   // salinan isi yang kukirim (aman dari perubahan saat menunggu server)
+    const snapMine = BMMerge.snapFromPayload(payload);
 
     let result;
     if (currentNoteId) {
-      // TIDAK PERNAH simpan tanpa kunci versi: catatan harus sudah terbaca dari server dulu.
       if (!serverSynced || !lastKnownUpdatedAt) {
         try { showSaveStatus('Belum tersambung ke server — perubahan aman di HP', true, true); } catch (e) {}
         return false;
@@ -2229,7 +2080,6 @@
       if (!newNoteId) newNoteId = bmUuid();
       result = await supabaseClient.from('notes').insert({ ...payload, ...(newNoteId ? { id: newNoteId } : {}), folder_id: targetFolderId }).select().single();
       if (result.error && result.error.code === '23505' && newNoteId) {
-        // Simpan sebelumnya sebenarnya sudah masuk (jawaban server hilang di jalan): lanjutkan sebagai pembaruan, bukan catatan ganda.
         const cur0 = await supabaseClient.from('notes').select('*').eq('id', newNoteId).single();
         if (cur0.data) {
           currentNoteId = newNoteId; lastKnownUpdatedAt = cur0.data.updated_at; serverSynced = true;
@@ -2255,8 +2105,6 @@
   }
 
   async function handleSaveConflict(myPayload, snapMine){
-    // Bentrok = perangkat/admin lain menyimpan lebih dulu. Tidak ada yang mengalah: isi terbaru di server
-    // digabung dengan perubahanku per data (id), lalu disimpan ulang. Diulang kalau ada yang menyimpan lagi di sela-selanya.
     for (let attempt = 0; attempt < 8; attempt++) {
       const cur = await supabaseClient.from('notes').select('*').eq('id', currentNoteId).single();
       if (cur.error || !cur.data) {
@@ -2267,7 +2115,6 @@
       const theirs = cur.data;
       const tc0 = theirs.content;
       if (tc0 && tc0.schema && tc0.schema !== SCHEMA_VERSION) {
-        // Isi di server ternyata jenis catatan lain: jangan pernah ditimpa.
         existingNoteLoadFailed = true;
         showSaveStatus('Catatan ini jenis data lain — tidak ditimpa', true, true);
         return false;
@@ -2286,7 +2133,6 @@
       if (!upd.error) {
         lastKnownUpdatedAt = upd.data.updated_at;
         const saved = BMMerge.snapFromPayload({ title: upd.data.title, content: upd.data.content });
-        // Terapkan hasil gabungan ke layar. Kalau kamu sempat mengetik lagi selama menyimpan, perubahan itu ikut digabung (bukan ditimpa).
         const live = BMMerge.merge(snapMine, { title: noteTitle, content: { records, trash, legacy: legacyBackup } }, saved);
         const liveChanged = !BMMerge.same(live.content.records, saved.content.records) || !BMMerge.same(live.content.trash, saved.content.trash) || live.title !== saved.title;
         BMMerge.syncArray(records, live.content.records);
@@ -2310,7 +2156,7 @@
   }
 
   function scheduleAutosave(){
-    saveLocalDraft();   // SELALU amankan di HP dulu, apa pun keadaan koneksi/muat
+    saveLocalDraft();
     hasUnsyncedChanges = true;
     clearTimeout(autosaveTimer);
     if (existingNoteLoadFailed || (currentNoteId && !serverSynced)) {
@@ -2319,9 +2165,6 @@
       return;
     }
 
-    // Jadwalkan dulu SEBELUM update tampilan status — supaya kalaupun ada
-    // bug kecil di bagian tampilan (mis. elemen indikator hilang), proses
-    // penyimpanan ke server TETAP jalan dan tidak pernah ikut gagal.
     if (!navigator.onLine) {
       try { showSaveStatus('Tersimpan di HP (offline)', false, true); } catch (e) { console.error(e); }
       return;
@@ -2338,13 +2181,11 @@
 
     let success = false;
     try {
-      // Inti penyimpanan ke Supabase. Apapun yang terjadi di luar blok ini
-      // (indikator UI, dsb) TIDAK BOLEH mengganggu hasil dari baris ini.
       success = await saveNoteToDatabase(true);
 
       if (success) {
         autosaveRetryCount = 0;
-        if (!autosavePending) { hasUnsyncedChanges = false; clearLocalDraft(); }   // ada ketikan baru selama menyimpan: draf jangan dihapus dulu
+        if (!autosavePending) { hasUnsyncedChanges = false; clearLocalDraft(); }
       } else {
         autosaveRetryCount++;
         const delay = Math.min(30000, 3000 * autosaveRetryCount);
@@ -2352,8 +2193,6 @@
         autosaveTimer = setTimeout(runAutosave, delay);
       }
     } finally {
-      // autosaveInFlight WAJIB direset apapun yang terjadi di atas — kalau
-      // tidak, semua penyimpanan berikutnya akan macet permanen.
       autosaveInFlight = false;
     }
 
@@ -2378,11 +2217,10 @@
     clearTimeout(autosaveTimer);
     if (hasUnsyncedChanges) showSaveStatus('Tersimpan di HP (offline)', false, true);
   });
-  // ===== Keluar dengan aman: simpan dulu, jangan sampai ada perubahan yang tertinggal =====
   let skipLeavePrompt = false;
   const sleepMs = ms => new Promise(r => setTimeout(r, ms));
   async function flushBeforeLeave(maxMs){
-    if (currentNoteId && !serverSynced) return false;   // data belum tersambung: aman di HP, jangan menunggu sia-sia
+    if (currentNoteId && !serverSynced) return false;
     const t0 = Date.now(); maxMs = maxMs || 8000;
     while (Date.now() - t0 < maxMs) {
       clearTimeout(autosaveTimer);
@@ -2397,7 +2235,6 @@
   window.addEventListener('beforeunload', (e) => {
     if (hasUnsyncedChanges && !skipLeavePrompt) { e.preventDefault(); e.returnValue = ''; }
   });
-  // Layar dimatikan / pindah aplikasi / tab ditutup: kirim sisa perubahan sekarang juga
   function flushSoon(){
     if (document.visibilityState === 'hidden' && hasUnsyncedChanges && !autosaveInFlight && navigator.onLine && !existingNoteLoadFailed) {
       clearTimeout(autosaveTimer); runAutosave();
@@ -2405,10 +2242,9 @@
   }
   document.addEventListener('visibilitychange', flushSoon);
   window.addEventListener('pagehide', flushSoon);
-  // Dashboard meminta editor menyelesaikan penyimpanan sebelum panel ditutup (mis. tombol kembali di HP)
   window.addEventListener('message', async (e) => {
     if (e.source !== window.parent || e.data !== 'flush-save') return;
-    skipLeavePrompt = true;   // data sudah diamankan di HP; jangan munculkan pop-up bawaan browser berbahasa Inggris
+    skipLeavePrompt = true;
     let ok = false;
     try { ok = await flushBeforeLeave(15000); } catch (err) {}
     try { window.parent.postMessage({ type: 'flush-done', ok }, '*'); } catch (err) {}
@@ -2435,11 +2271,6 @@
     migrationToastTimer = setTimeout(() => el.classList.remove('show'), 6000);
   }
 
-  // =====================================================================
-  // ROUTER ANTAR HALAMAN
-  // =====================================================================
-  // Animasi perpindahan halaman: Home <-> Settings menggeser ke samping, Tambah/Detail/Sampah naik dari bawah,
-  // kembali ke Home/Settings memudar halus.
   const NAV_ORDER = { home: 0, settings: 1 };
   function replayClass(el, cls, ms){
     el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls);
@@ -2453,11 +2284,10 @@
     else if (name in NAV_ORDER) c = 'anim-back';
     else c = 'anim-up';
     replayClass(el, c, 600);
-    // isi daftar/menu ikut muncul berurutan
     if (name === 'home') replayClass(document.getElementById('recentList'), 'anim-rows', 900);
     if (name === 'settings') { const sc = el.querySelector('.scroll'); if (sc) replayClass(sc, 'anim-rows', 900); }
   }
-  let homeScrollPos = 0;   // posisi gulir daftar Home, dipulihkan saat kembali dari Detail
+  let homeScrollPos = 0;
   function goView(name){
     const prevView = currentView;
     if (prevView === 'home' && name !== 'home') {
@@ -2477,7 +2307,6 @@
     if (name === 'trash') renderTrash();
     if (name === 'home') renderHome();
     refreshPager();
-    // Kembali dari Detail: tetap di posisi semula (tidak loncat ke paling atas)
     if (name === 'home' && prevView === 'detail') {
       const hs = document.getElementById('view-home').querySelector('.scroll');
       if (hs) { hs.scrollTop = homeScrollPos; requestAnimationFrame(() => { hs.scrollTop = homeScrollPos; }); }
@@ -2485,8 +2314,6 @@
     if (name === 'home') requestAnimationFrame(focusSearchedRow);
   }
 
-  // Dari hasil pencarian dashboard: data yang dicari ditampilkan, lalu saat kembali ke daftar
-  // baris itu otomatis digulir ke tengah layar dan berkedip sebentar.
   let focusRecId = null;
   function focusSearchedRow(){
     if (!focusRecId) return;
@@ -2498,7 +2325,6 @@
     setTimeout(() => row.classList.remove('row-flash'), 2600);
   }
 
-  // ---- Penjaga keluar: jangan keluar sebelum semua tersimpan & tersinkron ----
   function syncBusy(){
     if (existingNoteLoadFailed || (currentNoteId && !serverSynced)) return false;
     if (hasUnsyncedChanges || autosaveInFlight) return true;
@@ -2519,24 +2345,20 @@
     if (hasUnsyncedChanges) runAutosave();
     const t0 = Date.now();
     const iv = setInterval(() => {
-      if (!ov.classList.contains('show')) { clearInterval(iv); leaveWaiting = false; return; } // dibatalkan pengguna
+      if (!ov.classList.contains('show')) { clearInterval(iv); leaveWaiting = false; return; }
       if (!syncBusy()) { clearInterval(iv); leaveWaiting = false; closeOverlay('overlayNotice'); doLeave(); return; }
       if (hasUnsyncedChanges && !autosaveInFlight && !autosaveTimer) runAutosave();
       if (Date.now() - t0 > 20000) document.getElementById('noticeText').textContent = 'Penyimpanan lebih lama dari biasanya. Periksa koneksi internet, atau pilih Tetap keluar (data tetap tersimpan di HP).';
     }, 300);
   }
   function doLeave(){
-    skipLeavePrompt = true;   // sudah ditanyakan lewat pop-up sendiri; jangan ditambah pop-up bawaan browser
-    // Editor ini biasanya berjalan sebagai iframe di dalam dashboard-admin.html
-    // (lihat pola window.parent.postMessage('note-autosaved', ...) di atas).
-    // 'close-editor' adalah nama pesan yang sudah didengarkan oleh
-    // dashboard-admin.html untuk menutup modal editor & refresh daftar note.
+    skipLeavePrompt = true;
     try {
       if (window.parent && window.parent !== window) {
         window.parent.postMessage('close-editor', '*');
         return;
       }
-    } catch (e) { /* cross-origin atau tidak ada parent — lanjut ke fallback */ }
+    } catch (e) {  }
 
     if (window.history.length > 1) {
       window.history.back();
@@ -2554,10 +2376,6 @@
     btn.addEventListener('click', () => goView(btn.dataset.nav));
   });
 
-  // =====================================================================
-  // HOME
-  // =====================================================================
-  // Total Cash / Transfer: nominal Cash & Transfer murni dihitung penuh, campur dipecah sesuai nominalnya.
   function metodeSplitOf(r){
     const n = hargaNominal(r.harga);
     if (!n) return { cash: 0, transfer: 0 };
@@ -2589,7 +2407,7 @@
   function renderRecentList(){
     const all = sortedRecords();
     const noMap = new Map(all.map((r, i) => [r.id, i + 1]));
-    const recent = all.slice().reverse(); // terbaru di atas
+    const recent = all.slice().reverse();
     const listEl = document.getElementById('recentList');
     const emptyEl = document.getElementById('recentEmptyHint');
 
@@ -2640,9 +2458,6 @@
     });
   }
 
-  // =====================================================================
-  // TAMBAH DATA
-  // =====================================================================
   function prepareAddForm(){
     const now = new Date();
     document.getElementById('addPreviewNo').textContent = pad3(records.length + 1);
@@ -2654,7 +2469,6 @@
     restoreFormDraft();
   }
 
-  // Saran nama Buyer / Seller dari data yang sudah pernah dicatat
   function uniqueNames(field){
     const seen = new Set(), out = [];
     records.concat(trash).forEach(r => {
@@ -2669,7 +2483,6 @@
   const getBuyerNames = () => uniqueNames('buyer');
   const getSellerNames = () => uniqueNames('seller');
 
-  // Urutan field untuk tombol Enter/Next
   const FIELD_ORDER = [
     ['inputBuyer', 'inputSeller', 'inputItem', 'inputKeterangan', 'inputHarga'],
     ['detBuyerEdit', 'detSellerEdit', 'detItemEdit', 'detKetEdit', 'detHargaEdit']
@@ -2703,7 +2516,6 @@
   function setupSuggestDropdown(inputEl, listEl, getNames, smart){
     let closeTimer = null;
 
-    // Saran pintar: ketik "yono" -> semua tim yang memuat yono + nama anggota lain untuk ditambahkan
     function suggestionsFor(){
       const raw = inputEl.value;
       const teams = getNames();
@@ -2711,7 +2523,7 @@
       if (!q) return teams.map(t => ({ text: t, value: t }));
       if (!smart) return teams.filter(t => t.toLowerCase().includes(q)).map(t => ({ text: t, value: t }));
 
-      const trailing = /(?:^|\s)(?:x|dan)\s*$|[&+,]\s*$/i.test(raw);          // "yono x " / "yono &"
+      const trailing = /(?:^|\s)(?:x|dan)\s*$|[&+,]\s*$/i.test(raw);
       const toks = pjTokensOf(raw).map(t => t.toLowerCase());
       const base = trailing ? toks : toks.slice(0, -1);
       const part = trailing ? '' : (toks[toks.length - 1] || '');
@@ -2735,7 +2547,6 @@
 
       teams.filter(teamMatch).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b)).forEach(t => push({ text: t, value: t }));
 
-      // Nama anggota lain yang pernah muncul, untuk melengkapi tim
       const people = new Map();
       teams.forEach(t => pjTokensOf(t).forEach(n => { const k = n.toLowerCase(); if (!people.has(k)) people.set(k, n); }));
       const head = trailing ? raw.replace(/\s+$/, '') : raw.replace(/\s+$/, '').replace(/[A-Za-z0-9]+$/, '');
@@ -2783,21 +2594,17 @@
     inputEl.addEventListener('input', renderList);
     inputEl.addEventListener('blur', hideNow);
 
-    // Pilih saran
     listEl.addEventListener('mousedown', (e) => {
       const item = e.target.closest('.suggest-item');
       if (!item) return;
-      e.preventDefault(); // supaya blur pada input tidak lebih dulu menutup dropdown ini
+      e.preventDefault();
       const isAdd = item.classList.contains('add');
       inputEl.value = item.dataset.v || item.textContent;
       hideNow();
       if (isAdd) {
-        // tambah anggota: tetap di kolom ini supaya bisa menambah anggota lagi
         inputEl.blur();
         setTimeout(() => { inputEl.focus(); try { const n = inputEl.value.length; inputEl.setSelectionRange(n, n); } catch (er) {} }, 40);
       } else {
-        // Setelah pilih nama, pindah fokus ke field berikutnya supaya keyboard Android tersambung ulang
-        // (mengubah value input yang sedang fokus lewat script bikin Enter/Next "nyangkut").
         setTimeout(() => focusNextField(inputEl), 0);
       }
     });
@@ -2874,9 +2681,6 @@
     goView('home');
   });
 
-  // =====================================================================
-  // DETAIL / EDIT / HAPUS
-  // =====================================================================
   function setDetailView(id, val){
     const el = gid(id);
     if (val) { el.textContent = val; el.classList.remove('empty'); }
@@ -2886,7 +2690,6 @@
     const card = document.querySelector('#view-detail .detail-card');
     if (card) replayClass(card, 'anim-rows', 900);
   }
-  // pasangan tampilan <-> isian pada Detail (display isian saat Edit)
   const DETAIL_PAIRS = [
     ['detBuyerView', 'detBuyerEdit', 'block'], ['detSellerView', 'detSellerEdit', 'block'],
     ['detItemView', 'detItemEdit', 'block'], ['detKetView', 'detKetEdit', 'block'],
@@ -2961,7 +2764,6 @@
     if (detBukti.isUploading()) { alert('Tunggu upload bukti selesai dulu ya.'); return; }
     if (!validateMetode(detMetode, harga, () => gid('btnDetailSaveEdit').click())) return;
 
-    // created_at (tanggal & waktu pembuatan) TIDAK BOLEH berubah saat diedit.
     r.buyer = buyer; r.seller = seller; r.item = item; r.keterangan = keterangan;
     r.harga = harga; r.bukti = detBukti.getUrls();
     applyMetodeToRecord(r, detMetode);
@@ -2969,11 +2771,6 @@
     openDetail(editingRecordId);
   });
 
-  // =====================================================================
-  // PINDAH NOMOR (panah kiri/kanan) + DRAFT FORM TAMBAH DATA
-  // Nomor N+1 = form "Tambah Data". Isi form yang belum disimpan jadi draft
-  // di perangkat ini (localStorage), dihapus setelah data tersimpan / draft dibuang.
-  // =====================================================================
   const FORM_FIELD_IDS = ['inputBuyer', 'inputSeller', 'inputItem', 'inputKeterangan', 'inputHarga'];
   let lastDraftJson = '';
 
@@ -3076,11 +2873,6 @@
   }
   bindPager();
 
-  // =====================================================================
-  // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
-  // Tombol "Ya, Hapus" baru aktif setelah puzzle berhasil diselesaikan.
-  // Posisi lubang & gambar diacak setiap kali dibuka / salah geser.
-  // =====================================================================
   const deletePuzzle = (function(){
     const wrap = document.getElementById('pzWrap');
     const canvas = document.getElementById('pzCanvas');
@@ -3092,11 +2884,11 @@
     const btnYakin = document.getElementById('btnDeleteYakin');
     const btnRefresh = document.getElementById('pzRefresh');
 
-    const P = 40;          // sisi kotak potongan puzzle
-    const R = 7;           // jari-jari tonjolan
-    const H = 130;         // tinggi area gambar
-    const HANDLE = 39;     // diameter tombol geser
-    const TOL = 6;         // toleransi (px) posisi benar
+    const P = 40;
+    const R = 7;
+    const H = 130;
+    const HANDLE = 39;
+    const TOL = 6;
     const LABEL_DEFAULT = 'Geser untuk mencocokkan';
 
     let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
@@ -3108,7 +2900,6 @@
       return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; };
     }
 
-    // bentuk potongan: kotak dengan tonjolan di atas & kanan
     function piecePath(ctx, x, y){
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -3122,7 +2913,6 @@
       ctx.closePath();
     }
 
-    // gambar latar acak (deterministik per seed supaya lubang & potongan identik)
     function drawScene(ctx){
       const rnd = makeRng(sceneSeed);
       const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
@@ -3158,7 +2948,6 @@
     }
 
     function render(){
-      // kanvas utama + lubang
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       const c = canvas.getContext('2d');
@@ -3171,7 +2960,6 @@
       c.lineWidth = 1.5;
       c.stroke();
 
-      // kanvas potongan (kotak berada di offset (2, R+2))
       const pw = P + R + 4, ph = P + R + 4;
       piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
       piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
@@ -3243,7 +3031,7 @@
     function endDrag(){
       if (!dragging) return;
       dragging = false;
-      if (offset < 6) return; // hanya tap, bukan geser
+      if (offset < 6) return;
       if (Math.abs(dragX - tx) <= TOL) {
         solved = true;
         setOffset(offset);
@@ -3261,8 +3049,6 @@
     return { reset: reset, isSolved: function(){ return solved; } };
   })();
 
-  // Satu popup puzzle dipakai untuk 3 mode:
-  //  'soft' = hapus data -> Sampah | 'purge' = hapus permanen 1 data | 'empty' = kosongkan Sampah
   let deleteMode = 'soft';
   let deleteTargetIndex = null;
   function openDeleteConfirm(mode, target){
@@ -3318,9 +3104,6 @@
     }
   });
 
-  // =====================================================================
-  // HALAMAN SAMPAH — pulihkan / hapus permanen
-  // =====================================================================
   function renderTrash(){
     if (purgeExpiredTrash() > 0) scheduleAutosave();
     const listEl = gid('trashList'), emptyEl = gid('trashEmptyHint'), btnEmpty = gid('btnEmptyTrash');
@@ -3376,7 +3159,7 @@
     const rec = { ...item };
     delete rec.deleted_at;
     if (records.some(r => r.id === rec.id)) rec.id = uid();
-    records.push(rec); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
+    records.push(rec);
     scheduleAutosave();
     renderTrash();
     showMigrationToast('Data berhasil dipulihkan.');
@@ -3385,9 +3168,6 @@
   gid('btnTrashBack').addEventListener('click', () => goView('settings'));
   gid('btnEmptyTrash').addEventListener('click', () => { if (trash.length) openDeleteConfirm('empty', null); });
 
-  // =====================================================================
-  // SETTINGS — judul tabel & tema
-  // =====================================================================
   function renderSettings(){
     document.getElementById('inputJudulTabel').value = noteTitle || '';
     const dup = dedupeRecords(records).removed;
@@ -3400,18 +3180,16 @@
     if (!removed) { showMigrationToast('Tidak ada data duplikat.'); return; }
     if (!(await bmConfirm(`Ditemukan ${removed} data duplikat (isi dan waktu persis sama).\n\nPindahkan duplikatnya ke Sampah dan sisakan 1 dari tiap pasang?`, { title: 'Bersihkan Data Duplikat', ok: 'Ya, bersihkan', cancel: 'Batal' }))) return;
     const keptSet = new Set(kept);
-    moveToTrash(records.filter(r => !keptSet.has(r))); // duplikat juga masuk Sampah, bukan hilang
+    moveToTrash(records.filter(r => !keptSet.has(r)));
     records = kept;
     scheduleAutosave();
     renderHome();
     renderSettings();
     showMigrationToast(`${removed} data duplikat dipindahkan ke Sampah.`);
   });
-  // Matikan klik kanan / menu tekan-lama, kecuali di kolom isian
   document.addEventListener('contextmenu', (e) => { if (!(e.target.closest && e.target.closest('input, textarea, select'))) e.preventDefault(); });
   document.addEventListener('dragstart', (e) => { if (e.target && e.target.tagName === 'IMG') e.preventDefault(); });
 
-  // ---------- Panduan penggunaan (panduan.html) tampil sebagai lapisan di atas Editor ----------
   let guideChecked = false;
   async function openGuide(){
     const ov = document.getElementById('guideOverlay'), fr = document.getElementById('guideFrame');
@@ -3423,7 +3201,7 @@
           return;
         }
         guideChecked = true;
-      } catch (e) { /* offline / tidak bisa dicek: tetap coba buka */ }
+      } catch (e) {  }
     }
     if (!fr.getAttribute('src')) fr.setAttribute('src', 'panduan.html');
     ov.classList.add('show');
@@ -3445,7 +3223,6 @@
     renderHome();
   });
 
-  // Tema mengikuti kunci 'bm-theme' yang sama dengan dashboard-admin (light / dark; kosong = dark)
   function getStoredTheme(){ try { return localStorage.getItem('bm-theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; } }
   function setStoredTheme(t){ try { localStorage.setItem('bm-theme', t === 'light' ? 'light' : 'dark'); } catch (e) {} }
   function applyTheme(t){ window.bmApplyAppearance(); }
@@ -3465,11 +3242,7 @@
   applyThemeUI();
   window.addEventListener('storage', (e) => { if (e.key === 'bm-theme') applyThemeUI(); });
 
-  // =====================================================================
-  // OVERLAY (modal & sheet) HELPERS
-  // =====================================================================
   function openOverlay(id){ document.getElementById(id).classList.add('show'); }
-  // Blokir menu klik-kanan / tekan-tahan pada teks. Kolom isian (agar tetap bisa tempel/salin) dan gambar tetap normal.
   document.addEventListener('contextmenu', (e) => {
     const t = e.target;
     if (t && t.closest && t.closest('img, input, textarea, [contenteditable="true"]')) return;
@@ -3481,9 +3254,6 @@
     e.preventDefault();
   });
 
-
-  // Dialog pemberitahuan bergaya aplikasi (menggantikan alert bawaan browser)
-  // opts: { title, text, hint, danger, choices:true, onChoose(metode), okLabel }
   let noticeOnChoose = null, noticeExtra = null;
   function appNotice(opts){
     const ov = document.getElementById('overlayNotice');
@@ -3503,7 +3273,7 @@
     noticeExtra = opts.extra || null;
     ex.style.display = noticeExtra ? '' : 'none';
     if (noticeExtra) ex.textContent = noticeExtra.label;
-    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {} // tutup keyboard
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
     openOverlay('overlayNotice');
   }
   document.getElementById('btnNoticeOk').addEventListener('click', () => closeOverlay('overlayNotice'));
@@ -3514,7 +3284,6 @@
     closeOverlay('overlayNotice');
     if (noticeOnChoose) noticeOnChoose(b.dataset.metode);
   });
-  // Semua alert() lain di halaman ikut tampil dengan gaya yang sama
   window.__nativeAlert = window.alert.bind(window);
   window.alert = function(msg){ appNotice({ text: String(msg == null ? '' : msg).replace(/\n+/g, ' ').trim() }); };
   function closeOverlay(id){ document.getElementById(id).classList.remove('show'); }
@@ -3522,15 +3291,6 @@
     ov.addEventListener('click', (e) => { if (e.target === ov) closeOverlay(ov.id); });
   });
 
-  // =====================================================================
-  // RENDER SEMUA & INIT
-  // =====================================================================
-  // =====================================================================
-  // BOTTOM NAV NOTCH — bentuk cekungan mengikuti ukuran tombol ADD DATA
-  // Cukup ubah --fab-size / --fab-lift di :root (bagian atas CSS), lebar &
-  // kedalaman cekungan di bawah ini otomatis menyesuaikan, tidak perlu
-  // hitung ulang path SVG manual.
-  // =====================================================================
   function updateNavNotch(){
     var surface = document.querySelector('.bottom-nav-surface');
     var pathEl  = document.getElementById('navNotchPath');
@@ -3541,8 +3301,8 @@
     var barHeight = surface.offsetHeight || 64;
     if (!navWidth || !barHeight) return;
 
-    var notchTopWidth = fabSize + 16;                          // ruang 8px kiri-kanan tombol
-    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5); // kedalaman proporsional, dibatasi tinggi bar
+    var notchTopWidth = fabSize + 16;
+    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5);
 
     var cx = navWidth / 2;
     var x1 = cx - notchTopWidth / 2;
@@ -3578,10 +3338,7 @@
     if (rec && records.some(x => x.id === rec)) { focusRecId = rec; openDetail(rec); }
   });
 </script>
-
 <script>
-  // Daftarkan Service Worker — WAJIB supaya app-shell tersedia offline dan
-  // supaya iOS mengenali halaman ini sebagai PWA yang bisa di-cache.
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').catch((err) => {
@@ -3591,7 +3348,6 @@
   }
 </script>
 <script src="/bm-swipe-back.js" defer></script>
-
 <script src="/bm-jarvis.js" defer></script>
 <script src="/bm-update.js"></script>
 </body>

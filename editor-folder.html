@@ -57,10 +57,9 @@
     --skeleton-a:rgba(0,0,0,0.06);
     --skeleton-b:rgba(0,0,0,0.12);
 
-    /* ---- Tombol ADD DATA di bottom nav — ubah 3 angka ini saja untuk resize ---- */
-    --fab-size:44px;     /* diameter lingkaran tombol */
-    --fab-lift:14px;     /* seberapa tinggi tombol menonjol keluar navbar */
-    --fab-icon-size:18px;/* ukuran ikon "+" di dalamnya */
+    --fab-size:44px;
+    --fab-lift:14px;
+    --fab-icon-size:18px;
   }
 
   body.surface-dark{
@@ -96,7 +95,6 @@
 
   .app{ position:fixed; inset:0; display:flex; flex-direction:column; }
 
-  /* ---------- Top bar ---------- */
   .topbar{
     display:flex; align-items:center; gap:10px;
     padding:calc(var(--safe-top) + 12px) calc(var(--safe-left) + 16px) 12px calc(var(--safe-left) + 16px);
@@ -120,16 +118,13 @@
   }
   .topbar-action svg{ width:15px; height:15px; }
 
-  /* ---------- Scroll area ---------- */
   .scroll{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding-bottom:calc(96px + var(--safe-bottom)); }
   .scroll.no-nav{ padding-bottom:calc(28px + var(--safe-bottom)); }
   .px{ padding-left:calc(var(--safe-left) + 18px); padding-right:calc(var(--safe-right) + 18px); }
 
-  /* ---------- Views ---------- */
   .view{ display:none; flex-direction:column; height:100%; }
   .view.active{ display:flex; }
 
-  /* ---------- Home ---------- */
   .greet-card{
     margin-top:16px; padding:18px 20px; border-radius:var(--radius-lg);
     background:
@@ -193,12 +188,10 @@
   .detail-row .val.ok, .field .readonly-box.ok span:first-child{ color:#3E9B5F; }
   .recent-row .r-right.pending{ color:var(--ink-soft); font-weight:600; font-style:italic; font-size:11.5px; }
 
-  /* ---------- Bottom nav ---------- */
   .bottom-nav{
     position:fixed; left:0; right:0; bottom:0; z-index:60;
     display:flex; flex-direction:column;
   }
-  /* Layer background nav dengan cekungan (notch) di tengah, tinggi tetap 64px */
   .bottom-nav-surface{
     position:relative; height:64px;
     display:flex; align-items:center;
@@ -211,7 +204,6 @@
     clip-path:url(#navNotchClip);
     box-shadow:0 -2px 14px rgba(30,25,15,0.06);
   }
-  /* Strip pengisi safe-area bawah (mis. home-indicator iPhone), rata & tanpa cekungan */
   .bottom-nav-safe{
     height:var(--safe-bottom);
     background:var(--glass-bg);
@@ -226,7 +218,6 @@
   .nav-item span{ font-size:11px; font-weight:600; }
   .nav-item.active{ color:var(--accent); }
 
-  /* ---------- Tombol ADD DATA di tengah nav: flat, menonjol keluar cekungan ---------- */
   .nav-item-add{ gap:6px; justify-content:flex-end; }
   .nav-add-fab{
     width:var(--fab-size); height:var(--fab-size); border-radius:50%;
@@ -238,15 +229,12 @@
   .nav-add-fab svg{ width:var(--fab-icon-size); height:var(--fab-icon-size); }
   .nav-item-add span{
     font-size:10px; font-weight:750; letter-spacing:0.03em; color:var(--ink-soft);
-    margin-top:calc(-1 * var(--fab-lift) + 4px); /* label tetap rapat di bawah lingkaran meski ukurannya berubah */
+    margin-top:calc(-1 * var(--fab-lift) + 4px);
   }
   .nav-item-add.active .nav-add-fab, .nav-item-add:active .nav-add-fab{
     background:var(--accent-ink); transform:translateY(calc(-1 * var(--fab-lift))) scale(0.94);
   }
 
-
-
-  /* ---------- Form ---------- */
   .field{ margin-bottom:16px; }
   .field label{ display:block; font-size:12.5px; font-weight:700; color:var(--ink-soft); margin-bottom:6px; }
   .field label .opt-tag{ font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink-soft); opacity:0.75; }
@@ -267,7 +255,6 @@
   .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
   .field .price-input-wrap input{ padding-left:38px; }
 
-  /* ---------- Saran nama PJ (dropdown kustom, bukan datalist native) ---------- */
   .suggest-wrap{ position:relative; }
   .suggest-list{
     display:none; position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20;
@@ -311,7 +298,6 @@
   .trash-actions .btn-secondary, .trash-actions .btn-danger-outline{ flex:1; padding:10px 8px; font-size:13px; }
   .btn-danger-outline:disabled{ opacity:0.4; filter:grayscale(0.4); pointer-events:none; }
 
-  /* ---------- Puzzle konfirmasi hapus ---------- */
   .pz-wrap{
     position:relative; width:100%; height:130px; border-radius:14px; overflow:hidden;
     background:var(--paper-alt); margin-bottom:12px; user-select:none; -webkit-user-select:none;
@@ -357,7 +343,6 @@
   .btn-row{ display:flex; gap:10px; }
   .btn-row > *{ flex:1; }
 
-  /* ---------- Detail ---------- */
   .detail-card{
     border-radius:var(--radius-lg); background:var(--paper-alt); border:1px solid var(--line-soft);
     padding:6px 16px; margin-top:6px;
@@ -375,7 +360,6 @@
   .detail-row input:focus, .detail-row textarea:focus{ border-color:var(--accent); }
   .detail-actions{ margin-top:18px; display:flex; flex-direction:column; gap:10px; }
 
-  /* ---------- Settings ---------- */
   .theme-opt{
     display:flex; align-items:center; justify-content:space-between; padding:14px 16px; margin-bottom:10px;
     border-radius:14px; background:var(--paper-alt); border:1.5px solid var(--line-soft); cursor:pointer;
@@ -385,15 +369,12 @@
   .theme-opt .dot{ width:20px; height:20px; border-radius:50%; border:2px solid var(--line); flex-shrink:0; }
   .theme-opt.active .dot{ border-color:var(--accent); background:var(--accent); box-shadow:inset 0 0 0 3px var(--paper-alt); }
 
-  /* ---------- Modal / sheet ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(15,13,8,0.32); z-index:200;
     display:flex; align-items:flex-end; justify-content:center; opacity:0; pointer-events:none; transition:opacity .18s ease;
   }
   .overlay.center{ align-items:center; padding:0 20px; }
   .overlay.show{ opacity:1; pointer-events:auto; }
-  /* Blur ala iOS HANYA saat pop up terbuka. Kalau dipasang di overlay yang tertutup, lapisan layar penuh itu
-     tetap aktif di belakang layar dan bisa membuat sentuhan/scroll tersendat atau macet di WebView/iframe. */
   .overlay.show{ -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
   .modal-card{
     width:100%; max-width:420px; background:var(--paper); border-radius:24px 24px 0 0;
@@ -418,9 +399,6 @@
   .preview-row span:last-child{ font-weight:750; text-align:right; }
   .preview-row span.empty-val{ color:var(--ink-soft); font-weight:600; font-style:italic; }
 
-
-  /* ---------- Loading / toast ---------- */
-
   #saveStatusIndicator{
     position:fixed; top:calc(var(--safe-top) + 10px); right:14px; z-index:500;
     font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:var(--radius-pill);
@@ -433,10 +411,8 @@
   }
   #migrationToast.show{ opacity:1; transform:translateY(0); pointer-events:auto; }
 
-  /* ---------- Aturan umum sentuhan ---------- */
   input, textarea, select, button{ touch-action: manipulation; }
 
-  /* ---------- Kolom isian tambahan: select / tanggal / jam / uang di Detail ---------- */
   .field input[type="date"], .field input[type="time"]{ min-height:48px; }
   .detail-row select, .detail-row input[type="date"], .detail-row input[type="time"]{
     width:100%; padding:10px 12px; border-radius:11px; border:1.5px solid var(--line);
@@ -448,7 +424,6 @@
   .detail-row .price-input-wrap input{ padding-left:36px; }
   .recent-row .r-right.pending{ color:#C28A2E; }
 
-  /* ---------- Bukti (upload gambar, opsional maks. 2) ---------- */
   .bukti-dropzone{
     border:1.5px dashed var(--line); border-radius:var(--radius-md); background:var(--paper-alt);
     padding:14px; transition:border-color .15s ease, background .15s ease;
@@ -487,7 +462,6 @@
   .bukti-view-thumb{ width:56px; height:56px; border-radius:10px; object-fit:cover; cursor:pointer; }
   .r-photo-badge{ font-size:12px; margin-right:2px; vertical-align:-1px; }
 
-  /* ---------- Viewer bukti: preview geser (swipe) antar gambar ---------- */
   .bukti-viewer-overlay{
     position:fixed; inset:0; background:rgba(10,8,4,0.92); z-index:300;
     display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s ease;
@@ -509,14 +483,10 @@
   .bukti-dot{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.4); transition:all .15s ease; }
   .bukti-dot.active{ background:#fff; width:16px; border-radius:3px; }
 
-    /* ===================================================================
-     MEMUAT HALUS & LAYAR LEBAR
-     =================================================================== */
   .scroll { transition: opacity 0.25s ease; }
   html.is-loading .scroll { opacity: 0; }
   @media (prefers-reduced-motion: reduce) { .scroll { transition: none; } }
 
-  /* Tablet, laptop, monitor: isi berada di kolom tengah yang nyaman dibaca, simetris kiri-kanan */
   @media screen and (min-width: 768px) {
     .topbar,
     .px {
@@ -528,13 +498,9 @@
   }
 </style>
 <script>
-  // Isi halaman disembunyikan sampai data selesai dimuat, lalu muncul halus (tanpa kedip kosong-lalu-terisi).
-  // Pengaman: tampilkan paksa setelah 6 detik kalau jaringan macet.
   document.documentElement.classList.add('is-loading');
   setTimeout(function () { document.documentElement.classList.remove('is-loading'); }, 6000);
 </script>
-
-<!-- Supabase Client SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
 <script src="/bm-dialog.js"></script>
@@ -543,15 +509,13 @@
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpnem1ibmVxcXp4bnB0Ym1saHN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3OTU0ODksImV4cCI6MjEwMzM3MTQ4OX0.MQOtu5Pg2PtxIu18joKDd0dOA17cPEazmlL0Xl3Vz7E';
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-      persistSession: true,      // simpan sesi login di localStorage (bukan cuma di memori)
-      autoRefreshToken: true,    // perpanjang token otomatis selama app dibuka, tanpa perlu login ulang
+      persistSession: true,
+      autoRefreshToken: true,
       storage: window.localStorage,
-      storageKey: 'bmtech-auth' // key tetap sama di semua halaman, biar sesi kebaca di manapun dibuka
+      storageKey: 'bmtech-auth'
     }
   });
 </script>
-
-<!-- Auth Guard -->
 <script>
   (async function guardAdminAccess() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -574,7 +538,6 @@
     }
   })();
 </script>
-
 <script>
   window.addEventListener('error', function (e) {
     console.error('Unhandled error:', e.error || e.message);
@@ -585,13 +548,11 @@
     alert('Terjadi error tak terduga (async): ' + (e.reason && e.reason.message ? e.reason.message : e.reason));
   });
 </script>
-
 <script src="/bm-theme.js"></script>
 <script src="/bm-lang.js"></script>
 </head>
 <body>
 <script>
-  /* Sinkron dengan System Management & dashboard-admin: tema, warna sistem, font, teks tebal */
   (function () {
     var FONT_CLASS = { serif:'font-serif', klasik:'font-klasik', humanis:'font-humanis', kompak:'font-kompak', mono:'font-mono', rounded:'font-rounded', custom:'font-custom' };
     function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -638,8 +599,7 @@
   })();
 </script>
 <div class="app">
-
-  <!-- ============ HOME ============ -->
+  
   <section class="view active" id="view-home">
     <div class="topbar">
       <button class="icon-btn" id="btnHomeBack" aria-label="Kembali ke daftar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -658,8 +618,7 @@
       <p id="recentEmptyHint" style="display:none; font-size:12.5px; color:var(--ink-soft); font-weight:600; text-align:center; padding:18px 0;">Belum ada data. Ketuk tombol "+" di bawah untuk mulai.</p>
     </div>
   </section>
-
-  <!-- ============ TAMBAH DATA ============ -->
+  
   <section class="view" id="view-add">
     <div class="topbar">
       <button class="icon-btn" id="btnAddBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -679,8 +638,7 @@
       </button>
     </div>
   </section>
-
-  <!-- ============ DETAIL DATA ============ -->
+  
   <section class="view" id="view-detail">
     <div class="topbar">
       <button class="icon-btn" id="btnDetailBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -704,8 +662,7 @@
       </div>
     </div>
   </section>
-
-  <!-- ============ SETTINGS ============ -->
+  
   <section class="view" id="view-settings">
     <div class="topbar">
       <button class="icon-btn" id="btnSettingsBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -725,8 +682,7 @@
       <div class="theme-opt" data-theme="dark"><b>Gelap</b><div class="dot"></div></div>
     </div>
   </section>
-
-  <!-- ============ SAMPAH ============ -->
+  
   <section class="view" id="view-trash">
     <div class="topbar">
       <button class="icon-btn" id="btnTrashBack" aria-label="Kembali"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
@@ -763,8 +719,7 @@
     </div>
     <div class="bottom-nav-safe"></div>
   </div>
-
-    <!-- ============ MODAL: KONFIRMASI ============ -->
+    
   <div class="overlay center" id="overlayConfirm">
     <div class="modal-card">
       <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></div>
@@ -777,8 +732,7 @@
       </div>
     </div>
   </div>
-
-  <!-- ============ MODAL: HAPUS ============ -->
+  
   <div class="overlay center" id="overlayDelete">
     <div class="modal-card">
       <div class="modal-icon danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
@@ -816,13 +770,6 @@
 
 <script>
   const sb = supabaseClient;
-  // =====================================================================
-  // EDITOR FOLDER (custom) — data-nya format 'custom-data-v1':
-  //   notes.content = { schema, records:[{ id, v:{ idKolom: nilai | [urlFoto] }, no?, created_at }],
-  //                     trash:[{...record, deleted_at}], columns, auto }
-  //   Susunan kolom diambil dari folders.schema.columns (kolom `hidden` tidak ditampilkan).
-  // Tipe kolom: text, long, select, date, money, number, image (maks. 2 foto).
-  // =====================================================================
   const SCHEMA = 'custom-data-v1';
   const BUCKET = 'bukti';
   const TRASH_DAYS = 30;
@@ -837,13 +784,12 @@
   let records = [];
   let trash = [];
   let noteTitle = '';
-  let F = null;            // state form (tambah / edit)
-  let detId = null;        // id data yang sedang dibuka di Detail
+  let F = null;
+  let detId = null;
   let saving = false;
   let uploading = 0;
   let viewerUrls = [], viewerIndex = 0;
 
-  // ---------- helper ----------
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const pad2 = n => String(n).padStart(2, '0');
@@ -866,7 +812,6 @@
     if (c.type === 'date') { const d = new Date(v + 'T00:00:00'); return isNaN(d) ? String(v) : dmy(d); }
     return String(v);
   }
-  // judul utama sebuah baris: kolom teks pertama yang terisi
   function mainOf(r) {
     const c = cols.find(c => ['text', 'long', 'select'].includes(c.type) && !isEmpty(r.v && r.v[c.id]));
     return c ? txt(c, r.v[c.id]) : '';
@@ -875,12 +820,10 @@
     return Object.values((r && r.v) || {}).flatMap(x => Array.isArray(x) ? x : []).filter(u => typeof u === 'string');
   }
 
-  // ---------- overlay, tema, toast ----------
   function openOverlay(id) { $(id).classList.add('show'); }
   function closeOverlay(id) { $(id).classList.remove('show'); }
   document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeOverlay(o.id); }));
 
-  // Tema mengikuti kunci 'bm-theme' yang sama dengan dashboard-admin (light / dark; kosong = dark)
   function getStoredTheme(){ try { return localStorage.getItem('bm-theme') === 'light' ? 'light' : 'dark'; } catch (e) { return 'dark'; } }
   function setStoredTheme(t){ try { localStorage.setItem('bm-theme', t === 'light' ? 'light' : 'dark'); } catch (e) {} }
   function applyTheme(t){ window.bmApplyAppearance(); }
@@ -906,11 +849,9 @@
     else location.href = 'dashboard-admin.html';
   }
 
-  // ---------- router ----------
   function goView(n) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     $('view-' + n).classList.add('active');
-    // sama seperti empat editor lain: nav terlihat di Home & Pengaturan, tersembunyi di Tambah / Detail / Sampah
     $('bottomNav').style.display = (n === 'add' || n === 'detail' || n === 'trash') ? 'none' : 'flex';
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.nav === n));
     const sc = $('view-' + n).querySelector('.scroll'); if (sc) sc.scrollTop = 0;
@@ -936,7 +877,6 @@
     }
   });
 
-  // ---------- home ----------
   function renderHome() {
     $('gName').textContent = noteTitle || (folder ? folder.name : '...');
     const today = ymd(new Date());
@@ -966,7 +906,6 @@
   }
   $('recentList').addEventListener('click', e => { const el = e.target.closest('.recent-row'); if (el) openDetail(el.dataset.id); });
 
-  // ---------- form (dipakai Tambah & Edit) ----------
   const DZ = cid => `<div class="bukti-dropzone" id="dz_${cid}">
       <input type="file" accept="image/*" multiple hidden data-file="${cid}">
       <input type="file" accept="image/*" capture="environment" hidden data-file="${cid}">
@@ -1016,7 +955,6 @@
     afterForm();
   }
 
-  // ---------- foto (maks. 2 per kolom gambar) ----------
   function thumbs(cid) {
     const arr = F.vals[cid] || [], dz = $('dz_' + cid), box = $('th_' + cid);
     if (!dz || !box) return;
@@ -1024,7 +962,6 @@
     dz.classList.toggle('has-items', arr.length > 0);
     dz.classList.toggle('full', arr.length >= MAX_FOTO);
   }
-  // kecilkan ke maks. 1280px & JPEG 80% supaya hemat penyimpanan
   function toBlob(file) {
     return new Promise((res, rej) => {
       const img = new Image(), rd = new FileReader();
@@ -1066,7 +1003,6 @@
   $('buktiViewerPrev').addEventListener('click', () => { viewerIndex--; drawViewer(); });
   $('buktiViewerNext').addEventListener('click', () => { viewerIndex++; drawViewer(); });
   $('btnBuktiViewerClose').addEventListener('click', () => closeOverlay('overlayBuktiViewer'));
-  // geser (swipe) di viewer: kiri/kanan = gambar sebelumnya/berikutnya
   (function(){
     let x0 = null;
     const stage = $('buktiViewerStage');
@@ -1080,7 +1016,6 @@
     }, { passive: true });
   })();
 
-  // ---------- pendengar form (satu pendengar per jenis, tanpa mengunci sentuhan/scroll) ----------
   document.addEventListener('input', e => {
     const t = e.target; if (!F || !t.dataset) return;
     if (t.dataset.sys) F[t.dataset.sys] = t.value;
@@ -1106,7 +1041,6 @@
     else if (t.dataset.rm) { const [cid, i] = t.dataset.rm.split(':'); F.vals[cid].splice(+i, 1); thumbs(cid); }
     else if (t.dataset.vw) { const [cid, i] = t.dataset.vw.split(':'), r = records.find(x => x.id === detId); openViewer((r && r.v && r.v[cid]) || [], +i); }
   });
-  // Enter di kolom isian = pindah ke kolom berikutnya
   document.addEventListener('keydown', e => {
     if (e.key !== 'Enter' || e.isComposing) return;
     const t = e.target;
@@ -1116,13 +1050,11 @@
     const nx = all[all.indexOf(t) + 1];
     if (nx) nx.focus(); else t.blur();
   });
-  // Menyentuh bagian mana pun dari kolom uang (termasuk tulisan "Rp") memfokuskan isiannya
   document.addEventListener('click', e => {
     const w = e.target.closest && e.target.closest('.price-input-wrap');
     if (w && e.target.tagName !== 'INPUT') { const i = w.querySelector('input'); if (i) i.focus(); }
   });
 
-  // ---------- validasi & simpan ----------
   function check() {
     if (uploading) return 'Tunggu foto selesai diunggah dulu.';
     for (const c of cols) {
@@ -1143,10 +1075,7 @@
     return v;
   }
 
-  // Tulis ke server: selalu baca isi TERBARU dulu (aman kalau dibuka di 2 HP), ubah, lalu simpan.
-  // Field lain di content (mis. data yang tidak dikenal) tidak dibuang.
   async function persist(mutate) {
-    // Simpan dengan kunci versi: kalau HP lain menyimpan di sela-selanya, baca ulang lalu terapkan perubahan lagi (maks 6x).
     for (let attempt = 0; attempt < 6; attempt++) {
       const done = await persistOnce(mutate);
       if (done) return;
@@ -1179,7 +1108,7 @@
       if (lockAt) q = q.eq('updated_at', lockAt);
       const { data: upd, error } = await q.select('id');
       if (error) throw error;
-      if (!upd || !upd.length) return false;   // bentrok: ada yang menyimpan lebih dulu -> ulangi dengan isi terbaru
+      if (!upd || !upd.length) return false;
     } else {
       const f = [...cur].sort(byDate)[0];
       const { data, error } = await sb.from('notes').insert({ ...payload, title: noteTitle || (folder.name + ' ' + dmy(new Date(f ? f.created_at : Date.now()))), folder_id: folderId }).select().single();
@@ -1208,7 +1137,6 @@
     } catch (e) { saving = false; toast('Gagal menyimpan: ' + (e.message || e)); return null; }
   }
 
-  // ---------- konfirmasi tambah ----------
   $('btnBukaKonfirmasi').addEventListener('click', () => {
     const bad = check(); if (bad) return toast(bad);
     const now = new Date();
@@ -1228,7 +1156,6 @@
     if (id) goView('home');
   });
 
-  // ---------- detail / edit ----------
   function openDetail(id) { detId = id; goView('detail'); renderDetail(false); }
   function renderDetail(edit) {
     const r = records.find(x => x.id === detId);
@@ -1256,8 +1183,6 @@
     if (await doSave(detId)) renderDetail(false);
   });
 
-  // ---------- hapus -> Sampah (30 hari), pemulihan, hapus permanen ----------
-  // Satu popup puzzle dipakai untuk 3 mode: 'soft' (ke Sampah), 'purge' (1 data permanen), 'empty' (kosongkan Sampah)
   let deleteMode = 'soft', deleteTargetId = null;
   function openDeleteConfirm(mode, targetId) {
     deleteMode = mode; deleteTargetId = targetId;
@@ -1287,7 +1212,7 @@
   $('btnDetailDelete').addEventListener('click', () => openDeleteConfirm('soft', detId));
   $('btnDeleteBatal').addEventListener('click', () => closeOverlay('overlayDelete'));
   $('btnDeleteYakin').addEventListener('click', async () => {
-    if (!deletePuzzle.isSolved()) return; // puzzle wajib selesai dulu
+    if (!deletePuzzle.isSolved()) return;
     closeOverlay('overlayDelete');
     try {
       if (deleteMode === 'soft') {
@@ -1354,7 +1279,7 @@
         const i = tr.findIndex(t => t.id === id); if (i < 0) return;
         const [it] = tr.splice(i, 1); delete it.deleted_at;
         if (cur.some(r => r.id === it.id)) it.id = uid();
-        cur.push(it); // created_at asli dipertahankan -> nomor urut kembali ke posisi semula
+        cur.push(it);
       });
       toast('Data berhasil dipulihkan.');
     } catch (err) { toast('Gagal memulihkan: ' + (err.message || err)); }
@@ -1362,7 +1287,6 @@
   });
   $('btnEmptyTrash').addEventListener('click', () => { if (trash.length) openDeleteConfirm('empty', null); });
 
-  // data di Sampah yang lewat 30 hari dibuang (foto ikut dihapus dari penyimpanan)
   async function purgeExpired() {
     const expired = trash.filter(t => { const d = new Date(t.deleted_at).getTime(); return !isNaN(d) && Date.now() - d >= TRASH_DAYS * 86400000; });
     if (!expired.length || !noteId) return;
@@ -1371,12 +1295,6 @@
     catch (e) { console.warn('Gagal membuang Sampah kedaluwarsa:', e && e.message); }
   }
 
-
-  // =====================================================================
-  // PUZZLE KONFIRMASI HAPUS — geser potongan gambar ke lubang yang pas.
-  // Tombol "Ya, Hapus" baru aktif setelah puzzle berhasil diselesaikan.
-  // Posisi lubang & gambar diacak setiap kali dibuka / salah geser.
-  // =====================================================================
   const deletePuzzle = (function(){
     const wrap = document.getElementById('pzWrap');
     const canvas = document.getElementById('pzCanvas');
@@ -1388,11 +1306,11 @@
     const btnYakin = document.getElementById('btnDeleteYakin');
     const btnRefresh = document.getElementById('pzRefresh');
 
-    const P = 40;          // sisi kotak potongan puzzle
-    const R = 7;           // jari-jari tonjolan
-    const H = 130;         // tinggi area gambar
-    const HANDLE = 39;     // diameter tombol geser
-    const TOL = 6;         // toleransi (px) posisi benar
+    const P = 40;
+    const R = 7;
+    const H = 130;
+    const HANDLE = 39;
+    const TOL = 6;
     const LABEL_DEFAULT = 'Geser untuk mencocokkan';
 
     let W = 300, dpr = 1, tx = 0, ty = 0, sceneSeed = 1;
@@ -1404,7 +1322,6 @@
       return function(){ a = (Math.imul(a, 1664525) + 1013904223) >>> 0; return a / 4294967296; };
     }
 
-    // bentuk potongan: kotak dengan tonjolan di atas & kanan
     function piecePath(ctx, x, y){
       ctx.beginPath();
       ctx.moveTo(x, y);
@@ -1418,7 +1335,6 @@
       ctx.closePath();
     }
 
-    // gambar latar acak (deterministik per seed supaya lubang & potongan identik)
     function drawScene(ctx){
       const rnd = makeRng(sceneSeed);
       const h1 = Math.floor(rnd() * 360), h2 = (h1 + 40 + Math.floor(rnd() * 120)) % 360;
@@ -1454,7 +1370,6 @@
     }
 
     function render(){
-      // kanvas utama + lubang
       canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       const c = canvas.getContext('2d');
@@ -1467,7 +1382,6 @@
       c.lineWidth = 1.5;
       c.stroke();
 
-      // kanvas potongan (kotak berada di offset (2, R+2))
       const pw = P + R + 4, ph = P + R + 4;
       piece.width = Math.round(pw * dpr); piece.height = Math.round(ph * dpr);
       piece.style.width = pw + 'px'; piece.style.height = ph + 'px';
@@ -1539,7 +1453,7 @@
     function endDrag(){
       if (!dragging) return;
       dragging = false;
-      if (offset < 6) return; // hanya tap, bukan geser
+      if (offset < 6) return;
       if (Math.abs(dragX - tx) <= TOL) {
         solved = true;
         setOffset(offset);
@@ -1567,8 +1481,8 @@
     var barHeight = surface.offsetHeight || 64;
     if (!navWidth || !barHeight) return;
 
-    var notchTopWidth = fabSize + 16;                          // ruang 8px kiri-kanan tombol
-    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5); // kedalaman proporsional, dibatasi tinggi bar
+    var notchTopWidth = fabSize + 16;
+    var notchDepth = Math.min(fabSize * 0.36, barHeight * 0.5);
 
     var cx = navWidth / 2;
     var x1 = cx - notchTopWidth / 2;
@@ -1598,7 +1512,6 @@
   window.addEventListener('load', updateNavNotch);
   updateNavNotch();
 
-  // ---------- muat data ----------
   (async function init() {
     try {
       if (noteId) {

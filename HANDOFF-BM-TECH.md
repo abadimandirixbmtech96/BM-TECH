@@ -365,3 +365,14 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Bagikan dalam tampilan Kartu (HP): PDF A4 tegak 2 kolom (`exportCardsPdf`, gambar langsung jsPDF, teks bisa dipilih, `pdfSafe` untuk huruf WinAnsi) dan gambar PNG lebar 1080 per halaman (`exportCardsImage`, canvas). Mengikuti hari yang dipilih. Lembar "File siap" (`offerFiles`): Bagikan (Web Share files) / Simpan. Tampilan Tabel tetap memakai ekspor tabel lama.
 - Kartu detail: judul kartu = customer → nama → item (sebelumnya kartu Operasional berjudul nomor "001").
 - Laci folder: buka/tutup folder dan tahun beranimasi (WAAPI tinggi + isi muncul berurutan, `accGrow/accShrink`), gulir otomatis bila isi terhalang (`accEnsureVisible`). Animasi CSS lama `folderAccIn` (berulang tiap render) dihapus.
+
+## 35. Pencarian dashboard admin: semua baris cocok (sw v82)
+- Bug: pencarian hanya menampilkan baris cocok PERTAMA per catatan (mis. "Joko" dengan 2+ data di tanggal yang sama hanya muncul satu). `findMatchInContent` diganti `findAllMatchesInContent` (semua baris), `computeSearchMatches` membuat satu entri per baris cocok.
+- Pencocokan per baris dengan kata kunci terpisah spasi (semua kata harus ada di salah satu kolom baris itu): "joko 12-11" atau "joko piston" mempersempit hasil. Judul catatan yang cocok tanpa baris cocok tetap satu kartu.
+- Kartu hasil per baris: `data-rec-id` tiap baris (editor membuka baris yang tepat), badge = tanggal + jam baris. Render dibatasi 150 kartu dengan keterangan bila lebih. "Found N" menghitung semua kartu.
+- Tes: `uji57/srch.js` (+ adm.js, ops.js lulus).
+
+## 36. Standar editor + tanpa komentar (sw v83)
+- Pengaman salah-editor diseragamkan di kelima editor data (administrator, kasbon, hutang-piutang, warung, operasional): peta `otherEditors` per skema (`warung-data-v1`, `kasbon-data-v1`, `hutangpiutang-data-v1`, `admin-data-v1`, `operasional-data-v1`, `custom-data-v1`) lalu `bmRedirect`. Sebelumnya administrator tidak mengalihkan catatan hutang-piutang/custom, kasbon/hutang-piutang tidak mengalihkan operasional/custom, dan warung hanya mengalihkan kasbon, sehingga catatan bisa tertimpa format yang salah.
+- Semua komentar (JS, CSS, HTML) dihapus dari 6 editor dan dashboard-admin.html. Aturan tetap: JANGAN menulis komentar/teks panduan di kode.
+- Tes: `uji57/guard.js` (30 kombinasi editor x skema), `cmp.js` (CSS/DOM identik), token JS identik, adm.js, ops.js, srch.js.
