@@ -109,13 +109,25 @@ button.sel span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pv small{display:block;color:var(--mu);font-size:var(--f1)}
 .pv b{display:block;font-size:var(--f3);margin:2px 0 4px;overflow-wrap:anywhere}
 .pv .ok{color:var(--acx)}.pv .no{color:var(--er)}
-nav{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom) + var(--navfix,0px));width:auto;max-width:440px;box-sizing:border-box;display:flex;padding:6px;border-radius:34px;z-index:20;background:var(--ng);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);border:1px solid var(--nb);user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav{background:var(--sf)}}
+nav{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom) + var(--navfix,0px));width:auto;max-width:440px;box-sizing:border-box;display:flex;padding:6px;border-radius:34px;z-index:20;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;box-shadow:0 12px 26px -8px rgba(0,0,0,.34),0 2px 5px rgba(0,0,0,.12);transition:transform .45s var(--spring),box-shadow .3s}
+nav.ng{touch-action:none}
+nav.press{transform:scale(1.06);transition:transform .3s cubic-bezier(.2,.9,.3,1.3),box-shadow .3s;box-shadow:0 18px 34px -8px rgba(0,0,0,.42),0 3px 8px rgba(0,0,0,.16)}
+nav u{position:absolute;inset:0;border-radius:inherit;pointer-events:none;text-decoration:none}
+nav .gb{background:var(--ng);-webkit-backdrop-filter:blur(12px) saturate(1.5);backdrop-filter:blur(12px) saturate(1.5)}
+nav .gl{box-shadow:inset 0 0 0 1px var(--nb),inset 2px 2px 4px -1px rgba(255,255,255,.4),inset -2px -2px 4px -1px rgba(255,255,255,.22),inset 0 10px 14px -10px rgba(255,255,255,.3)}
+nav .gl::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from 0deg,rgba(255,255,255,.55),rgba(255,255,255,.12) 40deg,rgba(255,255,255,.04) 80deg,rgba(255,255,255,.35) 135deg,rgba(255,255,255,.05) 170deg,rgba(255,255,255,.04) 250deg,rgba(255,255,255,.85) 315deg,rgba(255,255,255,.55));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){nav .gb{background:var(--sf)}}
 nav button{flex:1;position:relative;z-index:1;background:none;border:0;color:var(--mu);font-size:10px;font-weight:600;padding:8px 0 6px;display:flex;flex-direction:column;align-items:center;gap:2px;transition:color .25s}
 nav button.on{color:var(--acx)}
 nav svg{width:22px;height:22px;stroke-width:2;transition:transform .35s var(--spring)}
 nav button.on svg{transform:scale(1.08)}nav button:active svg{transform:scale(.86)}
-nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);border-radius:28px;background:color-mix(in srgb,var(--tx) 9%,transparent);transform:translate3d(calc(var(--i,0)*100%),0,0);transition:transform .45s var(--spring);will-change:transform}
+nav i{position:absolute;top:6px;bottom:6px;left:6px;width:calc((100% - 12px)/5);border-radius:28px;background:color-mix(in srgb,var(--tx) 9%,transparent);box-shadow:inset 0 1px 1px rgba(255,255,255,.18),inset 0 0 0 1px color-mix(in srgb,var(--tx) 6%,transparent);transform:translate3d(calc(var(--i,0)*100%),0,0);transition:transform .45s var(--spring);will-change:transform}
+nav .lens{display:none;position:absolute;inset:auto;top:4px;left:0;z-index:2;border-radius:999px;opacity:0;will-change:transform,opacity;-webkit-backdrop-filter:saturate(1.25) brightness(1.1);backdrop-filter:saturate(1.25) brightness(1.1);background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.01) 50%,rgba(255,255,255,.06));box-shadow:inset 0 0 0 1.2px rgba(255,255,255,.45),inset 3px 3px 5px -1px rgba(255,255,255,.65),inset -3px -3px 5px -1px rgba(255,255,255,.4),inset 0 -6px 12px -6px rgba(255,255,255,.18),0 0 0 .5px color-mix(in srgb,var(--tx) 16%,transparent),0 10px 22px rgba(0,0,0,.34)}
+nav .lens::after{content:"";position:absolute;left:16%;right:16%;top:3px;height:38%;border-radius:30px 30px 60% 60%;background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0));opacity:.6}
+nav.ng .lens{display:block}
+nav.ng i{top:4px;bottom:auto;left:0;transition:none;transform:none}
+.ngsvg nav.ng .lens{-webkit-backdrop-filter:url(#lensF) saturate(1.25) brightness(1.1);backdrop-filter:url(#lensF) saturate(1.25) brightness(1.1)}
+svg.ngdefs{position:absolute;width:0;height:0;pointer-events:none}
 #pages{position:relative;z-index:30}
 .pg{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;animation:pgin .3s var(--ease) both}
 .pg.out{animation:pgout .22s ease-in forwards;pointer-events:none}
@@ -277,7 +289,7 @@ main.tin{animation:tabin var(--dur) var(--ease) both}
  body{padding-left:96px}
  nav{left:calc(12px + env(safe-area-inset-left));right:auto;margin:0;max-width:none;top:50%;bottom:auto;transform:translateY(-50%);width:72px;flex-direction:column;padding:8px 6px;border-radius:36px}
  nav button{padding:12px 0 8px}
- nav i{left:6px;right:6px;width:auto;top:8px;bottom:auto;height:calc((100% - 16px)/5);transform:translate3d(0,calc(var(--i,0)*100%),0)}
+ nav i{left:6px;right:6px;width:auto;top:8px;bottom:auto;height:calc((100% - 16px)/5);transform:translate3d(0,calc(var(--i,0)*100%),0);transition:transform .45s var(--spring)}
  main{padding-bottom:48px}
 }
 @media(prefers-contrast:more){:root{--bd:#8a8a8a}}
@@ -333,7 +345,8 @@ html.bold-mode body *{font-weight:700!important}
 <div id="app">
 <header><div><div class="app">Buku Warung BM TECH</div><h1 id="ttl"></h1></div><button type="button" id="bm-sync-f" class="syc" hidden></button></header>
 <main id="v"></main>
-<nav id="nv" aria-label="Menu utama"><i></i></nav>
+<nav id="nv" aria-label="Menu utama"><u class="gb"></u><u class="gl"></u><i></i></nav>
+<svg class="ngdefs" aria-hidden="true"><filter id="lensF" filterUnits="userSpaceOnUse" x="0" y="0" width="80" height="48" color-interpolation-filters="sRGB"><feImage id="lensMap" x="0" y="0" width="80" height="48" preserveAspectRatio="none" result="m"/><feDisplacementMap in="SourceGraphic" in2="m" scale="30" xChannelSelector="R" yChannelSelector="G" result="d1"/><feColorMatrix in="d1" values="1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0" result="r"/><feDisplacementMap in="SourceGraphic" in2="m" scale="20" xChannelSelector="R" yChannelSelector="G" result="d2"/><feColorMatrix in="d2" values="0 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="gb"/><feBlend in="r" in2="gb" mode="screen"/></filter></svg>
 </div>
 <div id="pages"></div><div id="mn"></div><div id="sug"></div><div id="dlg"></div><div id="ts" role="status" aria-live="polite"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -612,7 +625,7 @@ function bad(sel,m){toast(m);const t=topPg();if(sel&&t){const e=t.querySelector(
 function vals(el){const o={};if(el)el.querySelectorAll('input[name]').forEach(i=>{o[i.name]=i.value});return o}
 
 (function(){if(typeof document==='undefined')return;
- document.addEventListener('pointerdown',e=>{if(reduce())return;const t=e.target.closest&&e.target.closest('.bt,.chip,.sc,.kt,nav button,.ib');if(!t)return;
+ document.addEventListener('pointerdown',e=>{if(reduce())return;const t=e.target.closest&&e.target.closest('.bt,.chip,.sc,.kt,.ib');if(!t)return;
   t.classList.add('rp-h');const r=t.getBoundingClientRect(),d=Math.max(r.width,r.height)*2,s=document.createElement('span');s.className='rpl';
   s.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-r.left-d/2)+'px;top:'+(e.clientY-r.top-d/2)+'px';t.appendChild(s);setTimeout(()=>s.remove(),600)},{passive:true});
  if('IntersectionObserver' in window){const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('rvi');io.unobserve(x.target)}}),{rootMargin:'0px 0px -6% 0px',threshold:.05});
@@ -1581,9 +1594,55 @@ function pgLink(){return pgh('Hubungkan ke barang','<p style="margin:0 0 12px;co
 
 const TABS=[['Beranda','home',vHome],['Barang','box',vItems],['Nota','sale',vNotaTab],['Hutang','debt',vDebt],['Lainnya','dots',vMore]];
 const TTL=['Beranda','Barang','Nota','Hutang','Lainnya'];
-function buildNav(){$('#nv').innerHTML='<i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('')}
+const NG={x:0,vx:0,tx:0,g:0,gv:0,st:0,sv:0,pressed:false,raf:0,last:0,tabW:0,lw:0,lh:0,pad:6,on:false,mark:-1,key:'',init:false};
+const ngV=()=>!!(window.matchMedia&&matchMedia('(min-width:1100px)').matches);
+const ngClamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ngPos=i=>NG.pad+i*NG.tabW+(NG.tabW-NG.lw)/2;
+const ngIdx=v=>ngClamp(Math.floor((v+NG.lw/2-NG.pad)/NG.tabW),0,TABS.length-1);
+function ngMap(w,h){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),im=g.createImageData(w,h),d=im.data,r=h/2,bez=13;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const px=x+.5,py=y+.5,cx=Math.min(Math.max(px,r),w-r),dx=px-cx,dy=py-r,dist=Math.hypot(dx,dy),ins=r-dist;let ox=0,oy=0;
+  if(ins>0&&ins<bez&&dist>.001){const k=Math.pow(1-ins/bez,2.2);ox=-dx/dist*k;oy=-dy/dist*k}
+  const p=(y*w+x)*4;d[p]=128+ox*127;d[p+1]=128+oy*127;d[p+2]=128;d[p+3]=255}
+ g.putImageData(im,0,0);return c.toDataURL()}
+function ngMark(i){if(i===NG.mark)return;if(NG.mark>=0&&NG.pressed&&navigator.vibrate)try{navigator.vibrate(5)}catch(e){}NG.mark=i;document.querySelectorAll('#nv button').forEach((b,k)=>b.classList.toggle('on',k===i))}
+function ngRender(){const n=$('#nv'),lens=n.querySelector('.lens'),pill=n.querySelector('i');if(!lens||!NG.on)return;
+ const G=ngClamp(NG.g,0,1.12),O=Math.min(G,1),sx=(1+.2*G)*(1+NG.st),sy=(1+.3*G)/Math.sqrt(1+NG.st*1.4);
+ lens.style.transform='translate3d('+NG.x+'px,0,0) scale('+sx+','+sy+')';lens.style.opacity=O;
+ pill.style.transform='translate3d('+NG.x+'px,0,0) scale('+(1+NG.st)+','+1/Math.sqrt(1+NG.st*1.4)+')';pill.style.opacity=1-O}
+function ngStep(dt){const k=NG.pressed?900:480,c=NG.pressed?58:30;
+ NG.vx+=(k*(NG.tx-NG.x)-c*NG.vx)*dt;NG.x+=NG.vx*dt;
+ const want=(NG.pressed||Math.abs(NG.tx-NG.x)>2||Math.abs(NG.vx)>60)?1:0;
+ NG.gv+=(380*(want-NG.g)-30*NG.gv)*dt;NG.g+=NG.gv*dt;
+ const sT=Math.min(Math.abs(NG.vx)/2600,.5);NG.sv+=(420*(sT-NG.st)-15*NG.sv)*dt;NG.st+=NG.sv*dt;
+ if(NG.pressed||NG.g>.3)ngMark(ngIdx(NG.x))}
+function ngLoop(t){const dt=NG.last?Math.min((t-NG.last)/1000,1/30):1/60;NG.last=t;ngStep(dt/2);ngStep(dt/2);ngRender();
+ if(!NG.pressed&&Math.abs(NG.tx-NG.x)<.15&&Math.abs(NG.vx)<1.5&&NG.g<.003&&Math.abs(NG.gv)<.03&&Math.abs(NG.st)<.002&&Math.abs(NG.sv)<.03){NG.x=NG.tx;NG.g=0;NG.st=0;ngRender();NG.raf=0;NG.last=0;ngMark(tab);return}
+ NG.raf=requestAnimationFrame(ngLoop)}
+function ngKick(){if(!NG.raf)NG.raf=requestAnimationFrame(ngLoop)}
+function ngSnap(){NG.tx=NG.x=ngPos(tab);NG.vx=0;NG.g=0;NG.gv=0;NG.st=0;NG.sv=0;ngMark(tab);ngRender()}
+function ngLayout(){const n=$('#nv');if(!n)return;const lens=n.querySelector('.lens'),pill=n.querySelector('i');if(!lens||!pill)return;
+ if(ngV()||!window.requestAnimationFrame){NG.on=false;n.classList.remove('ng','press');lens.style.cssText='';pill.style.cssText='';NG.key='';return}
+ NG.on=true;n.classList.add('ng');NG.pad=parseFloat(getComputedStyle(n).paddingLeft)||6;
+ const W=n.clientWidth-NG.pad*2;NG.tabW=W/TABS.length;NG.lw=Math.round(NG.tabW+4);NG.lh=n.clientHeight-8;
+ const key=NG.lw+'x'+NG.lh;lens.style.width=pill.style.width=NG.lw+'px';lens.style.height=pill.style.height=NG.lh+'px';
+ if(key!==NG.key){NG.key=key;const f=document.getElementById('lensF'),m=document.getElementById('lensMap');
+  if(f&&m){f.setAttribute('width',NG.lw);f.setAttribute('height',NG.lh);m.setAttribute('width',NG.lw);m.setAttribute('height',NG.lh);try{m.setAttribute('href',ngMap(NG.lw,NG.lh))}catch(e){}}}
+ ngSnap()}
+function ngSync(i){if(!NG.on||NG.pressed)return;if(reduce()){ngSnap();return}NG.tx=ngPos(i);ngKick()}
+function ngInit(){const n=$('#nv');if(!n||NG.init)return;NG.init=true;
+ const u=navigator.userAgent;if(!/iPad|iPhone|iPod/.test(u)&&/Chrome\/|Chromium|EdgA|SamsungBrowser/.test(u))document.documentElement.classList.add('ngsvg');
+ const tx=e=>{const r=n.getBoundingClientRect(),lx=(e.clientX-r.left)*(n.offsetWidth/r.width);return ngClamp(lx-NG.lw/2,ngPos(0)-3,ngPos(TABS.length-1)+3)};
+ n.addEventListener('pointerdown',e=>{if(!NG.on||(e.pointerType==='mouse'&&e.button!==0))return;try{n.setPointerCapture(e.pointerId)}catch(x){}NG.pressed=true;n.classList.add('press');NG.tx=tx(e);if(reduce()){NG.x=NG.tx;NG.g=0;ngMark(ngIdx(NG.x));ngRender()}else ngKick()});
+ n.addEventListener('pointermove',e=>{if(!NG.pressed)return;NG.tx=tx(e);if(reduce()){NG.x=NG.tx;ngMark(ngIdx(NG.x));ngRender()}else ngKick()});
+ const rel=()=>{if(!NG.pressed)return;NG.pressed=false;n.classList.remove('press');const i=ngIdx(NG.tx);
+  if(i!==tab)setTab(i);else{NG.tx=ngPos(i);if(reduce())ngSnap();else ngKick()}};
+ n.addEventListener('pointerup',rel);n.addEventListener('pointercancel',rel);
+ window.addEventListener('resize',()=>{cancelAnimationFrame(NG.raf);NG.raf=0;NG.last=0;ngLayout()});
+ if(window.ResizeObserver)new ResizeObserver(()=>{if(!NG.pressed)ngLayout()}).observe(n);
+ ngLayout()}
+function buildNav(){$('#nv').innerHTML='<u class="gb"></u><u class="gl"></u><i></i>'+TABS.map((t,i)=>'<button type="button" data-a="tab" data-i="'+i+'">'+ic(t[1])+t[0]+'</button>').join('')+'<u class="lens"></u>';ngInit();ngLayout()}
 function render(anim){$('#nv').style.setProperty('--i',tab);
- document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('on',i===tab);if(i===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ document.querySelectorAll('nav button').forEach((b,i)=>{b.classList.toggle('on',i===tab);if(i===tab)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});NG.mark=tab;ngSync(tab);
  const v=$('#v');$('#ttl').textContent=TTL[tab];{const h=TABS[tab][2]();if(anim||!v.firstChild)v.innerHTML=h;else morph(v,h)}
  if(anim){v.classList.remove('tin');void v.offsetWidth;v.classList.add('tin');countUp(v)}
  fresh=null}
