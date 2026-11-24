@@ -376,3 +376,24 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Pengaman salah-editor diseragamkan di kelima editor data (administrator, kasbon, hutang-piutang, warung, operasional): peta `otherEditors` per skema (`warung-data-v1`, `kasbon-data-v1`, `hutangpiutang-data-v1`, `admin-data-v1`, `operasional-data-v1`, `custom-data-v1`) lalu `bmRedirect`. Sebelumnya administrator tidak mengalihkan catatan hutang-piutang/custom, kasbon/hutang-piutang tidak mengalihkan operasional/custom, dan warung hanya mengalihkan kasbon, sehingga catatan bisa tertimpa format yang salah.
 - Semua komentar (JS, CSS, HTML) dihapus dari 6 editor dan dashboard-admin.html. Aturan tetap: JANGAN menulis komentar/teks panduan di kode.
 - Tes: `uji57/guard.js` (30 kombinasi editor x skema), `cmp.js` (CSS/DOM identik), token JS identik, adm.js, ops.js, srch.js.
+
+## 37. Navigasi dashboard-shop liquid glass (sw v84)
+- Bar bawah `nav#nv` (dashboard-shop.html) memakai lensa kaca yang bisa diketuk dan digeser (`NG`, `ngInit/ngLayout/ngSync`, `ngMap`, filter SVG `#lensF`). Lapisan kaca dipisah dari nav (`u.gb`, `u.gl`) karena backdrop-filter pada induk memblokir backdrop-filter lensa. Lensa `u.lens` memakai distorsi SVG hanya di Chromium non-iOS (kelas `ngsvg`), selain itu kaca biasa.
+- Tab dipilih dari posisi jari saat dilepas (`ngIdx(NG.tx)`), dipindah lewat `setTab`; pointer capture di nav, jadi pilihan lewat keyboard tetap lewat klik tombol. Layar 1100px ke atas tetap bar vertikal lama (kelas `ng` tidak dipasang). Pengaturan animasi "mati" membuat lensa langsung pindah tanpa fisika.
+- Efek riak pada tombol nav dihapus (diganti lensa).
+- Tes: `uji58/glass.js` (ketuk, geser, keyboard, desktop, terang/gelap) + flick.js.
+
+## 38. Laporan Stok masuk per tanggal (dashboard-shop, tanpa bump sw)
+- Laporan "Pembelian stok" diganti "Stok masuk" (`pgRepBuy`, `rcvDays`): per tanggal (`.dsep`), memuat nota pembelian (`rcvCard`) DAN penyesuaian stok bernilai positif (`D.adj` delta>0 dengan reason Isi stok, Stok awal, Stok masuk, Impor data, dst; `rcvAdjCard`, dikelompokkan per alasan). Tiap barang menampilkan stok sebelum > sesudah (`rcvBA` memakai `events/step`). Koreksi kurang (Rusak, dst) tidak ikut.
+- Pintu masuk: Beranda > Laporan > Stok masuk, Lainnya > Laporan > Stok masuk, dan halaman Rekap stok > Laporan.
+- Cocokkan nota toko (`pgRcv`) hanya untuk nota pembelian: centang barang + total di nota toko, status Sesuai/Selisih/Dicek n/m/Belum dicek (`rcvState`). Disimpan di localStorage `bm-rcv` per id nota, tidak ikut sinkron database.
+- Ekspor CSV (`csvRcv`) dan PDF landscape (`pdfRcv`); `pdfBuild` menerima baris pemisah `{sep, rt}`.
+- Tes: `uji58/rcv.js`.
+
+## 39. Stok masuk: filter, halaman, hapus, urungkan (dashboard-shop, tanpa bump sw)
+- State `SM` (periode `p` termasuk `rng` dengan `from`/`to` lewat `dateBtn` + `HOOK.smf/smt`, sumber `s`, halaman `pg`, mode pilih `mode`, pilihan `sel`). 10 tanggal per halaman (`SMZ`). CSV dan PDF mengikuti filter yang aktif.
+- Mode Pilih: hanya catatan stok manual (`D.adj` delta>0) yang bisa dipilih per baris, per grup, atau per hari; `smDel` memberi peringatan bila stok jadi minus. Nota pembelian tidak ikut.
+- Halaman Hapus barang (`pgDelItems`, `dsList`, `dsDel`): pilih per barang atau per jenis; barang yang pernah dipakai (`kUsed`) hanya dinonaktifkan. Pintu: Jenis barang dan Rekap stok.
+- Urungkan/Ulangi (`UH`, `uhRun`, localStorage `bm-uh`, maksimal 20 langkah): menyimpan catatan yang dihapus (`di` barang, `da` adj, `ar` barang dinonaktifkan), bukan snapshot seluruh data, sehingga transaksi baru tidak ikut tertimpa; aman untuk sinkron (adj_insert/adj_delete, item_upsert/item_delete). Hanya admin yang boleh menghapus dan mengulang.
+- Tes: `uji59/hapus.js`.
+

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bmtech-shell-v83';
+const CACHE_NAME = 'bmtech-shell-v85';
 const DATA_CACHE = 'bmtech-data-v1';
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;
@@ -12,7 +12,7 @@ const PAGES = [
   '/editor-data-administrator.html', '/editor-data-warung.html', '/editor-data-hutang-piutang.html',
   '/editor-data-kasbon.html', '/editor-data-operasional.html', '/editor-folder.html', '/folder-baru.html',
   '/karyawan-login.html', '/karyawan-tracking.html', '/customer-login.html', '/customer-tracking.html',
-  '/calculator.html', '/salary-recap.html', '/panduan.html', '/buku-warung.html'
+  '/calculator.html', '/salary-recap.html', '/panduan.html', '/buku-warung.html', '/galeri-bm.html'
 ];
 const ASSETS = [
   '/bm-app.js', '/bm-theme.js', '/bm-lang.js', '/bm-swipe-back.js', '/bm-session.js', '/bm-merge.js', '/bm-update.js', '/bm-dialog.js', '/bm-jarvis.js',

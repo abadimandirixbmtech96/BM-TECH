@@ -63,6 +63,7 @@ main.tin{animation:tin .2s var(--ease)}
 .tag{display:inline-block;font-size:11px;font-weight:600;color:var(--er);border:1px solid var(--er);border-radius:6px;padding:0 6px;margin-left:4px;font-style:normal;line-height:18px}
 .tag.mu{color:var(--mu);border-color:var(--bd)}
 .tag.ok{color:var(--acx);border-color:var(--acx)}
+.gl{margin:12px 2px 6px;font-size:12px;font-weight:600;color:var(--mu);letter-spacing:.03em;text-transform:uppercase}.r.sl{gap:12px}.r.sl>div:not(.rt){flex:1;min-width:0}.dsep .tx{display:inline-block;padding:4px 0 4px 12px;margin:0;color:var(--acx)}.pgr{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:18px 0 8px}.pgr small{text-align:center;color:var(--mu);font-size:12px;line-height:1.4}.pgr .bt{height:42px;padding:0 10px;font-size:14px}
 .dsep{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:22px 2px 8px;font-size:13px;color:var(--mu)}.dsep b{color:var(--tx);font-size:14px}.dsep span{font-variant-numeric:tabular-nums}
 .rcv{margin-bottom:10px}
 .qty{display:inline-block;min-width:22px;padding:0 7px;border-radius:var(--rp);background:var(--ac);color:var(--on);font-size:var(--f1);font-weight:700;text-align:center}
@@ -749,6 +750,49 @@ function pgRepSales(){const S=stats(RP),avg=S.cnt?S.om/S.cnt:0;
 function pgRepTop(){const S=stats(RP);
  return pgh('Barang terlaris',repChips()+'<div style="height:12px"></div>'+(S.top.length?grp(S.top.slice(0,15).map((t,i)=>'<div class="r"><div><b>'+(i+1)+'. '+esc(t.name)+'</b><small>Terjual '+num(t.q)+' '+esc(t.unit)+'</small></div><b>'+rp(t.v)+'</b></div>').join('')):'<p class="em">Belum ada penjualan pada periode ini.</p>'))}
 const RCK='bm-rcv';
+const SM={p:'all',from:'',to:'',pg:1,s:'all',mode:false,sel:{}},DS={q:'',sel:{}},UHK='bm-uh',SMZ=10;
+const UH=(()=>{try{const o=JSON.parse(localStorage.getItem(UHK)||'null');return o&&Array.isArray(o.u)&&Array.isArray(o.r)?o:{u:[],r:[]}}catch(e){return{u:[],r:[]}}})();
+function uhSave(){UH.u=UH.u.slice(-20);UH.r=UH.r.slice(-20);try{localStorage.setItem(UHK,JSON.stringify(UH))}catch(e){}}
+const isAdm=()=>!window.BMShopSync||BMShopSync.status().admin;
+const smIn=d=>SM.p==='rng'?(d>=(SM.from||'0000-00-00')&&d<=(SM.to||'9999-99-99')):inPer(SM.p,d);
+const smNsel=()=>Object.keys(SM.sel).filter(k=>SM.sel[k]&&D.adj.some(a=>a.id===k)).length;
+const dsNsel=()=>Object.keys(DS.sel).filter(k=>DS.sel[k]&&itm(k)).length;
+function uhBar(x){const u=UH.u.length,r=UH.r.length;return '<div class="two'+(x?' three':'')+'" style="margin-top:12px"><button type="button" class="bt sec" data-a="uhu"'+(u?'':' disabled')+'>Urungkan</button><button type="button" class="bt sec" data-a="uhr"'+(r?'':' disabled')+'>Ulangi</button>'+(x||'')+'</div>'+(u?'<p class="hint">Terakhir: '+esc(UH.u[u-1].l)+'</p>':'')}
+function uhRun(undo){const from=undo?UH.u:UH.r,op=from[from.length-1];if(!op)return;
+ if(!undo&&!isAdm())return toast('Hanya admin yang boleh menghapus data');
+ const c=clone(D),hi=new Set(c.items.map(x=>x.id)),ha=new Set(c.adj.map(x=>x.id));let n=0;
+ if(undo){op.di.forEach(x=>{if(!hi.has(x.id)){c.items.push(clone(x));hi.add(x.id);n++}});
+  op.da.forEach(a=>{if(hi.has(a.i)&&!ha.has(a.id)){c.adj.push(clone(a));ha.add(a.id);n++}});
+  c.items.forEach(x=>{if(op.ar.indexOf(x.id)>=0&&x.arch){x.arch=false;n++}})}
+ else{const di=new Set(op.di.map(x=>x.id)),da=new Set(op.da.map(x=>x.id)),m0=c.items.length+c.adj.length;
+  c.items=c.items.filter(x=>!di.has(x.id));c.adj=c.adj.filter(a=>!da.has(a.id)&&!di.has(a.i));n=m0-c.items.length-c.adj.length;
+  c.items.forEach(x=>{if(op.ar.indexOf(x.id)>=0&&!x.arch){x.arch=true;n++}})}
+ if(!n){from.pop();uhSave();refresh();return toast('Tidak ada yang berubah, langkah dilewati')}
+ if(!commit(c))return;from.pop();(undo?UH.r:UH.u).push(op);uhSave();refresh();toast((undo?'Dikembalikan: ':'Diulang: ')+op.l)}
+function smDayIds(d,k){return D.adj.filter(a=>a.delta>0&&a.d===d&&(k==null||(a.reason||'Isi stok')===k)).map(a=>a.id)}
+function smDel(){const ids=new Set(Object.keys(SM.sel).filter(k=>SM.sel[k])),rm=D.adj.filter(a=>ids.has(a.id));if(!rm.length)return toast('Pilih stok dulu');
+ if(!isAdm())return toast('Hanya admin yang boleh menghapus data');
+ const c=clone(D);c.adj=c.adj.filter(a=>!ids.has(a.id));const b0=calc(D).stock,b1=calc(c).stock,neg=[];
+ rm.forEach(a=>{if(b1[a.i]<0&&!(b0[a.i]<0)){const x=itm(a.i),nm=x?x.name:a.name;if(neg.indexOf(nm)<0)neg.push(nm)}});
+ ask({title:'Hapus '+rm.length+' catatan stok',msg:'Stok barang berkurang sesuai jumlah yang dihapus. '+(neg.length?'Stok jadi minus: '+neg.slice(0,3).join(', ')+(neg.length>3?' dan '+(neg.length-3)+' lainnya':'')+'. ':'')+'Bisa dikembalikan dengan tombol Urungkan.',ok:'Hapus',danger:1,puzzle:rm.length>3?1:0},()=>{
+  if(commit(c)){UH.u.push({l:'Hapus '+rm.length+' catatan stok',di:[],da:clone(rm),ar:[]});UH.r=[];uhSave();SM.sel={};SM.mode=false;refresh();toast(rm.length+' catatan stok dihapus')}})}
+function dsList(){const u=kUsed(),t=nk(DS.q||'').split(' ').filter(Boolean),L=D.items.filter(x=>{const n=nk(x.name);return t.every(w=>n.indexOf(w)>=0)}),st=cc().stock;
+ return KORD.map(k=>{const a=L.filter(x=>kindOf(x)===k);if(!a.length)return '';const all=a.every(x=>DS.sel[x.id]);
+  return '<div class="dsep"><b>'+esc(KL[k])+'</b><span>'+a.length+' barang<button type="button" class="tx" data-a="dsk" data-k="'+k+'">'+(all?'Batal pilih':'Pilih semua')+'</button></span></div>'
+  +grp(a.map(x=>'<div class="r sl" data-a="dst" data-id="'+x.id+'"><span class="ck'+(DS.sel[x.id]?' on':'')+'"></span><div><b>'+esc(x.name)+(x.arch?'<i class="tag mu">nonaktif</i>':'')+'</b><small>Stok '+num(st[x.id]||0)+' '+esc(x.unit||'')+' · '+(u.has(x.id)?'pernah dipakai, hanya dinonaktifkan':'bisa dihapus permanen')+'</small></div></div>').join(''))}).join('')||'<p class="em">Tidak ada barang yang cocok.</p>'}
+function pgDelItems(){const n=dsNsel();
+ return pgh('Hapus barang','<p class="hint" style="margin:6px 0 10px">Ketuk barang yang mau dihapus, bisa satu atau beberapa. Barang yang pernah masuk nota hanya dinonaktifkan supaya riwayatnya utuh. Semua langkah bisa diurungkan.</p><input id="dq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(DS.q)+'">'+uhBar()+'<div id="dsl">'+dsList()+'</div>',
+  {foot:'<div class="two"><button class="bt sec" data-a="dsc"'+(n?'':' disabled')+'>Batal pilih</button><button class="bt dgf" data-a="ddel"'+(n?'':' disabled')+'>Hapus ('+n+')</button></div>'})}
+function dsDel(){if(!isAdm())return toast('Hanya admin yang boleh menghapus data');
+ const ids=new Set(Object.keys(DS.sel).filter(k=>DS.sel[k]&&itm(k)));if(!ids.size)return toast('Pilih barang dulu');
+ const u=kUsed(),all=D.items.filter(x=>ids.has(x.id)),del=all.filter(x=>!u.has(x.id)),keep=all.filter(x=>u.has(x.id)&&!x.arch);
+ if(!del.length&&!keep.length)return toast('Barang yang dipilih sudah nonaktif');
+ const dset=new Set(del.map(x=>x.id)),radj=D.adj.filter(a=>dset.has(a.i)),ks=new Set(keep.map(x=>x.id));
+ ask({title:'Hapus '+(del.length+keep.length)+' barang',msg:(del.length?del.length+' barang dihapus permanen beserta catatan stoknya. ':'')+(keep.length?keep.length+' barang pernah ada di nota, jadi hanya dinonaktifkan. ':'')+'Bisa dikembalikan dengan tombol Urungkan.',ok:'Hapus',danger:1,puzzle:all.length>3?1:0},()=>{
+  const c=clone(D);c.items=c.items.filter(x=>!dset.has(x.id));c.adj=c.adj.filter(a=>!dset.has(a.i));c.items.forEach(x=>{if(ks.has(x.id))x.arch=true});
+  if(commit(c)){UH.u.push({l:'Hapus '+(del.length+keep.length)+' barang',di:clone(del),da:clone(radj),ar:keep.map(x=>x.id)});UH.r=[];uhSave();DS.sel={};refresh();toast('Barang: '+del.length+' dihapus'+(keep.length?', '+keep.length+' dinonaktifkan':''))}})}
+HOOK.smf=v=>{SM.from=v;if(SM.to&&SM.to<v)SM.to=v;SM.pg=1;SM.sel={};refresh()};
+HOOK.smt=v=>{SM.to=v;if(SM.from&&SM.from>v)SM.from=v;SM.pg=1;SM.sel={};refresh()};
 function rcvAll(){try{return JSON.parse(localStorage.getItem(RCK)||'{}')||{}}catch(e){return{}}}
 function rcvPut(id,o){const a=rcvAll();if(o)a[id]=o;else delete a[id];try{localStorage.setItem(RCK,JSON.stringify(a))}catch(e){toast('Gagal menyimpan pencocokan')}}
 function rcvState(n){const r=rcvAll()[n.id],nl=n.lines.length;if(!r)return{k:'none',t:'Belum dicek',n:0,toko:null,diff:0};
@@ -758,7 +802,7 @@ function rcvState(n){const r=rcvAll()[n.id],nl=n.lines.length;if(!r)return{k:'no
  if(c>0||has)return{k:'part',t:has&&!c?'Total cocok':'Dicek '+c+'/'+nl,n:c,toko:has?r.t:null,diff:0};
  return{k:'none',t:'Belum dicek',n:0,toko:null,diff:0}}
 function rcvBA(){const S={},m={};events(D).forEach(e=>{const s=S[e.i]||(S[e.i]={q:0,a:0}),b=r4(s.q);step(s,e);if(e.k==='in'){const k=e.ref.id+'|'+e.i;(m[k]=m[k]||[]).push([b,r4(s.q)])}else if(e.k==='adj'&&e.q>0)m['a|'+e.ref.id]=[[b,r4(s.q)]]});return m}
-function rcvList(){return D.notas.filter(n=>n.t==='in'&&!n.void&&inPer(RP,n.d)).sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:y.ts-x.ts)}
+function rcvList(){return D.notas.filter(n=>n.t==='in'&&!n.void&&SM.s!=='man'&&smIn(n.d)).sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:y.ts-x.ts)}
 const fmtDay=d=>HARI[new Date(d+'T00:00:00').getDay()]+', '+fmtLong(d);
 function rcvLines(n,ba){return n.lines.map(l=>{const a=ba[n.id+'|'+l.i],z=a&&a.shift();return{l,b:z?z[0]:null,a:z?z[1]:null}})}
 function rcvTag(st){return '<i class="tag '+(st.k==='ok'?'ok':st.k==='diff'?'':'mu')+'">'+st.t+'</i>'}
@@ -768,19 +812,28 @@ function rcvCard(n,ba){const st=rcvState(n);
  +'<div class="r" data-a="rcv" data-id="'+n.id+'"><b class="ac">Cocokkan dengan nota toko</b>'+ic('chev')+'</div></div>'}
 function rcvDays(){const ba=rcvBA(),M={},get=d=>M[d]||(M[d]={d,ns:[],gs:{},it:{}});
  rcvList().forEach(n=>{const g=get(n.d);g.ns.push(n);n.lines.forEach(l=>{g.it[l.i]=1})});
- D.adj.filter(a=>a.delta>0&&inPer(RP,a.d)).sort((x,y)=>x.ts-y.ts).forEach(a=>{const z=(ba['a|'+a.id]||[])[0],g=get(a.d),k=a.reason||'Isi stok',x=itm(a.i);g.it[a.i]=1;(g.gs[k]=g.gs[k]||[]).push({a,name:x?x.name:a.name,unit:x?x.unit:a.unit,b:z?z[0]:null,af:z?z[1]:null})});
+ D.adj.filter(a=>SM.s!=='buy'&&a.delta>0&&smIn(a.d)).sort((x,y)=>x.ts-y.ts).forEach(a=>{const z=(ba['a|'+a.id]||[])[0],g=get(a.d),k=a.reason||'Isi stok',x=itm(a.i);g.it[a.i]=1;(g.gs[k]=g.gs[k]||[]).push({a,name:x?x.name:a.name,unit:x?x.unit:a.unit,b:z?z[0]:null,af:z?z[1]:null})});
  return{days:Object.values(M).sort((x,y)=>x.d<y.d?1:-1),ba}}
-function rcvAdjCard(k,arr){return '<div class="grp rcv"><div class="r"><div><b>'+esc(k)+'</b><small>'+arr.length+' barang</small></div></div>'
- +arr.map(z=>'<div class="r"><div><b>'+esc(z.name)+'</b><small>'+(z.b!=null?'Stok '+num(z.b)+' → '+num(z.af):'Stok bertambah')+'</small></div><div class="rt"><b class="ac">+'+num(z.a.delta)+' '+esc(z.unit)+'</b></div></div>').join('')+'</div>'}
-function pgRepBuy(){const R=rcvDays(),shown=R.days.slice(0,31),a=rcvList();let tot=0,ok=0,df=0,man=0,kinds={};
+function rcvAdjCard(k,arr,d){const on=SM.mode,all=on&&arr.every(z=>SM.sel[z.a.id]);
+ return '<div class="grp rcv"><div class="r"><div><b>'+esc(k)+'</b><small>'+arr.length+' barang</small></div>'+(on?'<button type="button" class="tx" data-a="smg" data-d="'+d+'" data-k="'+esc(k)+'">'+(all?'Batal pilih':'Pilih semua')+'</button>':'')+'</div>'
+ +arr.map(z=>'<div class="r'+(on?' sl':'')+'"'+(on?' data-a="smt" data-id="'+z.a.id+'"':'')+'>'+(on?'<span class="ck'+(SM.sel[z.a.id]?' on':'')+'"></span>':'')+'<div><b>'+esc(z.name)+'</b><small>'+(z.b!=null?'Stok '+num(z.b)+' → '+num(z.af):'Stok bertambah')+'</small></div><div class="rt"><b class="ac">+'+num(z.a.delta)+' '+esc(z.unit)+'</b></div></div>').join('')+'</div>'}
+function pgRepBuy(){const R=rcvDays(),a=rcvList(),pages=Math.max(1,Math.ceil(R.days.length/SMZ));SM.pg=Math.min(Math.max(1,SM.pg),pages);
+ const shown=R.days.slice((SM.pg-1)*SMZ,SM.pg*SMZ);let tot=0,ok=0,df=0,man=0,kinds={};
  a.forEach(n=>{tot+=nTotal(n);const k=rcvState(n).k;if(k==='ok')ok++;if(k==='diff')df++});
  R.days.forEach(g=>{Object.keys(g.it).forEach(k=>{kinds[k]=1});Object.keys(g.gs).forEach(k=>{man+=g.gs[k].length})});
- const body=shown.map(g=>{const nt=g.ns.reduce((s,n)=>s+nTotal(n),0),cnt=Object.keys(g.it).length;
-  return '<div class="dsep"><b>'+fmtDay(g.d)+'</b><span>'+cnt+' barang'+(g.ns.length?' · beli '+rp(nt):'')+'</span></div>'+g.ns.map(n=>rcvCard(n,R.ba)).join('')+Object.keys(g.gs).map(k=>rcvAdjCard(k,g.gs[k])).join('')}).join('');
- return pgh('Stok masuk',repChips()+'<div class="grid" style="margin-top:12px"><div class="c"><small>Barang masuk</small><b>'+Object.keys(kinds).length+'</b></div><div class="c"><small>Nota pembelian</small><b>'+a.length+'</b></div><div class="c"><small>Diisi manual</small><b>'+man+'</b></div><div class="c"><small>Selisih nota toko</small><b class="'+(df?'lw':'')+'">'+df+'</b></div></div>'
- +'<p class="hint">Semua stok yang baru masuk dipisah per tanggal: dari pembelian dan dari isi stok atau impor. Tiap barang menampilkan stok sebelum dan sesudahnya. Ketuk Cocokkan pada nota pembelian untuk memeriksanya dengan nota dari toko.</p>'
- +(R.days.length?body+(R.days.length>shown.length?'<p class="hint" style="text-align:center">Menampilkan 31 tanggal terbaru dari '+R.days.length+'. Persempit periode untuk melihat sisanya.</p>':''):'<p class="em">Belum ada stok masuk pada periode ini.</p>'),
- {foot:'<div class="two"><button class="bt sec" data-a="rcvcsv">CSV</button><button class="bt" data-a="rcvpdf">PDF</button></div>'})}
+ const body=shown.map(g=>{const nt=g.ns.reduce((s,n)=>s+nTotal(n),0),cnt=Object.keys(g.it).length,gk=Object.keys(g.gs);
+  return '<div class="dsep"><b>'+fmtDay(g.d)+'</b><span>'+cnt+' barang'+(g.ns.length?' · beli '+rp(nt):'')+(SM.mode&&gk.length?'<button type="button" class="tx" data-a="smd" data-d="'+g.d+'">Pilih hari ini</button>':'')+'</span></div>'
+  +(g.ns.length?'<div class="gl">Pembelian dari toko</div>'+g.ns.map(n=>rcvCard(n,R.ba)).join(''):'')
+  +(gk.length?'<div class="gl">Stok diisi manual</div>'+gk.map(k=>rcvAdjCard(k,g.gs[k],g.d)).join(''):'')}).join('');
+ const rng=SM.p==='rng'?'<div class="two" style="margin-top:10px"><div class="fld"><span class="lb">Dari</span>'+dateBtn('smf',SM.from,'smf')+'</div><div class="fld"><span class="lb">Sampai</span>'+dateBtn('smt',SM.to,'smt')+'</div></div>':'',
+  n=smNsel(),first=R.days.length?(SM.pg-1)*SMZ+1:0,last=Math.min(SM.pg*SMZ,R.days.length);
+ return pgh('Stok masuk',chips(PERS.concat([['rng','Pilih tanggal']]),SM.p,'smp')+rng
+ +chips([['all','Semua sumber'],['buy','Pembelian'],['man','Isi manual']],SM.s,'sms')
+ +'<div class="grid" style="margin-top:12px"><div class="c"><small>Barang masuk</small><b>'+Object.keys(kinds).length+'</b></div><div class="c"><small>Nota pembelian</small><b>'+a.length+'</b></div><div class="c"><small>Diisi manual</small><b>'+man+'</b></div><div class="c"><small>Selisih nota toko</small><b class="'+(df?'lw':'')+'">'+df+'</b></div></div>'
+ +uhBar('<button type="button" class="bt'+(SM.mode?'':' sec')+'" data-a="smm">'+(SM.mode?'Selesai':'Pilih')+'</button>')
+ +(SM.mode?'<p class="hint">Ketuk baris stok untuk memilih, lalu tekan Hapus di bawah. Nota pembelian tidak ikut dipilih, batalkan lewat Daftar nota.</p>':'')
+ +(R.days.length?body+'<div class="pgr"><button type="button" class="bt sec" data-a="smpg" data-d="-1"'+(SM.pg>1?'':' disabled')+'>‹ Lebih baru</button><small>Halaman '+SM.pg+' dari '+pages+'<br>Tanggal '+first+'-'+last+' dari '+R.days.length+'</small><button type="button" class="bt sec" data-a="smpg" data-d="1"'+(SM.pg<pages?'':' disabled')+'>Lebih lama ›</button></div>':'<p class="em">Belum ada stok masuk pada periode ini.</p>'),
+ {foot:SM.mode?'<div class="two"><button class="bt sec" data-a="smm">Batal</button><button class="bt dgf" data-a="smdel"'+(n?'':' disabled')+'>Hapus ('+n+')</button></div>':'<div class="two"><button class="bt sec" data-a="rcvcsv">CSV</button><button class="bt" data-a="rcvpdf">PDF</button></div>'})}
 function pgRcv(id){const n=nOf(id);if(!n)return pgh('Cocokkan nota','<p class="em">Nota tidak ditemukan.</p>');
  const r=rcvAll()[id]||{},st=rcvState(n),ba=rcvBA(),ls=rcvLines(n,ba),tot=nTotal(n),has=r.t!=null&&r.t!=='',diff=has?Math.round(r.t-tot):0;
  return pgh('Cocokkan '+nno(n),'<div class="kv"><span>Tanggal</span><b>'+fmtLong(n.d)+'</b></div><div class="kv"><span>Pemasok</span><b>'+esc(n.partyId?partyName(n.partyId):'Tanpa pemasok')+'</b></div><div class="kv"><span>Total tercatat</span><b>'+rp(tot)+'</b></div><div class="kv"><span>Status</span><b>'+rcvTag(st)+'</b></div>'
@@ -802,7 +855,7 @@ function rcvRows(){const R=rcvDays(),rows=[],csv=[['Tanggal','Hari','Sumber','No
   Object.keys(g.gs).forEach(k=>g.gs[k].forEach(z=>{const c=z.a.c;rows.push([k,'-',z.name,z.b!=null?num(z.b)+' > '+num(z.af):'-','+'+num(z.a.delta)+' '+z.unit,c!=null?rp(c):'-',c!=null?rp(c*z.a.delta):'-','']);
    csv.push([g.d,dn,k,'','',z.name,z.unit,z.b==null?'':z.b,z.a.delta,z.af==null?'':z.af,c==null?'':c,c==null?'':c*z.a.delta,'','','',''])}))});
  return{rows,csv}}
-function rcvPer(){const p=PERS.find(z=>z[0]===RP);return p?p[1]:''}
+function rcvPer(){const p=SM.p==='rng'?fmtLong(SM.from)+' sampai '+fmtLong(SM.to):(PERS.find(z=>z[0]===SM.p)||['',''])[1];return p+(SM.s==='buy'?', hanya pembelian':SM.s==='man'?', hanya isi manual':'')}
 function csvRcv(){dl('stok-masuk-'+today()+'.csv',csvText(rcvRows().csv),'text/csv;charset=utf-8');toast('CSV stok masuk diunduh')}
 function pdfRcv(){const R=rcvDays(),a=rcvList(),d=rcvRows();let tot=0,ok=0,df=0,man=0,kinds={};a.forEach(n=>{tot+=nTotal(n);const k=rcvState(n).k;if(k==='ok')ok++;if(k==='diff')df++});
  R.days.forEach(g=>{Object.keys(g.it).forEach(k=>{kinds[k]=1});Object.keys(g.gs).forEach(k=>{man+=g.gs[k].length})});
@@ -1212,7 +1265,7 @@ const kCount=k=>D.items.filter(x=>kindOf(x)===k).length;
 function pgKindNew(){return pgh('Jenis barang baru','<p class="hint" style="margin:6px 0 12px">Jenis baru langsung muncul di Input barang, Impor, Isi stok, dan filter daftar barang. Tersimpan di database, terbaca juga oleh Jarvis.</p>'
  +fT('kname','Nama jenis','',{ph:'Contoh: Baut'})+fT('kunit','Satuan bawaan','pcs',{ph:'pcs, set, meter',cap:'none'}),{foot:'<button class="bt" style="width:100%" data-a="ksave" data-enter="1">Simpan jenis</button>'})}
 function pgKinds(){const row=k=>mrow(KL[k],kCount(k)+' barang'+(/^k_/.test(k)?' · kustom':''),/^k_/.test(k)?'inbox':'box','ked','data-k="'+k+'"');
- return pgh('Jenis barang','<p class="date">Ketuk jenis untuk impor ulang, mengosongkan, atau mengubahnya.</p>'+grp(KORD.map(row).join(''))+grp(mrow('Jenis kustom baru','Misalnya baut, blok, gasket','plus','kadd','')))}
+ return pgh('Jenis barang','<p class="date">Ketuk jenis untuk impor ulang, mengosongkan, atau mengubahnya.</p>'+grp(KORD.map(row).join(''))+grp(mrow('Jenis kustom baru','Misalnya baut, blok, gasket','plus','kadd','')+mrow('Hapus barang pilihan','Pilih barang yang mau dihapus, bisa lebih dari satu','trash','dsel','')))}
 function kUsed(){const u=new Set();D.notas.forEach(n=>n.lines.forEach(l=>{if(l.i)u.add(l.i)}));D.rets.forEach(r=>r.lines.forEach(l=>{if(l.i)u.add(l.i)}));D.adj.forEach(a=>{if(/^bengkel:/.test(a.note||''))u.add(a.i)});return u}
 function pgKindEd(k){if(!KL[k])return pgh('Jenis barang','<p class="em">Jenis ini sudah tidak ada.</p>');const cu=/^k_/.test(k),all=D.items.filter(x=>kindOf(x)===k),u=kUsed(),used=all.filter(x=>u.has(x.id)).length;
  return pgh(KL[k],(cu?fT('kname','Nama jenis',KL[k])+fT('kunit','Satuan bawaan',KU[k],{cap:'none'})+'<button class="bt sec full" data-a="kedsave" data-k="'+k+'">Simpan nama dan satuan</button>':'')
@@ -1387,7 +1440,7 @@ function pgRecapStock(){const d=rsData(),c=d.cnt,now=new Date();
   +(c.new?'<p class="hint">'+c.new+' barang belum pernah diisi stoknya. Itu bukan berarti habis. <button type="button" class="tx" data-a="rsfill">Isi sekarang</button></p>':'')
   +'<p class="hint"><button type="button" class="tx" data-a="rsask">Tanya Jarvis tentang stok ini</button></p>'
   +(ks?'<h4>Per jenis</h4>'+grp(ks):'')
-  +'<h4>Laporan</h4>'+grp(mrow('Stok masuk','Barang baru masuk per tanggal, bisa diekspor','buy','rep','data-v="buy"'))
+  +'<h4>Laporan</h4>'+grp(mrow('Stok masuk','Barang baru masuk per tanggal, bisa diekspor','buy','rep','data-v="buy"')+mrow('Hapus barang','Pilih barang yang mau dihapus, bisa lebih dari satu','trash','dsel',''))
   +'<h4>Daftar barang</h4><input id="rsq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(RS.q)+'">'
   +chips([['filled','Terisi '+c.filled],['out','Habis '+c.out],['low','Menipis '+c.low],['new','Belum dicatat '+c.new],['all','Semua '+c.all]],RS.f,'rsf')
   +chips([['all','Semua jenis']].concat(KORD.map(k=>[k,KS[k]])),RS.k,'rsk')
@@ -1813,8 +1866,22 @@ const A={
  fq(b){const el=topPg().querySelector('[name=q]');if(!el)return;const d=+b.dataset.d,n=d===0?0:Math.max(0,(pq(el.value)||0)+d);el.value=n?String(n):'';IFS.vals.q=el.value;updPv()},
  gtog(b){const k=b.dataset.g,c=b.closest('.gc'),o=!c.classList.contains('open');c.classList.toggle('open',o);GO[k]=o},
  isave(){doSave(false)},
- rep(b){const m={sales:pgRepSales,top:pgRepTop,buy:pgRepBuy};openPage(m[b.dataset.v],[],{live:true})},
+ rep(b){if(b.dataset.v==='buy'){SM.mode=false;SM.sel={}}const m={sales:pgRepSales,top:pgRepTop,buy:pgRepBuy};openPage(m[b.dataset.v],[],{live:true})},
  rper(b){RP=b.dataset.v;refresh()},
+ smp(b){const v=b.dataset.v;if(v==='rng'&&!SM.from){SM.from=addDays(today(),-6);SM.to=today()}SM.p=v;SM.pg=1;SM.sel={};refresh()},
+ sms(b){SM.s=b.dataset.v;SM.pg=1;SM.sel={};refresh()},
+ smpg(b){SM.pg+=+b.dataset.d;refresh();const e=topPg()&&topPg().querySelector('.pb');if(e)e.scrollTop=0},
+ smm(){SM.mode=!SM.mode;SM.sel={};refresh()},
+ smt(b){const id=b.dataset.id;SM.sel[id]=!SM.sel[id];refresh()},
+ smg(b){const ids=smDayIds(b.dataset.d,b.dataset.k),on=!ids.every(i=>SM.sel[i]);ids.forEach(i=>{SM.sel[i]=on});refresh()},
+ smd(b){const ids=smDayIds(b.dataset.d),on=!ids.every(i=>SM.sel[i]);ids.forEach(i=>{SM.sel[i]=on});refresh()},
+ smdel(){smDel()},
+ uhu(){uhRun(true)},uhr(){uhRun(false)},
+ dsel(){DS.sel={};DS.q='';openPage(pgDelItems,[],{live:true})},
+ dst(b){const id=b.dataset.id;DS.sel[id]=!DS.sel[id];refresh()},
+ dsk(b){const k=b.dataset.k,t=nk(DS.q||'').split(' ').filter(Boolean),a=D.items.filter(x=>kindOf(x)===k&&t.every(w=>nk(x.name).indexOf(w)>=0)),on=!a.every(x=>DS.sel[x.id]);a.forEach(x=>{DS.sel[x.id]=on});refresh()},
+ dsc(){DS.sel={};refresh()},
+ ddel(){dsDel()},
  hik(b){IK=b.dataset.v;render(false);swapIn('#lst')},nseg(b){NT=b.dataset.v;render(false);swapIn('#v')},harch(b){SF=b.dataset.v;render(false);swapIn('#lst')},pkk(b){PKK=b.dataset.v;paint(PGS[PGS.length-1])},
  nper(b){const f=HF[b.dataset.t];f.per=b.dataset.v;f.lim=30;refresh();swapIn('[id^="nl-"]')},nst(b){const f=HF[b.dataset.t];f.st=b.dataset.v;f.lim=30;refresh();swapIn('[id^="nl-"]')},more(b){HF[b.dataset.t].lim+=30;refresh()},
  ei(b){openPage(pgItem,[b.dataset.id],{live:true})},ied(b){openProd(b.dataset.id)},
@@ -1907,6 +1974,7 @@ document.addEventListener('input',e=>{const t=e.target;if(!t||!t.dataset)return;
  if(t.id==='skpt'){SKP.txt=t.value;return}
  if(t.id==='skq'){SK.q=t.value;const l=document.getElementById('skl');if(l)l.innerHTML=skList();return}
  if(t.dataset.sk!==undefined||t.dataset.sp!==undefined){const id=t.dataset.sk!==undefined?t.dataset.sk:t.dataset.sp,v=SK.v[id]||(SK.v[id]={});if(t.dataset.sk!==undefined){v.q=t.value;t.classList.toggle('ch',t.value!==''&&String(pq(t.value))!==String(cc().stock[id]||0))}else v.p=t.value;setT('skn',skCnt()+' barang');return}
+ if(t.id==='dq'){DS.q=t.value;const l=document.getElementById('dsl');if(l)l.innerHTML=dsList();return}
  if(t.id==='q'){q=t.value;const l=document.getElementById('lst');if(l)l.innerHTML=itemsHtml()}
  else if(t.id.indexOf('nq-')===0){const k=t.id.slice(3);HF[k].q=t.value;HF[k].lim=30;const l=document.getElementById('nl-'+k);if(l)l.innerHTML=listNHtml(k)}
  else if(t.id==='hq'){hq=t.value;const l=document.getElementById('dl');if(l)l.innerHTML=partyListHtml()}
