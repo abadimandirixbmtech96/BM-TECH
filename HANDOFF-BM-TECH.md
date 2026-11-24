@@ -397,3 +397,11 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Urungkan/Ulangi (`UH`, `uhRun`, localStorage `bm-uh`, maksimal 20 langkah): menyimpan catatan yang dihapus (`di` barang, `da` adj, `ar` barang dinonaktifkan), bukan snapshot seluruh data, sehingga transaksi baru tidak ikut tertimpa; aman untuk sinkron (adj_insert/adj_delete, item_upsert/item_delete). Hanya admin yang boleh menghapus dan mengulang.
 - Tes: `uji59/hapus.js`.
 
+## 40. Galeri Bukti + navigasi Profil liquid glass (sw v86)
+- `galeri-bm.html` = halaman mandiri "Galeri Bukti" (tombol "Galeri" di Profil BM tetap: `SHORTCUTS` a:'galeri', `location.href`). Tidak menyimpan gambar apa pun; hanya membaca foto bukti yang sudah ada di data.
+- Sumber: tabel `notes` pada folder Buku Besar (`admin-data-v1`, customer/barang/pj) dan folder Operasional (`operasional-data-v1`, buyer/item/seller). Hanya record dengan `bukti` terisi. Tanggal/jam dari `created_at` record. Foto ibb lewat `/api/img?u=` (fungsi `buktiSrc` sama dengan editor).
+- Tampilan: tile per foto dikelompokkan per tanggal (header tanggal bisa diketuk = filter hari itu), chip sumber (Semua/Buku Besar/Operasional), strip tanggal (60 hari terbaru + tombol kalender untuk tanggal lain), pencarian bawah multi-kata (nama, barang, PJ, keterangan, harga, tanggal, jam), muat bertahap 60 foto (tombol + otomatis saat scroll).
+- Penampil: geser/zoom/ketuk dua kali, panel data (nama, barang, PJ/seller, keterangan, harga, metode, sumber, No), tombol "Buka data" ke editor (`?id=&folder=&rec=`), Salin data, Foto asli. Tombol back sistem menutup penampil (`layer()` + `__bmCanBack`).
+- Gerbang admin sama dengan daftar-nomor-hp (`bm-admin-ok` optimistis, `is_admin`).
+- Navigasi bawah `my-profile-bm.html` (`#nav`) memakai modul liquid glass yang sama dengan dashboard-shop (lensa displacement SVG hanya Chromium non-iOS, fisika pegas, lepas = pindah tab dari posisi jari, nonaktif di layar >=1100px). Tab tetap tombol `.tab-btn` dengan kelas `active`; `on` = penanda lensa. Pindah tab dari kode (`goTab`) disinkronkan lewat MutationObserver.
+- Tes: `uji61/gal.js`, `uji61/nav.js`.
