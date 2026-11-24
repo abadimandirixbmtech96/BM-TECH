@@ -663,7 +663,7 @@ function vHome(){const st=cc().stock,t=today(),RD=rsData(),low=RD.rows.filter(r=
  +scg('Penjualan',[sc('sale','Jual baru','cnew','data-t="out"'),sc('buy','Beli baru','cnew','data-t="in"'),sc('inbox','Daftar nota','tab','data-i="2"')])
  +scg('Stok',[sc('stock','Rekap stok','rsopen','',low.length||'', RD.cnt.filled+' barang terisi'),sc('scan','Isi stok cepat','qk','','', 'Scan terus, kamera tetap buka'),sc('edit','Isi stok','stk','','', 'Ketik jumlah stok'),sc('up','Tempel daftar','stkp','','', 'Dari WhatsApp atau catatan'),sc('plus','Tambah barang','inp','','', 'Satu per satu'),sc('inbox','Impor barang','imp','','', 'Dari file atau foto')])
  +scg('Keuangan',[sc('debt','Hutang pelanggan','tab','data-i="3"',alld.length||'', alld.length+' pelanggan'),sc('plus','Pelanggan baru','pnew','','', 'Tambah nama')])
- +scg('Laporan',[sc('chart','Penjualan','rep','data-v="sales"'),sc('sale','Terlaris','rep','data-v="top"'),sc('buy','Penerimaan','rep','data-v="buy"')])
+ +scg('Laporan',[sc('chart','Penjualan','rep','data-v="sales"'),sc('sale','Terlaris','rep','data-v="top"'),sc('buy','Stok masuk','rep','data-v="buy"')])
  +'<h4 style="margin-top:26px">Stok habis'+(low.length?' ('+low.length+')':'')+'</h4>'
  +(low.length?grp(low.slice(0,5).map(x=>'<div class="r" data-a="ei" data-id="'+x.id+'"><div><b>'+esc(x.name)+'</b><small>'+KL[kindOf(x)]+'</small></div><b class="lw">'+num(st[x.id]||0)+' '+esc(x.unit)+'</b></div>').join('')):'<p class="em">Tidak ada stok yang habis.</p>')
  +'<h4>Hutang terbesar</h4>'+(ds.length?grp(ds.map(x=>'<div class="r" data-a="pty" data-id="'+x.p.id+'"><div><b>'+esc(x.p.name)+'</b><small>'+x.a.rows.filter(r=>r.out>0.5).length+' nota belum lunas</small></div><b class="lw">'+rp(x.a.debt)+'</b></div>').join('')):'<p class="em">Tidak ada hutang.</p>')
@@ -726,7 +726,7 @@ function vMore(){return '<p class="date">Laporan, data, dan pengaturan.</p>'
   mrow('Rekap stok','Stok terisi, habis, menipis, nilai stok. Bisa dibagikan','stock','rsopen','')
   +mrow('Penjualan','Omzet, jumlah nota, rata-rata per nota','chart','rep','data-v="sales"')
   +mrow('Barang terlaris','Urutan barang yang paling banyak terjual','sale','rep','data-v="top"')
-  +mrow('Penerimaan stok','Stok masuk per tanggal, cek dengan nota toko','buy','rep','data-v="buy"'))
+  +mrow('Stok masuk','Barang baru masuk per tanggal, bisa diekspor','buy','rep','data-v="buy"'))
  +'<h4>Barang</h4>'+grp(
   mrow('Jenis barang',(KORD.length-KBASE.length)+' jenis kustom. Tambah, impor ulang, kosongkan','box','kman','')
   +mrow('Impor barang','Dari file Excel, CSV, PDF, atau foto','up','imp','')
@@ -757,22 +757,29 @@ function rcvState(n){const r=rcvAll()[n.id],nl=n.lines.length;if(!r)return{k:'no
  if(c===nl)return{k:'ok',t:'Sesuai',n:c,toko:has?r.t:null,diff:0};
  if(c>0||has)return{k:'part',t:has&&!c?'Total cocok':'Dicek '+c+'/'+nl,n:c,toko:has?r.t:null,diff:0};
  return{k:'none',t:'Belum dicek',n:0,toko:null,diff:0}}
-function rcvBA(){const S={},m={};events(D).forEach(e=>{const s=S[e.i]||(S[e.i]={q:0,a:0}),b=r4(s.q);step(s,e);if(e.k==='in'){const k=e.ref.id+'|'+e.i;(m[k]=m[k]||[]).push([b,r4(s.q)])}});return m}
+function rcvBA(){const S={},m={};events(D).forEach(e=>{const s=S[e.i]||(S[e.i]={q:0,a:0}),b=r4(s.q);step(s,e);if(e.k==='in'){const k=e.ref.id+'|'+e.i;(m[k]=m[k]||[]).push([b,r4(s.q)])}else if(e.k==='adj'&&e.q>0)m['a|'+e.ref.id]=[[b,r4(s.q)]]});return m}
 function rcvList(){return D.notas.filter(n=>n.t==='in'&&!n.void&&inPer(RP,n.d)).sort((x,y)=>x.d<y.d?1:x.d>y.d?-1:y.ts-x.ts)}
 const fmtDay=d=>HARI[new Date(d+'T00:00:00').getDay()]+', '+fmtLong(d);
 function rcvLines(n,ba){return n.lines.map(l=>{const a=ba[n.id+'|'+l.i],z=a&&a.shift();return{l,b:z?z[0]:null,a:z?z[1]:null}})}
 function rcvTag(st){return '<i class="tag '+(st.k==='ok'?'ok':st.k==='diff'?'':'mu')+'">'+st.t+'</i>'}
 function rcvCard(n,ba){const st=rcvState(n);
- return '<div class="grp rcv"><div class="r" data-a="nd" data-id="'+n.id+'"><div><b>'+nno(n)+' '+esc(n.partyId?partyName(n.partyId):'Tanpa pemasok')+'</b><small>'+rcvTag(st)+(st.toko!=null?' Nota toko '+rp(st.toko):'')+'</small></div><div class="rt"><b>'+rp(nTotal(n))+'</b></div></div>'
+ return '<div class="grp rcv"><div class="r" data-a="nd" data-id="'+n.id+'"><div><b>Beli '+nno(n)+' '+esc(n.partyId?partyName(n.partyId):'Tanpa pemasok')+'</b><small>'+rcvTag(st)+(st.toko!=null?' Nota toko '+rp(st.toko):'')+'</small></div><div class="rt"><b>'+rp(nTotal(n))+'</b></div></div>'
  +rcvLines(n,ba).map(z=>'<div class="r"><div><b>'+esc(z.l.name)+'</b><small>'+(z.b!=null?'Stok '+num(z.b)+' → '+num(z.a)+' · ':'')+'+'+num(z.l.q)+' '+esc(z.l.unit)+' × '+rp(z.l.p)+'</small></div><b>'+rp(z.l.q*z.l.p)+'</b></div>').join('')
  +'<div class="r" data-a="rcv" data-id="'+n.id+'"><b class="ac">Cocokkan dengan nota toko</b>'+ic('chev')+'</div></div>'}
-function pgRepBuy(){const a=rcvList(),ba=rcvBA(),sh=a.slice(0,60),days=[];let tot=0,ok=0,df=0;
+function rcvDays(){const ba=rcvBA(),M={},get=d=>M[d]||(M[d]={d,ns:[],gs:{},it:{}});
+ rcvList().forEach(n=>{const g=get(n.d);g.ns.push(n);n.lines.forEach(l=>{g.it[l.i]=1})});
+ D.adj.filter(a=>a.delta>0&&inPer(RP,a.d)).sort((x,y)=>x.ts-y.ts).forEach(a=>{const z=(ba['a|'+a.id]||[])[0],g=get(a.d),k=a.reason||'Isi stok',x=itm(a.i);g.it[a.i]=1;(g.gs[k]=g.gs[k]||[]).push({a,name:x?x.name:a.name,unit:x?x.unit:a.unit,b:z?z[0]:null,af:z?z[1]:null})});
+ return{days:Object.values(M).sort((x,y)=>x.d<y.d?1:-1),ba}}
+function rcvAdjCard(k,arr){return '<div class="grp rcv"><div class="r"><div><b>'+esc(k)+'</b><small>'+arr.length+' barang</small></div></div>'
+ +arr.map(z=>'<div class="r"><div><b>'+esc(z.name)+'</b><small>'+(z.b!=null?'Stok '+num(z.b)+' → '+num(z.af):'Stok bertambah')+'</small></div><div class="rt"><b class="ac">+'+num(z.a.delta)+' '+esc(z.unit)+'</b></div></div>').join('')+'</div>'}
+function pgRepBuy(){const R=rcvDays(),shown=R.days.slice(0,31),a=rcvList();let tot=0,ok=0,df=0,man=0,kinds={};
  a.forEach(n=>{tot+=nTotal(n);const k=rcvState(n).k;if(k==='ok')ok++;if(k==='diff')df++});
- sh.forEach(n=>{let g=days[days.length-1];if(!g||g.d!==n.d){g={d:n.d,ns:[]};days.push(g)}g.ns.push(n)});
- const body=days.map(g=>'<div class="dsep"><b>'+fmtDay(g.d)+'</b><span>'+g.ns.length+' nota · '+rp(g.ns.reduce((s,n)=>s+nTotal(n),0))+'</span></div>'+g.ns.map(n=>rcvCard(n,ba)).join('')).join('');
- return pgh('Penerimaan stok',repChips()+'<div class="grid" style="margin-top:12px"><div class="c"><small>Total pembelian</small><b data-cnt="'+tot+'">'+rp(tot)+'</b></div><div class="c"><small>Jumlah nota</small><b>'+a.length+'</b></div><div class="c"><small>Sesuai nota toko</small><b class="ac">'+ok+'</b></div><div class="c"><small>Ada selisih</small><b class="'+(df?'lw':'')+'">'+df+'</b></div></div>'
- +'<p class="hint">Stok baru masuk dipisah per tanggal, lengkap dengan stok sebelum dan sesudahnya. Ketuk Cocokkan pada tiap nota untuk memeriksanya dengan nota dari toko.</p>'
- +(a.length?body+(a.length>sh.length?'<p class="hint" style="text-align:center">Menampilkan '+sh.length+' nota terbaru dari '+a.length+'. Persempit periode untuk melihat sisanya.</p>':''):'<p class="em">Belum ada pembelian pada periode ini.</p>'),
+ R.days.forEach(g=>{Object.keys(g.it).forEach(k=>{kinds[k]=1});Object.keys(g.gs).forEach(k=>{man+=g.gs[k].length})});
+ const body=shown.map(g=>{const nt=g.ns.reduce((s,n)=>s+nTotal(n),0),cnt=Object.keys(g.it).length;
+  return '<div class="dsep"><b>'+fmtDay(g.d)+'</b><span>'+cnt+' barang'+(g.ns.length?' · beli '+rp(nt):'')+'</span></div>'+g.ns.map(n=>rcvCard(n,R.ba)).join('')+Object.keys(g.gs).map(k=>rcvAdjCard(k,g.gs[k])).join('')}).join('');
+ return pgh('Stok masuk',repChips()+'<div class="grid" style="margin-top:12px"><div class="c"><small>Barang masuk</small><b>'+Object.keys(kinds).length+'</b></div><div class="c"><small>Nota pembelian</small><b>'+a.length+'</b></div><div class="c"><small>Diisi manual</small><b>'+man+'</b></div><div class="c"><small>Selisih nota toko</small><b class="'+(df?'lw':'')+'">'+df+'</b></div></div>'
+ +'<p class="hint">Semua stok yang baru masuk dipisah per tanggal: dari pembelian dan dari isi stok atau impor. Tiap barang menampilkan stok sebelum dan sesudahnya. Ketuk Cocokkan pada nota pembelian untuk memeriksanya dengan nota dari toko.</p>'
+ +(R.days.length?body+(R.days.length>shown.length?'<p class="hint" style="text-align:center">Menampilkan 31 tanggal terbaru dari '+R.days.length+'. Persempit periode untuk melihat sisanya.</p>':''):'<p class="em">Belum ada stok masuk pada periode ini.</p>'),
  {foot:'<div class="two"><button class="bt sec" data-a="rcvcsv">CSV</button><button class="bt" data-a="rcvpdf">PDF</button></div>'})}
 function pgRcv(id){const n=nOf(id);if(!n)return pgh('Cocokkan nota','<p class="em">Nota tidak ditemukan.</p>');
  const r=rcvAll()[id]||{},st=rcvState(n),ba=rcvBA(),ls=rcvLines(n,ba),tot=nTotal(n),has=r.t!=null&&r.t!=='',diff=has?Math.round(r.t-tot):0;
@@ -785,18 +792,22 @@ function pgRcv(id){const n=nOf(id);if(!n)return pgh('Cocokkan nota','<p class="e
 function rcvSave(id,all){const n=nOf(id);if(!n)return;const v=vals(topPg()),o=rcvAll()[id]||{ok:{}};o.ok=o.ok||{};
  if(all){n.lines.forEach((l,i)=>{o.ok[i]=1})}
  o.t=v.t==null||v.t===''?null:pm(v.t);o.at=new Date().toISOString();rcvPut(id,o)}
-function rcvRows(){const ba=rcvBA(),rows=[],csv=[['Tanggal','Hari','Nomor','Pemasok','Barang','Satuan','Stok sebelum','Masuk','Stok sesudah','Harga beli','Subtotal','Total nota','Total nota toko','Selisih','Status cek']];let cur=null;
- rcvList().forEach(n=>{const st=rcvState(n),tot=nTotal(n),pm2=n.partyId?partyName(n.partyId):'-',dn=HARI[new Date(n.d+'T00:00:00').getDay()];
-  if(cur!==n.d){cur=n.d;const ns=rcvList().filter(z=>z.d===n.d);rows.push({sep:fmtDay(n.d),rt:ns.length+' nota, '+rp(ns.reduce((s,z)=>s+nTotal(z),0))})}
-  rcvLines(n,ba).forEach(z=>{rows.push([nno(n),pm2,z.l.name,z.b!=null?num(z.b)+' > '+num(z.a):'-',num(z.l.q)+' '+z.l.unit,rp(z.l.p),rp(z.l.q*z.l.p),'']);
-   csv.push([n.d,dn,nno(n),pm2,z.l.name,z.l.unit,z.b==null?'':z.b,z.l.q,z.a==null?'':z.a,z.l.p,z.l.q*z.l.p,tot,st.toko==null?'':st.toko,st.toko==null?'':Math.round(st.toko-tot),st.t])});
-  rows.push([nno(n),'','Total nota','','','',rp(tot),st.t+(st.toko!=null?' (toko '+rp(st.toko)+')':'')])});
+function rcvRows(){const R=rcvDays(),rows=[],csv=[['Tanggal','Hari','Sumber','Nomor nota','Pemasok','Barang','Satuan','Stok sebelum','Masuk','Stok sesudah','Harga beli','Subtotal','Total nota','Total nota toko','Selisih','Status cek']];
+ R.days.forEach(g=>{const dn=HARI[new Date(g.d+'T00:00:00').getDay()],nt=g.ns.reduce((s,n)=>s+nTotal(n),0);
+  rows.push({sep:fmtDay(g.d),rt:Object.keys(g.it).length+' barang'+(g.ns.length?', beli '+rp(nt):'')});
+  g.ns.forEach(n=>{const st=rcvState(n),tot=nTotal(n),pm2=n.partyId?partyName(n.partyId):'-';
+   rcvLines(n,R.ba).forEach(z=>{rows.push(['Beli '+nno(n),pm2,z.l.name,z.b!=null?num(z.b)+' > '+num(z.a):'-',num(z.l.q)+' '+z.l.unit,rp(z.l.p),rp(z.l.q*z.l.p),'']);
+    csv.push([g.d,dn,'Pembelian',nno(n),pm2,z.l.name,z.l.unit,z.b==null?'':z.b,z.l.q,z.a==null?'':z.a,z.l.p,z.l.q*z.l.p,tot,st.toko==null?'':st.toko,st.toko==null?'':Math.round(st.toko-tot),st.t])});
+   rows.push(['Beli '+nno(n),'','Total nota','','','',rp(tot),st.t+(st.toko!=null?' (toko '+rp(st.toko)+')':'')])});
+  Object.keys(g.gs).forEach(k=>g.gs[k].forEach(z=>{const c=z.a.c;rows.push([k,'-',z.name,z.b!=null?num(z.b)+' > '+num(z.af):'-','+'+num(z.a.delta)+' '+z.unit,c!=null?rp(c):'-',c!=null?rp(c*z.a.delta):'-','']);
+   csv.push([g.d,dn,k,'','',z.name,z.unit,z.b==null?'':z.b,z.a.delta,z.af==null?'':z.af,c==null?'':c,c==null?'':c*z.a.delta,'','','',''])}))});
  return{rows,csv}}
 function rcvPer(){const p=PERS.find(z=>z[0]===RP);return p?p[1]:''}
-function csvRcv(){dl('penerimaan-stok-'+today()+'.csv',csvText(rcvRows().csv),'text/csv;charset=utf-8');toast('CSV penerimaan stok diunduh')}
-function pdfRcv(){const a=rcvList(),d=rcvRows();let tot=0,ok=0,df=0;a.forEach(n=>{tot+=nTotal(n);const k=rcvState(n).k;if(k==='ok')ok++;if(k==='diff')df++});
- pdfSave({name:'penerimaan-stok-'+today()+'.pdf',title:'Laporan penerimaan stok',sub:'Periode: '+rcvPer()+'  -  Dicetak '+fmtLong(today()),land:1,sum:[['Total pembelian',rp(tot)],['Jumlah nota',num(a.length)],['Sesuai nota toko',ok+' dari '+a.length],['Ada selisih',num(df)]],
-  cols:[{h:'Nomor',w:56},{h:'Pemasok',w:110},{h:'Barang',w:210},{h:'Stok awal > akhir',w:110,al:'r'},{h:'Masuk',w:70,al:'r'},{h:'Harga beli',w:74,al:'r'},{h:'Subtotal',w:80,al:'r'},{h:'Cek nota toko',w:120}],rows:d.rows})}
+function csvRcv(){dl('stok-masuk-'+today()+'.csv',csvText(rcvRows().csv),'text/csv;charset=utf-8');toast('CSV stok masuk diunduh')}
+function pdfRcv(){const R=rcvDays(),a=rcvList(),d=rcvRows();let tot=0,ok=0,df=0,man=0,kinds={};a.forEach(n=>{tot+=nTotal(n);const k=rcvState(n).k;if(k==='ok')ok++;if(k==='diff')df++});
+ R.days.forEach(g=>{Object.keys(g.it).forEach(k=>{kinds[k]=1});Object.keys(g.gs).forEach(k=>{man+=g.gs[k].length})});
+ pdfSave({name:'stok-masuk-'+today()+'.pdf',title:'Laporan stok masuk',sub:'Periode: '+rcvPer()+'  -  Dicetak '+fmtLong(today()),land:1,sum:[['Barang masuk',num(Object.keys(kinds).length)+' jenis'],['Nota pembelian',num(a.length)+' nota, '+rp(tot)],['Diisi manual / impor',num(man)+' baris'],['Sesuai nota toko',ok+' dari '+a.length],['Selisih nota toko',num(df)]],
+  cols:[{h:'Sumber',w:92},{h:'Pemasok',w:96},{h:'Barang',w:170},{h:'Stok awal > akhir',w:100,al:'r'},{h:'Masuk',w:66,al:'r'},{h:'Harga beli',w:70,al:'r'},{h:'Subtotal',w:76,al:'r'},{h:'Cek nota toko',w:150}],rows:d.rows})}
 
 const fT=(n,l,v,o)=>{o=o||{};return '<label class="fld"><span class="lb">'+l+(o.opt?'<span class="op">opsional</span>':'')+'</span><input class="in" name="'+n+'" value="'+esc(v==null?'':v)+'" autocomplete="off" autocapitalize="'+(o.cap||'words')+'" spellcheck="false"'+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+(o.sug?' data-sug="'+o.sug+'"':'')+(o.mode?' inputmode="'+o.mode+'"':'')+(o.fmt?' data-fmt="'+o.fmt+'"':'')+'></label>'};
 const fCode=(n,l,v,w,ph)=>'<div class="fld"><span class="lb">'+l+'<span class="op">opsional</span></span><span class="cw2"><input class="in" name="'+n+'" value="'+esc(v||'')+'" autocomplete="off" autocapitalize="'+(w==='pc'?'characters':'off')+'" spellcheck="false" placeholder="'+esc(ph)+'"><button type="button" class="scb" data-a="scf" data-w="'+w+'" aria-label="'+(w==='pc'?'Scan QR':'Scan barcode')+'">'+ic('scan')+'</button></span></div>';
@@ -1376,6 +1387,7 @@ function pgRecapStock(){const d=rsData(),c=d.cnt,now=new Date();
   +(c.new?'<p class="hint">'+c.new+' barang belum pernah diisi stoknya. Itu bukan berarti habis. <button type="button" class="tx" data-a="rsfill">Isi sekarang</button></p>':'')
   +'<p class="hint"><button type="button" class="tx" data-a="rsask">Tanya Jarvis tentang stok ini</button></p>'
   +(ks?'<h4>Per jenis</h4>'+grp(ks):'')
+  +'<h4>Laporan</h4>'+grp(mrow('Stok masuk','Barang baru masuk per tanggal, bisa diekspor','buy','rep','data-v="buy"'))
   +'<h4>Daftar barang</h4><input id="rsq" class="in" placeholder="Cari barang" aria-label="Cari barang" autocomplete="off" value="'+esc(RS.q)+'">'
   +chips([['filled','Terisi '+c.filled],['out','Habis '+c.out],['low','Menipis '+c.low],['new','Belum dicatat '+c.new],['all','Semua '+c.all]],RS.f,'rsf')
   +chips([['all','Semua jenis']].concat(KORD.map(k=>[k,KS[k]])),RS.k,'rsk')
