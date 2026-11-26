@@ -1,16 +1,3 @@
-/*
- * BM-TECH: navigasi "kembali" yang sama di semua perangkat.
- *  - Android: tombol back / gestur back sistem → history.back() (ditangani tiap halaman lewat popstate).
- *  - iPhone/iPad (tidak punya tombol back di aplikasi PWA) dan Android: geser dari tepi kiri layar.
- *    Lapisan (Dashboard di atas Profil, halaman lain) IKUT bergeser mengikuti jari seperti iOS;
- *    lepas lewat sepertiga layar atau dikibas cepat = kembali, kurang dari itu = batal (memantul balik).
- *  - Keyboard (desktop): Esc = kembali. Saat mengetik, Esc pertama hanya melepas fokus.
- *
- * Aturan aman:
- *  - Hanya aktif kalau ADA tujuan kembali (lapisan terbuka, panel di dalam aplikasi, atau halaman
- *    sebelumnya milik aplikasi ini). Tidak pernah membuat aplikasi tertutup tanpa sengaja.
- *  - Kalau sistem (Safari) mengambil alih gestur dan mengirim touchcancel, semua kembali ke posisi semula.
- */
 (function () {
   'use strict';
   if (window.__bmSwipeBack) return;
@@ -21,11 +8,90 @@
   var inFrame = window.parent !== window;
   var st = null, lastFire = 0, hint = null;
 
+  var layers = [], uid = 0, zomb = [], skip = [], pend = [], later = [];
+  function drain() {
+    while (!skip.length && pend.length) { try { history.pushState({ bmLayer: pend.shift() }, ''); } catch (e) {} }
+    while (!skip.length && !pend.length && later.length) later.shift()();
+  }
+  function drop(id, then) {
+    if (history.state && history.state.bmLayer === id) {
+      skip.push(then || null);
+      try { history.back(); } catch (e) { skip.pop(); if (then) then(); }
+    } else { zomb.push(id); if (then) then(); }
+  }
+  function settle() {
+    var s = history.state && history.state.bmLayer, zi = s ? zomb.indexOf(s) : -1;
+    if (zi < 0) return;
+    zomb.splice(zi, 1); skip.push(null);
+    try { history.back(); } catch (e) { skip.pop(); }
+  }
+  var api = window.bmLayer = {
+    open: function (close) {
+      var id = ++uid;
+      layers.push({ id: id, close: close });
+      if (skip.length) pend.push(id);
+      else { try { history.pushState({ bmLayer: id }, ''); } catch (e) {} }
+      return id;
+    },
+    closed: function (id, then) {
+      var i = layers.length - 1;
+      while (i >= 0 && layers[i].id !== id) i--;
+      if (i < 0) { if (then) then(); return; }
+      layers.splice(i, 1);
+      var pi = pend.indexOf(id);
+      if (pi >= 0) { pend.splice(pi, 1); if (then) then(); return; }
+      if (skip.length) { later.push(function () { drop(id, then); }); return; }
+      drop(id, then);
+    },
+    after: function (fn) {
+      Promise.resolve().then(function () { if (skip.length || pend.length) later.push(fn); else fn(); });
+    },
+    watch: function (el, cls, close) {
+      if (!el) return;
+      var id = 0;
+      function sync() {
+        var on = el.classList.contains(cls);
+        if (on && !id) {
+          id = api.open(function () { id = 0; if (close) close(); else el.classList.remove(cls); });
+        } else if (!on && id) {
+          var x = id; id = 0; api.closed(x);
+        }
+      }
+      new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['class'] });
+      sync();
+    },
+    views: function (cfg) {
+      var els = [].slice.call(document.querySelectorAll(cfg.sel || '.view')), id = 0;
+      function active() { for (var i = 0; i < els.length; i++) if (els[i].classList.contains('active')) return els[i]; return null; }
+      function leave() {
+        id = 0; arm();
+        var cur = active(), name = cur && cfg.backs[cur.id.replace(/^view-/, '')], btn = name && document.getElementById(name);
+        if (btn) btn.click();
+      }
+      function arm() { id = api.open(leave); }
+      function sync() {
+        var a = active(), away = !!a && a.id !== cfg.home;
+        if (away && !id) arm();
+        else if (!away && id) { var x = id; id = 0; api.closed(x); }
+      }
+      els.forEach(function (e) { new MutationObserver(sync).observe(e, { attributes: true, attributeFilter: ['class'] }); });
+      sync();
+    },
+    count: function () { return layers.length; }
+  };
+  window.addEventListener('popstate', function () {
+    if (skip.length) { var cb = skip.shift(); if (cb) cb(); if (!skip.length) settle(); drain(); return; }
+    var l = layers.pop();
+    if (l) { try { l.close(); } catch (e) {} }
+    settle();
+  });
+
   function innerLayerOpen() {
+    if (layers.length) return true;
     try { if (typeof window.__bmCanBack === 'function') return !!window.__bmCanBack(); } catch (e) {}
     return false;
   }
-  function layerFrame() {   // iframe lapisan milik halaman induk (Dashboard/Rekap di atas Profil)
+  function layerFrame() {
     try {
       var fe = window.frameElement;
       if (fe && /^(dashHub|recapHub)$/.test(fe.id) && fe.classList.contains('on')) return fe;
@@ -38,19 +104,14 @@
       return history.length > 1 && !!document.referrer && new URL(document.referrer).origin === location.origin;
     } catch (e) { return false; }
   }
-  /* mode: 'hint' = lapisan di dalam halaman (sheet, editor) → panah kecil lalu back
-           'frame' = iframe lapisan ikut digeser
-           'page' = seluruh halaman ikut digeser lalu kembali ke halaman sebelumnya */
   function modeNow() {
     if (innerLayerOpen()) return 'hint';
     if (layerFrame()) return 'frame';
-    if (inFrame) return 'hint';                           // panel di dalam iframe (editor, halaman di modal)
+    if (inFrame) return 'hint';
     if (history.state && typeof history.state === 'object' && Object.keys(history.state).length) return 'hint';
     if (hasAppHistory()) return 'page';
     return null;
   }
-
-  /* ---------- tampilan ---------- */
   function ensureHint() {
     if (hint) return hint;
     hint = document.createElement('div');
@@ -77,7 +138,7 @@
   }
   function parentRoot(el) { try { return el && el.ownerDocument !== document ? el.ownerDocument.documentElement : null; } catch (e) { return null; } }
   function moveEl(el, x, anim, done) {
-    var pr = parentRoot(el);   // halaman di bawahnya (Profil) ikut bergerak sebanding dengan jari
+    var pr = parentRoot(el);
     if (pr) {
       pr.classList.toggle('bm-dragging', !anim);
       pr.style.setProperty('--bm-pull', String(Math.max(0, Math.min(1, x / (window.innerWidth || 375)))));
@@ -93,14 +154,12 @@
   function goBack(mode) {
     lastFire = Date.now();
     if (mode === 'frame') {
-      // Lapisan dibuka tanpa entri riwayat: minta halaman induk menutupnya (jangan sampai keluar aplikasi)
+
       try { var ps = window.parent.history.state; if (!(ps && (ps.bmHub || ps.bmRecap))) { window.parent.postMessage({ type: 'bm-nav', to: 'profile', from: window.frameElement.id }, location.origin); return; } } catch (e) {}
     }
     if (mode === 'page') { window.__bmSwipeNav = true; try { sessionStorage.setItem('bm-swipe-nav', '1'); } catch (e) {} }
     history.back();
   }
-
-  /* ---------- sentuhan ---------- */
   document.addEventListener('touchstart', function (e) {
     st = null;
     if (e.touches.length !== 1) return;
@@ -145,22 +204,20 @@
     hideHint();
     if (!commit) { if (s.el) moveEl(s.el, 0, 260, function () { resetEl(s.el); }); return; }
     if (!s.el) { goBack(); return; }
-    // Lepas: lapisan meluncur keluar dengan kecepatan jari, lalu kembali
+
     var left = Math.max(120, Math.min(320, (w - s.dx) / Math.max(0.6, s.vx)));
     moveEl(s.el, w, left, function () {
       goBack(s.mode);
-      if (s.mode === 'frame') {   // kelas .on sudah dilepas induk; bayangan & posisi halaman bawah dibereskan sesudahnya
+      if (s.mode === 'frame') {
         setTimeout(function () { s.el.style.transition = ''; s.el.style.transform = ''; s.el.style.boxShadow = ''; }, 250);
         setTimeout(function () { resetEl(s.el); }, 650);
       }
-      else setTimeout(function () { resetEl(s.el); }, 700);                              // tetap di halaman (tidak ada riwayat)
+      else setTimeout(function () { resetEl(s.el); }, 700);
     });
   }, { passive: true });
 
   document.addEventListener('touchcancel', cancel, { passive: true });
   window.addEventListener('pageshow', function () { resetEl(document.documentElement); });
-
-  /* ---------- Keyboard: Esc ---------- */
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape' || e.defaultPrevented || e.isComposing) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;

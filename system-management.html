@@ -1053,11 +1053,11 @@
     toast(t('m_resetdone'));
   });
 
-  /* ---------- Kembali ke dashboard (buka lagi layar Settings) ---------- */
   $('btnBack').addEventListener('click', function () {
     if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'close-page' }, '*'); return; }
-    try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
-    window.location.href = 'dashboard-admin.html';
+    var fromProfile = false;
+    try { fromProfile = /my-profile-bm/.test(document.referrer) && history.length > 1; } catch (e) {}
+    if (fromProfile) history.back(); else window.location.href = 'my-profile-bm.html';
   });
 
   /* ---------- Init ---------- */
@@ -1073,6 +1073,11 @@
 })();
 </script>
 <script src="/bm-swipe-back.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+if (window.bmLayer) bmLayer.watch(document.getElementById('sheetOverlay'), 'open', function () { document.getElementById('sheetOverlay').click(); });
+});
+</script>
 <script src="/bm-jarvis.js" defer></script>
 </body>
 </html>

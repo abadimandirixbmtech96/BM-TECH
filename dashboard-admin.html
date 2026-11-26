@@ -60,7 +60,6 @@
   }
 
   body.theme-light .screen-container,
-  body.theme-light .settings-screen,
   body.theme-light .search-overlay {
     background: #F5F5F7 !important;
   }
@@ -70,7 +69,6 @@
   }
 
   body.theme-light .drawer { background: #FFFFFF !important; }
-  body.theme-light .settings-group,
   body.theme-light .search-input-box,
   body.theme-light .chip {
     background: #FFFFFF !important;
@@ -79,9 +77,7 @@
 
   body.theme-light .page-title,
   body.theme-light .drawer-header h3,
-  body.theme-light .settings-item-title,
   body.theme-light .folder-item,
-  body.theme-light .settings-header h2,
   body.theme-light .search-input-box input {
     color: #000000 !important;
   }
@@ -881,130 +877,6 @@
   .drawer-foot-btn:active { transform: scale(0.9); }
   .drawer-foot-btn svg { width: 20px; height: 20px; }
 
-  .settings-screen {
-    position: fixed;
-    inset: 0;
-    background: #000000;
-    z-index: 110;
-    display: flex;
-    flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.32s cubic-bezier(0.18, 0.85, 0.3, 1);
-    overflow-y: auto;
-    padding: calc(var(--safe-top) + 12px) 16px calc(var(--safe-bottom) + 20px) 16px;
-  }
-
-  .settings-screen.open { transform: translateX(0); }
-
-  .settings-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-
-  .settings-back-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    color: var(--text-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.15s ease;
-  }
-
-  .settings-back-btn:active { transform: scale(0.88); }
-  .settings-back-btn svg { width: 22px; height: 22px; }
-
-  .settings-header h2 {
-    font-size: 20px;
-    font-weight: 700;
-    color: #FFF;
-  }
-
-  .settings-group {
-    background: #141416;
-    border-radius: 18px;
-    overflow: hidden;
-    flex-shrink: 0;
-    margin-bottom: 14px;
-    border: 1px solid var(--card-border-dark);
-  }
-
-  .settings-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 18px;
-    cursor: pointer;
-    transition: background 0.15s ease;
-  }
-
-  .settings-item:not(:last-child) {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .settings-item:active { background: rgba(255, 255, 255, 0.04); }
-
-  .settings-item-title {
-    font-size: 15px;
-    font-weight: 500;
-    color: #FFFFFF;
-  }
-
-  .settings-item-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-secondary);
-    font-size: 14px;
-  }
-
-  .settings-item-right svg { width: 16px; height: 16px; color: var(--text-secondary); }
-
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-  }
-
-  .switch input { opacity: 0; width: 0; height: 0; }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    inset: 0;
-    background-color: #2C2C2E;
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 34px;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  }
-
-  input:checked + .slider {
-    background-color: var(--accent-yellow);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(22px);
-  }
-
   .search-overlay {
     position: fixed;
     inset: 0;
@@ -1260,126 +1132,6 @@
   .pzv-cancel { background: var(--glass-pill-bg); color: var(--text-primary); }
   .pzv-confirm { background: #F0555C; color: #fff; }
   .pzv-confirm:disabled { opacity: .4; filter: grayscale(.4); pointer-events: none; }
-
-  .trash-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 260; transform: translateX(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
-  .trash-screen.open { transform: translateX(0); }
-  .trash-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-shrink: 0; }
-  .trash-header h2 { flex: 1; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
-  .trash-empty-all { border: none; background: transparent; color: #F0555C; font-size: 13.5px; font-weight: 700; cursor: pointer; padding: 8px 4px; }
-  .trash-sub { padding: 0 20px 6px; font-size: 12.5px; color: var(--text-secondary); }
-  .trash-list { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
-  .trash-empty { text-align: center; color: var(--text-secondary); padding: 60px 20px; font-size: 13.5px; }
-  .trash-card { background: var(--card-surface-dark); border: 1px solid var(--card-border-dark); border-radius: 16px; padding: 14px; margin-bottom: 12px; }
-  .trash-card-top { display: flex; align-items: center; gap: 12px; }
-  .trash-card-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--accent-yellow-glow); color: var(--accent-yellow); }
-  .trash-card-icon svg { width: 20px; height: 20px; }
-  .trash-card-title { font-size: 14.5px; font-weight: 700; color: var(--text-primary); margin: 0; word-break: break-word; }
-  .trash-card-meta { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0; }
-  .trash-card-actions { display: flex; gap: 10px; margin-top: 12px; }
-  .trash-card-actions button { flex: 1; height: 40px; border-radius: 12px; border: none; font-size: 13.5px; font-weight: 700; cursor: pointer; }
-  .trash-btn-restore { background: var(--accent-yellow); color: #1C1B19; }
-  .trash-btn-purge { background: transparent; border: 1.5px solid rgba(240,85,92,0.6) !important; color: #F0555C; }
-
-  .karyawan-screen, .karyawan-form-overlay, .karyawan-form-sheet { all: unset; }
-  .karyawan-screen { position: fixed; inset: 0; background: var(--bg-dark); z-index: 260; transform: translateX(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); display: flex; flex-direction: column; padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); }
-  .karyawan-screen.open { transform: translateX(0); }
-  .karyawan-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; flex-shrink: 0; }
-  .karyawan-header h2 { flex: 1; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
-  .karyawan-add-btn { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--accent-yellow); color: #1C1B19; font-size: 22px; font-weight: 700; line-height: 1; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-  .karyawan-add-btn:active { transform: scale(0.92); }
-  .karyawan-list { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
-  .karyawan-empty { text-align: center; color: var(--text-secondary); padding: 60px 20px; font-size: 13.5px; }
-  .karyawan-form-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 270; opacity: 0; pointer-events: none; transition: opacity .2s ease; }
-  .karyawan-form-overlay.open { opacity: 1; pointer-events: auto; }
-  .karyawan-form-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card-surface-dark); border-radius: 24px 24px 0 0; padding: 18px 18px calc(18px + var(--safe-bottom)); z-index: 271; transform: translateY(100%); transition: transform .28s cubic-bezier(.32,.72,0,1); }
-  .karyawan-form-sheet.open { transform: translateY(0); }
-  .karyawan-form-sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
-
-  .customer-screen {
-    position: fixed; inset: 0;
-    background: var(--bg-dark);
-    z-index: 260;
-    transform: translateX(100%);
-    transition: transform .28s cubic-bezier(.32,.72,0,1);
-    display: flex; flex-direction: column;
-    padding-top: var(--safe-top);
-    padding-bottom: var(--safe-bottom);
-  }
-  .customer-screen.open { transform: translateX(0); }
-  .customer-header {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 16px;
-    flex-shrink: 0;
-  }
-  .customer-header h2 { flex: 1; font-size: 18px; font-weight: 700; color: var(--text-primary); margin: 0; }
-  .customer-add-btn {
-    width: 38px; height: 38px; border-radius: 50%;
-    border: none; background: var(--accent-yellow); color: #1C1B19;
-    font-size: 22px; font-weight: 700; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-  }
-  .customer-add-btn:active { transform: scale(0.92); }
-  .customer-list { flex: 1; overflow-y: auto; padding: 4px 16px 24px; }
-  .customer-card {
-    background: var(--card-surface-dark);
-    border: 1px solid var(--card-border-dark);
-    border-radius: var(--radius-lg);
-    padding: 14px 16px;
-    margin-bottom: 10px;
-  }
-  .customer-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .customer-card-name { font-size: 15px; font-weight: 700; color: var(--text-primary); }
-  .customer-card-email { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
-  .customer-card-actions { display: flex; gap: 8px; margin-top: 10px; }
-  .customer-mini-btn {
-    flex: 1;
-    padding: 8px 10px;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--card-border-dark);
-    background: var(--glass-pill-bg);
-    color: var(--text-primary);
-    font-size: 12.5px; font-weight: 600;
-    cursor: pointer; text-align: center;
-  }
-  .customer-mini-btn.danger { color: #F0555C; }
-  .customer-empty { text-align: center; color: var(--text-secondary); padding: 60px 20px; font-size: 13.5px; }
-
-  .customer-form-overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 270; opacity: 0; pointer-events: none; transition: opacity .2s ease;
-  }
-  .customer-form-overlay.open { opacity: 1; pointer-events: auto; }
-  .customer-form-sheet {
-    position: fixed; left: 0; right: 0; bottom: 0;
-    background: var(--card-surface-dark);
-    border-radius: 24px 24px 0 0;
-    padding: 18px 18px calc(18px + var(--safe-bottom));
-    z-index: 271;
-    transform: translateY(100%);
-    transition: transform .28s cubic-bezier(.32,.72,0,1);
-  }
-  .customer-form-sheet.open { transform: translateY(0); }
-  .customer-form-sheet h3 { margin: 0 0 14px; font-size: 16px; font-weight: 700; color: var(--text-primary); }
-  .customer-form-field { margin-bottom: 12px; }
-  .customer-form-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-  .customer-form-field input {
-    width: 100%; padding: 12px 14px;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--card-border-dark);
-    background: rgba(255,255,255,0.05);
-    color: var(--text-primary);
-    font-size: 14.5px; outline: none;
-  }
-  .customer-form-error { color: #F0555C; font-size: 12.5px; margin: -4px 0 10px; display: none; }
-  .customer-form-actions { display: flex; gap: 10px; margin-top: 6px; }
-  .customer-form-actions button {
-    flex: 1; padding: 13px; border-radius: var(--radius-pill); border: none;
-    font-size: 14.5px; font-weight: 700; cursor: pointer;
-  }
-  #btnCustomerCancel { background: var(--glass-pill-bg); color: var(--text-primary); }
-  #btnCustomerSubmit { background: var(--accent-yellow); color: #1C1B19; }
-  #btnCustomerSubmit:disabled { opacity: 0.5; pointer-events: none; }
 
   .new-folder-overlay {
     position: fixed;
@@ -2282,16 +2034,12 @@
   @keyframes shareSpin { to { transform: rotate(360deg); } }
   .share-sheet:not(.open),
   .note-action-sheet:not(.open),
-  .new-folder-sheet:not(.open),
-  .customer-form-sheet:not(.open),
-  .karyawan-form-sheet:not(.open) {
+  .new-folder-sheet:not(.open) {
     transform: translateY(calc(100% + 80px));
     box-shadow: none !important;
   }
   @media (min-width: 640px) {
     .tf-sheet,
-    .karyawan-form-sheet,
-    .customer-form-sheet,
     .share-sheet {
       max-width: 480px;
       margin-left: auto;
@@ -2299,18 +2047,12 @@
     }
 
     .tf-actions,
-    .pzv-actions,
-    .customer-form-actions,
-    .trash-card-actions,
-    .customer-card-actions {
+    .pzv-actions {
       justify-content: flex-end;
     }
 
     .tf-actions button,
-    .pzv-actions button,
-    .customer-form-actions button,
-    .trash-card-actions button,
-    .customer-card-actions button {
+    .pzv-actions button {
       flex: 0 0 auto;
       min-width: 96px;
       height: 40px;
@@ -2321,10 +2063,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .tf-actions button:hover,
-    .pzv-actions button:hover,
-    .customer-form-actions button:hover,
-    .trash-card-actions button:hover,
-    .customer-card-actions button:hover {
+    .pzv-actions button:hover {
       filter: brightness(1.12);
     }
   }
@@ -2340,7 +2079,6 @@
   .header-btn,
   .search-pill,
   .tab-btn,
-  .settings-item,
   .drawer-foot-btn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -2367,38 +2105,6 @@
 
     .note-detail-overlay { padding-left: 32px; padding-right: 32px; }
 
-    .settings-screen {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      column-gap: 16px;
-      align-content: start;
-      align-items: start;
-      padding-left: 32px;
-      padding-right: 32px;
-    }
-    .settings-screen > .settings-header { grid-column: 1 / -1; }
-
-    .trash-header,
-    .karyawan-header,
-    .customer-header,
-    .trash-sub { padding-left: 32px; padding-right: 32px; }
-
-    .trash-list,
-    .karyawan-list,
-    .customer-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 12px;
-      align-content: start;
-      padding-left: 32px;
-      padding-right: 32px;
-    }
-    .trash-list > *,
-    .karyawan-list > *,
-    .customer-list > * { margin-bottom: 0; }
-    .trash-empty,
-    .karyawan-empty,
-    .customer-empty { grid-column: 1 / -1; }
   }
   @view-transition { navigation: auto; }
 
@@ -2494,13 +2200,13 @@
   .hdr-filter-btn .tasks-filter-badge { position: absolute; top: -4px; right: -4px; z-index: 2; }
 
   .header-btn, .search-pill, .btn-compose-pencil,
-  .sel-bar-btn, .btn-share-note, .btn-edit-note, .karyawan-add-btn, .customer-add-btn, .btn-create-category,
+  .sel-bar-btn, .btn-share-note, .btn-edit-note, .btn-create-category,
   .btn-new-folder-complete, .nas-btn, .folder-empty-create-btn, .jump-chip, .btn-select-all {
     transition: transform .38s cubic-bezier(.34, 1.7, .5, 1), background-color .2s ease, box-shadow .25s ease, filter .2s ease !important;
     will-change: transform;
   }
   .header-btn:active, .btn-compose-pencil:active,
-  .btn-share-note:active, .btn-edit-note:active, .karyawan-add-btn:active, .customer-add-btn:active,
+  .btn-share-note:active, .btn-edit-note:active,
   .btn-select-all:active { transform: scale(1.14) !important; filter: brightness(1.12); }
   .search-pill:active { transform: scale(1.035) !important; filter: brightness(1.08); }
   .sel-bar-btn:active, .btn-create-category:active, .btn-new-folder-complete:active,
@@ -2939,162 +2645,8 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
       Analisa
     </button>
-    <button class="drawer-foot-btn" id="btnOpenSettings">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Settings
-    </button>
   </div>
 </aside>
-
-<div class="settings-screen" id="settingsScreen">
-  <div class="settings-header">
-    <button class="settings-back-btn" id="btnSettingsBack" aria-label="Kembali">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"></line>
-        <polyline points="12 19 5 12 12 5"></polyline>
-      </svg>
-    </button>
-    <h2>Settings</h2>
-  </div>
-
-  <div class="settings-group">
-    <div class="settings-item" id="btnOpenCustomers">
-      <span class="settings-item-title">Kelola Customer</span>
-      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-    <div class="settings-item" id="btnOpenKaryawan">
-      <span class="settings-item-title">Kelola Karyawan</span>
-      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-    <div class="settings-item" id="btnOpenPhones">
-      <span class="settings-item-title">Daftar Nomor Customer</span>
-      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-    <div class="settings-item" id="btnOpenKasir">
-      <span class="settings-item-title">Kasir (Dashboard Warung)</span>
-      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-    <div class="settings-item" id="btnOpenSystem">
-      <span class="settings-item-title">System Management</span>
-      <div class="settings-item-right"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-    <div class="settings-item" id="btnOpenTrash">
-      <span class="settings-item-title">Sampah</span>
-      <div class="settings-item-right"><span id="trashCountLabel"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></div>
-    </div>
-  </div>
-
-  <div class="settings-group">
-    <div class="settings-item">
-      <span class="settings-item-title">Dark Theme</span>
-      <label class="switch">
-        <input type="checkbox" id="themeCheckbox" checked>
-        <span class="slider"></span>
-      </label>
-    </div>
-
-    <div class="settings-item">
-      <span class="settings-item-title">Haptic Feedback</span>
-      <label class="switch">
-        <input type="checkbox" checked>
-        <span class="slider"></span>
-      </label>
-    </div>
-
-    <div class="settings-item" id="rowBackupAll">
-      <span class="settings-item-title" id="backupAllTitle">Backup Semua Data</span>
-      <div class="settings-item-right">
-        <span>JSON</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-
-    <div class="settings-item" id="rowSyncCloud">
-      <span class="settings-item-title">Sync to Cloud Database</span>
-      <div class="settings-item-right">
-        <span>Active</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-group">
-    <div class="settings-item" id="rowUserAgreement">
-      <span class="settings-item-title">User Agreement</span>
-      <div class="settings-item-right">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-    <div class="settings-item" id="rowPrivacyPolicy">
-      <span class="settings-item-title">Privacy Policy</span>
-      <div class="settings-item-right">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-  </div>
-
-  <div class="settings-group">
-  </div>
-</div>
-
-<div class="customer-screen" id="customerScreen">
-  <div class="customer-header">
-    <button class="settings-back-btn" id="btnCustomerScreenBack" aria-label="Kembali">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"></line>
-        <polyline points="12 19 5 12 12 5"></polyline>
-      </svg>
-    </button>
-    <h2>Kelola Customer</h2>
-    <button class="customer-add-btn" id="btnCustomerAddOpen" aria-label="Tambah Customer">+</button>
-  </div>
-  <div class="customer-list" id="customerListEl">
-    <div class="customer-empty">Memuat data customer...</div>
-  </div>
-</div>
-
-<div class="customer-form-overlay" id="customerFormOverlay"></div>
-<div class="customer-form-sheet" id="customerFormSheet">
-  <h3>Tambah Customer Baru</h3>
-  <div class="customer-form-field">
-    <label for="inpCustDisplayName">Nama Customer (boleh spasi, tampil di kolom tabel)</label>
-    <input type="text" id="inpCustDisplayName" placeholder="contoh: Puji Bengkel" autocomplete="off">
-  </div>
-  <div class="customer-form-field">
-    <label for="inpCustUsername">Username (untuk link login, tanpa spasi/simbol)</label>
-    <input type="text" id="inpCustUsername" placeholder="contoh: puji_bengkel" autocomplete="off">
-  </div>
-  <div class="customer-form-field">
-    <label for="inpCustEmail">Email</label>
-    <input type="email" id="inpCustEmail" placeholder="customer@email.com" autocomplete="off">
-  </div>
-  <div class="customer-form-field">
-    <label for="inpCustPassword">Password (min. 6 karakter)</label>
-    <input type="password" id="inpCustPassword" placeholder="Password login customer" autocomplete="off">
-  </div>
-  <div class="customer-form-error" id="customerFormError"></div>
-  <div class="customer-form-actions">
-    <button id="btnCustomerCancel">Batal</button>
-    <button id="btnCustomerSubmit">Buat Akun</button>
-  </div>
-</div>
-
-<div class="trash-screen" id="trashScreen">
-  <div class="trash-header">
-    <button class="settings-back-btn" id="btnTrashBack" aria-label="Kembali">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"></line>
-        <polyline points="12 19 5 12 12 5"></polyline>
-      </svg>
-    </button>
-    <h2>Sampah</h2>
-    <button class="trash-empty-all" id="btnTrashEmptyAll" style="display:none;">Kosongkan</button>
-  </div>
-  <div class="trash-sub" id="trashSub">Catatan dan folder yang dihapus muncul di sini</div>
-  <div class="trash-list" id="trashListEl">
-    <div class="trash-empty">Memuat sampah...</div>
-  </div>
-</div>
 
 <div class="tf-overlay" id="tfOverlay">
   <div class="tf-sheet">
@@ -3129,48 +2681,6 @@
       <button type="button" class="pzv-cancel" id="pzvCancel">Batal</button>
       <button type="button" class="pzv-confirm" id="pzvConfirm" disabled>Hapus</button>
     </div>
-  </div>
-</div>
-
-<div class="karyawan-screen" id="karyawanScreen">
-  <div class="karyawan-header">
-    <button class="settings-back-btn" id="btnKaryawanScreenBack" aria-label="Kembali">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="19" y1="12" x2="5" y2="12"></line>
-        <polyline points="12 19 5 12 12 5"></polyline>
-      </svg>
-    </button>
-    <h2>Kelola Karyawan</h2>
-    <button class="karyawan-add-btn" id="btnKaryawanAddOpen" aria-label="Tambah Karyawan">+</button>
-  </div>
-  <div class="karyawan-list" id="karyawanListEl">
-    <div class="karyawan-empty">Memuat data karyawan...</div>
-  </div>
-</div>
-
-<div class="karyawan-form-overlay" id="karyawanFormOverlay"></div>
-<div class="karyawan-form-sheet" id="karyawanFormSheet">
-  <h3>Tambah Karyawan Baru</h3>
-  <div class="customer-form-field">
-    <label for="inpKwDisplayName">Nama PJ (harus SAMA PERSIS dengan yang ditulis di kolom "PJ" buku besar)</label>
-    <input type="text" id="inpKwDisplayName" placeholder="contoh: Budi" autocomplete="off">
-  </div>
-  <div class="customer-form-field">
-    <label for="inpKwUsername">Username (untuk link login, tanpa spasi/simbol)</label>
-    <input type="text" id="inpKwUsername" placeholder="contoh: budi" autocomplete="off">
-  </div>
-  <div class="customer-form-field">
-    <label for="inpKwEmail">Email</label>
-    <input type="email" id="inpKwEmail" placeholder="karyawan@email.com" autocomplete="off">
-  </div>
-  <div class="customer-form-field">
-    <label for="inpKwPassword">Password (min. 6 karakter)</label>
-    <input type="password" id="inpKwPassword" placeholder="Password login karyawan" autocomplete="off">
-  </div>
-  <div class="customer-form-error" id="karyawanFormError"></div>
-  <div class="customer-form-actions">
-    <button id="btnKaryawanCancel">Batal</button>
-    <button id="btnKaryawanSubmit">Buat Akun</button>
   </div>
 </div>
 
@@ -4456,7 +3966,6 @@
       return;
     }
     showMiniToast('Folder dipindahkan ke Sampah');
-    refreshTrashCount();
 
     if (activeCategoryId === catId) {
       activeCategoryId = null;
@@ -5956,7 +5465,6 @@
 
     exitSelectionMode();
     loadCategories();
-    refreshTrashCount();
     showMiniToast(`${count} note dipindahkan ke Sampah`);
   }
 
@@ -5966,7 +5474,6 @@
     const go = (silent) => {
       t.classList.add('bm-spin');
       Promise.resolve(loadCategories()).catch(() => {}).then(() => {
-        try { refreshTrashCount(); } catch (e) {}
         try { refreshTasksIfVisible(); } catch (e) {}
         t.classList.remove('bm-spin');
         if (silent !== true) showMiniToast('Data diperbarui');
@@ -6014,15 +5521,9 @@
     drawerOverlay.classList.remove('open');
   });
 
-  const btnOpenSettings = document.getElementById('btnOpenSettings');
-  const settingsScreen = document.getElementById('settingsScreen');
-  const btnSettingsBack = document.getElementById('btnSettingsBack');
-  const themeCheckbox = document.getElementById('themeCheckbox');
-
   const savedTheme = localStorage.getItem('bm-theme');
   if (savedTheme === 'light') {
     document.body.classList.add('theme-light');
-    themeCheckbox.checked = false;
   }
 
   const FONT_CLASS_BY_ID = {
@@ -6041,26 +5542,6 @@
   if (savedFont === 'custom' && window.BMTheme) {
     window.BMTheme.ensureCustom();
   }
-
-  btnOpenSettings.addEventListener('click', () => {
-    drawer.classList.remove('open');
-    drawerOverlay.classList.remove('open');
-    settingsScreen.classList.add('open');
-  });
-
-  btnSettingsBack.addEventListener('click', () => {
-    settingsScreen.classList.remove('open');
-  });
-
-  try {
-    if (sessionStorage.getItem('bm-return-settings') === '1') {
-      sessionStorage.removeItem('bm-return-settings');
-      settingsScreen.classList.add('open');
-    }
-  } catch (e) {}
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) { try { sessionStorage.removeItem('bm-return-settings'); } catch (err) {} }
-  });
 
   const pzv = (function(){
     const overlay = document.getElementById('pzvOverlay');
@@ -6221,12 +5702,6 @@
     return (typeof u === 'string' && /^https:\/\/i\.ibb\.co\//.test(u)) ? '/api/img?u=' + encodeURIComponent(u) : (u || '');
   }
 
-  function trashDaysLeft(item){
-    const d = new Date(item.deleted_at).getTime();
-    if (isNaN(d)) return TRASH_DAYS;
-    return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000));
-  }
-
   function collectBuktiPathsFromNotes(notes){
     const marker = '/storage/v1/object/public/' + BUKTI_BUCKET + '/';
     const paths = [];
@@ -6293,32 +5768,6 @@
     return { error: null, count: (notes || []).length };
   }
 
-  async function restoreTrashItem(item){
-    const pl = item.payload || {};
-    if (item.kind === 'note') {
-      const note = pl.note;
-      if (!note) return { error: { message: 'Data catatan di Sampah rusak.' } };
-      if (note.folder_id) {
-        const { data: f } = await supabaseClient.from('folders').select('id').eq('id', note.folder_id).maybeSingle();
-        if (!f) return { error: { message: 'Folder asal catatan ini sudah dihapus. Pulihkan folder-nya dulu dari Sampah.' } };
-      }
-      const { error } = await supabaseClient.from('notes').insert(note);
-      if (error) return { error };
-    } else {
-      const folder = pl.folder, notes = Array.isArray(pl.notes) ? pl.notes : [];
-      if (!folder) return { error: { message: 'Data folder di Sampah rusak.' } };
-      const { error: fErr } = await supabaseClient.from('folders').insert(folder);
-      if (fErr) return { error: fErr };
-      if (notes.length) {
-        const { error: nErr } = await supabaseClient.from('notes').insert(notes);
-        if (nErr) { await supabaseClient.from('folders').delete().eq('id', folder.id); return { error: nErr }; }
-      }
-    }
-    const { error: delErr } = await supabaseClient.from('trash_items').delete().eq('id', item.id);
-    if (delErr) console.warn('Pulih berhasil tapi gagal hapus dari Sampah:', delErr.message);
-    return { error: null };
-  }
-
   async function purgeExpiredTrash(){
     let serverNowMs = NaN;
     try {
@@ -6334,585 +5783,11 @@
     return expired.length;
   }
 
-  const trashScreen = document.getElementById('trashScreen');
-  const trashListEl = document.getElementById('trashListEl');
-  const btnTrashEmptyAll = document.getElementById('btnTrashEmptyAll');
-  let trashItems = [];
-
-  async function refreshTrashCount(){
-    const { count } = await supabaseClient.from('trash_items').select('id', { count: 'exact', head: true });
-    document.getElementById('trashCountLabel').textContent = count ? String(count) : '';
-  }
-
-  const TRASH_ICON_NOTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>';
-  const TRASH_ICON_FOLDER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
-
-  async function loadTrashScreen(){
-    trashListEl.innerHTML = '<div class="trash-empty">Memuat sampah...</div>';
-    await purgeExpiredTrash();
-    const { data, error } = await supabaseClient.from('trash_items').select('*').order('deleted_at', { ascending: false });
-    if (error) {
-      trashListEl.innerHTML = '<div class="trash-empty">Gagal memuat Sampah: ' + escapeHtml(error.message) + '</div>';
-      return;
-    }
-    trashItems = data || [];
-    document.getElementById('trashCountLabel').textContent = trashItems.length ? String(trashItems.length) : '';
-    document.getElementById('trashSub').textContent = trashItems.length
-      ? trashItems.length + ' item · otomatis hilang setelah ' + TRASH_DAYS + ' hari'
-      : 'Catatan dan folder yang dihapus muncul di sini';
-    btnTrashEmptyAll.style.display = trashItems.length ? 'block' : 'none';
-
-    if (!trashItems.length) { trashListEl.innerHTML = '<div class="trash-empty">Sampah kosong</div>'; return; }
-
-    trashListEl.innerHTML = trashItems.map(it => {
-      const d = new Date(it.deleted_at);
-      const when = isNaN(d.getTime()) ? '—' : d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-      const n = trashItemNotes(it).length;
-      const kindText = it.kind === 'folder' ? 'Folder · ' + n + ' catatan' : 'Catatan';
-      return `
-        <div class="trash-card">
-          <div class="trash-card-top">
-            <div class="trash-card-icon">${it.kind === 'folder' ? TRASH_ICON_FOLDER : TRASH_ICON_NOTE}</div>
-            <div style="min-width:0;">
-              <p class="trash-card-title">${escapeHtml(it.label || '(tanpa judul)')}</p>
-              <p class="trash-card-meta">${kindText} · Dihapus ${escapeHtml(when)} · sisa ${trashDaysLeft(it)} hari</p>
-            </div>
-          </div>
-          <div class="trash-card-actions">
-            <button type="button" class="trash-btn-restore" data-act="restore" data-id="${it.id}">Pulihkan</button>
-            <button type="button" class="trash-btn-purge" data-act="purge" data-id="${it.id}">Hapus Permanen</button>
-          </div>
-        </div>`;
-    }).join('');
-  }
-
-  trashListEl.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-act]');
-    if (!btn) return;
-    const item = trashItems.find(t => t.id === btn.dataset.id);
-    if (!item) return;
-    if (btn.dataset.act === 'restore') {
-      btn.disabled = true; btn.textContent = 'Memulihkan...';
-      const { error } = await restoreTrashItem(item);
-      if (error) { alert('Gagal memulihkan: ' + error.message); }
-      else { showMiniToast(item.kind === 'folder' ? 'Folder dipulihkan' : 'Catatan dipulihkan'); loadCategories(); }
-      loadTrashScreen();
-    } else {
-      const ok = await askDeleteVerification({
-        title: 'Hapus Permanen?',
-        text: '"' + (item.label || 'Item ini') + '" akan hilang selamanya dan TIDAK bisa dipulihkan lagi.',
-        confirmLabel: 'Hapus Permanen'
-      });
-      if (!ok) return;
-      await removeBuktiFilesOfTrashItems([item]);
-      const { error } = await supabaseClient.from('trash_items').delete().eq('id', item.id);
-      if (error) alert('Gagal menghapus permanen: ' + error.message);
-      else showMiniToast('Dihapus permanen');
-      loadTrashScreen();
-    }
-  });
-
-  btnTrashEmptyAll.addEventListener('click', async () => {
-    if (!trashItems.length) return;
-    const ok = await askDeleteVerification({
-      title: 'Kosongkan Sampah?',
-      text: trashItems.length + ' item di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi.',
-      confirmLabel: 'Kosongkan'
-    });
-    if (!ok) return;
-    await removeBuktiFilesOfTrashItems(trashItems);
-    const { error } = await supabaseClient.from('trash_items').delete().in('id', trashItems.map(t => t.id));
-    if (error) alert('Gagal mengosongkan Sampah: ' + error.message);
-    else showMiniToast('Sampah dikosongkan');
-    loadTrashScreen();
-  });
-
-  document.getElementById('btnOpenTrash').addEventListener('click', () => {
-    trashScreen.classList.add('open');
-    loadTrashScreen();
-  });
-  document.getElementById('btnTrashBack').addEventListener('click', () => trashScreen.classList.remove('open'));
-  refreshTrashCount();
-  purgeExpiredTrash().then(refreshTrashCount);
-
-  const CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/create-customer';
-  const DELETE_CUSTOMER_FN_URL = SUPABASE_URL + '/functions/v1/delete-customer';
-  const customerScreen = document.getElementById('customerScreen');
-  const btnOpenCustomers = document.getElementById('btnOpenCustomers');
-  const btnCustomerScreenBack = document.getElementById('btnCustomerScreenBack');
-  const customerListEl = document.getElementById('customerListEl');
-  const customerFormOverlay = document.getElementById('customerFormOverlay');
-  const customerFormSheet = document.getElementById('customerFormSheet');
-  const btnCustomerAddOpen = document.getElementById('btnCustomerAddOpen');
-  const btnCustomerCancel = document.getElementById('btnCustomerCancel');
-  const btnCustomerSubmit = document.getElementById('btnCustomerSubmit');
-  const inpCustDisplayName = document.getElementById('inpCustDisplayName');
-  const inpCustUsername = document.getElementById('inpCustUsername');
-  const inpCustEmail = document.getElementById('inpCustEmail');
-  const inpCustPassword = document.getElementById('inpCustPassword');
-  const customerFormError = document.getElementById('customerFormError');
-
-  btnOpenCustomers.addEventListener('click', () => {
-    drawer.classList.remove('open');
-    drawerOverlay.classList.remove('open');
-    customerScreen.classList.add('open');
-    loadCustomerList();
-  });
-
-  btnCustomerScreenBack.addEventListener('click', () => {
-    customerScreen.classList.remove('open');
-  });
-
-  function openCustomerForm() {
-    inpCustDisplayName.value = '';
-    inpCustUsername.value = '';
-    inpCustUsername.dataset.autoFilled = 'true';
-    inpCustEmail.value = '';
-    inpCustPassword.value = '';
-    customerFormError.style.display = 'none';
-    btnCustomerSubmit.disabled = false;
-    btnCustomerSubmit.textContent = 'Buat Akun';
-    customerFormOverlay.classList.add('open');
-    customerFormSheet.classList.add('open');
-  }
-  function closeCustomerForm() {
-    customerFormOverlay.classList.remove('open');
-    customerFormSheet.classList.remove('open');
-  }
-  btnCustomerAddOpen.addEventListener('click', openCustomerForm);
-
-  inpCustDisplayName.addEventListener('input', () => {
-    if (inpCustUsername.dataset.autoFilled !== 'false') {
-      inpCustUsername.value = inpCustDisplayName.value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .slice(0, 24);
-    }
-  });
-  inpCustUsername.addEventListener('input', () => {
-    inpCustUsername.dataset.autoFilled = 'false';
-  });
-  btnCustomerCancel.addEventListener('click', closeCustomerForm);
-  customerFormOverlay.addEventListener('click', closeCustomerForm);
-
-  async function loadCustomerList() {
-    customerListEl.innerHTML = '<div class="customer-empty">Memuat data customer...</div>';
-    const { data, error } = await supabaseClient
-      .from('customers')
-      .select('id, username, email, display_name, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      customerListEl.innerHTML = '<div class="customer-empty">Gagal memuat: ' + escapeHtmlAdmin(error.message) + '</div>';
-      return;
-    }
-    if (!data || data.length === 0) {
-      customerListEl.innerHTML = '<div class="customer-empty">Belum ada customer. Tekan tombol + untuk menambahkan.</div>';
-      return;
-    }
-
-    customerListEl.innerHTML = '';
-    data.forEach((c) => {
-      const loginUrl = 'https://dashboard-bm-tech.vercel.app/role-customer-' + c.username;
-      const card = document.createElement('div');
-      card.className = 'customer-card';
-      card.innerHTML = `
-        <div class="customer-card-top">
-          <div>
-            <div class="customer-card-name">${escapeHtmlAdmin(c.display_name || c.username)}</div>
-            <div class="customer-card-email">@${escapeHtmlAdmin(c.username)} · ${escapeHtmlAdmin(c.email)}</div>
-          </div>
-        </div>
-        <div class="customer-card-actions">
-          <button class="customer-mini-btn" data-action="copy" data-url="${loginUrl}">Salin Link Login</button>
-          <button class="customer-mini-btn danger" data-action="remove" data-id="${c.id}" data-username="${escapeHtmlAdmin(c.username)}">Hapus</button>
-        </div>
-      `;
-      customerListEl.appendChild(card);
-    });
-  }
-
-  customerListEl.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-
-    if (btn.dataset.action === 'copy') {
-      try {
-        await navigator.clipboard.writeText(btn.dataset.url);
-        showMiniToast('Link login disalin');
-      } catch {
-        showMiniToast(btn.dataset.url);
-      }
-    }
-
-    if (btn.dataset.action === 'remove') {
-      const username = btn.dataset.username;
-      const custId = btn.dataset.id;
-      if (!(await askDeleteVerification({
-        title: 'Hapus Akun Customer?',
-        text: 'Akun "' + username + '" dihapus SEPENUHNYA (email, password, username login) dan TIDAK bisa dipulihkan. Folder & data tabel yang sudah dibuat tetap tersimpan sebagai arsip.',
-        confirmLabel: 'Hapus Akun'
-      }))) return;
-
-      btn.disabled = true;
-      btn.textContent = 'Menghapus...';
-
-      try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) {
-          alert('Sesi admin habis, silakan login ulang.');
-          btn.disabled = false;
-          btn.textContent = 'Hapus';
-          return;
-        }
-
-        const res = await fetch(DELETE_CUSTOMER_FN_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + session.access_token,
-            'apikey': SUPABASE_ANON_KEY
-          },
-          body: JSON.stringify({ customer_id: custId })
-        });
-        const result = await res.json();
-
-        if (!res.ok || result.error) {
-          alert('Gagal menghapus: ' + (result.error || 'terjadi kesalahan'));
-          btn.disabled = false;
-          btn.textContent = 'Hapus';
-          return;
-        }
-
-        showMiniToast('Akun customer "' + username + '" dihapus sepenuhnya');
-        loadCustomerList();
-      } catch (err) {
-        alert('Gagal terhubung ke server: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Hapus';
-      }
-    }
-  });
-
-  btnCustomerSubmit.addEventListener('click', async () => {
-    const displayName = inpCustDisplayName.value.trim();
-    const username = inpCustUsername.value.trim().toLowerCase().replace(/^@+/, '');
-    const email = inpCustEmail.value.trim();
-    const password = inpCustPassword.value;
-
-    customerFormError.style.display = 'none';
-
-    if (!displayName || displayName.length < 2 || displayName.length > 60) {
-      customerFormError.textContent = 'Nama customer wajib diisi (2-60 karakter).';
-      customerFormError.style.display = 'block';
-      return;
-    }
-    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
-      customerFormError.textContent = 'Username harus 3-24 karakter: huruf kecil, angka, underscore.';
-      customerFormError.style.display = 'block';
-      return;
-    }
-    if (!email.includes('@')) {
-      customerFormError.textContent = 'Email tidak valid.';
-      customerFormError.style.display = 'block';
-      return;
-    }
-    if (password.length < 6) {
-      customerFormError.textContent = 'Password minimal 6 karakter.';
-      customerFormError.style.display = 'block';
-      return;
-    }
-
-    btnCustomerSubmit.disabled = true;
-    btnCustomerSubmit.textContent = 'Memproses...';
-
-    try {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        customerFormError.textContent = 'Sesi admin habis, silakan login ulang.';
-        customerFormError.style.display = 'block';
-        btnCustomerSubmit.disabled = false;
-        btnCustomerSubmit.textContent = 'Buat Akun';
-        return;
-      }
-
-      const res = await fetch(CUSTOMER_FN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
-          'apikey': SUPABASE_ANON_KEY
-        },
-        body: JSON.stringify({ username, email, password, display_name: displayName })
-      });
-      const result = await res.json();
-
-      if (!res.ok || result.error) {
-        customerFormError.textContent = result.error || 'Gagal membuat akun customer.';
-        customerFormError.style.display = 'block';
-        btnCustomerSubmit.disabled = false;
-        btnCustomerSubmit.textContent = 'Buat Akun';
-        return;
-      }
-
-      closeCustomerForm();
-      showMiniToast('Customer "' + displayName + '" berhasil dibuat');
-      loadCustomerList();
-      loadCategories();
-
-    } catch (err) {
-      customerFormError.textContent = 'Gagal terhubung ke server: ' + err.message;
-      customerFormError.style.display = 'block';
-      btnCustomerSubmit.disabled = false;
-      btnCustomerSubmit.textContent = 'Buat Akun';
-    }
-  });
-
-  const KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/create-karyawan';
-  const DELETE_KARYAWAN_FN_URL = SUPABASE_URL + '/functions/v1/delete-karyawan';
-  const karyawanScreen = document.getElementById('karyawanScreen');
-  const btnOpenKaryawan = document.getElementById('btnOpenKaryawan');
-  const btnKaryawanScreenBack = document.getElementById('btnKaryawanScreenBack');
-  const karyawanListEl = document.getElementById('karyawanListEl');
-  const karyawanFormOverlay = document.getElementById('karyawanFormOverlay');
-  const karyawanFormSheet = document.getElementById('karyawanFormSheet');
-  const btnKaryawanAddOpen = document.getElementById('btnKaryawanAddOpen');
-  const btnKaryawanCancel = document.getElementById('btnKaryawanCancel');
-  const btnKaryawanSubmit = document.getElementById('btnKaryawanSubmit');
-  const inpKwDisplayName = document.getElementById('inpKwDisplayName');
-  const inpKwUsername = document.getElementById('inpKwUsername');
-  const inpKwEmail = document.getElementById('inpKwEmail');
-  const inpKwPassword = document.getElementById('inpKwPassword');
-  const karyawanFormError = document.getElementById('karyawanFormError');
-
-  btnOpenKaryawan.addEventListener('click', () => {
-    drawer.classList.remove('open');
-    drawerOverlay.classList.remove('open');
-    karyawanScreen.classList.add('open');
-    loadKaryawanList();
-  });
-
-  btnKaryawanScreenBack.addEventListener('click', () => {
-    karyawanScreen.classList.remove('open');
-  });
-
-  function openKaryawanForm() {
-    inpKwDisplayName.value = '';
-    inpKwUsername.value = '';
-    inpKwUsername.dataset.autoFilled = 'true';
-    inpKwEmail.value = '';
-    inpKwPassword.value = '';
-    karyawanFormError.style.display = 'none';
-    btnKaryawanSubmit.disabled = false;
-    btnKaryawanSubmit.textContent = 'Buat Akun';
-    karyawanFormOverlay.classList.add('open');
-    karyawanFormSheet.classList.add('open');
-  }
-  function closeKaryawanForm() {
-    karyawanFormOverlay.classList.remove('open');
-    karyawanFormSheet.classList.remove('open');
-  }
-  btnKaryawanAddOpen.addEventListener('click', openKaryawanForm);
-
-  inpKwDisplayName.addEventListener('input', () => {
-    if (inpKwUsername.dataset.autoFilled !== 'false') {
-      inpKwUsername.value = inpKwDisplayName.value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .slice(0, 24);
-    }
-  });
-  inpKwUsername.addEventListener('input', () => {
-    inpKwUsername.dataset.autoFilled = 'false';
-  });
-  btnKaryawanCancel.addEventListener('click', closeKaryawanForm);
-  karyawanFormOverlay.addEventListener('click', closeKaryawanForm);
-
-  async function loadKaryawanList() {
-    karyawanListEl.innerHTML = '<div class="karyawan-empty">Memuat data karyawan...</div>';
-    const { data, error } = await supabaseClient
-      .from('karyawan')
-      .select('id, username, email, display_name, created_at')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      karyawanListEl.innerHTML = '<div class="karyawan-empty">Gagal memuat: ' + escapeHtmlAdmin(error.message) + '</div>';
-      return;
-    }
-    if (!data || data.length === 0) {
-      karyawanListEl.innerHTML = '<div class="karyawan-empty">Belum ada karyawan. Tekan tombol + untuk menambahkan.</div>';
-      return;
-    }
-
-    karyawanListEl.innerHTML = '';
-    data.forEach((k) => {
-      const loginUrl = 'https://dashboard-bm-tech.vercel.app/role-karyawan-' + k.username;
-      const card = document.createElement('div');
-      card.className = 'customer-card';
-      card.innerHTML = `
-        <div class="customer-card-top">
-          <div>
-            <div class="customer-card-name">${escapeHtmlAdmin(k.display_name || k.username)}</div>
-            <div class="customer-card-email">@${escapeHtmlAdmin(k.username)} · ${escapeHtmlAdmin(k.email)}</div>
-          </div>
-        </div>
-        <div class="customer-card-actions">
-          <button class="customer-mini-btn" data-action="copy" data-url="${loginUrl}">Salin Link Login</button>
-          <button class="customer-mini-btn danger" data-action="remove" data-id="${k.id}" data-username="${escapeHtmlAdmin(k.username)}">Hapus</button>
-        </div>
-      `;
-      karyawanListEl.appendChild(card);
-    });
-  }
-
-  karyawanListEl.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-
-    if (btn.dataset.action === 'copy') {
-      try {
-        await navigator.clipboard.writeText(btn.dataset.url);
-        showMiniToast('Link login disalin');
-      } catch {
-        showMiniToast(btn.dataset.url);
-      }
-    }
-
-    if (btn.dataset.action === 'remove') {
-      const username = btn.dataset.username;
-      const kwId = btn.dataset.id;
-      if (!(await askDeleteVerification({
-        title: 'Hapus Akun Karyawan?',
-        text: 'Akun "' + username + '" dihapus SEPENUHNYA (email, password, username login) dan TIDAK bisa dipulihkan. Baris buku besar yang sudah ada tetap tersimpan sebagai arsip.',
-        confirmLabel: 'Hapus Akun'
-      }))) return;
-
-      btn.disabled = true;
-      btn.textContent = 'Menghapus...';
-
-      try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) {
-          alert('Sesi admin habis, silakan login ulang.');
-          btn.disabled = false;
-          btn.textContent = 'Hapus';
-          return;
-        }
-
-        const res = await fetch(DELETE_KARYAWAN_FN_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + session.access_token,
-            'apikey': SUPABASE_ANON_KEY
-          },
-          body: JSON.stringify({ karyawan_id: kwId })
-        });
-        const result = await res.json();
-
-        if (!res.ok || result.error) {
-          alert('Gagal menghapus: ' + (result.error || 'terjadi kesalahan'));
-          btn.disabled = false;
-          btn.textContent = 'Hapus';
-          return;
-        }
-
-        showMiniToast('Akun karyawan "' + username + '" dihapus sepenuhnya');
-        loadKaryawanList();
-      } catch (err) {
-        alert('Gagal terhubung ke server: ' + err.message);
-        btn.disabled = false;
-        btn.textContent = 'Hapus';
-      }
-    }
-  });
-
-  btnKaryawanSubmit.addEventListener('click', async () => {
-    const displayName = inpKwDisplayName.value.trim();
-    const username = inpKwUsername.value.trim().toLowerCase().replace(/^@+/, '');
-    const email = inpKwEmail.value.trim();
-    const password = inpKwPassword.value;
-
-    karyawanFormError.style.display = 'none';
-
-    if (!displayName || displayName.length < 2 || displayName.length > 60) {
-      karyawanFormError.textContent = 'Nama PJ wajib diisi (2-60 karakter), dan harus sama persis dengan yang nanti ditulis di kolom PJ buku besar.';
-      karyawanFormError.style.display = 'block';
-      return;
-    }
-    if (!/^[a-z0-9_]{3,24}$/.test(username)) {
-      karyawanFormError.textContent = 'Username harus 3-24 karakter: huruf kecil, angka, underscore.';
-      karyawanFormError.style.display = 'block';
-      return;
-    }
-    if (!email.includes('@')) {
-      karyawanFormError.textContent = 'Email tidak valid.';
-      karyawanFormError.style.display = 'block';
-      return;
-    }
-    if (password.length < 6) {
-      karyawanFormError.textContent = 'Password minimal 6 karakter.';
-      karyawanFormError.style.display = 'block';
-      return;
-    }
-
-    btnKaryawanSubmit.disabled = true;
-    btnKaryawanSubmit.textContent = 'Memproses...';
-
-    try {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        karyawanFormError.textContent = 'Sesi admin habis, silakan login ulang.';
-        karyawanFormError.style.display = 'block';
-        btnKaryawanSubmit.disabled = false;
-        btnKaryawanSubmit.textContent = 'Buat Akun';
-        return;
-      }
-
-      const res = await fetch(KARYAWAN_FN_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
-          'apikey': SUPABASE_ANON_KEY
-        },
-        body: JSON.stringify({ username, email, password, display_name: displayName })
-      });
-      const result = await res.json();
-
-      if (!res.ok || result.error) {
-        karyawanFormError.textContent = result.error || 'Gagal membuat akun karyawan.';
-        karyawanFormError.style.display = 'block';
-        btnKaryawanSubmit.disabled = false;
-        btnKaryawanSubmit.textContent = 'Buat Akun';
-        return;
-      }
-
-      closeKaryawanForm();
-      showMiniToast('Karyawan "' + displayName + '" berhasil dibuat');
-      loadKaryawanList();
-
-    } catch (err) {
-      karyawanFormError.textContent = 'Gagal terhubung ke server: ' + err.message;
-      karyawanFormError.style.display = 'block';
-      btnKaryawanSubmit.disabled = false;
-      btnKaryawanSubmit.textContent = 'Buat Akun';
-    }
-  });
+  purgeExpiredTrash();
 
   function escapeHtmlAdmin(s) {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
-
-  themeCheckbox.addEventListener('change', (e) => {
-    const isLight = !e.target.checked;
-    document.body.classList.toggle('theme-light', isLight);
-    localStorage.setItem('bm-theme', isLight ? 'light' : 'dark');
-  });
 
   const btnSearchOpen = document.getElementById('btnSearchOpen');
   const searchOverlay = document.getElementById('searchOverlay');
@@ -8528,44 +7403,6 @@
     downloadTextFile(`${safeFileName(title)}.csv`, tableToCsv(content), 'text/csv;charset=utf-8;', true);
   });
 
-  let backupRunning = false;
-  document.getElementById('rowBackupAll').addEventListener('click', async () => {
-    if (backupRunning) return;
-    backupRunning = true;
-    const titleEl = document.getElementById('backupAllTitle');
-    const originalText = titleEl.textContent;
-    titleEl.textContent = 'Menyiapkan backup...';
-    try {
-      const [notesRes, foldersRes, trashRes] = await Promise.all([
-        supabaseClient.from('notes').select('*').order('created_at', { ascending: true }),
-        supabaseClient.from('folders').select('*'),
-        supabaseClient.from('trash_items').select('*').order('deleted_at', { ascending: false })
-      ]);
-      if (notesRes.error) throw new Error(notesRes.error.message);
-      const notes = notesRes.data || [];
-      const folders = foldersRes.error ? (typeof categoriesData !== 'undefined' ? categoriesData : []) : (foldersRes.data || []);
-      const backup = {
-        app: 'BM-TECH',
-        type: 'backup-semua-data',
-        created_at: new Date().toISOString(),
-        total_notes: notes.length,
-        folders,
-        notes,
-        trash_items: trashRes.error ? [] : (trashRes.data || [])
-      };
-      const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
-      downloadTextFile(`backup-bm-tech-${stamp}.json`, JSON.stringify(backup, null, 2), 'application/json;charset=utf-8;', false);
-      try { Promise.resolve(supabaseClient.rpc('note_backup')).then(() => {}, () => {}); } catch (e) {}
-      showLiquidAlert('Backup selesai', `${notes.length} catatan dari semua buku berhasil diunduh. Simpan file ini di tempat aman (Drive/WhatsApp ke diri sendiri).`);
-    } catch (err) {
-      console.error('Gagal backup:', err);
-      showLiquidAlert('Backup gagal', 'Tidak bisa mengambil data: ' + err.message);
-    } finally {
-      titleEl.textContent = originalText;
-      backupRunning = false;
-    }
-  });
-
   function buildExportTableEl(note, buktiQrCache) {
     const content = getDisplayTable(note);
 
@@ -9108,27 +7945,6 @@
     if (e.target === liquidAlertBackdrop) liquidAlertBackdrop.classList.remove('open');
   });
 
-  document.getElementById('rowSyncCloud').addEventListener('click', () => {
-    showLiquidAlert(
-      'Sync to Cloud Database',
-      'Dashboard Admin ini sudah terhubung langsung ke Supabase.\nSetiap perubahan folder & notes otomatis tersinkron ke Viewer Publik BM-TECH.'
-    );
-  });
-
-  document.getElementById('rowUserAgreement').addEventListener('click', () => {
-    showLiquidAlert(
-      'User Agreement',
-      'Halaman ini khusus untuk admin BM-TECH dalam mengelola data folder, notes, dan transaksi yang akan tampil di Viewer Publik.'
-    );
-  });
-
-  document.getElementById('rowPrivacyPolicy').addEventListener('click', () => {
-    showLiquidAlert(
-      'Privacy Policy',
-      'Seluruh data yang diinput dari Dashboard Admin disimpan di database Supabase resmi aplikasi ini dan tidak dibagikan ke pihak ketiga mana pun.'
-    );
-  });
-
   const pageModal = document.getElementById('pageModal');
   const pageFrame = document.getElementById('pageFrame');
   let pageReadyTimer = null;
@@ -9145,7 +7961,6 @@
   function applyAppearanceLive() {
     const light = localStorage.getItem('bm-theme') === 'light';
     document.body.classList.toggle('theme-light', light);
-    themeCheckbox.checked = !light;
     Object.values(FONT_CLASS_BY_ID).forEach(c => document.body.classList.remove(c));
     const f = localStorage.getItem('bm-font');
     if (f && FONT_CLASS_BY_ID[f]) document.body.classList.add(FONT_CLASS_BY_ID[f]);
@@ -9178,7 +7993,6 @@
       if (window.BMTheme && BMTheme.langChangedSinceLoad && !BMTheme.langChangedSinceLoad()) {
         applyAppearanceLive();
       } else {
-        try { sessionStorage.setItem('bm-return-settings', '1'); } catch (e) {}
         setTimeout(() => location.reload(), 360);
       }
     }
@@ -9203,16 +8017,10 @@
       { id: 'imageLightboxOverlay',  close: () => closeLightbox() },
       { id: 'shareSheet',            close: () => closeShareSheet() },
       { id: 'noteActionSheet',       close: () => closeActionSheet() },
-      { id: 'customerFormSheet',     close: () => closeCustomerForm() },
-      { id: 'karyawanFormSheet',     close: () => closeKaryawanForm() },
       { id: 'newFolderSheet',        close: () => closeNewFolderModal() },
       { id: 'tfOverlay',             close: () => closeTasksFilterSheet() },
       { id: 'noteDetailOverlay',     close: rm('noteDetailOverlay') },
       { id: 'searchOverlay',         close: rm('searchOverlay') },
-      { id: 'trashScreen',           close: rm('trashScreen') },
-      { id: 'customerScreen',        close: rm('customerScreen') },
-      { id: 'karyawanScreen',        close: rm('karyawanScreen') },
-      { id: 'settingsScreen',        close: rm('settingsScreen') },
       { id: 'drawer',                close: rm('drawer', 'drawerOverlay') },
     ].filter(L => $id(L.id));
     const byId = {};
@@ -9302,11 +8110,6 @@
     if (e.data && e.data.type === 'bm-visible') { try { loadCategories(); } catch (err) {} }
   });
   document.getElementById('btnAnalyticsOpen').addEventListener('click', () => openPageModal('analisa.html'));
-  document.getElementById('btnOpenSystem').addEventListener('click', () => openPageModal('system-management.html', true));
-  document.getElementById('btnOpenPhones').addEventListener('click', () => openPageModal('daftar-nomor-hp.html'));
-  document.getElementById('btnOpenKasir').addEventListener('click', () => {
-    try { window.top.location.href = '/dashboard-shop.html'; } catch (e) { window.location.href = '/dashboard-shop.html'; }
-  });
 
 </script>
 <script>

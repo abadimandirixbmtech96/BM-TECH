@@ -405,3 +405,28 @@ Satu software, beberapa aplikasi, satu database Supabase (project id `zgzmbneqqz
 - Gerbang admin sama dengan daftar-nomor-hp (`bm-admin-ok` optimistis, `is_admin`).
 - Navigasi bawah `my-profile-bm.html` (`#nav`) memakai modul liquid glass yang sama dengan dashboard-shop (lensa displacement SVG hanya Chromium non-iOS, fisika pegas, lepas = pindah tab dari posisi jari, nonaktif di layar >=1100px). Tab tetap tombol `.tab-btn` dengan kelas `active`; `on` = penanda lensa. Pindah tab dari kode (`goTab`) disinkronkan lewat MutationObserver.
 - Tes: `uji61/gal.js`, `uji61/nav.js`.
+
+## 41. Warung per catatan: Harga otomatis, barang dan jasa dipisah (tanpa bump sw sendiri)
+- Harga di editor admin = jasa + barang. Memilih barang di "Barang dari Warung" mengisi kolom Harga otomatis sebesar jumlah x harga barang. Jasa yang sudah ditambahkan di Harga tidak hilang saat barang atau jumlah diubah (Harga = Harga lama - barang lama + barang baru). Bila Harga berisi teks (bukan angka), Harga tidak ditimpa.
+- Di bawah kolom Harga (form tambah dan edit detail) tampil rincian "Barang Rp X" dan, bila ada jasa, " · Jasa & lainnya Rp Y". Detail catatan memakai teks yang sama (`BMWarungPick.ringkas`).
+- Catatan menyimpan `warung: [{id,nama,qty,harga}]`; `harga` adalah harga jual saat disimpan, jadi harga lama tidak bergeser bila harga Warung diganti. Catatan lama tanpa harga memakai harga jual Warung saat ini.
+- `bm-warung-pick.js`: `mount(root, {onChange, onLoad})`; `onChange` dipanggil saat pengguna menambah, menghapus, atau mengubah jumlah; `onLoad` saat `set`/`reset`. Metode `total()` tersedia. Pengikat Harga ada di `mountWarungHarga` pada `editor-data-administrator.html`.
+- Analisa membaca `warung` dari catatan (`warungItems`), bukan dari `shop_stok`. Warung = jumlah x harga tersimpan; BERSIH TOTAL = Pemasukan - Kasbon - Operasional - Warung. Bersih Cash dan Bersih Transfer tidak diubah. Panel Terpakai dari catatan, Stok Masuk dari `shop_stok` (alasan "Isi stok").
+- Tes: `work65/e2e.js` (editor), `work65/ana.js` (Analisa).
+
+## 42. Login dan tracking customer dan karyawan dihapus (sw v87)
+- Dihapus dari repo: `customer-login.html`, `customer-tracking.html`, `karyawan-login.html`, `karyawan-tracking.html`, `manifest-customer.json`; rute `/role-customer-*` dan `/role-karyawan-*` di `vercel.json`; entri cache dan pengalihan di `sw.js`; tabel `customers` dan `karyawan` dari daftar mirror `sw.js`; menu Settings "Kelola Customer" dan "Kelola Karyawan" beserta layar, formulir, gaya, dan kodenya di `dashboard-admin.html`.
+- Tidak disentuh: data catatan, folder, filter `owner_username` (tetap aman), field "Customer" di editor (itu nama pelanggan bengkel), dan label "Akun Karyawan" pada daftar folder PJ.
+- Sisi Supabase sudah dibersihkan (26 Nov 2026): empat edge function lama dihapus manual oleh pemilik, akun login karyawan dihapus, lalu migrasi `hapus_peran_customer_karyawan` menghapus tabel `customers` dan `karyawan`, fungsi `is_customer`, `is_karyawan`, `get_customer_username`, `get_my_ledger_history`, dan kebijakan peran customer/karyawan. Kebijakan baca `folders` dan `notes` kini khusus admin (`Admin baca folder`, `Admin baca notes`). Fungsi backup melewati tabel yang tidak ada. `admin-manage` sengaja dipertahankan karena dipakai halaman Profil.
+- Penyebutan halaman customer dan karyawan di bagian HANDOFF yang lebih lama bersifat riwayat.
+- Upload lewat "Add files via upload" tidak menghapus file lama: kelima file di atas harus dihapus manual di GitHub.
+
+
+## 43. Tombol kembali universal, Pengaturan dan Sampah gabungan di My Profile (sw v88)
+- `bm-swipe-back.js` kini menyediakan `window.bmLayer` (tumpukan layer berbasis history): `open(closeFn)`, `closed(id, then)`, `after(fn)`, `watch(el, cls, closeFn)`, `views({home, backs})`, `count()`. Back/gesture sistem menutup layer paling atas dulu, baru keluar halaman. Layer yang ditutup bersamaan atau tidak di puncak riwayat dibereskan otomatis (antrean `skip`, `later`, `zomb`).
+- Skrip berstatus `defer` jalan setelah HTML selesai; kode yang memakai `bmLayer` di halaman defer dibungkus `DOMContentLoaded`. My Profile memuat skripnya tanpa defer.
+- Enam editor (administrator, kasbon, hutang-piutang, operasional, warung, folder) memakai `bmLayer.views` untuk Add, Detail, Settings, Trash dan `bmLayer.watch` untuk semua overlay.
+- `my-profile-bm.html`: halaman Pengaturan (tema gelap, Daftar Nomor Customer, Manajemen Sistem, info) dan Sampah gabungan (catatan, folder, record dari semua editor; pulihkan, hapus permanen, kosongkan). Tombol Cadangan manual dihapus.
+- `dashboard-admin.html`: Settings, Haptic, tombol Kasir dan layar Sampah dihapus; fungsi pindah ke sampah tetap.
+- `system-management.html`, `daftar-nomor-hp.html`: tombol kembali ke My Profile; `analisa.html`, `folder-baru.html`, `panduan.html`, `salary-recap.html`: kembali memakai riwayat bila berasal dari halaman sendiri; sheet dan dialog salary-recap jadi layer.
+- Uji kegagalan yang sudah ada sebelum perubahan ini: `ana.js` "panel detail stok masuk 480.000".

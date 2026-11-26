@@ -559,7 +559,6 @@
     }
   });
 
-  const DASHBOARD_FILE = 'dashboard-admin.html';
   const LOGIN_FILE = 'admin-login.html';
   const LEDGER_FOLDER_KEY = 'bukubesar';
   const PAGE_SIZE = 1000;
@@ -967,8 +966,11 @@
 
   document.getElementById('btnBack').addEventListener('click', () => {
     if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'close-page' }, '*'); return; }
+    let fromProfile = false;
+    try { fromProfile = /my-profile-bm/.test(document.referrer) && history.length > 1; } catch (e) {}
+    if (fromProfile) { history.back(); return; }
     pageEl.classList.add('leaving');
-    setTimeout(() => { window.location.href = DASHBOARD_FILE; }, 200);
+    setTimeout(() => { window.location.href = 'my-profile-bm.html'; }, 200);
   });
 
   window.addEventListener('pageshow', () => pageEl.classList.remove('leaving'));

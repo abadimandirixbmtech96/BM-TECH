@@ -1126,6 +1126,7 @@
             metode: r.metode || '',
             _bayarCash: Number(r.bayarCash) || 0,
             _bayarTransfer: Number(r.bayarTransfer) || 0,
+            _warung: Array.isArray(r.warung) ? r.warung : [],
             bukti: (Array.isArray(r.bukti) && r.bukti[0]) || '',
             _buktiAll: Array.isArray(r.bukti) ? r.bukti : []
           }
@@ -1311,6 +1312,7 @@
   let opsLoadError = false;
   let shopLoadError = false;
   let shopRows = [];
+  let shopPrice = new Map();
   let shopMode = 'out';
   let shopAll = false;
   let isLoading = false;
@@ -1563,6 +1565,7 @@
           metode: normMetode(cellText(columns, row, 'Metode', '')),
           cashAmt: Number(row.cells && row.cells._bayarCash) || 0,
           trfAmt: Number(row.cells && row.cells._bayarTransfer) || 0,
+          warung: (row.cells && row.cells._warung) || [],
           folder: note.folder || 'Uncategorized',
           noteTitle: note.title || 'Untitled'
         });
@@ -1965,6 +1968,19 @@
       .map(o => ({ t: o.when.getTime(), v: o.amount, label: formatTime(o.when) + ' · ' + o.item, nama: o.item }));
   }
 
+  function warungItems(period) {
+    const out = [];
+    getPeriodTxs(period).forEach(tx => {
+      (tx.warung || []).forEach(x => {
+        const qty = Number(x && x.qty) || 0;
+        if (!x || !x.id || qty <= 0) return;
+        const sp = shopPrice.get(x.id), harga = Number(x.harga) > 0 ? Number(x.harga) : (sp ? sp.harga : 0);
+        out.push({ t: tx.ts.getTime(), when: tx.date, id: x.id, nama: x.nama || 'Tanpa nama', satuan: sp ? sp.satuan : '', qty, qtyTxt: String(Math.round(qty * 100) / 100), harga, v: qty * harga, who: tx.customer });
+      });
+    });
+    return out;
+  }
+
   function heroEvents(period) {
     const { start, end } = getPeriodRange(period), all = period === 'all';
     const inc = getPeriodTxs(period).map(t => ({ t: t.ts || t.date.getTime(), v: t.amount, label: (t.hasTime ? formatTime(t.ts) + ' · ' : '') + displayCustomer(t) }));
@@ -1980,8 +1996,7 @@
       if (o.amount - o.trf > 0) oc.push({ t: o.when.getTime(), v: o.amount - o.trf, label: lab });
       if (o.trf > 0) ot.push({ t: o.when.getTime(), v: o.trf, label: lab });
     });
-    const wrg = shopRows.filter(s => s.delta < 0 && (all || (s.when >= start && s.when <= end)))
-      .map(s => ({ t: s.when.getTime(), v: Math.abs(s.delta) * s.harga, label: s.nama + ' ×' + (Math.round(Math.abs(s.delta) * 100) / 100), nama: s.nama }));
+    const wrg = warungItems(period).map(w => ({ t: w.t, v: w.v, label: formatTime(new Date(w.t)) + ' · ' + w.nama + ' ×' + w.qtyTxt, nama: w.nama }));
     return { inc, kas, ops: getOperasionalEvents(period), wrg, cin, tin, oc, ot };
   }
 
@@ -3019,7 +3034,7 @@
       for (let from = 0; ; from += NOTES_PAGE_SIZE) {
         const { data, error } = await supabaseClient.from('shop_barang').select('id, nama, satuan, harga_jual, harga_beli').order('id').range(from, from + NOTES_PAGE_SIZE - 1);
         if (error) { console.error('Gagal memuat barang shop:', error.message); return false; }
-        (data || []).forEach(b => barang.set(b.id, b));
+        (data || []).forEach(b => { barang.set(b.id, b); shopPrice.set(b.id, { harga: Number(b.harga_jual) || 0, satuan: b.satuan || '' }); });
         if (!data || data.length < NOTES_PAGE_SIZE) break;
       }
       const rows = [];
@@ -3047,14 +3062,14 @@
     if (shopLoadError) { el.innerHTML = '<p class="bar-empty">Gagal memuat data Dashboard Shop. Ketuk muat ulang.</p>'; return; }
     const { start, end } = getPeriodRange(period), all = period === 'all', out = shopMode === 'out';
     const inP = shopRows.filter(r => all || (r.when >= start && r.when <= end));
-    const list = inP.filter(r => out ? r.delta < 0 : (r.delta > 0 && /isi stok/i.test(r.alasan)));
+    const list = out ? warungItems(period).map(w => ({ id: w.id, nama: w.nama, satuan: w.satuan, harga: w.harga, delta: -w.qty, alasan: w.who })) : inP.filter(r => r.delta > 0 && /isi stok/i.test(r.alasan));
     const skipped = out ? 0 : inP.filter(r => r.delta > 0 && !/isi stok/i.test(r.alasan)).length;
     const map = new Map();
     list.forEach(r => {
       let g = map.get(r.id);
       if (!g) { g = { name: r.nama, satuan: r.satuan, harga: r.harga, qty: 0, n: 0, who: new Set() }; map.set(r.id, g); }
       g.qty += Math.abs(r.delta); g.n += 1;
-      if (out) { const w = r.alasan.replace(/^dipakai bengkel:?\s*/i, '').trim(); if (w) g.who.add(w); }
+      if (out) { const w = String(r.alasan || '').trim(); if (w) g.who.add(w); }
     });
     const groups = [...map.values()].map(g => ({ ...g, total: g.qty * g.harga })).sort((a, b) => b.total - a.total || b.qty - a.qty);
     const note = skipped ? `<p class="bar-note">${skipped} catatan Stok awal tidak dihitung.</p>` : '';
@@ -3072,7 +3087,7 @@
         <div class="bar-track"><div class="bar-fill" style="width:${Math.max(2, Math.round((g.total / max) * 100))}%"></div></div>
       </div>`).join('')
       + (groups.length > 10 ? `<button type="button" class="bar-more" id="shopMore">${shopAll ? 'Ringkas' : 'Lihat semua ' + groups.length + ' barang'}</button>` : '')
-      + `<p class="bar-note">Nilai = jumlah × harga jual di Dashboard Shop saat ini.</p>` + note;
+      + `<p class="bar-note">Nilai = jumlah × harga barang yang tersimpan di catatan.</p>` + note;
   }
 
   $('shopTabs').addEventListener('click', e => {
@@ -3486,10 +3501,11 @@
 
   $('btnAnalyticsBack').addEventListener('click', () => {
     if (window.parent && window.parent !== window) { window.parent.postMessage({ type: 'close-page' }, '*'); return; }
+    var ref = ''; try { ref = new URL(document.referrer).origin; } catch (e) {}
+    if (ref === location.origin && history.length > 1) { history.back(); return; }
     window.location.href = 'dashboard-admin.html';
   });
 
-  // --- Auth Guard + muat data: cuma admin yang login yang boleh lihat halaman ini ---
   (async function init() {
     const guard = $('authGuardScreen');
     const page = $('analyticsPage');

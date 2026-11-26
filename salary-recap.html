@@ -370,6 +370,17 @@
 <script src="/bm-swipe-back.js"></script>
 <script src="/bm-session.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+if (!window.bmLayer) return;
+var sb = document.getElementById('sheetBg'), mb = document.getElementById('modalBg');
+bmLayer.watch(sb, 'open', function () {
+  document.getElementById('sheetClose').click();
+  setTimeout(function () { if (sb.classList.contains('open')) { sb.classList.remove('open'); sb.classList.add('open'); } }, 0);
+});
+bmLayer.watch(mb, 'open', function () { document.getElementById('modalCancel').click(); });
+});
+</script>
+<script>
 (function () {
   'use strict';
 

@@ -260,6 +260,13 @@
   .cnt2 { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
 
   /* halaman layar penuh (Alat Developer) */
+  .srow { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 16px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; font-size: 15px; text-align: left; cursor: pointer; }
+  .srow:last-child { border-bottom: 0; }
+  .srow small { color: var(--muted); font-size: 13px; font-weight: 700; }
+  .trc { margin-bottom: 12px; }
+  .trc b { display: block; word-break: break-word; }
+  .trc small { display: block; color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .trc .row-b { margin-top: 10px; }
   .page { position: fixed; inset: 0; z-index: 60; background: var(--bg); overflow-y: auto; display: none; -webkit-overflow-scrolling: touch; }
   .page.on { display: block; animation: rise .25s ease both; }
   .page .app { padding-bottom: 48px; }
@@ -641,15 +648,30 @@
   <p class="hint">Daftar versi lama catatan yang punya LEBIH BANYAK data daripada sekarang. Ketuk Pulihkan: sistem menghitung dulu berapa data yang akan kembali, lalu minta ketuk sekali lagi. Hanya menambah, tidak menimpa. Data yang sudah dibuang ke sampah tidak ikut.</p>
   <div class="card" id="rvList" style="padding:4px 18px"></div>
   </div>
-  <div class="sec">Cadangan manual</div>
-  <p class="hint">Cadangan lengkap juga bisa dibuat manual di Dashboard melalui Pengaturan, lalu Backup Semua Data.</p>
-  <button class="btn ghost" id="bkOpen" type="button">Buka Dashboard</button>
   <div id="bkRemWrap" hidden>
     <div class="sec">Pengingat cadangan manual <span class="devtag">DEV</span></div>
     <div class="card"><div class="chips wrap" id="bkInt" style="margin:0">
       <button class="chip" data-v="3">3 hari</button><button class="chip" data-v="7">7 hari</button><button class="chip" data-v="14">14 hari</button><button class="chip" data-v="30">30 hari</button>
     </div></div>
   </div>
+</div></div>
+
+<div class="page" id="pgSet"><div class="app">
+  <div class="head">
+    <button class="round" data-close="pgSet" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Pengaturan</h1>
+  </div>
+  <div class="card" id="setList" style="padding:4px 18px"></div>
+</div></div>
+
+<div class="page" id="pgTrash"><div class="app">
+  <div class="head">
+    <button class="round" data-close="pgTrash" aria-label="Kembali"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <h1>Sampah</h1>
+  </div>
+  <p class="hint" id="trSub" style="margin-top:6px"></p>
+  <button class="btn danger" id="trEmpty" type="button" hidden style="margin-bottom:14px">Kosongkan Sampah</button>
+  <div id="trList"></div>
 </div></div>
 
 <div class="page" id="pgHealth"><div class="app">
@@ -714,6 +736,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/bm-app.js"></script>
 <script src="/bm-swipe-back.js"></script>
+<script src="/bm-warung-pick.js"></script>
 <script src="/bm-session.js"></script>
 <script>
 function bmMain(REAL){
@@ -740,6 +763,8 @@ function bmMain(REAL){
     { k: null, a: 'dash', t: 'Dashboard', ic: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>' },
     { k: null, a: 'jarvis', t: 'Jarvis AI', ic: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.6"/><path d="M12 3.5V6M12 18v2.5M3.5 12H6M18 12h2.5"/>' },
     { k: null, a: 'warung', t: 'Warung', ic: '<path d="M4 9.5 5.5 4h13L20 9.5"/><path d="M4 9.5h16v1a2.7 2.7 0 0 1-5.3.6 2.7 2.7 0 0 1-5.4 0A2.7 2.7 0 0 1 4 10.5z"/><path d="M5.5 12.5V20h13v-7.5M10 20v-4.5h4V20"/>' },
+    { k: 'pulih', a: 'trash', t: 'Sampah', ic: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>' },
+    { k: null, a: 'settings', t: 'Pengaturan', ic: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>' },
     { k: null, a: 'galeri', t: 'Galeri', ic: '<rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>' },
     { k: null, a: 'recap', t: 'Rekap Gaji', ic: '<rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10h18M16.5 14.5h.01"/>' },
     { k: null, a: 'health', t: 'Kesehatan', ic: '<path d="M3 12h4l2-5 4 10 2-5h6"/>' },
@@ -826,6 +851,7 @@ function bmMain(REAL){
   }
   function svg(inner){ return '<svg class="i" viewBox="0 0 24 24">' + inner + '</svg>'; }
   function confirmBox(title, text, yes){
+    $('dNo').style.display = ''; $('dYes').textContent = 'OK';
     $('dTitle').textContent = title; $('dText').textContent = text; $('ov').classList.add('on');
     $('dNo').onclick = function(){ $('ov').classList.remove('on'); };
     $('dYes').onclick = function(){ $('ov').classList.remove('on'); yes(); };
@@ -1333,7 +1359,6 @@ function bmMain(REAL){
     var d = +c.getAttribute('data-v');
     srv(function(){ return REAL.c.rpc('dev_set_backup_interval', { p_days: d }); }, 'Pengingat diatur setiap ' + d + ' hari').then(renderBackup);
   });
-  $('bkOpen').addEventListener('click', function(){ closePage('pgBackup'); goDash(); });
 
   var bkBusy = false;
   function wibStamp(iso){ try { return new Date(iso).toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }).slice(0, 16).replace(' ', '_').replace(':', '-'); } catch (e) { return 'cadangan'; } }
@@ -1609,6 +1634,8 @@ function bmMain(REAL){
     if (b.getAttribute('data-a') === 'jarvis') return goJv();
     if (b.getAttribute('data-a') === 'warung') { location.href = 'dashboard-shop.html'; return; }
     if (b.getAttribute('data-a') === 'galeri') { location.href = 'galeri-bm.html'; return; }
+    if (b.getAttribute('data-a') === 'settings') { renderSet(); return openPage('pgSet'); }
+    if (b.getAttribute('data-a') === 'trash') { if (!can('pulih')) return toast('Tidak ada izin'); return openTrash(); }
     if (b.getAttribute('data-a') === 'health') return openPage('pgHealth');
     if (b.getAttribute('data-a') === 'backup') { renderBackup(); loadBackupList(); loadRestoreList(); return openPage('pgBackup'); }
     var k = b.getAttribute('data-k') || null;
@@ -1750,6 +1777,215 @@ function bmMain(REAL){
   document.addEventListener('click', function(e){
     var c = e.target.closest('[data-close]'); if (c) closePage(c.getAttribute('data-close'));
   });
+
+  function infoBox(title, text){
+    $('dTitle').textContent = title; $('dText').textContent = text;
+    $('dNo').style.display = 'none'; $('dYes').textContent = 'Tutup';
+    $('ov').classList.add('on');
+    $('dYes').onclick = function(){ $('ov').classList.remove('on'); };
+  }
+  try { BMWarungPick.init({ client: REAL.c, toast: function(m){ toast(m); } }); } catch (e) {}
+
+  function themeLight(){ return document.body.classList.contains('theme-light'); }
+  function renderSet(){
+    var rows = [
+      ['theme', 'Tema Gelap', themeLight() ? 'Mati' : 'Aktif'],
+      ['phones', 'Daftar Nomor Customer', ''],
+      ['sys', 'Manajemen Sistem', ''],
+      ['sync', 'Sinkronisasi ke Database Cloud', 'Aktif'],
+      ['agree', 'Perjanjian Pengguna', ''],
+      ['priv', 'Kebijakan Privasi', '']
+    ];
+    $('setList').innerHTML = rows.map(function(r){
+      return '<button type="button" class="srow" data-s="' + r[0] + '"><span>' + r[1] + '</span><small>' + r[2] + '</small></button>';
+    }).join('');
+  }
+  $('setList').addEventListener('click', function(e){
+    var b = e.target.closest('[data-s]'); if (!b) return;
+    var s = b.getAttribute('data-s');
+    if (s === 'theme') {
+      var light = !themeLight();
+      document.body.classList.toggle('theme-light', light);
+      try { localStorage.setItem('bm-theme', light ? 'light' : 'dark'); } catch (x) {}
+      try { if (window.BMTheme && BMTheme.reapply) BMTheme.reapply(); } catch (x) {}
+      return renderSet();
+    }
+    if (s === 'phones') { location.href = 'daftar-nomor-hp.html'; return; }
+    if (s === 'sys') { location.href = 'system-management.html'; return; }
+    if (s === 'sync') return infoBox('Sinkronisasi ke Database Cloud', 'Dashboard Admin ini sudah terhubung langsung ke Supabase. Setiap perubahan folder dan catatan otomatis tersinkron ke Viewer Publik BM-TECH.');
+    if (s === 'agree') return infoBox('Perjanjian Pengguna', 'Halaman ini khusus untuk admin BM-TECH dalam mengelola data folder, catatan, dan transaksi yang akan tampil di Viewer Publik.');
+    if (s === 'priv') return infoBox('Kebijakan Privasi', 'Seluruh data yang diinput dari Dashboard Admin disimpan di database Supabase resmi aplikasi ini dan tidak dibagikan ke pihak ketiga mana pun.');
+  });
+
+  var TR = { items: [], busy: false };
+  var TRASH_DAYS = 30, BUKTI_BUCKET = 'bukti';
+  var SCHEMA_LABEL = { 'admin-data-v1': 'Buku Besar', 'kasbon-data-v1': 'Kasbon', 'hutangpiutang-data-v1': 'Hutang-Piutang', 'operasional-data-v1': 'Operasional', 'warung-data-v1': 'Warung', 'custom-data-v1': 'Tabel' };
+  function trLeft(ts){ var d = new Date(ts).getTime(); if (isNaN(d)) return TRASH_DAYS; return Math.max(0, Math.ceil((d + TRASH_DAYS * 86400000 - Date.now()) / 86400000)); }
+  function trWhen(ts){ var d = new Date(ts); if (isNaN(d.getTime())) return '-'; return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); }
+  function buktiPaths(list){
+    var m = '/storage/v1/object/public/' + BUKTI_BUCKET + '/', out = [];
+    (list || []).forEach(function(r){ ((r && Array.isArray(r.bukti)) ? r.bukti : []).forEach(function(u){ var i = typeof u === 'string' ? u.indexOf(m) : -1; if (i >= 0) out.push(u.slice(i + m.length)); }); });
+    return out;
+  }
+  function notesOfItem(row){ var pl = row.payload || {}; return row.kind === 'folder' ? (Array.isArray(pl.notes) ? pl.notes : []) : (pl.note ? [pl.note] : []); }
+  function recsOfNotes(notes){
+    var out = [];
+    (notes || []).forEach(function(n){ var c = n && n.content; if (c && typeof c === 'object') out = out.concat(Array.isArray(c.records) ? c.records : [], Array.isArray(c.trash) ? c.trash : []); });
+    return out;
+  }
+  function removeBukti(paths){
+    if (!paths.length) return Promise.resolve();
+    try { return Promise.resolve(REAL.c.storage.from(BUKTI_BUCKET).remove(paths)).then(function(){}, function(){}); } catch (e) { return Promise.resolve(); }
+  }
+  function recTitle(r){
+    var skip = { id: 1, created_at: 1, deleted_at: 1, bukti: 1, warung: 1, ambilDari: 1 }, parts = [];
+    Object.keys(r).forEach(function(k){ if (!skip[k] && typeof r[k] === 'string' && r[k].trim() && parts.length < 3) parts.push(r[k].trim()); });
+    return parts.join(' · ') || '(tanpa isi)';
+  }
+  function newRecId(){ return 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
+
+  function openTrash(){ openPage('pgTrash'); trLoad(); }
+  function trLoad(){
+    var box = $('trList'); box.innerHTML = '<p class="hint">Memuat…</p>';
+    var c = REAL.c;
+    return Promise.all([
+      c.from('trash_items').select('*').order('deleted_at', { ascending: false }),
+      c.from('notes').select('id,title,content,updated_at')
+    ]).then(function(r){
+      if (r[0].error) throw r[0].error;
+      if (r[1].error) throw r[1].error;
+      var items = (r[0].data || []).map(function(x){ return { src: 'item', key: 'i' + x.id, at: x.deleted_at, row: x }; });
+      (r[1].data || []).forEach(function(n){
+        var cc = n.content;
+        if (!cc || typeof cc !== 'object' || !Array.isArray(cc.trash)) return;
+        cc.trash.forEach(function(rec){ if (rec) items.push({ src: 'rec', key: 'n' + n.id + ':' + rec.id + ':' + rec.deleted_at, at: rec.deleted_at, noteId: n.id, noteTitle: n.title, schema: cc.schema, rec: rec }); });
+      });
+      items.sort(function(a, b){ return new Date(b.at) - new Date(a.at); });
+      TR.items = items; trPaint();
+    }).catch(function(e){ box.innerHTML = '<p class="hint warn">Gagal memuat Sampah: ' + esc(String(e && e.message || e)) + '</p>'; });
+  }
+  function trPaint(){
+    var box = $('trList'), n = TR.items.length, canDel = can('hapus');
+    $('trSub').textContent = n ? n + ' item · otomatis hilang setelah ' + TRASH_DAYS + ' hari' : 'Folder, catatan, dan data yang dihapus muncul di sini';
+    $('trEmpty').hidden = !(n && canDel);
+    if (!n) { box.innerHTML = '<p class="hint">Sampah kosong</p>'; return; }
+    box.innerHTML = TR.items.map(function(it, i){
+      var title, kind;
+      if (it.src === 'item') { title = it.row.label || '(tanpa judul)'; kind = it.row.kind === 'folder' ? 'Folder · ' + notesOfItem(it.row).length + ' catatan' : 'Catatan'; }
+      else { title = recTitle(it.rec); kind = (SCHEMA_LABEL[it.schema] || 'Tabel') + (it.noteTitle ? ' · ' + it.noteTitle : ''); }
+      return '<div class="card trc"><b>' + esc(title) + '</b><small>' + esc(kind) + '</small><small>Dihapus ' + esc(trWhen(it.at)) + ' · sisa ' + trLeft(it.at) + ' hari</small>' +
+        '<div class="row-b"><button class="btn ghost" type="button" data-tr="restore" data-i="' + i + '">Pulihkan</button>' +
+        (canDel ? '<button class="btn danger" type="button" data-tr="purge" data-i="' + i + '">Hapus Permanen</button>' : '') + '</div></div>';
+    }).join('');
+  }
+
+  function itemRestore(row){
+    var c = REAL.c, pl = row.payload || {};
+    if (row.kind === 'note') {
+      var note = pl.note;
+      if (!note) return Promise.reject(new Error('Data catatan di Sampah rusak.'));
+      var chk = note.folder_id ? Promise.resolve(c.from('folders').select('id').eq('id', note.folder_id).maybeSingle()) : Promise.resolve({ data: true });
+      return chk.then(function(f){
+        if (!f.data) throw new Error('Folder asal catatan ini sudah dihapus. Pulihkan folder-nya dulu.');
+        return c.from('notes').insert(note);
+      }).then(function(r){ if (r.error) throw r.error; });
+    }
+    var folder = pl.folder, notes = Array.isArray(pl.notes) ? pl.notes : [];
+    if (!folder) return Promise.reject(new Error('Data folder di Sampah rusak.'));
+    return Promise.resolve(c.from('folders').insert(folder)).then(function(r){
+      if (r.error) throw r.error;
+      if (!notes.length) return;
+      return Promise.resolve(c.from('notes').insert(notes)).then(function(r2){
+        if (r2.error) return Promise.resolve(c.from('folders').delete().eq('id', folder.id)).then(function(){ throw r2.error; });
+      });
+    });
+  }
+  function recMutate(noteId, mutate){
+    var c = REAL.c;
+    return Promise.resolve(c.from('notes').select('id,content,updated_at').eq('id', noteId).single()).then(function(r){
+      if (r.error) throw r.error;
+      var cc = Object.assign({}, r.data.content || {});
+      var tr = Array.isArray(cc.trash) ? cc.trash.slice() : [], recs = Array.isArray(cc.records) ? cc.records.slice() : [];
+      var out = mutate(tr, recs);
+      cc.trash = tr; cc.records = recs;
+      return Promise.resolve(c.from('notes').update({ content: cc }).eq('id', noteId).eq('updated_at', r.data.updated_at).select('id')).then(function(u){
+        if (u.error) throw u.error;
+        if (!u.data || !u.data.length) throw new Error('Data baru saja diubah di tempat lain. Muat ulang Sampah lalu coba lagi.');
+        return out;
+      });
+    });
+  }
+  function recIndex(tr, rec){ for (var k = 0; k < tr.length; k++) if (tr[k] && tr[k].id === rec.id && tr[k].deleted_at === rec.deleted_at) return k; return -1; }
+  function recRestore(it){
+    return recMutate(it.noteId, function(tr, recs){
+      var i = recIndex(tr, it.rec);
+      if (i < 0) throw new Error('Data sudah tidak ada di Sampah.');
+      var rec = Object.assign({}, tr[i]); delete rec.deleted_at; tr.splice(i, 1);
+      if (recs.some(function(x){ return x && x.id === rec.id; })) rec.id = newRecId();
+      if (Array.isArray(rec.ambilDari)) rec.ambilDari = rec.ambilDari.map(function(l){ return Object.assign({}, l, { synced: l.synced === 'reverted' ? false : l.synced }); });
+      recs.push(rec);
+      return rec;
+    }).then(function(rec){
+      if (Array.isArray(rec.warung) && rec.warung.length) { try { BMWarungPick.sync(rec); } catch (e) {} }
+    });
+  }
+  function recPurge(it){
+    return recMutate(it.noteId, function(tr){
+      var i = recIndex(tr, it.rec);
+      if (i < 0) throw new Error('Data sudah tidak ada di Sampah.');
+      tr.splice(i, 1);
+    }).then(function(){ return removeBukti(buktiPaths([it.rec])); });
+  }
+  function itemPurge(row){
+    var c = REAL.c;
+    return removeBukti(buktiPaths(recsOfNotes(notesOfItem(row)))).then(function(){ return c.from('trash_items').delete().eq('id', row.id); }).then(function(r){ if (r && r.error) throw r.error; });
+  }
+
+  $('trList').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-tr]'); if (!b || TR.busy) return;
+    var it = TR.items[+b.getAttribute('data-i')]; if (!it) return;
+    var act = b.getAttribute('data-tr');
+    var run = function(fn, okMsg){
+      TR.busy = true; b.disabled = true;
+      Promise.resolve().then(fn).then(function(){ toast(okMsg); }).catch(function(err){ toast('Gagal: ' + String(err && err.message || err)); }).then(function(){ TR.busy = false; trLoad(); });
+    };
+    if (act === 'restore') {
+      if (!can('pulih')) return toast('Tidak ada izin');
+      return run(function(){
+        if (it.src === 'rec') return recRestore(it);
+        return itemRestore(it.row).then(function(){ return REAL.c.from('trash_items').delete().eq('id', it.row.id); });
+      }, 'Dipulihkan');
+    }
+    if (!can('hapus')) return toast('Tidak ada izin');
+    confirmBox('Hapus Permanen?', 'Item ini akan hilang selamanya dan TIDAK bisa dipulihkan lagi.', function(){
+      run(function(){ return it.src === 'rec' ? recPurge(it) : itemPurge(it.row); }, 'Dihapus permanen');
+    });
+  });
+  $('trEmpty').addEventListener('click', function(){
+    if (!TR.items.length || TR.busy || !can('hapus')) return;
+    confirmBox('Kosongkan Sampah?', TR.items.length + ' item di Sampah akan hilang selamanya dan TIDAK bisa dipulihkan lagi.', function(){
+      TR.busy = true;
+      var items = TR.items.slice(), byNote = {};
+      items.filter(function(x){ return x.src === 'rec'; }).forEach(function(x){ (byNote[x.noteId] = byNote[x.noteId] || []).push(x); });
+      var chain = Promise.resolve();
+      items.filter(function(x){ return x.src === 'item'; }).forEach(function(x){ chain = chain.then(function(){ return itemPurge(x.row); }); });
+      Object.keys(byNote).forEach(function(id){
+        chain = chain.then(function(){
+          return recMutate(id, function(tr){ byNote[id].forEach(function(x){ var i = recIndex(tr, x.rec); if (i >= 0) tr.splice(i, 1); }); })
+            .then(function(){ return removeBukti(buktiPaths(byNote[id].map(function(x){ return x.rec; }))); });
+        });
+      });
+      chain.then(function(){ toast('Sampah dikosongkan'); }).catch(function(err){ toast('Gagal: ' + String(err && err.message || err)); }).then(function(){ TR.busy = false; trLoad(); });
+    });
+  });
+
+  if (window.bmLayer) {
+    ['pgAnn', 'pgInfo', 'pgBackup', 'pgHealth', 'pgLogs', 'pgSet', 'pgTrash'].forEach(function(id){ bmLayer.watch($(id), 'on', function(){ closePage(id); }); });
+    bmLayer.watch($('ov'), 'on');
+    bmLayer.watch($('ovPrev'), 'on');
+    bmLayer.watch($('ovAdm'), 'on', function(){ $('admPw').value = ''; $('ovAdm').classList.remove('on'); });
+    bmLayer.watch($('ovProf'), 'on');
+  }
 
   var KIND = {
     update: { t: 'Update',    cls: 'k-up', ic: '<path d="M12 19V5M5 12l7-7 7 7"/>' },

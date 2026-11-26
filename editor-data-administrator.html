@@ -432,6 +432,7 @@
   .field .price-input-wrap{ position:relative; }
   .field .price-prefix{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:700; color:var(--ink-soft); }
   .field .price-input-wrap input{ padding-left:38px; }
+  .hrinci{ display:none; margin-top:6px; font-size:12px; font-weight:600; color:var(--ink-soft); }
 
   .suggest-wrap{ position:relative; }
   .suggest-list{
@@ -1041,6 +1042,7 @@
           <span class="price-prefix">Rp</span>
           <input type="text" id="inputHarga" inputmode="text" autocomplete="off" placeholder="0">
         </div>
+        <div class="hrinci" id="hargaRinciAdd"></div>
       </div>
 
       <div class="field">
@@ -1136,6 +1138,7 @@
           <label>Harga</label>
           <div class="val" id="detHargaView">—</div>
           <div class="price-input-wrap" id="detHargaEditWrap" style="display:none;"><span class="price-prefix">Rp</span><input type="text" id="detHargaEdit" inputmode="text" autocomplete="off"></div>
+          <div class="hrinci" id="hargaRinciDet"></div>
           <div class="scope-edit" id="detScopeWrap" style="display:none;">
             <span>Harga ini untuk barang yang mana?</span>
             <select id="detScope">
@@ -2085,8 +2088,34 @@
   });
 
   BMWarungPick.init({ client: supabaseClient, toast: function (t) { try { showMigrationToast(t); } catch (e) {} } });
-  const wpAdd = BMWarungPick.mount(document.getElementById('wpAdd'));
-  const wpDet = BMWarungPick.mount(document.getElementById('detWarungEdit'));
+  function mountWarungHarga(rootId, hargaId, infoId){
+    const hEl = document.getElementById(hargaId), info = document.getElementById(infoId);
+    let base = 0, pk = null;
+    const angka = () => { const v = parseHarga(hEl.value); return typeof v === 'number' ? v : null; };
+    const gambar = () => {
+      const t = pk ? pk.total() : 0;
+      const txt = t > 0 ? BMWarungPick.ringkas(pk.get(), angka() || 0) : '';
+      info.textContent = txt;
+      info.style.display = txt ? 'block' : 'none';
+    };
+    pk = BMWarungPick.mount(document.getElementById(rootId), {
+      onChange: (t) => {
+        const n = angka();
+        if (n !== null) {
+          const baru = Math.max(0, n - base + t);
+          hEl.value = baru ? String(baru) : '';
+          hEl.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        base = t;
+        gambar();
+      },
+      onLoad: (t) => { base = t; gambar(); }
+    });
+    hEl.addEventListener('input', gambar);
+    return pk;
+  }
+  const wpAdd = mountWarungHarga('wpAdd', 'inputHarga', 'hargaRinciAdd');
+  const wpDet = mountWarungHarga('detWarungEdit', 'detHargaEdit', 'hargaRinciDet');
 
   function renderDetailBuktiView(list){
     const el = document.getElementById('detBuktiView');
@@ -3347,7 +3376,7 @@
     setDetailView('detPJview', r.pj);
     setDetailView('detCustomerView', r.customer);
     setDetailView('detBarangView', r.barang);
-    setDetailView('detWarungView', BMWarungPick.text(r.warung));
+    setDetailView('detWarungView', (r.warung && r.warung.length) ? [BMWarungPick.text(r.warung), BMWarungPick.ringkas(r.warung, typeof r.harga === 'number' ? r.harga : Number(String(r.harga || '').replace(/\D/g, '')) || 0)].filter(Boolean).join(' — ') : '');
     document.getElementById('detWarungRow').style.display = (r.warung && r.warung.length) ? '' : 'none';
     setDetailView('detKeluarView', r.barangKeluar);
     setDetailView('detStokView', r.stokBarang);
@@ -3503,6 +3532,7 @@
     document.getElementById('detStokEdit').value = r.stokBarang || '';
     document.getElementById('detKetEdit').value = r.keterangan || '';
     document.getElementById('detHargaEdit').value = hargaToInput(r.harga);
+    document.getElementById('detHargaEdit').dispatchEvent(new Event('input'));
     const ownN = (r.ambilDari && r.ambilDari.length) ? parseStokItems(r).items.filter(i => !i.carried).length : 0;
     document.getElementById('detOwnPaidWrap').style.display = ownN ? 'flex' : 'none';
     document.getElementById('detOwnPaid').checked = !!r.ownPaid;
@@ -5174,5 +5204,15 @@
 <script src="/bm-swipe-back.js" defer></script>
 <script src="/bm-jarvis.js" defer></script>
 <script src="/bm-update.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+if (window.bmLayer) {
+  bmLayer.views({ home: 'view-home', backs: { add: 'btnAddBack', detail: 'btnDetailBack', settings: 'btnSettingsBack', trash: 'btnTrashBack' } });
+  document.querySelectorAll('.overlay, .bukti-viewer-overlay, .bukti-editor, .guide-overlay').forEach(function (el) {
+    bmLayer.watch(el, 'show', el.id === 'guideOverlay' ? function () { var b = document.getElementById('btnGuideClose'); if (b) b.click(); else el.classList.remove('show'); } : null);
+  });
+}
+});
+</script>
 </body>
 </html>

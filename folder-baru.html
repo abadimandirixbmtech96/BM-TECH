@@ -126,7 +126,10 @@
 
   function close() {
     if (window.parent !== window) window.parent.postMessage('close-editor', '*');
-    else location.href = 'dashboard-admin.html';
+    else {
+      var ref = ''; try { ref = new URL(document.referrer).origin; } catch (e) {}
+      if (ref === location.origin && history.length > 1) history.back(); else location.href = 'dashboard-admin.html';
+    }
   }
   $('btnBack').onclick = close;
 

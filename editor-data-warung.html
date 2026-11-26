@@ -2018,5 +2018,15 @@
 <script src="/bm-swipe-back.js" defer></script>
 <script src="/bm-jarvis.js" defer></script>
 <script src="/bm-update.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+if (window.bmLayer) {
+  bmLayer.views({ home: 'view-home', backs: { add: 'btnAddBack', detail: 'btnDetailBack', settings: 'btnSettingsBack', trash: 'btnTrashBack' } });
+  document.querySelectorAll('.overlay, .bukti-viewer-overlay, .bukti-editor, .guide-overlay').forEach(function (el) {
+    bmLayer.watch(el, 'show', el.id === 'guideOverlay' ? function () { var b = document.getElementById('btnGuideClose'); if (b) b.click(); else el.classList.remove('show'); } : null);
+  });
+}
+});
+</script>
 </body>
 </html>

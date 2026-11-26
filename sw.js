@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bmtech-shell-v86';
+const CACHE_NAME = 'bmtech-shell-v88';
 const DATA_CACHE = 'bmtech-data-v1';
 const DATA_ORIGIN = 'https://bm-data.invalid';
 const NET_WAIT_MS = 2500;
@@ -11,13 +11,12 @@ const PAGES = [
   '/jarvis-ai.html', '/analisa.html', '/daftar-nomor-hp.html', '/system-management.html',
   '/editor-data-administrator.html', '/editor-data-warung.html', '/editor-data-hutang-piutang.html',
   '/editor-data-kasbon.html', '/editor-data-operasional.html', '/editor-folder.html', '/folder-baru.html',
-  '/karyawan-login.html', '/karyawan-tracking.html', '/customer-login.html', '/customer-tracking.html',
   '/calculator.html', '/salary-recap.html', '/panduan.html', '/buku-warung.html', '/galeri-bm.html'
 ];
 const ASSETS = [
   '/bm-app.js', '/bm-theme.js', '/bm-lang.js', '/bm-swipe-back.js', '/bm-session.js', '/bm-merge.js', '/bm-update.js', '/bm-dialog.js', '/bm-jarvis.js',
   '/bm-visual.js', '/bm-voice.js', '/bm-warung-pick.js', '/bm-shop-sync.js', '/bm-nota.js',
-  '/manifest.json', '/manifest-admin.json', '/manifest-shop.json', '/icons/icon-shop-192.png', '/icons/icon-shop-512.png', '/icons/apple-touch-icon-shop.png', '/icons/favicon-shop-32.png', '/manifest-customer.json', '/manifest-calculator.json',
+  '/manifest.json', '/manifest-admin.json', '/manifest-shop.json', '/icons/icon-shop-192.png', '/icons/icon-shop-512.png', '/icons/apple-touch-icon-shop.png', '/icons/favicon-shop-32.png', '/manifest-calculator.json',
   '/icons/icon-192.png', '/icons/icon-512.png', '/icons/apple-touch-icon.png',
   '/icons/apple-touch-icon-152.png', '/icons/apple-touch-icon-167.png',
   '/icons/favicon-32.png', '/icons/favicon-16.png',
@@ -67,7 +66,7 @@ const MIRROR = DATA_ORIGIN + '/mirror/';
 const PAGE = 1000;
 
 const MIRROR_TABLES = [
-  ['notes', 0], ['folders', 0], ['trash_items', 0], ['pending_items', 0], ['customers', 0], ['karyawan', 0],
+  ['notes', 0], ['folders', 0], ['trash_items', 0], ['pending_items', 0],
   ['admin_roles', 0], ['role_permissions', 0], ['announcements', 0], ['announcement_seen', 0], ['app_settings', 0],
   ['jarvis_brain', 0], ['jarvis_memori', 0], ['shop_barang', 0], ['shop_v_stok', 0],
   ['perm_history', 200, 'id.desc'], ['login_log', 300, 'last_seen.desc'], ['activity_log', 500, 'created_at.desc']
@@ -364,8 +363,6 @@ self.addEventListener('fetch', (event) => {
     if (req.mode === 'navigate') {
 
       let path = url.pathname === '/' ? '/admin-login.html' : url.pathname;
-      if (/^\/role-customer-/.test(path)) path = '/customer-tracking.html';
-      if (/^\/role-karyawan-/.test(path)) path = '/karyawan-tracking.html';
       staleWhileRevalidate(event, new Request(url.origin + path), () => caches.match('/admin-login.html'));
       return;
     }

@@ -715,6 +715,10 @@
 
   /* Tombol kembali: disembunyikan kalau dibuka di dalam Editor (overlay) */
   if (window.self !== window.top) document.getElementById('backBtn').style.display = 'none';
+  document.getElementById('backBtn').addEventListener('click', function (e) {
+    var ref = ''; try { ref = new URL(document.referrer).origin; } catch (x) {}
+    if (ref === location.origin && history.length > 1) { e.preventDefault(); history.back(); }
+  });
 
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
